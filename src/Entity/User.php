@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * User
@@ -25,6 +26,7 @@ class User
      * @var string
      *
      * @ORM\Column(name="nom", type="string", length=100, nullable=false)
+     * @Assert\NotBlank(message="Le nom est obligatoire.")
      */
     private $nom;
 
@@ -32,6 +34,7 @@ class User
      * @var string
      *
      * @ORM\Column(name="prenom", type="string", length=100, nullable=false)
+     * @Assert\NotBlank(message="Le prénom est obligatoire.")
      */
     private $prenom;
 
@@ -39,6 +42,8 @@ class User
      * @var string
      *
      * @ORM\Column(name="email", type="string", length=255, nullable=false)
+     * @Assert\NotBlank(message="L'email est obligatoire.")
+     * @Assert\Email(message="Veuillez saisir un email valide.")
      */
     private $email;
 
@@ -46,6 +51,8 @@ class User
      * @var string
      *
      * @ORM\Column(name="password", type="string", length=255, nullable=false)
+     * @Assert\NotBlank(message="Le mot de passe est obligatoire.")
+     * @Assert\Length(min=6, minMessage="Le mot de passe doit contenir au moins 6 caractères.")
      */
     private $password;
 
@@ -71,14 +78,103 @@ class User
     private $faceDescriptor;
 
     /**
-     * @var \Profil
+     * @var \App\Entity\Profil|null
      *
-     * @ORM\ManyToOne(targetEntity="Profil")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="profil_id", referencedColumnName="id")
-     * })
+     * @ORM\ManyToOne(targetEntity="App\Entity\Profil")
+     * @ORM\JoinColumn(name="profil_id", referencedColumnName="id", nullable=true)
      */
     private $profil;
 
+    public function getId(): ?int
+    {
+        return $this->id;
+    }
 
+    public function getNom(): ?string
+    {
+        return $this->nom;
+    }
+
+    public function setNom(string $nom): self
+    {
+        $this->nom = $nom;
+        return $this;
+    }
+
+    public function getPrenom(): ?string
+    {
+        return $this->prenom;
+    }
+
+    public function setPrenom(string $prenom): self
+    {
+        $this->prenom = $prenom;
+        return $this;
+    }
+
+    public function getEmail(): ?string
+    {
+        return $this->email;
+    }
+
+    public function setEmail(string $email): self
+    {
+        $this->email = $email;
+        return $this;
+    }
+
+    public function getPassword(): ?string
+    {
+        return $this->password;
+    }
+
+    public function setPassword(string $password): self
+    {
+        $this->password = $password;
+        return $this;
+    }
+
+    public function getTelephone(): ?string
+    {
+        return $this->telephone;
+    }
+
+    public function setTelephone(?string $telephone): self
+    {
+        $this->telephone = $telephone;
+        return $this;
+    }
+
+    public function getAddresse(): ?string
+    {
+        return $this->addresse;
+    }
+
+    public function setAddresse(?string $addresse): self
+    {
+        $this->addresse = $addresse;
+        return $this;
+    }
+
+    public function getFaceDescriptor(): ?string
+    {
+        return $this->faceDescriptor;
+    }
+
+    public function setFaceDescriptor(?string $faceDescriptor): self
+    {
+        $this->faceDescriptor = $faceDescriptor;
+        return $this;
+    }
+
+    public function getProfil(): ?Profil
+    {
+        return $this->profil;
+    }
+
+    public function setProfil(?Profil $profil): self
+    {
+        $this->profil = $profil;
+        return $this;
+    }
 }

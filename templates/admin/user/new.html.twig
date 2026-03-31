@@ -1,0 +1,74 @@
+{% extends 'admin/base_admin.html.twig' %}
+
+{% block title %}Ajouter un utilisateur{% endblock %}
+
+{% block admin_content %}
+    <div class="container-fluid">
+        <h1 class="mb-4">Ajouter un utilisateur</h1>
+
+        <div class="card card-horozia">
+            <div class="card-body">
+                {{ form_start(form, {'attr': {'novalidate': 'novalidate'}}) }}
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        {{ form_label(form.nom) }}
+                        {{ form_widget(form.nom, {'attr': {'class': 'form-control'}}) }}
+                        {{ form_errors(form.nom) }}
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        {{ form_label(form.prenom) }}
+                        {{ form_widget(form.prenom, {'attr': {'class': 'form-control'}}) }}
+                        {{ form_errors(form.prenom) }}
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        {{ form_label(form.email) }}
+                        {{ form_widget(form.email, {'attr': {'class': 'form-control'}}) }}
+                        {{ form_errors(form.email) }}
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        {{ form_label(form.password) }}
+                        {{ form_widget(form.password, {'attr': {'class': 'form-control'}}) }}
+                        {{ form_errors(form.password) }}
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        {{ form_label(form.telephone) }}
+                        {{ form_widget(form.telephone, {'attr': {'class': 'form-control'}}) }}
+                        {{ form_errors(form.telephone) }}
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        {{ form_label(form.addresse) }}
+                        {{ form_widget(form.addresse, {'attr': {'class': 'form-control'}}) }}
+                        {{ form_errors(form.addresse) }}
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    {{ form_label(form.faceDescriptor) }}
+                    {{ form_widget(form.faceDescriptor, {'attr': {'class': 'form-control'}}) }}
+                    {{ form_errors(form.faceDescriptor) }}
+                </div>
+
+                <div class="mb-3">
+                    {{ form_label(form.profil) }}
+                    {{ form_widget(form.profil, {'attr': {'class': 'form-select'}}) }}
+                    {{ form_errors(form.profil) }}
+                </div>
+
+                <button class="btn btn-horozia-secondary">Enregistrer</button>
+                <a href="{{ path('app_user_index') }}" class="btn btn-horozia-neutral">Retour</a>
+
+                {{ form_end(form) }}
+            </div>
+        </div>
+    </div>
+{% endblock %}
