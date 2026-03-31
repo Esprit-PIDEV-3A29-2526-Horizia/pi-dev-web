@@ -23,6 +23,7 @@
                             <th>ID</th>
                             <th>Titre</th>
                             <th>Destination</th>
+                            <th>Catégorie</th>
                             <th>Prix</th>
                             <th>Date départ</th>
                             <th>Date retour</th>
@@ -36,18 +37,17 @@
                             <td>{{ voyage.id }}</td>
                             <td>{{ voyage.titre }}</td>
                             <td>{{ voyage.destination }}</td>
+                            <td>{{ voyage.categorie ? voyage.categorie.nom : '' }}</td>
                             <td>{{ voyage.prix }}</td>
                             <td>{{ voyage.dateDepart ? voyage.dateDepart|date('Y-m-d') : '' }}</td>
                             <td>{{ voyage.dateRetour ? voyage.dateRetour|date('Y-m-d') : '' }}</td>
                             <td>{{ voyage.placesRestantes }}/{{ voyage.placesTotal }}</td>
                             <td>
                                 <a href="{{ path('app_voyage_edit', {'id': voyage.id}) }}" class="btn btn-warning btn-sm">
-                                    Modifier
+                                 Modifier
                                 </a>
-                                <a href="{{ path('app_voyage_delete', {'id': voyage.id}) }}"
-                                   class="btn btn-danger btn-sm"
-                                   onclick="return confirm('Voulez-vous vraiment supprimer ce voyage ?');">
-                                    Supprimer
+                                 <a href="{{ path('app_voyage_delete', {'id': voyage.id}) }}" class="btn btn-danger btn-sm"
+                                 onclick="return confirm('Voulez-vous vraiment supprimer ce voyage ?');"> Supprimer
                                 </a>
                             </td>
                         </tr>

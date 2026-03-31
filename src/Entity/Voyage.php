@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Entity;
-
+use App\Entity\Categorie;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
@@ -82,12 +82,13 @@ class Voyage
     private $imageUrl;
 
     /**
-     * @var int|null
-     *
-     * @ORM\Column(name="id_categorie", type="integer", nullable=true)
-     * @Assert\NotBlank(message="La catégorie est obligatoire.")
-     */
-    private $idCategorie;
+    * @var Categorie|null
+    *
+    * @ORM\ManyToOne(targetEntity="App\Entity\Categorie", inversedBy="voyages")
+    * @ORM\JoinColumn(name="id_categorie", referencedColumnName="id", nullable=true)
+    * @Assert\NotNull(message="La catégorie est obligatoire.")
+    */
+    private $categorie;
 
     /**
      * @var int
@@ -188,15 +189,14 @@ class Voyage
         $this->imageUrl = $imageUrl;
         return $this;
     }
-
-    public function getIdCategorie(): ?int
+    public function getCategorie(): ?Categorie
     {
-        return $this->idCategorie;
+        return $this->categorie;
     }
 
-    public function setIdCategorie(?int $idCategorie): self
+    public function setCategorie(?Categorie $categorie): self
     {
-        $this->idCategorie = $idCategorie;
+        $this->categorie = $categorie;
         return $this;
     }
 

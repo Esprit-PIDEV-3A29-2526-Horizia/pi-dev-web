@@ -3,7 +3,9 @@
 namespace App\Form;
 
 use App\Entity\Voyage;
+use App\Entity\Categorie;
 use Symfony\Component\Form\AbstractType;
+use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\Extension\Core\Type\DateType;
 use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use Symfony\Component\Form\Extension\Core\Type\MoneyType;
@@ -42,8 +44,11 @@ class VoyageType extends AbstractType
                 'label' => 'Image URL',
                 'required' => false
             ])
-            ->add('idCategorie', IntegerType::class, [
-                'label' => 'ID Catégorie'
+            ->add('categorie', EntityType::class, [
+                'class' => Categorie::class,
+                'choice_label' => 'nom',
+                'label' => 'Catégorie',
+                'placeholder' => 'Choisir une catégorie'
             ])
             ->add('placesTotal', IntegerType::class, [
                 'label' => 'Places totales'
