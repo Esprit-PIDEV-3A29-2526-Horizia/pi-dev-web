@@ -3,16 +3,18 @@
 {% block title %}Admin - Horozia{% endblock %}
 
 {% block navbar %}{% endblock %}
-{% block footer %}{% endblock %}
+
 
 {% block body %}
-    {% include 'admin/partials/navbar-admin.html.twig' %}
+<div class="admin-layout">
+    {% include 'admin/partials/sidebar-admin.html.twig' %}
 
-    <div class="d-flex">
-        {% include 'admin/partials/sidebar-admin.html.twig' %}
+    <div class="admin-main">
+        {% include 'admin/partials/navbar-admin.html.twig' %}
 
-        <main class="flex-grow-1 p-4 bg-light" style="min-height: 100vh;">
+        <main class="admin-content">
             {% block admin_content %}{% endblock %}
         </main>
     </div>
+</div>
 {% endblock %}

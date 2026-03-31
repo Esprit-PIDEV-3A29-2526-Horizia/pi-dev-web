@@ -221,19 +221,20 @@ class Voyage
         $this->placesRestantes = $placesRestantes;
         return $this;
     }
+
     #[Assert\Callback]
-public function validateDatesAndPlaces(\Symfony\Component\Validator\Context\ExecutionContextInterface $context): void
-{
-    if ($this->dateDepart && $this->dateRetour && $this->dateRetour < $this->dateDepart) {
-        $context->buildViolation('La date de retour doit être postérieure à la date de départ.')
+    public function validateDatesAndPlaces(\Symfony\Component\Validator\Context\ExecutionContextInterface $context): void
+    {
+        if ($this->dateDepart && $this->dateRetour && $this->dateRetour < $this->dateDepart) {
+            $context->buildViolation('La date de retour doit être postérieure à la date de départ.')
             ->atPath('dateRetour')
             ->addViolation();
-    }
+        }
 
-    if ($this->placesRestantes !== null && $this->placesTotal !== null && $this->placesRestantes > $this->placesTotal) {
-        $context->buildViolation('Les places restantes ne peuvent pas dépasser les places totales.')
+        if ($this->placesRestantes !== null && $this->placesTotal !== null && $this->placesRestantes > $this->placesTotal) {
+            $context->buildViolation('Les places restantes ne peuvent pas dépasser les places totales.')
             ->atPath('placesRestantes')
             ->addViolation();
+        }
     }
-}
 }

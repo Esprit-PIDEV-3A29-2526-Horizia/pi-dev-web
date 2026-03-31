@@ -3,39 +3,168 @@
 {% block title %}Dashboard Admin - Horozia{% endblock %}
 
 {% block admin_content %}
-    <div class="container-fluid">
-        <h1 class="mb-4">Dashboard Admin</h1>
+<div class="container-fluid">
+    <div class="mb-4">
+        <h2 class="fw-bold mb-0">Analytics Dashboard</h2>
+    </div>
 
-        <div class="row g-4">
-            <div class="col-md-4">
-                <div class="card shadow-sm border-0">
-                    <div class="card-body">
-                        <h5 class="card-title">Voyages</h5>
-                        <p class="card-text">Gérer les voyages disponibles.</p>
-                        <a href="#" class="btn btn-primary">Gérer</a>
+    <div class="row g-4 mb-4">
+        <div class="col-md-6 col-xl-3">
+            <div class="dashboard-card stat-card">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-label">Voyages</div>
+                        <div class="stat-value">{{ nbVoyages }}</div>
+                        <div class="stat-meta text-success">Module disponible</div>
+                    </div>
+                    <div class="stat-icon soft-blue">
+                        <i class="bi bi-airplane-fill"></i>
                     </div>
                 </div>
             </div>
+        </div>
 
-            <div class="col-md-4">
-                <div class="card shadow-sm border-0">
-                    <div class="card-body">
-                        <h5 class="card-title">Réservations</h5>
-                        <p class="card-text">Gérer les réservations des utilisateurs.</p>
-                        <a href="#" class="btn btn-success">Gérer</a>
+        <div class="col-md-6 col-xl-3">
+            <div class="dashboard-card stat-card">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-label">Réservations</div>
+                        <div class="stat-value">{{ nbReservations }}</div>
+                        <div class="stat-meta text-success">Suivi actif</div>
+                    </div>
+                    <div class="stat-icon soft-green">
+                        <i class="bi bi-calendar-check-fill"></i>
                     </div>
                 </div>
             </div>
+        </div>
 
-            <div class="col-md-4">
-                <div class="card shadow-sm border-0">
-                    <div class="card-body">
-                        <h5 class="card-title">Utilisateurs</h5>
-                        <p class="card-text">Gérer les comptes utilisateurs.</p>
-                        <a href="#" class="btn btn-dark">Gérer</a>
+        <div class="col-md-6 col-xl-3">
+            <div class="dashboard-card stat-card">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-label">Utilisateurs</div>
+                        <div class="stat-value">{{ nbUsers }}</div>
+                        <div class="stat-meta text-success">Comptes créés</div>
+                    </div>
+                    <div class="stat-icon soft-yellow">
+                        <i class="bi bi-people-fill"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-xl-3">
+            <div class="dashboard-card stat-card">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-label">Catégories</div>
+                        <div class="stat-value">{{ nbCategories }}</div>
+                        <div class="stat-meta text-success">Organisation prête</div>
+                    </div>
+                    <div class="stat-icon soft-neutral">
+                        <i class="bi bi-tags-fill"></i>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
+    <div class="row g-4 mb-4">
+        <div class="col-xl-8">
+            <div class="dashboard-card chart-card">
+                <div class="card-title-custom mb-3">Activité mensuelle</div>
+                <div class="fake-chart">
+                    <div class="bar" style="height: 45%"></div>
+                    <div class="bar" style="height: 60%"></div>
+                    <div class="bar" style="height: 40%"></div>
+                    <div class="bar" style="height: 70%"></div>
+                    <div class="bar" style="height: 55%"></div>
+                    <div class="bar" style="height: 78%"></div>
+                    <div class="bar" style="height: 50%"></div>
+                    <div class="bar" style="height: 85%"></div>
+                    <div class="bar" style="height: 68%"></div>
+                    <div class="bar" style="height: 92%"></div>
+                    <div class="bar" style="height: 58%"></div>
+                    <div class="bar" style="height: 88%"></div>
+                </div>
+                <div class="d-flex justify-content-between text-muted small mt-2">
+                    <span>Jan</span><span>Fév</span><span>Mar</span><span>Avr</span><span>Mai</span><span>Juin</span>
+                    <span>Juil</span><span>Août</span><span>Sep</span><span>Oct</span><span>Nov</span><span>Déc</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-xl-8">
+            <div class="dashboard-card">
+                <div class="card-title-custom mb-3">Résumé des modules</div>
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0 dashboard-table">
+                        <thead>
+                            <tr>
+                                <th>Module</th>
+                                <th>Élément total</th>
+                                <th>Statut</th>
+                                <th>Accès</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Voyages</td>
+                                <td>{{ nbVoyages }}</td>
+                                <td><span class="status-badge done">Actif</span></td>
+                                <td><a href="{{ path('app_voyage_index') }}" class="text-decoration-none">Ouvrir</a></td>
+                            </tr>
+                            <tr>
+                                <td>Réservations</td>
+                                <td>{{ nbReservations }}</td>
+                                <td><span class="status-badge done">Actif</span></td>
+                                <td><a href="{{ path('app_reservation_index') }}" class="text-decoration-none">Ouvrir</a></td>
+                            </tr>
+                            <tr>
+                                <td>Utilisateurs</td>
+                                <td>{{ nbUsers }}</td>
+                                <td><span class="status-badge progress">En cours</span></td>
+                                <td><a href="{{ path('app_user_index') }}" class="text-decoration-none">Ouvrir</a></td>
+                            </tr>
+                            <tr>
+                                <td>Catégories</td>
+                                <td>{{ nbCategories }}</td>
+                                <td><span class="status-badge done">Actif</span></td>
+                                <td><a href="{{ path('app_categorie_index') }}" class="text-decoration-none">Ouvrir</a></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-4">
+            <div class="dashboard-card h-100">
+                <div class="card-title-custom mb-3">Répartition</div>
+                <div class="mini-donut"></div>
+                <div class="mt-4 small">
+                    <div class="d-flex justify-content-between py-2 border-bottom">
+                        <span>Voyages</span>
+                        <span>{{ nbVoyages }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between py-2 border-bottom">
+                        <span>Réservations</span>
+                        <span>{{ nbReservations }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between py-2 border-bottom">
+                        <span>Utilisateurs</span>
+                        <span>{{ nbUsers }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between py-2">
+                        <span>Catégories</span>
+                        <span>{{ nbCategories }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

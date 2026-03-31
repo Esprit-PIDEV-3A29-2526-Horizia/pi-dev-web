@@ -1,32 +1,39 @@
-<div class="sidebar-horozia text-white p-3 vh-100" style="width: 260px;">
-    <ul class="nav flex-column">
-        <li class="nav-item mb-2">
-            <a class="nav-link text-white" href="{{ path('app_admin') }}">
-                <i class="bi bi-house-door-fill me-2"></i> Accueil Admin
+<div class="admin-sidebar">
+    <div class="sidebar-brand-center">
+        <img src="{{ asset('images/logo.png') }}" alt="Logo Horozia" class="sidebar-logo-large">
+    </div>
+
+    <ul class="sidebar-menu">
+        <li>
+            <a class="sidebar-link active" href="{{ path('app_admin') }}">
+                <i class="bi bi-grid-fill"></i>
+                <span>Dashboard</span>
+            </a>
+        </li>
+        <li>
+            <a class="sidebar-link" href="{{ path('app_user_index') }}">
+                <i class="bi bi-person"></i>
+                <span>Gestion Profile</span>
+            </a>
+        </li>
+    
+        <li>
+            <a class="sidebar-link" href="{{ path('app_categorie_index') }}">
+                <i class="bi bi-tags-fill"></i>
+                <span>Gestion Catégories</span>
             </a>
         </li>
 
-        <li class="nav-item mb-2">
-            <a class="nav-link text-white" href="{{ path('app_voyage_index') }}">
-                <i class="bi bi-airplane-fill me-2"></i> Gestion Voyages
+        <li>
+            <a class="sidebar-link" href="{{ path('app_voyage_index') }}">
+                <i class="bi bi-airplane-fill"></i>
+                <span>Gestion Voyages</span>
             </a>
         </li>
-
-        <li class="nav-item mb-2">
-            <a class="nav-link text-white" href="{{ path('app_reservation_index') }}">
-                <i class="bi bi-calendar-check-fill me-2"></i> Gestion Réservations
-            </a>
-        </li>
-
-        <li class="nav-item mb-2">
-            <a class="nav-link text-white" href="{{ path('app_user_index') }}">
-                <i class="bi bi-people-fill me-2"></i> Gestion Utilisateurs
-            </a>
-        </li>
-
-        <li class="nav-item mb-2">
-            <a class="nav-link text-white" href="{{ path('app_categorie_index') }}">
-                <i class="bi bi-tags-fill me-2"></i> Gestion Catégories
+        <li>
+            <a class="sidebar-link" href="{{ path('app_reservation_index') }}">
+                <i class="bi bi-calendar-check-fill"></i>
+                <span>Gestion Réservations</span>
             </a>
         </li>
     </ul>
