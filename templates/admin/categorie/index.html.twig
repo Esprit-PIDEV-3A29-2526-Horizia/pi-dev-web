@@ -6,7 +6,7 @@
     <div class="container-fluid">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h1>Liste des catégories</h1>
-            <a href="{{ path('app_categorie_new') }}" class="btn btn-primary">
+            <a href="{{ path('app_categorie_new') }}" class="btn btn-horozia-secondary">
                 <i class="bi bi-plus-circle"></i> Ajouter une catégorie
             </a>
         </div>
@@ -19,10 +19,43 @@
             <div class="alert alert-danger">{{ message }}</div>
         {% endfor %}
 
-        <div class="card shadow-sm border-0">
+        <div class="card card-horozia mb-4">
             <div class="card-body">
-                <table class="table table-bordered table-hover align-middle">
-                    <thead class="table-dark">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-6">
+                        <label for="searchInput" class="form-label">Recherche d'une catégorie</label>
+                        <input
+                            type="text"
+                            id="searchInput"
+                            class="form-control"
+                            placeholder="Rechercher par nom ou description"
+                        >
+                    </div>
+
+                    <div class="col-md-4">
+                        <label for="sortSelect" class="form-label">Filtrer par :</label>
+                        <select id="sortSelect" class="form-select">
+                            <option value="">Voulez-vous choisir ?</option>
+                            <option value="nom_asc">Nom A-Z</option>
+                            <option value="nom_desc">Nom Z-A</option>
+                            <option value="nbvoyages_asc">Nb voyages croissant</option>
+                            <option value="nbvoyages_desc">Nb voyages décroissant</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-2">
+                        <button type="button" id="resetBtn" class="btn btn-secondary w-100">
+                            Réinitialiser
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card card-horozia">
+            <div class="card-body">
+                <table id="categorieTable" class="table table-bordered table-hover align-middle">
+                    <thead class="table-horozia">
                         <tr>
                             <th>ID</th>
                             <th>Nom</th>
@@ -33,13 +66,17 @@
                     </thead>
                     <tbody>
                     {% for categorie in categories %}
-                        <tr>
+                        <tr
+                            data-nom="{{ categorie.nom ? categorie.nom|lower : '' }}"
+                            data-description="{{ categorie.description ? categorie.description|lower : '' }}"
+                            data-nbvoyages="{{ categorie.voyages|length }}"
+                        >
                             <td>{{ categorie.id }}</td>
                             <td>{{ categorie.nom }}</td>
                             <td>{{ categorie.description }}</td>
                             <td>{{ categorie.voyages|length }}</td>
                             <td>
-                                <a href="{{ path('app_categorie_edit', {'id': categorie.id}) }}" class="btn btn-warning btn-sm">
+                                <a href="{{ path('app_categorie_edit', {'id': categorie.id}) }}" class="btn btn-horozia-warning btn-sm">
                                     Modifier
                                 </a>
                                 <a href="{{ path('app_categorie_delete', {'id': categorie.id}) }}"
@@ -50,13 +87,99 @@
                             </td>
                         </tr>
                     {% else %}
-                        <tr>
+                        <tr id="noResultRow">
                             <td colspan="5" class="text-center">Aucune catégorie trouvée.</td>
                         </tr>
                     {% endfor %}
                     </tbody>
                 </table>
+
+                <div id="emptySearchMessage" class="alert alert-warning mt-3 d-none">
+                    Aucune catégorie ne correspond à votre recherche.
+                </div>
             </div>
         </div>
     </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const searchInput = document.getElementById('searchInput');
+            const sortSelect = document.getElementById('sortSelect');
+            const resetBtn = document.getElementById('resetBtn');
+            const table = document.getElementById('categorieTable');
+            const tbody = table.querySelector('tbody');
+            const emptySearchMessage = document.getElementById('emptySearchMessage');
+
+            function getDataRows() {
+                return Array.from(tbody.querySelectorAll('tr')).filter(row => row.dataset.nom !== undefined);
+            }
+
+            function applySearch() {
+                const value = searchInput.value.toLowerCase().trim();
+                const rows = getDataRows();
+                let visibleCount = 0;
+
+                rows.forEach(row => {
+                    const nom = row.dataset.nom || '';
+                    const description = row.dataset.description || '';
+
+                    const matches = nom.includes(value) || description.includes(value);
+
+                    if (matches) {
+                        row.style.display = '';
+                        visibleCount++;
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+
+                emptySearchMessage.classList.toggle('d-none', visibleCount > 0);
+            }
+
+            function applySort() {
+                const rows = getDataRows();
+                const sortValue = sortSelect.value;
+
+                rows.sort((a, b) => {
+                    if (sortValue === 'nom_asc') {
+                        return (a.dataset.nom || '').localeCompare(b.dataset.nom || '');
+                    }
+
+                    if (sortValue === 'nom_desc') {
+                        return (b.dataset.nom || '').localeCompare(a.dataset.nom || '');
+                    }
+
+                    if (sortValue === 'nbvoyages_asc') {
+                        return parseInt(a.dataset.nbvoyages || 0) - parseInt(b.dataset.nbvoyages || 0);
+                    }
+
+                    if (sortValue === 'nbvoyages_desc') {
+                        return parseInt(b.dataset.nbvoyages || 0) - parseInt(a.dataset.nbvoyages || 0);
+                    }
+
+                    return 0;
+                });
+
+                rows.forEach(row => tbody.appendChild(row));
+            }
+
+            function applyFilters() {
+                applySort();
+                applySearch();
+            }
+
+            searchInput.addEventListener('input', applyFilters);
+            sortSelect.addEventListener('change', applyFilters);
+
+            resetBtn.addEventListener('click', function () {
+                searchInput.value = '';
+                sortSelect.value = '';
+                applyFilters();
+            });
+        });
+    </script>
 {% endblock %}

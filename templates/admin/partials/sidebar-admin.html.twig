@@ -1,9 +1,7 @@
-<div class="bg-dark text-white p-3 vh-100" style="width: 250px;">
-    <h4 class="text-center mb-4">Dashboard</h4>
-
+<div class="sidebar-horozia text-white p-3 vh-100" style="width: 260px;">
     <ul class="nav flex-column">
         <li class="nav-item mb-2">
-            <a class="nav-link text-white" href="#">
+            <a class="nav-link text-white" href="{{ path('app_admin') }}">
                 <i class="bi bi-house-door-fill me-2"></i> Accueil Admin
             </a>
         </li>
@@ -28,7 +26,7 @@
 
         <li class="nav-item mb-2">
             <a class="nav-link text-white" href="{{ path('app_categorie_index') }}">
-                <i class="bi bi-tags-fill me-2"></i> Catégories
+                <i class="bi bi-tags-fill me-2"></i> Gestion Catégories
             </a>
         </li>
     </ul>

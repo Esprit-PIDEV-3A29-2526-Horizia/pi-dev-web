@@ -13,15 +13,47 @@ use Symfony\Component\HttpFoundation\Request;
 #[Route('/admin/voyage')]
 class VoyageController extends AbstractController
 {
-    #[Route('/', name: 'app_voyage_index')]
-    public function index(EntityManagerInterface $entityManager): Response
-    {
-        $voyages = $entityManager->getRepository(Voyage::class)->findAll();
+   #[Route('/', name: 'app_voyage_index')]
+public function index(Request $request, EntityManagerInterface $entityManager): Response
+{
+    $search = $request->query->get('search');
+    $sort = $request->query->get('sort');
 
-        return $this->render('admin/voyage/index.html.twig', [
-            'voyages' => $voyages,
-        ]);
+    $qb = $entityManager->getRepository(Voyage::class)->createQueryBuilder('v')
+        ->leftJoin('v.categorie', 'c')
+        ->addSelect('c');
+
+    if ($search) {
+        $qb->andWhere('v.titre LIKE :search OR v.destination LIKE :search')
+            ->setParameter('search', '%' . $search . '%');
     }
+
+    switch ($sort) {
+        case 'prix_asc':
+            $qb->orderBy('v.prix', 'ASC');
+            break;
+        case 'prix_desc':
+            $qb->orderBy('v.prix', 'DESC');
+            break;
+        case 'date_asc':
+            $qb->orderBy('v.dateDepart', 'ASC');
+            break;
+        case 'titre_asc':
+            $qb->orderBy('v.titre', 'ASC');
+            break;
+        default:
+            $qb->orderBy('v.id', 'DESC');
+            break;
+    }
+
+    $voyages = $qb->getQuery()->getResult();
+
+    return $this->render('admin/voyage/index.html.twig', [
+        'voyages' => $voyages,
+        'search' => $search,
+        'sort' => $sort,
+    ]);
+}
 
     #[Route('/new', name: 'app_voyage_new')]
     public function new(Request $request, EntityManagerInterface $entityManager): Response

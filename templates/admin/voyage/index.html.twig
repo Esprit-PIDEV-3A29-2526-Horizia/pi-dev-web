@@ -6,7 +6,7 @@
     <div class="container-fluid">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h1>Liste des voyages</h1>
-            <a href="{{ path('app_voyage_new') }}" class="btn btn-primary">
+            <a href="{{ path('app_voyage_new') }}" class="btn btn-horozia-secondary">
                 <i class="bi bi-plus-circle"></i> Ajouter un voyage
             </a>
         </div>
@@ -15,10 +15,47 @@
             <div class="alert alert-success">{{ message }}</div>
         {% endfor %}
 
+        {% for message in app.flashes('error') %}
+            <div class="alert alert-danger">{{ message }}</div>
+        {% endfor %}
+
+        <div class="card card-horozia">
+            <div class="card-body">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-6">
+                        <label for="searchInput" class="form-label">Recherche d'un voyage</label>
+                        <input
+                            type="text"
+                            id="searchInput"
+                            class="form-control"
+                            placeholder="Rechercher par titre ou destination"
+                        >
+                    </div>
+
+                    <div class="col-md-4">
+                        <label for="sortSelect" class="form-label">Filtrer par :</label>
+                        <select id="sortSelect" class="form-select">
+                            <option value="">Voulez-vous choisir ?</option>
+                            <option value="prix_asc">Prix croissant</option>
+                            <option value="prix_desc">Prix décroissant</option>
+                            <option value="date_asc">Date de départ</option>
+                            <option value="titre_asc">Titre A-Z</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-2">
+                        <button type="button" id="resetBtn" class="btn btn-secondary w-100">
+                            Réinitialiser
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div class="card shadow-sm border-0">
             <div class="card-body">
-                <table class="table table-bordered table-hover align-middle">
-                    <thead class="table-dark">
+                <table id="voyageTable" class="table table-bordered table-hover align-middle">
+                    <thead class="table-horozia">
                         <tr>
                             <th>ID</th>
                             <th>Titre</th>
@@ -33,7 +70,12 @@
                     </thead>
                     <tbody>
                     {% for voyage in voyages %}
-                        <tr>
+                        <tr
+                            data-titre="{{ voyage.titre ? voyage.titre|lower : '' }}"
+                            data-destination="{{ voyage.destination ? voyage.destination|lower : '' }}"
+                            data-prix="{{ voyage.prix }}"
+                            data-date="{{ voyage.dateDepart ? voyage.dateDepart|date('Y-m-d') : '' }}"
+                        >
                             <td>{{ voyage.id }}</td>
                             <td>{{ voyage.titre }}</td>
                             <td>{{ voyage.destination }}</td>
@@ -43,22 +85,112 @@
                             <td>{{ voyage.dateRetour ? voyage.dateRetour|date('Y-m-d') : '' }}</td>
                             <td>{{ voyage.placesRestantes }}/{{ voyage.placesTotal }}</td>
                             <td>
-                                <a href="{{ path('app_voyage_edit', {'id': voyage.id}) }}" class="btn btn-warning btn-sm">
-                                 Modifier
+                                <a href="{{ path('app_voyage_edit', {'id': voyage.id}) }}" class="btn btn-horozia-warning btn-sm">
+                                    Modifier
                                 </a>
-                                 <a href="{{ path('app_voyage_delete', {'id': voyage.id}) }}" class="btn btn-danger btn-sm"
-                                 onclick="return confirm('Voulez-vous vraiment supprimer ce voyage ?');"> Supprimer
+                                <a href="{{ path('app_voyage_delete', {'id': voyage.id}) }}"
+                                   class="btn btn-danger btn-sm"
+                                   onclick="return confirm('Voulez-vous vraiment supprimer ce voyage ?');">
+                                    Supprimer
                                 </a>
                             </td>
                         </tr>
                     {% else %}
-                        <tr>
-                            <td colspan="8" class="text-center">Aucun voyage trouvé.</td>
+                        <tr id="noResultRow">
+                            <td colspan="9" class="text-center">Aucun voyage trouvé.</td>
                         </tr>
                     {% endfor %}
                     </tbody>
                 </table>
+
+                <div id="emptySearchMessage" class="alert alert-warning mt-3 d-none">
+                    Aucun voyage ne correspond à votre recherche.
+                </div>
             </div>
         </div>
     </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const searchInput = document.getElementById('searchInput');
+            const sortSelect = document.getElementById('sortSelect');
+            const resetBtn = document.getElementById('resetBtn');
+            const table = document.getElementById('voyageTable');
+            const tbody = table.querySelector('tbody');
+            const emptySearchMessage = document.getElementById('emptySearchMessage');
+
+            function getDataRows() {
+                return Array.from(tbody.querySelectorAll('tr')).filter(row => row.dataset.titre !== undefined);
+            }
+
+            function applySearch() {
+                const value = searchInput.value.toLowerCase().trim();
+                const rows = getDataRows();
+                let visibleCount = 0;
+
+                rows.forEach(row => {
+                    const titre = row.dataset.titre || '';
+                    const destination = row.dataset.destination || '';
+
+                    const matches = titre.includes(value) || destination.includes(value);
+
+                    if (matches) {
+                        row.style.display = '';
+                        visibleCount++;
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+
+                if (emptySearchMessage) {
+                    emptySearchMessage.classList.toggle('d-none', visibleCount > 0);
+                }
+            }
+
+            function applySort() {
+                const rows = getDataRows();
+                const sortValue = sortSelect.value;
+
+                rows.sort((a, b) => {
+                    if (sortValue === 'prix_asc') {
+                        return parseFloat(a.dataset.prix || 0) - parseFloat(b.dataset.prix || 0);
+                    }
+
+                    if (sortValue === 'prix_desc') {
+                        return parseFloat(b.dataset.prix || 0) - parseFloat(a.dataset.prix || 0);
+                    }
+
+                    if (sortValue === 'date_asc') {
+                        return new Date(a.dataset.date || '1900-01-01') - new Date(b.dataset.date || '1900-01-01');
+                    }
+
+                    if (sortValue === 'titre_asc') {
+                        return (a.dataset.titre || '').localeCompare(b.dataset.titre || '');
+                    }
+
+                    return 0;
+                });
+
+                rows.forEach(row => tbody.appendChild(row));
+            }
+
+            function applyFilters() {
+                applySort();
+                applySearch();
+            }
+
+            searchInput.addEventListener('input', applyFilters);
+            sortSelect.addEventListener('change', applyFilters);
+
+            resetBtn.addEventListener('click', function () {
+                searchInput.value = '';
+                sortSelect.value = '';
+                applyFilters();
+            });
+        });
+    </script>
 {% endblock %}

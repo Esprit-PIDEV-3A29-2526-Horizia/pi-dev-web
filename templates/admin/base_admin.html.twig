@@ -2,6 +2,9 @@
 
 {% block title %}Admin - Horozia{% endblock %}
 
+{% block navbar %}{% endblock %}
+{% block footer %}{% endblock %}
+
 {% block body %}
     {% include 'admin/partials/navbar-admin.html.twig' %}
 
@@ -9,41 +12,7 @@
         {% include 'admin/partials/sidebar-admin.html.twig' %}
 
         <main class="flex-grow-1 p-4 bg-light" style="min-height: 100vh;">
-            {% block admin_content %}
-                <div class="container-fluid">
-                    <div class="row g-4">
-                        <div class="col-md-4">
-                            <div class="card shadow-sm border-0">
-                                <div class="card-body">
-                                    <h5 class="card-title">Voyages</h5>
-                                    <p class="card-text">Gérez les voyages du système.</p>
-                                    <a href="#" class="btn btn-primary btn-sm">Voir plus</a>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-md-4">
-                            <div class="card shadow-sm border-0">
-                                <div class="card-body">
-                                    <h5 class="card-title">Réservations</h5>
-                                    <p class="card-text">Consultez et administrez les réservations.</p>
-                                    <a href="#" class="btn btn-success btn-sm">Voir plus</a>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="col-md-4">
-                            <div class="card shadow-sm border-0">
-                                <div class="card-body">
-                                    <h5 class="card-title">Utilisateurs</h5>
-                                    <p class="card-text">Suivez les comptes utilisateurs.</p>
-                                    <a href="#" class="btn btn-dark btn-sm">Voir plus</a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            {% endblock %}
+            {% block admin_content %}{% endblock %}
         </main>
     </div>
 {% endblock %}
