@@ -1,0 +1,66 @@
+{% extends 'admin/base_admin.html.twig' %}
+
+{% block title %}Calendrier - Horozia{% endblock %}
+
+{% block admin_content %}
+    <div class="container-fluid">
+        <div class="dashboard-card">
+            <div class="calendar-header mb-4">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="calendar-header-icon">
+                        <i class="bi bi-calendar3"></i>
+                    </div>
+                    <div>
+                        <h2 class="calendar-page-title mb-1">Calendrier des voyages</h2>
+                        <p class="calendar-page-subtitle mb-0">
+                            Visualisation des voyages selon leurs dates de départ et de retour.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="calendar-holder"></div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css">
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const calendarEl = document.getElementById('calendar-holder');
+
+            if (calendarEl) {
+                const calendar = new FullCalendar.Calendar(calendarEl, {
+                    initialView: 'dayGridMonth',
+                    locale: 'fr',
+                    firstDay: 1,
+                    height: 'auto',
+                    fixedWeekCount: false,
+                    dayMaxEvents: 2,
+                    moreLinkText: 'plus',
+                    headerToolbar: {
+                        left: 'title',
+                        center: '',
+                        right: 'today prev,next'
+                    },
+                    buttonText: {
+                        today: "Aujourd'hui"
+                    },
+                    events: '/fc-load-events',
+                    eventDisplay: 'block',
+                    displayEventTime: false
+                });
+
+                calendar.render();
+            }
+        });
+    </script>
+{% endblock %}
