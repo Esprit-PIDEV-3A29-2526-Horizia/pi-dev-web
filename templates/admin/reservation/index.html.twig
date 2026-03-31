@@ -61,8 +61,8 @@
                             <th>ID</th>
                             <th>Date réservation</th>
                             <th>Statut</th>
-                            <th>ID Voyage</th>
-                            <th>ID User</th>
+                            <th>Voyage</th>
+                            <th>Client</th>
                             <th>Nombre personnes</th>
                             <th>Actions</th>
                         </tr>
@@ -72,15 +72,16 @@
                         <tr
                             data-statut="{{ reservation.statut ? reservation.statut|lower : '' }}"
                             data-idvoyage="{{ reservation.idVoyage }}"
+                            data-voyage="{{ reservation.idVoyage and voyageTitles[reservation.idVoyage] is defined ? voyageTitles[reservation.idVoyage]|lower : '' }}"
                             data-iduser="{{ reservation.idUser }}"
+                            data-client="{{ reservation.idUser and userNames[reservation.idUser] is defined ? userNames[reservation.idUser]|lower : '' }}"
                             data-nbr="{{ reservation.nbrPersonnes }}"
-                            data-date="{{ reservation.dateReservation ? reservation.dateReservation|date('Y-m-d H:i:s') : '' }}"
-                        >
+                            data-date="{{ reservation.dateReservation ? reservation.dateReservation|date('Y-m-d H:i:s') : '' }}">
                             <td>{{ reservation.id }}</td>
                             <td>{{ reservation.dateReservation ? reservation.dateReservation|date('Y-m-d H:i') : '' }}</td>
                             <td>{{ reservation.statut }}</td>
-                            <td>{{ reservation.idVoyage }}</td>
-                            <td>{{ reservation.idUser }}</td>
+                            <td>{{ reservation.idVoyage and voyageTitles[reservation.idVoyage] is defined ? voyageTitles[reservation.idVoyage] : 'Voyage inconnu' }}</td>
+                            <td>{{ reservation.idUser and userNames[reservation.idUser] is defined ? userNames[reservation.idUser] : 'Utilisateur inconnu' }}</td>
                             <td>{{ reservation.nbrPersonnes }}</td>
                             <td>
                                  <a href="{{ path('app_reservation_edit', {'id': reservation.id}) }}" class="btn btn-horozia-warning btn-sm">

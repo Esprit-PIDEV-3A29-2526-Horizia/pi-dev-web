@@ -15,15 +15,29 @@ use Symfony\Component\Routing\Annotation\Route;
 #[Route('/admin/reservation')]
 class ReservationController extends AbstractController
 {
-    #[Route('/', name: 'app_reservation_index')]
-    public function index(EntityManagerInterface $entityManager): Response
-    {
-        $reservations = $entityManager->getRepository(Reservation::class)->findAll();
+   #[Route('/', name: 'app_reservation_index')]
+public function index(EntityManagerInterface $entityManager): Response
+{
+    $reservations = $entityManager->getRepository(Reservation::class)->findAll();
+    $users = $entityManager->getRepository(\App\Entity\User::class)->findAll();
+    $voyages = $entityManager->getRepository(\App\Entity\Voyage::class)->findAll();
 
-        return $this->render('admin/reservation/index.html.twig', [
-            'reservations' => $reservations,
-        ]);
+    $userNames = [];
+    foreach ($users as $user) {
+        $userNames[$user->getId()] = $user->getNom() . ' ' . $user->getPrenom();
     }
+
+    $voyageTitles = [];
+    foreach ($voyages as $voyage) {
+        $voyageTitles[$voyage->getId()] = $voyage->getTitre();
+    }
+
+    return $this->render('admin/reservation/index.html.twig', [
+        'reservations' => $reservations,
+        'userNames' => $userNames,
+        'voyageTitles' => $voyageTitles,
+    ]);
+}
 
     #[Route('/new', name: 'app_reservation_new')]
     public function new(Request $request, EntityManagerInterface $entityManager): Response
