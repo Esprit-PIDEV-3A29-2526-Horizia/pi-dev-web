@@ -1,0 +1,41 @@
+{% extends 'admin/base_admin.html.twig' %}
+
+{% block title %}Dashboard Admin - Horozia{% endblock %}
+
+{% block admin_content %}
+    <div class="container-fluid">
+        <h1 class="mb-4">Dashboard Admin</h1>
+
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card shadow-sm border-0">
+                    <div class="card-body">
+                        <h5 class="card-title">Voyages</h5>
+                        <p class="card-text">Gérer les voyages disponibles.</p>
+                        <a href="#" class="btn btn-primary">Gérer</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card shadow-sm border-0">
+                    <div class="card-body">
+                        <h5 class="card-title">Réservations</h5>
+                        <p class="card-text">Gérer les réservations des utilisateurs.</p>
+                        <a href="#" class="btn btn-success">Gérer</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card shadow-sm border-0">
+                    <div class="card-body">
+                        <h5 class="card-title">Utilisateurs</h5>
+                        <p class="card-text">Gérer les comptes utilisateurs.</p>
+                        <a href="#" class="btn btn-dark">Gérer</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

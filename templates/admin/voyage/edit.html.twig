@@ -1,0 +1,86 @@
+{% extends 'admin/base_admin.html.twig' %}
+
+{% block title %}Modifier un voyage{% endblock %}
+
+{% block admin_content %}
+    <div class="container-fluid">
+        <h1 class="mb-4">Modifier le voyage</h1>
+
+        <div class="card shadow-sm border-0">
+            <div class="card-body">
+                {{ form_start(form, {'attr': {'novalidate': 'novalidate'}}) }}
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form_label(form.titre) }}
+                            {{ form_widget(form.titre, {'attr': {'class': 'form-control'}}) }}
+                            {{ form_errors(form.titre) }}
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            {{ form_label(form.destination) }}
+                            {{ form_widget(form.destination, {'attr': {'class': 'form-control'}}) }}
+                            {{ form_errors(form.destination) }}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form_label(form.description) }}
+                        {{ form_widget(form.description, {'attr': {'class': 'form-control'}}) }}
+                        {{ form_errors(form.description) }}
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            {{ form_label(form.prix) }}
+                            {{ form_widget(form.prix, {'attr': {'class': 'form-control'}}) }}
+                            {{ form_errors(form.prix) }}
+                        </div>
+
+                        <div class="col-md-4 mb-3">
+                            {{ form_label(form.dateDepart) }}
+                            {{ form_widget(form.dateDepart, {'attr': {'class': 'form-control'}}) }}
+                            {{ form_errors(form.dateDepart) }}
+                        </div>
+
+                        <div class="col-md-4 mb-3">
+                            {{ form_label(form.dateRetour) }}
+                            {{ form_widget(form.dateRetour, {'attr': {'class': 'form-control'}}) }}
+                            {{ form_errors(form.dateRetour) }}
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            {{ form_label(form.imageUrl) }}
+                            {{ form_widget(form.imageUrl, {'attr': {'class': 'form-control'}}) }}
+                            {{ form_errors(form.imageUrl) }}
+                        </div>
+
+                        <div class="col-md-4 mb-3">
+                            {{ form_label(form.idCategorie) }}
+                            {{ form_widget(form.idCategorie, {'attr': {'class': 'form-control'}}) }}
+                            {{ form_errors(form.idCategorie) }}
+                        </div>
+
+                        <div class="col-md-2 mb-3">
+                            {{ form_label(form.placesTotal) }}
+                            {{ form_widget(form.placesTotal, {'attr': {'class': 'form-control'}}) }}
+                            {{ form_errors(form.placesTotal) }}
+                        </div>
+
+                        <div class="col-md-2 mb-3">
+                            {{ form_label(form.placesRestantes) }}
+                            {{ form_widget(form.placesRestantes, {'attr': {'class': 'form-control'}}) }}
+                            {{ form_errors(form.placesRestantes) }}
+                        </div>
+                    </div>
+
+                    <button class="btn btn-warning">Mettre à jour</button>
+                    <a href="{{ path('app_voyage_index') }}" class="btn btn-secondary">Retour</a>
+
+                {{ form_end(form) }}
+            </div>
+        </div>
+    </div>
+{% endblock %}
