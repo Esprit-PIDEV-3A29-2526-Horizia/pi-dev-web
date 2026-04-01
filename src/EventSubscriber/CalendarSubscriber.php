@@ -5,9 +5,9 @@ namespace App\EventSubscriber;
 use App\Entity\Voyage;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-use CalendarBundle\Event\CalendarEvent;
 use CalendarBundle\CalendarEvents;
 use CalendarBundle\Entity\Event;
+use CalendarBundle\Event\CalendarEvent;
 
 class CalendarSubscriber implements EventSubscriberInterface
 {
@@ -33,29 +33,32 @@ class CalendarSubscriber implements EventSubscriberInterface
             ->andWhere('v.dateRetour >= :start')
             ->setParameter('start', $start)
             ->setParameter('end', $end)
+            ->orderBy('v.dateDepart', 'ASC')
             ->getQuery()
             ->getResult();
 
         foreach ($voyages as $voyage) {
+            $title = ($voyage->getTitre() ?: 'Voyage') . ' - ' . ($voyage->getDestination() ?: '');
+
             $event = new Event(
-                $voyage->getTitre() ?: 'Voyage',
+                $title,
                 $voyage->getDateDepart(),
                 $voyage->getDateRetour()
             );
 
             $event->setOptions([
-                'backgroundColor' => '#3D94CA',
-                'borderColor' => '#23779C',
+                'backgroundColor' => '#dc3545',
+                'borderColor' => '#b02a37',
                 'textColor' => '#ffffff',
             ]);
 
-            $event = new Event(
-                ($voyage->getTitre() ?: 'Voyage') . ' - ' . $voyage->getDestination(),
-                $voyage->getDateDepart(),
-                $voyage->getDateRetour()
-            );
-
-            $event->addOption('url', '/admin/voyage/edit/' . $voyage->getId());
+            $event->addOption('extendedProps', [
+                'titre' => $voyage->getTitre(),
+                'destination' => $voyage->getDestination(),
+                'prix' => $voyage->getPrix(),
+                'dateDepart' => $voyage->getDateDepart() ? $voyage->getDateDepart()->format('Y-m-d') : '',
+                'dateRetour' => $voyage->getDateRetour() ? $voyage->getDateRetour()->format('Y-m-d') : '',
+            ]);
 
             $calendar->addEvent($event);
         }

@@ -3,128 +3,147 @@
 {% block title %}Liste des voyages{% endblock %}
 
 {% block admin_content %}
-    <div class="container-fluid">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1>Liste des voyages</h1>
-            <a href="{{ path('app_voyage_new') }}" class="btn btn-horozia-secondary">
-                <i class="bi bi-plus-circle"></i> Ajouter un voyage
-            </a>
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-1">Liste des voyages</h2>
+            <p class="text-muted mb-0">Consultez et gérez les voyages disponibles.</p>
         </div>
 
-       {% for message in app.flashes('success') %}
-            <div class="alert alert-success alert-horozia alert-dismissible fade show d-flex align-items-center gap-2" role="alert">
-                <i class="bi bi-check-circle-fill"></i>
-                <span>{{ message }}</span>
-                <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
-             </div>
-        {% endfor %}
+        <a href="{{ path('app_voyage_new') }}" class="btn btn-horozia-secondary">
+            <i class="bi bi-plus-circle me-1"></i> Ajouter un voyage
+        </a>
+    </div>
 
-        {% for message in app.flashes('error') %}
-            <div class="alert alert-danger alert-horozia alert-dismissible fade show d-flex align-items-center gap-2" role="alert">
-                <i class="bi bi-exclamation-triangle-fill"></i>
-                <span>{{ message }}</span>
-                <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
+    <div class="dashboard-card mb-4">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-6">
+                <label class="form-label fw-semibold">Recherche</label>
+                <input
+                    type="text"
+                    id="voyageSearch"
+                    class="form-control"
+                    placeholder="Rechercher par titre ou destination"
+                >
             </div>
-        {% endfor %}
 
-        {% for message in app.flashes('warning') %}
-            <div class="alert alert-warning alert-horozia alert-dismissible fade show d-flex align-items-center gap-2" role="alert">
-                <i class="bi bi-exclamation-circle-fill"></i>
-                <span>{{ message }}</span>
-                <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
+            <div class="col-md-4">
+                <label class="form-label fw-semibold">Filtrer par</label>
+                <select id="voyageFilter" class="form-select">
+                    <option value="">Voulez-vous choisir ?</option>
+                    <option value="disponible">Disponible</option>
+                    <option value="bientot">Bientôt complet</option>
+                    <option value="complet">Complet</option>
+                </select>
             </div>
-        {% endfor %}
 
-        <div class="card card-horozia">
-            <div class="card-body">
-                <div class="row g-3 align-items-end">
-                    <div class="col-md-6">
-                        <label for="searchInput" class="form-label">Recherche d'un voyage</label>
-                        <input
-                            type="text"
-                            id="searchInput"
-                            class="form-control"
-                            placeholder="Rechercher par titre ou destination"
-                        >
-                    </div>
-
-                    <div class="col-md-4">
-                        <label for="sortSelect" class="form-label">Filtrer par :</label>
-                        <select id="sortSelect" class="form-select">
-                            <option value="">Voulez-vous choisir ?</option>
-                            <option value="prix_asc">Prix croissant</option>
-                            <option value="prix_desc">Prix décroissant</option>
-                            <option value="date_asc">Date de départ</option>
-                            <option value="titre_asc">Titre A-Z</option>
-                        </select>
-                    </div>
-
-                    <div class="col-md-2">
-                        <button type="button" id="resetBtn" class="btn btn-secondary w-100">
-                            Réinitialiser
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="card shadow-sm border-0">
-            <div class="card-body">
-                <table id="voyageTable" class="table table-bordered table-hover align-middle">
-                    <thead class="table-horozia">
-                        <tr>
-                            <th>ID</th>
-                            <th>Titre</th>
-                            <th>Destination</th>
-                            <th>Catégorie</th>
-                            <th>Prix</th>
-                            <th>Date départ</th>
-                            <th>Date retour</th>
-                            <th>Places disponible </th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    {% for voyage in voyages %}
-                        <tr
-                            data-titre="{{ voyage.titre ? voyage.titre|lower : '' }}"
-                            data-destination="{{ voyage.destination ? voyage.destination|lower : '' }}"
-                            data-prix="{{ voyage.prix }}"
-                            data-date="{{ voyage.dateDepart ? voyage.dateDepart|date('Y-m-d') : '' }}"
-                        >
-                            <td>{{ voyage.id }}</td>
-                            <td>{{ voyage.titre }}</td>
-                            <td>{{ voyage.destination }}</td>
-                            <td>{{ voyage.categorie ? voyage.categorie.nom : '' }}</td>
-                            <td>{{ voyage.prix }}</td>
-                            <td>{{ voyage.dateDepart ? voyage.dateDepart|date('Y-m-d') : '' }}</td>
-                            <td>{{ voyage.dateRetour ? voyage.dateRetour|date('Y-m-d') : '' }}</td>
-                            <td>{{ voyage.placesRestantes }}/{{ voyage.placesTotal }}</td>
-                            <td>
-                                <a href="{{ path('app_voyage_edit', {'id': voyage.id}) }}" class="btn btn-horozia-warning btn-sm">
-                                    Modifier
-                                </a>
-                                <a href="{{ path('app_voyage_delete', {'id': voyage.id}) }}"
-                                   class="btn btn-danger btn-sm"
-                                   onclick="return confirm('Voulez-vous vraiment supprimer ce voyage ?');">
-                                    Supprimer
-                                </a>
-                            </td>
-                        </tr>
-                    {% else %}
-                        <tr id="noResultRow">
-                            <td colspan="9" class="text-center">Aucun voyage trouvé.</td>
-                        </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
-
-                <div id="emptySearchMessage" class="alert alert-warning mt-3 d-none">
-                    Aucun voyage ne correspond à votre recherche.
-                </div>
+            <div class="col-md-2">
+                <button type="button" id="resetVoyageFilter" class="btn btn-horozia-neutral w-100">
+                    Réinitialiser
+                </button>
             </div>
         </div>
     </div>
+
+    <div class="row g-4" id="voyagesCardsContainer">
+        {% for voyage in voyages %}
+            {% set statut = 'disponible' %}
+            {% if voyage.placesRestantes == 0 %}
+                {% set statut = 'complet' %}
+            {% elseif voyage.placesRestantes <= 10 %}
+                {% set statut = 'bientot' %}
+            {% endif %}
+
+            <div
+                class="col-md-6 col-xl-4 voyage-card-item"
+                data-search="{{ (voyage.titre ~ ' ' ~ voyage.destination)|lower }}"
+                data-status="{{ statut }}"
+            >
+                <div class="voyage-card h-100">
+                    <div class="voyage-card-image-wrapper">
+                        {% if voyage.imageUrl %}
+                            <img
+                                src="{% if voyage.imageUrl starts with 'http://' or voyage.imageUrl starts with 'https://' %}
+                                        {{ voyage.imageUrl }}
+                                     {% else %}
+                                        {{ asset(voyage.imageUrl starts with '/' ? voyage.imageUrl|slice(1) : voyage.imageUrl) }}
+                                     {% endif %}"
+                                alt="{{ voyage.titre }}"
+                                class="voyage-card-image"
+                            >
+                        {% else %}
+                            <div class="voyage-card-no-image">Pas d'image</div>
+                        {% endif %}
+
+                        <div class="voyage-card-badge-wrapper">
+                            {% if statut == 'complet' %}
+                                <span class="badge voyage-badge-complet">Complet</span>
+                            {% elseif statut == 'bientot' %}
+                                <span class="badge voyage-badge-bientot">Bientôt complet</span>
+                            {% else %}
+                                <span class="badge voyage-badge-disponible">Disponible</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="p-3">
+                        <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                            <h5 class="mb-0 fw-bold">{{ voyage.titre }}</h5>
+                            <span class="voyage-price">{{ voyage.prix }} DT</span>
+                        </div>
+
+                        <div class="text-muted mb-3">
+                            <i class="bi bi-geo-alt me-1"></i>{{ voyage.destination }}
+                        </div>
+
+                        <div class="small mb-3">
+                            <div class="mb-2">
+                                <strong>Catégorie :</strong>
+                                {{ voyage.categorie ? voyage.categorie.nom : 'Non définie' }}
+                            </div>
+                            <div class="mb-2">
+                                <strong>Départ :</strong>
+                                {{ voyage.dateDepart ? voyage.dateDepart|date('d/m/Y') : '' }}
+                            </div>
+                            <div class="mb-2">
+                                <strong>Retour :</strong>
+                                {{ voyage.dateRetour ? voyage.dateRetour|date('d/m/Y') : '' }}
+                            </div>
+                            <div>
+                                <strong>Places :</strong>
+                                {{ voyage.placesRestantes }}/{{ voyage.placesTotal }}
+                            </div>
+                        </div>
+
+                        <div class="d-flex gap-2">
+                            <a href="{{ path('app_voyage_edit', {'id': voyage.id}) }}" class="btn btn-horozia-warning btn-sm flex-fill">
+                                Modifier
+                            </a>
+
+                            <a
+                                href="{{ path('app_voyage_delete', {'id': voyage.id}) }}"
+                                class="btn btn-danger btn-sm flex-fill"
+                                onclick="return confirm('Voulez-vous vraiment supprimer ce voyage ?');"
+                            >
+                                Supprimer
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <div class="col-12">
+                <div class="dashboard-card text-center text-muted py-5">
+                    Aucun voyage trouvé.
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <div id="voyageNoResult" class="dashboard-card text-center text-muted py-5 mt-4 d-none">
+        Aucun voyage ne correspond à votre recherche.
+    </div>
+</div>
 {% endblock %}
 
 {% block javascripts %}
@@ -132,81 +151,54 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            const searchInput = document.getElementById('searchInput');
-            const sortSelect = document.getElementById('sortSelect');
-            const resetBtn = document.getElementById('resetBtn');
-            const table = document.getElementById('voyageTable');
-            const tbody = table.querySelector('tbody');
-            const emptySearchMessage = document.getElementById('emptySearchMessage');
+            const searchInput = document.getElementById('voyageSearch');
+            const filterSelect = document.getElementById('voyageFilter');
+            const resetBtn = document.getElementById('resetVoyageFilter');
+            const cards = document.querySelectorAll('.voyage-card-item');
+            const noResult = document.getElementById('voyageNoResult');
 
-            function getDataRows() {
-                return Array.from(tbody.querySelectorAll('tr')).filter(row => row.dataset.titre !== undefined);
-            }
-
-            function applySearch() {
-                const value = searchInput.value.toLowerCase().trim();
-                const rows = getDataRows();
+            function applyFilters() {
+                const searchValue = searchInput.value.trim().toLowerCase();
+                const filterValue = filterSelect.value;
                 let visibleCount = 0;
 
-                rows.forEach(row => {
-                    const titre = row.dataset.titre || '';
-                    const destination = row.dataset.destination || '';
+                cards.forEach(card => {
+                    const searchData = card.dataset.search || '';
+                    const statusData = card.dataset.status || '';
 
-                    const matches = titre.includes(value) || destination.includes(value);
+                    const matchesSearch = searchData.includes(searchValue);
+                    const matchesFilter = filterValue === '' || statusData === filterValue;
 
-                    if (matches) {
-                        row.style.display = '';
+                    if (matchesSearch && matchesFilter) {
+                        card.classList.remove('d-none');
                         visibleCount++;
                     } else {
-                        row.style.display = 'none';
+                        card.classList.add('d-none');
                     }
                 });
 
-                if (emptySearchMessage) {
-                    emptySearchMessage.classList.toggle('d-none', visibleCount > 0);
+                if (visibleCount === 0) {
+                    noResult.classList.remove('d-none');
+                } else {
+                    noResult.classList.add('d-none');
                 }
             }
 
-            function applySort() {
-                const rows = getDataRows();
-                const sortValue = sortSelect.value;
+            if (searchInput) {
+                searchInput.addEventListener('input', applyFilters);
+            }
 
-                rows.sort((a, b) => {
-                    if (sortValue === 'prix_asc') {
-                        return parseFloat(a.dataset.prix || 0) - parseFloat(b.dataset.prix || 0);
-                    }
+            if (filterSelect) {
+                filterSelect.addEventListener('change', applyFilters);
+            }
 
-                    if (sortValue === 'prix_desc') {
-                        return parseFloat(b.dataset.prix || 0) - parseFloat(a.dataset.prix || 0);
-                    }
-
-                    if (sortValue === 'date_asc') {
-                        return new Date(a.dataset.date || '1900-01-01') - new Date(b.dataset.date || '1900-01-01');
-                    }
-
-                    if (sortValue === 'titre_asc') {
-                        return (a.dataset.titre || '').localeCompare(b.dataset.titre || '');
-                    }
-
-                    return 0;
+            if (resetBtn) {
+                resetBtn.addEventListener('click', function () {
+                    searchInput.value = '';
+                    filterSelect.value = '';
+                    applyFilters();
                 });
-
-                rows.forEach(row => tbody.appendChild(row));
             }
-
-            function applyFilters() {
-                applySort();
-                applySearch();
-            }
-
-            searchInput.addEventListener('input', applyFilters);
-            sortSelect.addEventListener('change', applyFilters);
-
-            resetBtn.addEventListener('click', function () {
-                searchInput.value = '';
-                sortSelect.value = '';
-                applyFilters();
-            });
         });
     </script>
 {% endblock %}

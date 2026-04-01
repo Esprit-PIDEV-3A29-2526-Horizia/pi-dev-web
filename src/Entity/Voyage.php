@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Entity;
+
 use App\Entity\Categorie;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -15,7 +16,7 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
 class Voyage
 {
     /**
-     * @var int
+     * @var int|null
      *
      * @ORM\Column(name="id", type="integer", nullable=false)
      * @ORM\Id
@@ -33,7 +34,7 @@ class Voyage
     private $titre;
 
     /**
-     * @var string
+     * @var string|null
      *
      * @ORM\Column(name="destination", type="string", length=255, nullable=false)
      * @Assert\NotBlank(message="La destination est obligatoire.")
@@ -50,7 +51,7 @@ class Voyage
     private $description;
 
     /**
-     * @var float
+     * @var float|null
      *
      * @ORM\Column(name="prix", type="float", precision=10, scale=0, nullable=false)
      * @Assert\NotBlank(message="Le prix est obligatoire.")
@@ -59,7 +60,7 @@ class Voyage
     private $prix;
 
     /**
-     * @var \DateTimeInterface
+     * @var \DateTimeInterface|null
      *
      * @ORM\Column(name="date_depart", type="date", nullable=false)
      * @Assert\NotBlank(message="La date de départ est obligatoire.")
@@ -67,7 +68,7 @@ class Voyage
     private $dateDepart;
 
     /**
-     * @var \DateTimeInterface
+     * @var \DateTimeInterface|null
      *
      * @ORM\Column(name="date_retour", type="date", nullable=false)
      * @Assert\NotBlank(message="La date de retour est obligatoire.")
@@ -82,16 +83,16 @@ class Voyage
     private $imageUrl;
 
     /**
-    * @var Categorie|null
-    *
-    * @ORM\ManyToOne(targetEntity="App\Entity\Categorie", inversedBy="voyages")
-    * @ORM\JoinColumn(name="id_categorie", referencedColumnName="id", nullable=true)
-    * @Assert\NotNull(message="La catégorie est obligatoire.")
-    */
+     * @var Categorie|null
+     *
+     * @ORM\ManyToOne(targetEntity="App\Entity\Categorie", inversedBy="voyages")
+     * @ORM\JoinColumn(name="id_categorie", referencedColumnName="id", nullable=true)
+     * @Assert\NotNull(message="La catégorie est obligatoire.")
+     */
     private $categorie;
 
     /**
-     * @var int
+     * @var int|null
      *
      * @ORM\Column(name="places_total", type="integer", nullable=false)
      * @Assert\NotBlank(message="Le nombre total de places est obligatoire.")
@@ -100,7 +101,7 @@ class Voyage
     private $placesTotal;
 
     /**
-     * @var int
+     * @var int|null
      *
      * @ORM\Column(name="places_restantes", type="integer", nullable=false)
      * @Assert\NotBlank(message="Le nombre de places restantes est obligatoire.")
@@ -129,7 +130,7 @@ class Voyage
         return $this->destination;
     }
 
-    public function setDestination(string $destination): self
+    public function setDestination(?string $destination): self
     {
         $this->destination = $destination;
         return $this;
@@ -151,7 +152,7 @@ class Voyage
         return $this->prix;
     }
 
-    public function setPrix(float $prix): self
+    public function setPrix(?float $prix): self
     {
         $this->prix = $prix;
         return $this;
@@ -162,7 +163,7 @@ class Voyage
         return $this->dateDepart;
     }
 
-    public function setDateDepart(\DateTimeInterface $dateDepart): self
+    public function setDateDepart(?\DateTimeInterface $dateDepart): self
     {
         $this->dateDepart = $dateDepart;
         return $this;
@@ -173,7 +174,7 @@ class Voyage
         return $this->dateRetour;
     }
 
-    public function setDateRetour(\DateTimeInterface $dateRetour): self
+    public function setDateRetour(?\DateTimeInterface $dateRetour): self
     {
         $this->dateRetour = $dateRetour;
         return $this;
@@ -189,6 +190,7 @@ class Voyage
         $this->imageUrl = $imageUrl;
         return $this;
     }
+
     public function getCategorie(): ?Categorie
     {
         return $this->categorie;
@@ -205,7 +207,7 @@ class Voyage
         return $this->placesTotal;
     }
 
-    public function setPlacesTotal(int $placesTotal): self
+    public function setPlacesTotal(?int $placesTotal): self
     {
         $this->placesTotal = $placesTotal;
         return $this;
@@ -216,25 +218,27 @@ class Voyage
         return $this->placesRestantes;
     }
 
-    public function setPlacesRestantes(int $placesRestantes): self
+    public function setPlacesRestantes(?int $placesRestantes): self
     {
         $this->placesRestantes = $placesRestantes;
         return $this;
     }
 
-    #[Assert\Callback]
-    public function validateDatesAndPlaces(\Symfony\Component\Validator\Context\ExecutionContextInterface $context): void
+    /**
+     * @Assert\Callback
+     */
+    public function validateDatesAndPlaces(ExecutionContextInterface $context): void
     {
         if ($this->dateDepart && $this->dateRetour && $this->dateRetour < $this->dateDepart) {
             $context->buildViolation('La date de retour doit être postérieure à la date de départ.')
-            ->atPath('dateRetour')
-            ->addViolation();
+                ->atPath('dateRetour')
+                ->addViolation();
         }
 
         if ($this->placesRestantes !== null && $this->placesTotal !== null && $this->placesRestantes > $this->placesTotal) {
             $context->buildViolation('Les places restantes ne peuvent pas dépasser les places totales.')
-            ->atPath('placesRestantes')
-            ->addViolation();
+                ->atPath('placesRestantes')
+                ->addViolation();
         }
     }
 }
