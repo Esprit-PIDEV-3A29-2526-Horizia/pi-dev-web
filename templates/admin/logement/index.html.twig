@@ -1,0 +1,176 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}Gestion des logements - Horozia{% endblock %}
+
+{% block admin_content %}
+<div class="container-fluid px-4">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+        <h1 class="h2 mb-0">
+            <i class="bi bi-building me-2"></i>Gestion des logements
+            <span class="badge bg-secondary ms-2">{{ totalLogements|default(0) }}</span>
+        </h1>
+        <a href="{{ path('admin_logement_new') }}" class="btn btn-horozia-primary rounded-pill">
+            <i class="bi bi-plus-circle me-2"></i>Ajouter un logement
+        </a>
+    </div>
+
+    <!-- Barre de recherche, filtres et tri -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3 align-items-end">
+                <div class="col-md-5">
+                    <label class="form-label text-muted">Recherche</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                        <input type="text" name="search" class="form-control" value="{{ search|default('') }}" placeholder="Nom ou adresse...">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label text-muted">Disponibilité</label>
+                    <select name="disponibilite" class="form-select">
+                        <option value="all" {{ disponibilite == 'all' ? 'selected' }}>Tous</option>
+                        <option value="available" {{ disponibilite == 'available' ? 'selected' }}>Disponibles</option>
+                        <option value="unavailable" {{ disponibilite == 'unavailable' ? 'selected' }}>Indisponibles</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label text-muted">Trier par</label>
+                    <select name="sort" class="form-select">
+                        <option value="" {{ sort == '' ? 'selected' }}>Date (récent)</option>
+                        <option value="price_asc" {{ sort == 'price_asc' ? 'selected' }}>Prix croissant</option>
+                        <option value="price_desc" {{ sort == 'price_desc' ? 'selected' }}>Prix décroissant</option>
+                        <option value="dispo_asc" {{ sort == 'dispo_asc' ? 'selected' }}>Disponibles d'abord</option>
+                        <option value="dispo_desc" {{ sort == 'dispo_desc' ? 'selected' }}>Indisponibles d'abord</option>
+                    </select>
+                </div>
+                <div class="col-md-1">
+                    <button type="submit" class="btn btn-primary w-100 rounded-pill">Filtrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Grille des logements -->
+    <div class="row g-4">
+        {% for logement in logements %}
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 border-0 shadow-sm hover-lift rounded-4 overflow-hidden {{ not logement.disponibilite ? 'grayscale' : '' }}">
+                    <div class="position-relative">
+                        <img src="{{ logement.image ? logement.image : 'https://placehold.co/400x200?text=Image+indisponible' }}" 
+                             class="card-img-top" 
+                             alt="{{ logement.nom }}"
+                             style="height: 200px; object-fit: cover;"
+                             onerror="this.src='https://placehold.co/400x200?text=Image+indisponible'">
+                        <span class="badge {{ logement.disponibilite ? 'bg-success' : 'bg-secondary' }} position-absolute top-0 end-0 m-3 px-3 py-2 rounded-pill">
+                            {{ logement.disponibilite ? 'Disponible' : 'Indisponible' }}
+                        </span>
+                    </div>
+                    <div class="card-body p-4">
+                        <h5 class="card-title fw-bold mb-1">{{ logement.nom }}</h5>
+                        <p class="text-muted mb-2">{{ logement.type }}</p>
+                        <p class="text-muted small mb-3">
+                            <i class="bi bi-geo-alt"></i> {{ logement.adresse|slice(0,50) }}{% if logement.adresse|length > 50 %}...{% endif %}
+                        </p>
+                        <div class="d-flex justify-content-between align-items-center mt-3">
+                            <div>
+                                <span class="fw-bold text-horozia-primary fs-5">{{ logement.tarifNuit|number_format(0, ',', ' ') }} DT</span>
+                                <span class="text-muted small">/nuit</span>
+                            </div>
+                            <span class="badge bg-light text-dark rounded-pill">
+                                <i class="bi bi-people"></i> {{ logement.capacite }} pers.
+                            </span>
+                        </div>
+                        {% if logement.equipement %}
+                            <div class="mt-3">
+                                {% set equipements = logement.equipement|split(',') %}
+                                {% for equip in equipements|slice(0,2) %}
+                                    <span class="badge bg-light text-dark rounded-pill me-1">{{ equip|trim }}</span>
+                                {% endfor %}
+                                {% if equipements|length > 2 %}
+                                    <span class="badge bg-light text-dark rounded-pill">+{{ equipements|length - 2 }}</span>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="card-footer bg-transparent border-0 pt-0 pb-4">
+                        <div class="d-flex gap-2">
+                            {% if logement.disponibilite %}
+                                <a href="{{ path('admin_logement_show', {'id': logement.id}) }}" class="btn btn-outline-secondary btn-sm rounded-pill flex-grow-1">
+                                    <i class="bi bi-eye"></i> Voir
+                                </a>
+                            {% endif %}
+                            <a href="{{ path('admin_logement_edit', {'id': logement.id}) }}" class="btn btn-outline-primary btn-sm rounded-pill flex-grow-1">
+                                <i class="bi bi-pencil"></i> Modifier
+                            </a>
+                            {{ include('admin/logement/_delete_form.html.twig', {'logement': logement}, with_context = false) }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <div class="col-12">
+                <div class="alert alert-info text-center">
+                    <i class="bi bi-info-circle me-2"></i> Aucun logement ne correspond à votre recherche.
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if total is defined and total > 0 and total > logements|length %}
+        <nav class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if currentPage > 1 %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ path('admin_logement_index', {page: currentPage-1, search: search, disponibilite: disponibilite, sort: sort}) }}">
+                            Précédent
+                        </a>
+                    </li>
+                {% endif %}
+                {% set totalPages = ((total - 1) // 9) + 1 %}
+                {% for i in 1..totalPages %}
+                    <li class="page-item {{ i == currentPage ? 'active' : '' }}">
+                        <a class="page-link" href="{{ path('admin_logement_index', {page: i, search: search, disponibilite: disponibilite, sort: sort}) }}">
+                            {{ i }}
+                        </a>
+                    </li>
+                {% endfor %}
+                {% if currentPage < totalPages %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ path('admin_logement_index', {page: currentPage+1, search: search, disponibilite: disponibilite, sort: sort}) }}">
+                            Suivant
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .hover-lift {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .hover-lift:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 1rem 2rem rgba(0,0,0,.15) !important;
+        }
+        .grayscale {
+            filter: grayscale(0.6);
+            opacity: 0.85;
+            background-color: #f8f9fa;
+        }
+        /* On ne désactive plus les clics sur les boutons des cartes grisées */
+        .btn-danger {
+            background-color: #dc3545;
+            border-color: #dc3545;
+            color: white;
+        }
+        .btn-danger:hover {
+            background-color: #bb2d3b;
+        }
+    </style>
+{% endblock %}
