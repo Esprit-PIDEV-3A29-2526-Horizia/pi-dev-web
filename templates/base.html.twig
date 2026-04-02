@@ -766,53 +766,161 @@
             }
 
             .voyage-places-section {
-    background: #f8fafc;
-    border-radius: 14px;
-    padding: 14px 16px;
-    border: 1px solid #eef2f7;
-}
+                background: #f8fafc;
+                border-radius: 14px;
+                padding: 14px 16px;
+                border: 1px solid #eef2f7;
+            }
 
-.voyage-places-label {
-    font-size: 0.92rem;
-    font-weight: 700;
-    color: #334155;
-}
+            .voyage-places-label {
+                font-size: 0.92rem;
+                font-weight: 700;
+                color: #334155;
+            }
 
-.voyage-places-value {
-    font-size: 0.92rem;
-    font-weight: 800;
-    color: #23779C;
-}
+            .voyage-places-value {
+                font-size: 0.92rem;
+                font-weight: 800;
+                color: #23779C;
+            }
 
-.voyage-progress {
-    width: 100%;
-    height: 10px;
-    background: #e9eef5;
-    border-radius: 999px;
-    overflow: hidden;
-}
+            .voyage-progress {
+                width: 100%;
+                height: 10px;
+                background: #e9eef5;
+                border-radius: 999px;
+                overflow: hidden;
+            }
 
-.voyage-progress-bar {
-    height: 100%;
-    border-radius: 999px;
-    transition: width 0.4s ease;
-}
+            .voyage-progress-bar {
+                height: 100%;
+                border-radius: 999px;
+                transition: width 0.4s ease;
+            }
 
-.progress-good {
-    background: linear-gradient(90deg, #81AE8D, #6fa57c);
-}
+            .progress-good {
+                background: linear-gradient(90deg, #81AE8D, #6fa57c);
+            }
 
-.progress-medium {
-    background: linear-gradient(90deg, #E8B156, #d8a145);
-}
+            .progress-medium {
+                background: linear-gradient(90deg, #E8B156, #d8a145);
+            }
 
-.progress-low {
-    background: linear-gradient(90deg, #f59e0b, #ea580c);
-}
+            .progress-low {
+                background: linear-gradient(90deg, #f59e0b, #ea580c);
+            }
 
-.progress-complet {
-    background: linear-gradient(90deg, #dc3545, #b91c1c);
-}
+            .progress-complet {
+                background: linear-gradient(90deg, #dc3545, #b91c1c);
+            }
+
+            .categorie-card-item {
+                display: flex;
+            }
+
+            .categorie-flip-card {
+                position: relative;
+                width: 100%;
+                height: 430px;
+                border-radius: 18px;
+                overflow: hidden;
+                perspective: 1000px;
+                background-color: #daceb6;
+                box-shadow: 0 10px 26px rgba(15, 23, 42, 0.08);
+                transition: transform 0.35s ease, box-shadow 0.35s ease;
+            }
+
+            .categorie-flip-card:hover {
+                transform: translateY(-4px);
+                box-shadow: 0 16px 34px rgba(15, 23, 42, 0.14);
+            }
+
+            .categorie-flip-front,
+            .categorie-flip-content {
+                position: absolute;
+                inset: 0;
+                width: 100%;
+                height: 100%;
+                border-radius: 18px;
+            }
+
+            .categorie-flip-front {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: #daceb6;
+                overflow: hidden;
+                transition: opacity 0.3s ease;
+            }
+
+            .categorie-flip-image {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                display: block;
+            }
+
+            .categorie-flip-icon {
+                font-size: 3rem;
+                color: #1f2d3d;
+            }
+
+            .categorie-flip-content {
+                padding: 22px;
+                box-sizing: border-box;
+                background-color: #daceb6;
+                color: #1f2d3d;
+                transform: rotateX(-90deg);
+                transform-origin: bottom;
+                transition: transform 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+                backface-visibility: hidden;
+            }
+
+            .categorie-flip-card:hover .categorie-flip-content {
+                transform: rotateX(0deg);
+            }
+
+            .categorie-flip-card:hover .categorie-flip-front {
+                opacity: 0;
+            }
+
+            .categorie-flip-title {
+                font-size: 1.35rem;
+                font-weight: 800;
+                color: #1f2d3d;
+                line-height: 1.2;
+                margin: 0;
+            }
+
+            .categorie-flip-description {
+                margin: 14px 0 18px;
+                font-size: 0.95rem;
+                color: #4b5563;
+                line-height: 1.6;
+                overflow: hidden;
+                display: -webkit-box;
+                -webkit-line-clamp: 4;
+                -webkit-box-orient: vertical;
+            }
+
+            .categorie-flip-badge {
+                background: rgba(255, 255, 255, 0.45);
+                color: #1f2d3d;
+                padding: 7px 12px;
+                border-radius: 12px;
+                font-size: 0.82rem;
+                font-weight: 700;
+                white-space: nowrap;
+            }
+
+            @media (max-width: 768px) {
+                .categorie-flip-card {
+                    height: 380px;
+                }
+            }
         </style>
     {% endblock %}
 </head>
@@ -823,7 +931,6 @@
             <div class="container">
                 <a class="navbar-brand d-flex align-items-center gap-2" href="{{ path('app_home') }}">
                     <img src="{{ asset('images/logo.png') }}" alt="Logo Horozia" width="60" height="60" style="object-fit: contain;">
-                    <span>Horozia</span>
                 </a>
 
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar">
@@ -856,13 +963,13 @@
     {% endblock %}
 
     {% for label, messages in app.flashes %}
-    {% for message in messages %}
-        <div class="swal-flash-message d-none"
-             data-type="{{ label }}"
-             data-message="{{ message|e('html_attr') }}">
-        </div>
+        {% for message in messages %}
+            <div class="swal-flash-message d-none"
+                 data-type="{{ label }}"
+                 data-message="{{ message|e('html_attr') }}">
+            </div>
+        {% endfor %}
     {% endfor %}
-{% endfor %}
 
     {% block body %}{% endblock %}
 
@@ -875,56 +982,56 @@
     {% endblock %}
 
     {% block javascripts %}
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            setTimeout(() => {
-                document.querySelectorAll('.alert-horozia').forEach(alert => {
-                    if (window.bootstrap) {
-                        const bsAlert = bootstrap.Alert.getOrCreateInstance(alert);
-                        bsAlert.close();
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                setTimeout(() => {
+                    document.querySelectorAll('.alert-horozia').forEach(alert => {
+                        if (window.bootstrap) {
+                            const bsAlert = bootstrap.Alert.getOrCreateInstance(alert);
+                            bsAlert.close();
+                        }
+                    });
+                }, 3000);
+
+                const flashMessages = document.querySelectorAll('.swal-flash-message');
+
+                flashMessages.forEach(item => {
+                    const type = item.dataset.type;
+                    const message = item.dataset.message;
+
+                    let icon = 'info';
+                    let title = 'Information';
+
+                    if (type === 'success') {
+                        icon = 'success';
+                        title = 'Succès';
+                    } else if (type === 'error' || type === 'danger') {
+                        icon = 'error';
+                        title = 'Erreur';
+                    } else if (type === 'warning') {
+                        icon = 'warning';
+                        title = 'Attention';
+                    } else if (type === 'info') {
+                        icon = 'info';
+                        title = 'Information';
                     }
-                });
-            }, 3000);
 
-            const flashMessages = document.querySelectorAll('.swal-flash-message');
-
-            flashMessages.forEach(item => {
-                const type = item.dataset.type;
-                const message = item.dataset.message;
-
-                let icon = 'info';
-                let title = 'Information';
-
-                if (type === 'success') {
-                    icon = 'success';
-                    title = 'Succès';
-                } else if (type === 'error' || type === 'danger') {
-                    icon = 'error';
-                    title = 'Erreur';
-                } else if (type === 'warning') {
-                    icon = 'warning';
-                    title = 'Attention';
-                } else if (type === 'info') {
-                    icon = 'info';
-                    title = 'Information';
-                }
-
-                Swal.fire({
-                    icon: icon,
-                    title: title,
-                    text: message,
-                    timer: 2500,
-                    showConfirmButton: false,
-                    background: '#ffffff',
-                    borderRadius: '18px'
+                    Swal.fire({
+                        icon: icon,
+                        title: title,
+                        text: message,
+                        timer: 2500,
+                        showConfirmButton: false,
+                        background: '#ffffff',
+                        borderRadius: '18px'
+                    });
                 });
             });
-        });
-    </script>
-{% endblock %}
+        </script>
+    {% endblock %}
 </body>
 </html>

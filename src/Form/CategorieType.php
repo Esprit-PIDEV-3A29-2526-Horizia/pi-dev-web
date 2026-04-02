@@ -15,11 +15,28 @@ class CategorieType extends AbstractType
     {
         $builder
             ->add('nom', TextType::class, [
-                'label' => 'Nom'
+                'label' => 'Nom',
+                'attr' => [
+                    'class' => 'form-control',
+                    'placeholder' => 'Nom de la catégorie'
+                ]
             ])
             ->add('description', TextareaType::class, [
                 'label' => 'Description',
-                'required' => false
+                'required' => false,
+                'attr' => [
+                    'class' => 'form-control',
+                    'rows' => 4,
+                    'placeholder' => 'Description de la catégorie'
+                ]
+            ])
+            ->add('imageUrl', TextType::class, [
+                'label' => 'Image URL',
+                'required' => false,
+                'attr' => [
+                    'class' => 'form-control',
+                    'placeholder' => '/images/categories/aventure.jpg'
+                ]
             ]);
     }
 

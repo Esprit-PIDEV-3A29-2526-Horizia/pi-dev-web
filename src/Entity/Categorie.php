@@ -2,21 +2,21 @@
 
 namespace App\Entity;
 
+use App\Repository\CategorieRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
-use Symfony\Component\Validator\Constraints as Assert;
 
 /**
  * Categorie
  *
  * @ORM\Table(name="categorie")
- * @ORM\Entity
+ * @ORM\Entity(repositoryClass=CategorieRepository::class)
  */
 class Categorie
 {
     /**
-     * @var int
+     * @var int|null
      *
      * @ORM\Column(name="id", type="integer", nullable=false)
      * @ORM\Id
@@ -25,10 +25,9 @@ class Categorie
     private $id;
 
     /**
-     * @var string
+     * @var string|null
      *
      * @ORM\Column(name="nom", type="string", length=255, nullable=false)
-     * @Assert\NotBlank(message="Le nom de la catégorie est obligatoire.")
      */
     private $nom;
 
@@ -40,9 +39,16 @@ class Categorie
     private $description;
 
     /**
+     * @var string|null
+     *
+     * @ORM\Column(name="image_url", type="string", length=255, nullable=true)
+     */
+    private $imageUrl;
+
+    /**
      * @var Collection<int, Voyage>
      *
-     * @ORM\OneToMany(targetEntity="App\Entity\Voyage", mappedBy="categorie")
+     * @ORM\OneToMany(mappedBy="categorie", targetEntity="App\Entity\Voyage")
      */
     private $voyages;
 
@@ -61,7 +67,7 @@ class Categorie
         return $this->nom;
     }
 
-    public function setNom(string $nom): self
+    public function setNom(?string $nom): self
     {
         $this->nom = $nom;
         return $this;
@@ -78,6 +84,20 @@ class Categorie
         return $this;
     }
 
+    public function getImageUrl(): ?string
+    {
+        return $this->imageUrl;
+    }
+
+    public function setImageUrl(?string $imageUrl): self
+    {
+        $this->imageUrl = $imageUrl;
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Voyage>
+     */
     public function getVoyages(): Collection
     {
         return $this->voyages;

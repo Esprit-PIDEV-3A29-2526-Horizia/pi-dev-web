@@ -1,0 +1,59 @@
+{{ form_start(form) }}
+
+<div class="row g-4">
+    <div class="col-md-6">
+        <div class="form-group">
+            {{ form_label(form.nom, null, {'label_attr': {'class': 'form-label fw-semibold'}}) }}
+            {{ form_widget(form.nom, {'attr': {'class': 'form-control'}}) }}
+            {{ form_errors(form.nom) }}
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="form-group">
+            {{ form_label(form.imageUrl, null, {'label_attr': {'class': 'form-label fw-semibold'}}) }}
+            {{ form_widget(form.imageUrl, {
+                'attr': {
+                    'class': 'form-control',
+                    'id': 'categorie_image_url',
+                    'placeholder': '/images/Aventure.jpg'
+                }
+            }) }}
+            {{ form_errors(form.imageUrl) }}
+        </div>
+    </div>
+
+    <div class="col-12">
+        <div class="form-group">
+            {{ form_label(form.description, null, {'label_attr': {'class': 'form-label fw-semibold'}}) }}
+            {{ form_widget(form.description, {'attr': {'class': 'form-control', 'rows': 4}}) }}
+            {{ form_errors(form.description) }}
+        </div>
+    </div>
+
+    <div class="col-12">
+        <label class="form-label fw-semibold">Aperçu de l'image</label>
+
+        <div class="image-preview-wrapper">
+            <img
+                id="categorie-image-preview"
+                class="image-preview-element"
+                src="{% if form.vars.data and form.vars.data.imageUrl %}{{ asset(form.vars.data.imageUrl starts with '/' ? form.vars.data.imageUrl|slice(1) : form.vars.data.imageUrl) }}{% else %}https://via.placeholder.com/800x400?text=Aper%C3%A7u+image{% endif %}"
+                alt="Aperçu de l'image"
+            >
+        </div>
+    </div>
+
+    <div class="col-12 d-flex gap-2 mt-2">
+        <button type="submit" class="btn btn-horozia-secondary">
+            <i class="bi bi-check-circle me-1"></i>
+            {{ button_label|default('Enregistrer') }}
+        </button>
+
+        <a href="{{ path('app_categorie_index') }}" class="btn btn-horozia-neutral">
+            Retour
+        </a>
+    </div>
+</div>
+
+{{ form_end(form) }}

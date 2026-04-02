@@ -3,30 +3,45 @@
 {% block title %}Ajouter une catégorie{% endblock %}
 
 {% block admin_content %}
-    <div class="container-fluid">
-        <h1 class="mb-4">Ajouter une catégorie</h1>
-
-        <div class="card shadow-sm border-0">
-            <div class="card-body">
-                {{ form_start(form, {'attr': {'novalidate': 'novalidate'}}) }}
-
-                    <div class="mb-3">
-                        {{ form_label(form.nom) }}
-                        {{ form_widget(form.nom, {'attr': {'class': 'form-control'}}) }}
-                        {{ form_errors(form.nom) }}
-                    </div>
-
-                    <div class="mb-3">
-                        {{ form_label(form.description) }}
-                        {{ form_widget(form.description, {'attr': {'class': 'form-control'}}) }}
-                        {{ form_errors(form.description) }}
-                    </div>
-
-                    <button class="btn btn-primary">Enregistrer</button>
-                    <a href="{{ path('app_categorie_index') }}" class="btn btn-secondary">Retour</a>
-
-                {{ form_end(form) }}
-            </div>
-        </div>
+<div class="container-fluid">
+    <div class="mb-4">
+        <h2 class="fw-bold mb-1">Ajouter une catégorie</h2>
+        <p class="text-muted mb-0">Créez une nouvelle catégorie avec image et description.</p>
     </div>
+
+    <div class="dashboard-card">
+        {% include 'admin/categorie/form.html.twig' with {
+            form: form,
+            button_label: 'Enregistrer'
+        } %}
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const imageInput = document.getElementById('categorie_image_url');
+            const preview = document.getElementById('categorie-image-preview');
+
+            function updatePreview() {
+                if (!imageInput || !preview) return;
+
+                const value = imageInput.value.trim();
+
+                if (!value) {
+                    preview.src = 'https://via.placeholder.com/800x400?text=Aper%C3%A7u+image';
+                    return;
+                }
+
+                preview.src = value;
+            }
+
+            if (imageInput) {
+                imageInput.addEventListener('input', updatePreview);
+            }
+        });
+    </script>
 {% endblock %}
