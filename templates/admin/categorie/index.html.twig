@@ -95,9 +95,7 @@
                                 <a href="{{ path('app_categorie_edit', {'id': categorie.id}) }}" class="btn btn-horozia-warning btn-sm">
                                     Modifier
                                 </a>
-                                <a href="{{ path('app_categorie_delete', {'id': categorie.id}) }}"
-                                   class="btn btn-danger btn-sm"
-                                   onclick="return confirm('Voulez-vous vraiment supprimer cette catégorie ?');">
+                                <a href="{{ path('app_categorie_delete', {'id': categorie.id}) }}" class="btn btn-danger btn-sm btn-delete-categorie" data-categorie-name="{{ categorie.nom }}">
                                     Supprimer
                                 </a>
                             </td>
@@ -121,81 +119,36 @@
 {% block javascripts %}
     {{ parent() }}
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const searchInput = document.getElementById('searchInput');
-            const sortSelect = document.getElementById('sortSelect');
-            const resetBtn = document.getElementById('resetBtn');
-            const table = document.getElementById('categorieTable');
-            const tbody = table.querySelector('tbody');
-            const emptySearchMessage = document.getElementById('emptySearchMessage');
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const deleteButtons = document.querySelectorAll('.btn-delete-categorie');
 
-            function getDataRows() {
-                return Array.from(tbody.querySelectorAll('tr')).filter(row => row.dataset.nom !== undefined);
-            }
+        deleteButtons.forEach(button => {
+            button.addEventListener('click', function (e) {
+                e.preventDefault();
 
-            function applySearch() {
-                const value = searchInput.value.toLowerCase().trim();
-                const rows = getDataRows();
-                let visibleCount = 0;
+                const deleteUrl = this.getAttribute('href');
+                const categorieName = this.dataset.categorieName || 'cette catégorie';
 
-                rows.forEach(row => {
-                    const nom = row.dataset.nom || '';
-                    const description = row.dataset.description || '';
-
-                    const matches = nom.includes(value) || description.includes(value);
-
-                    if (matches) {
-                        row.style.display = '';
-                        visibleCount++;
-                    } else {
-                        row.style.display = 'none';
+                Swal.fire({
+                    title: 'Supprimer cette catégorie ?',
+                    html: `Vous êtes sur le point de supprimer <strong>${categorieName}</strong>.`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#dc3545',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Oui, supprimer',
+                    cancelButtonText: 'Annuler',
+                    reverseButtons: true,
+                    background: '#ffffff',
+                    borderRadius: '18px'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = deleteUrl;
                     }
                 });
-
-                emptySearchMessage.classList.toggle('d-none', visibleCount > 0);
-            }
-
-            function applySort() {
-                const rows = getDataRows();
-                const sortValue = sortSelect.value;
-
-                rows.sort((a, b) => {
-                    if (sortValue === 'nom_asc') {
-                        return (a.dataset.nom || '').localeCompare(b.dataset.nom || '');
-                    }
-
-                    if (sortValue === 'nom_desc') {
-                        return (b.dataset.nom || '').localeCompare(a.dataset.nom || '');
-                    }
-
-                    if (sortValue === 'nbvoyages_asc') {
-                        return parseInt(a.dataset.nbvoyages || 0) - parseInt(b.dataset.nbvoyages || 0);
-                    }
-
-                    if (sortValue === 'nbvoyages_desc') {
-                        return parseInt(b.dataset.nbvoyages || 0) - parseInt(a.dataset.nbvoyages || 0);
-                    }
-
-                    return 0;
-                });
-
-                rows.forEach(row => tbody.appendChild(row));
-            }
-
-            function applyFilters() {
-                applySort();
-                applySearch();
-            }
-
-            searchInput.addEventListener('input', applyFilters);
-            sortSelect.addEventListener('change', applyFilters);
-
-            resetBtn.addEventListener('click', function () {
-                searchInput.value = '';
-                sortSelect.value = '';
-                applyFilters();
             });
         });
-    </script>
+    });
+</script>
 {% endblock %}

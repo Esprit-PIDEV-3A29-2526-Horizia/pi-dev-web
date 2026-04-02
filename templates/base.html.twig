@@ -17,7 +17,6 @@
                 --color-accent: #81AE8D;
                 --color-warning: #E8B156;
                 --color-neutral: #DACEB6;
-
                 --color-dark: #103749;
                 --color-sidebar: #1f2d3d;
                 --color-light-bg: #f8f6f1;
@@ -169,21 +168,6 @@
                 background-color: var(--color-primary) !important;
                 color: white !important;
                 border-color: rgba(255,255,255,0.12);
-            }
-
-            .sidebar-horozia {
-                background-color: var(--color-dark);
-            }
-
-            .sidebar-horozia .nav-link {
-                color: white;
-                border-radius: 10px;
-                transition: 0.3s;
-            }
-
-            .sidebar-horozia .nav-link:hover {
-                background-color: var(--color-primary);
-                color: white;
             }
 
             .admin-layout {
@@ -371,24 +355,6 @@
                 padding: 14px 12px;
             }
 
-            .status-badge {
-                display: inline-block;
-                padding: 5px 10px;
-                border-radius: 8px;
-                font-size: .82rem;
-                font-weight: 700;
-            }
-
-            .status-badge.done {
-                background: #d1f3e0;
-                color: #198754;
-            }
-
-            .status-badge.progress {
-                background: #fff0c7;
-                color: #b78103;
-            }
-
             .alert-horozia {
                 border: none;
                 border-radius: 14px;
@@ -450,7 +416,7 @@
                 margin: 0 auto;
                 position: relative;
             }
-            
+
             .line-chart-box {
                 width: 100%;
                 height: 320px;
@@ -484,6 +450,7 @@
                 color: #6b7280;
                 font-size: 0.98rem;
             }
+
             .modal-content {
                 border-radius: 18px;
             }
@@ -506,47 +473,24 @@
                 background: #eef2f7;
             }
 
-            .voyage-thumbnail {
-                width: 72px;
-                height: 52px;
-                object-fit: cover;
-                border-radius: 10px;
-                border: 1px solid #e5e7eb;
-                box-shadow: 0 4px 10px rgba(15, 23, 42, 0.06);
-            }
-
-            .voyage-thumbnail-placeholder {
-                width: 72px;
-                height: 52px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                background: #eef2f7;
-                color: #6b7280;
-                font-size: 0.75rem;
-                border-radius: 10px;
-                border: 1px solid #e5e7eb;
-                text-align: center;
-                padding: 4px;
-            }
-
             .voyage-card {
-                background: #fff;
-                border-radius: 18px;
+                background: #ffffff;
+                border-radius: 24px;
                 overflow: hidden;
-                box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
                 border: 1px solid #edf2f7;
-                transition: transform 0.2s ease, box-shadow 0.2s ease;
+                box-shadow: 0 12px 32px rgba(15, 23, 42, 0.07);
+                transition: transform 0.25s ease, box-shadow 0.25s ease;
             }
 
             .voyage-card:hover {
-                transform: translateY(-4px);
-                box-shadow: 0 14px 30px rgba(15, 23, 42, 0.10);
+                transform: translateY(-6px);
+                box-shadow: 0 20px 44px rgba(15, 23, 42, 0.12);
             }
 
             .voyage-card-image-wrapper {
                 position: relative;
-                height: 220px;
+                height: 250px;
+                overflow: hidden;
                 background: #eef2f7;
             }
 
@@ -555,6 +499,140 @@
                 height: 100%;
                 object-fit: cover;
                 display: block;
+                transition: transform 0.4s ease;
+            }
+
+            .voyage-card:hover .voyage-card-image {
+                transform: scale(1.05);
+            }
+
+            .voyage-card-overlay {
+                position: absolute;
+                inset: 0;
+                background: linear-gradient(to top, rgba(16,55,73,0.35), rgba(16,55,73,0.03));
+                pointer-events: none;
+            }
+
+            .voyage-card-topbar {
+                position: absolute;
+                top: 16px;
+                left: 16px;
+                right: 16px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                z-index: 2;
+            }
+
+            .voyage-card-title {
+                font-size: 1.15rem;
+                font-weight: 800;
+                color: #1f2d3d;
+                line-height: 1.3;
+                margin-bottom: 8px;
+            }
+
+            .voyage-card-destination {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                color: #667085;
+                font-size: 0.95rem;
+                font-weight: 500;
+                margin-bottom: 16px;
+            }
+
+            .voyage-card-destination i {
+                color: #23779C;
+            }
+
+            .voyage-card-infos {
+                display: grid;
+                gap: 12px;
+                margin-bottom: 20px;
+            }
+
+            .voyage-info-line {
+                display: flex;
+                align-items: flex-start;
+                gap: 10px;
+                color: #334155;
+                font-size: 0.92rem;
+                padding: 10px 12px;
+                border-radius: 14px;
+                background: #f8fafc;
+            }
+
+            .voyage-info-line i {
+                color: #23779C;
+                margin-top: 2px;
+            }
+
+            .voyage-price {
+                background: rgba(255,255,255,0.94);
+                color: #23779C;
+                padding: 8px 14px;
+                border-radius: 14px;
+                font-weight: 800;
+                font-size: 0.95rem;
+                box-shadow: 0 6px 16px rgba(15, 23, 42, 0.10);
+                backdrop-filter: blur(4px);
+                white-space: nowrap;
+            }
+
+            .voyage-badge-disponible,
+            .voyage-badge-bientot,
+            .voyage-badge-complet {
+                padding: 8px 12px;
+                border-radius: 12px;
+                font-size: 0.8rem;
+                font-weight: 700;
+                box-shadow: 0 6px 16px rgba(15, 23, 42, 0.10);
+            }
+
+            .voyage-badge-disponible {
+                background: rgba(129, 174, 141, 0.96);
+                color: #fff;
+            }
+
+            .voyage-badge-bientot {
+                background: rgba(232, 177, 86, 0.96);
+                color: #fff;
+            }
+
+            .voyage-badge-complet {
+                background: rgba(220, 53, 69, 0.96);
+                color: #fff;
+            }
+
+            .btn-voyage-edit {
+                background: #E8B156;
+                border: none;
+                color: #fff;
+                border-radius: 12px;
+                font-weight: 700;
+                padding: 10px 14px;
+                font-size: 0.95rem;
+            }
+
+            .btn-voyage-edit:hover {
+                background: #d6a041;
+                color: #fff;
+            }
+
+            .btn-voyage-delete {
+                background: #dc3545;
+                border: none;
+                color: #fff;
+                border-radius: 12px;
+                font-weight: 700;
+                padding: 10px 14px;
+                font-size: 0.95rem;
+            }
+
+            .btn-voyage-delete:hover {
+                background: #bb2d3b;
+                color: #fff;
             }
 
             .voyage-card-no-image {
@@ -568,35 +646,173 @@
                 background: #eef2f7;
             }
 
-            .voyage-card-badge-wrapper {
-                position: absolute;
-                top: 14px;
-                right: 14px;
+            .voyage-card-link {
+                text-decoration: none;
+                color: inherit;
+                display: block;
             }
 
-            .voyage-badge-disponible {
-                background: rgba(129, 174, 141, 0.95);
-                color: #fff;
+            .voyage-show-image {
+                width: 100%;
+                height: 430px;
+                object-fit: cover;
+                border-radius: 20px;
+                border: 1px solid #e5e7eb;
+                box-shadow: 0 10px 28px rgba(15, 23, 42, 0.08);
+                display: block;
             }
 
-            .voyage-badge-bientot {
-                background: rgba(232, 177, 86, 0.95);
-                color: #fff;
+            .voyage-show-placeholder {
+                width: 100%;
+                height: 430px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                background: #eef2f7;
+                color: #6b7280;
+                border-radius: 20px;
+                font-weight: 600;
+                border: 1px solid #e5e7eb;
             }
 
-            .voyage-badge-complet {
-                background: rgba(220, 53, 69, 0.95);
-                color: #fff;
+            .voyage-description-card {
+                background: #f8fafc;
+                border: 1px solid #e9edf3;
+                border-radius: 18px;
+                padding: 22px;
             }
 
-            .voyage-price {
-                background: rgba(61, 148, 202, 0.12);
+            .voyage-section-title {
+                font-size: 1.1rem;
+                font-weight: 800;
+                color: #1f2d3d;
+            }
+
+            .voyage-description-text {
+                color: #4b5563;
+                line-height: 1.8;
+                font-size: 0.98rem;
+                white-space: pre-line;
+            }
+
+            .voyage-show-side-card {
+                background: #ffffff;
+                border: 1px solid #e9edf3;
+                border-radius: 20px;
+                padding: 24px;
+                height: 100%;
+                box-shadow: 0 8px 22px rgba(15, 23, 42, 0.04);
+            }
+
+            .voyage-show-title {
+                font-size: 2rem;
+                font-weight: 800;
+                color: #1f2d3d;
+                line-height: 1.2;
+            }
+
+            .voyage-show-info-list {
+                display: grid;
+                gap: 14px;
+            }
+
+            .voyage-show-info-item {
+                display: flex;
+                gap: 14px;
+                align-items: flex-start;
+                padding: 15px 16px;
+                background: #f8fafc;
+                border-radius: 16px;
+                border: 1px solid #eef2f7;
+            }
+
+            .voyage-show-info-item i {
                 color: #23779C;
-                padding: 6px 10px;
-                border-radius: 10px;
-                font-weight: 700;
-                white-space: nowrap;
+                font-size: 1.1rem;
+                margin-top: 4px;
             }
+
+            .voyage-show-info-item strong {
+                color: #1f2d3d;
+                font-size: 0.96rem;
+            }
+
+            .voyage-show-info-item span {
+                color: #667085;
+                font-size: 0.95rem;
+            }
+
+            .voyage-detail-status-badge {
+                display: inline-block;
+                padding: 10px 16px;
+                border-radius: 999px;
+                font-size: 0.9rem;
+                font-weight: 800;
+            }
+
+            .voyage-detail-badge-disponible {
+                background: rgba(129, 174, 141, 0.16);
+                color: #5b8a67;
+            }
+
+            .voyage-detail-badge-bientot {
+                background: rgba(232, 177, 86, 0.18);
+                color: #b27a19;
+            }
+
+            .voyage-detail-badge-complet {
+                background: rgba(220, 53, 69, 0.14);
+                color: #b42318;
+            }
+
+            .voyage-places-section {
+    background: #f8fafc;
+    border-radius: 14px;
+    padding: 14px 16px;
+    border: 1px solid #eef2f7;
+}
+
+.voyage-places-label {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: #334155;
+}
+
+.voyage-places-value {
+    font-size: 0.92rem;
+    font-weight: 800;
+    color: #23779C;
+}
+
+.voyage-progress {
+    width: 100%;
+    height: 10px;
+    background: #e9eef5;
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.voyage-progress-bar {
+    height: 100%;
+    border-radius: 999px;
+    transition: width 0.4s ease;
+}
+
+.progress-good {
+    background: linear-gradient(90deg, #81AE8D, #6fa57c);
+}
+
+.progress-medium {
+    background: linear-gradient(90deg, #E8B156, #d8a145);
+}
+
+.progress-low {
+    background: linear-gradient(90deg, #f59e0b, #ea580c);
+}
+
+.progress-complet {
+    background: linear-gradient(90deg, #dc3545, #b91c1c);
+}
         </style>
     {% endblock %}
 </head>
@@ -639,6 +855,15 @@
         </nav>
     {% endblock %}
 
+    {% for label, messages in app.flashes %}
+    {% for message in messages %}
+        <div class="swal-flash-message d-none"
+             data-type="{{ label }}"
+             data-message="{{ message|e('html_attr') }}">
+        </div>
+    {% endfor %}
+{% endfor %}
+
     {% block body %}{% endblock %}
 
     {% block footer %}
@@ -650,20 +875,56 @@
     {% endblock %}
 
     {% block javascripts %}
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-        <script>
-            document.addEventListener('DOMContentLoaded', function () {
-                setTimeout(() => {
-                    document.querySelectorAll('.alert-horozia').forEach(alert => {
-                        if (window.bootstrap) {
-                            const bsAlert = bootstrap.Alert.getOrCreateInstance(alert);
-                            bsAlert.close();
-                        }
-                    });
-                }, 3000);
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            setTimeout(() => {
+                document.querySelectorAll('.alert-horozia').forEach(alert => {
+                    if (window.bootstrap) {
+                        const bsAlert = bootstrap.Alert.getOrCreateInstance(alert);
+                        bsAlert.close();
+                    }
+                });
+            }, 3000);
+
+            const flashMessages = document.querySelectorAll('.swal-flash-message');
+
+            flashMessages.forEach(item => {
+                const type = item.dataset.type;
+                const message = item.dataset.message;
+
+                let icon = 'info';
+                let title = 'Information';
+
+                if (type === 'success') {
+                    icon = 'success';
+                    title = 'Succès';
+                } else if (type === 'error' || type === 'danger') {
+                    icon = 'error';
+                    title = 'Erreur';
+                } else if (type === 'warning') {
+                    icon = 'warning';
+                    title = 'Attention';
+                } else if (type === 'info') {
+                    icon = 'info';
+                    title = 'Information';
+                }
+
+                Swal.fire({
+                    icon: icon,
+                    title: title,
+                    text: message,
+                    timer: 2500,
+                    showConfirmButton: false,
+                    background: '#ffffff',
+                    borderRadius: '18px'
+                });
             });
-        </script>
-    {% endblock %}
+        });
+    </script>
+{% endblock %}
 </body>
 </html>

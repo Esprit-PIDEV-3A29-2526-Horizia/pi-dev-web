@@ -103,9 +103,7 @@
                                  <a href="{{ path('app_reservation_edit', {'id': reservation.id}) }}" class="btn btn-horozia-warning btn-sm">
                                     Modifier
                                 </a>
-                                <a href="{{ path('app_reservation_delete', {'id': reservation.id}) }}"
-                                   class="btn btn-danger btn-sm"
-                                   onclick="return confirm('Voulez-vous vraiment supprimer cette réservation ?');">
+                                <a href="{{ path('app_reservation_delete', {'id': reservation.id}) }}" class="btn btn-danger btn-sm btn-delete-reservation" data-reservation-id="{{ reservation.id }}">
                                     Supprimer
                                 </a>
                             </td>
@@ -129,91 +127,36 @@
 {% block javascripts %}
     {{ parent() }}
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const searchInput = document.getElementById('searchInput');
-            const sortSelect = document.getElementById('sortSelect');
-            const resetBtn = document.getElementById('resetBtn');
-            const table = document.getElementById('reservationTable');
-            const tbody = table.querySelector('tbody');
-            const emptySearchMessage = document.getElementById('emptySearchMessage');
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const deleteButtons = document.querySelectorAll('.btn-delete-reservation');
 
-            function getDataRows() {
-                return Array.from(tbody.querySelectorAll('tr')).filter(row => row.dataset.statut !== undefined);
-            }
+        deleteButtons.forEach(button => {
+            button.addEventListener('click', function (e) {
+                e.preventDefault();
 
-            function applySearch() {
-                const value = searchInput.value.toLowerCase().trim();
-                const rows = getDataRows();
-                let visibleCount = 0;
+                const deleteUrl = this.getAttribute('href');
+                const reservationId = this.dataset.reservationId || '';
 
-                rows.forEach(row => {
-                    const statut = row.dataset.statut || '';
-                    const idVoyage = String(row.dataset.idvoyage || '').toLowerCase();
-                    const idUser = String(row.dataset.iduser || '').toLowerCase();
-
-                    const matches =
-                        statut.includes(value) ||
-                        idVoyage.includes(value) ||
-                        idUser.includes(value);
-
-                    if (matches) {
-                        row.style.display = '';
-                        visibleCount++;
-                    } else {
-                        row.style.display = 'none';
+                Swal.fire({
+                    title: 'Supprimer cette réservation ?',
+                    html: `Vous êtes sur le point de supprimer la réservation <strong>#${reservationId}</strong>.`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#dc3545',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Oui, supprimer',
+                    cancelButtonText: 'Annuler',
+                    reverseButtons: true,
+                    background: '#ffffff',
+                    borderRadius: '18px'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = deleteUrl;
                     }
                 });
-
-                if (emptySearchMessage) {
-                    emptySearchMessage.classList.toggle('d-none', visibleCount > 0);
-                }
-            }
-
-            function applySort() {
-                const rows = getDataRows();
-                const sortValue = sortSelect.value;
-
-                rows.sort((a, b) => {
-                    if (sortValue === 'date_desc') {
-                        return new Date(b.dataset.date || '1900-01-01') - new Date(a.dataset.date || '1900-01-01');
-                    }
-
-                    if (sortValue === 'date_asc') {
-                        return new Date(a.dataset.date || '1900-01-01') - new Date(b.dataset.date || '1900-01-01');
-                    }
-
-                    if (sortValue === 'statut_asc') {
-                        return (a.dataset.statut || '').localeCompare(b.dataset.statut || '');
-                    }
-
-                    if (sortValue === 'nbr_asc') {
-                        return parseInt(a.dataset.nbr || 0) - parseInt(b.dataset.nbr || 0);
-                    }
-
-                    if (sortValue === 'nbr_desc') {
-                        return parseInt(b.dataset.nbr || 0) - parseInt(a.dataset.nbr || 0);
-                    }
-
-                    return 0;
-                });
-
-                rows.forEach(row => tbody.appendChild(row));
-            }
-
-            function applyFilters() {
-                applySort();
-                applySearch();
-            }
-
-            searchInput.addEventListener('input', applyFilters);
-            sortSelect.addEventListener('change', applyFilters);
-
-            resetBtn.addEventListener('click', function () {
-                searchInput.value = '';
-                sortSelect.value = '';
-                applyFilters();
             });
         });
-    </script>
+    });
+</script>
 {% endblock %}
