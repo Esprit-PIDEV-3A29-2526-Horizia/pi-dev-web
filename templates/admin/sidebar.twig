@@ -5,43 +5,40 @@
 
     <ul class="sidebar-menu">
         <li>
-{% set current_route = app.request.attributes.get('_route') %}
-<a class="sidebar-link {{ current_route == 'app_admin' ? 'active' : '' }}" href="{{ path('app_admin') }}">
+            <a class="sidebar-link {{ app.request.attributes.get('_route') == 'app_admin' ? 'active' : '' }}" href="{{ path('app_admin') }}">
                 <i class="bi bi-grid-fill"></i>
                 <span>Dashboard</span>
             </a>
         </li>
         <li>
-            <a class="sidebar-link"
-            >
+            <a class="sidebar-link" href="#">
                 <i class="bi bi-person"></i>
                 <span>Gestion Profile</span>
             </a>
         </li>
-    
         <li>
-            <a class="sidebar-link">
+            <a class="sidebar-link" href="#">
                 <i class="bi bi-tags-fill"></i>
                 <span>Gestion Catégories</span>
             </a>
         </li>
-
         <li>
-            <a class="sidebar-link" >
+            <a class="sidebar-link" href="#">
                 <i class="bi bi-airplane-fill"></i>
                 <span>Gestion Voyages</span>
             </a>
         </li>
         <li>
-    <a class="sidebar-link {{ current_route starts with 'admin_logement' ? 'active' : '' }}" href="{{ path('admin_logement_index') }}">
-        <i class="bi bi-building"></i>
-        <span>Gestion Logements</span>
-    </a>
-</li>
+            <a class="sidebar-link {{ app.request.attributes.get('_route') starts with 'admin_logement' ? 'active' : '' }}" href="{{ path('admin_logement_index') }}">
+                <i class="bi bi-building"></i>
+                <span>Gestion Logements</span>
+            </a>
+        </li>
         <li>
-            <a class="sidebar-link">
+            <a class="sidebar-link" href="#">
                 <i class="bi bi-calendar-check-fill"></i>
-<span>Gestion Réservations</span>    
-    </a>      </li>      </ul>
-
+                <span>Gestion Réservations</span>
+            </a>
+        </li>
+    </ul>
 </div>
