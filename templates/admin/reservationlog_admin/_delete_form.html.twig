@@ -1,0 +1,4 @@
+path('admin_reservationlog_admin_delete', {'id': reservationlog.idreslog})
+    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ reservationlog.idreslog) }}">
+    <button class="btn">Delete</button>
+</form>

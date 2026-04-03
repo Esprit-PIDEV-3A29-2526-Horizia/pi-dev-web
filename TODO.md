@@ -1,15 +1,10 @@
-# Logement Design Fixes - BLACKBOXAI Task Tracker
+# TODO: Fix admin reservationlog routing error
 
-**Images:** External HTTPS URLs stored in DB.
+## Steps to complete:
+- [ ] 1. Create TODO.md (done)
+- [x] 2. Fix broken route path in templates/admin/logement/index.html.twig (replace 'admin_reservation_' → 'admin_reservation_index')\n- [x] 3. Update path names in templates/admin/reservationlog_admin/*.html.twig ('app_reservationlog_admin_*' → 'admin_reservation_*')\n- [x] 4. Add sidebar link in templates/admin/sidebar.twig for reservationlog index
+- [x] 5. Clear cache and verify routes
+- [x] 6. Test navigation from /admin/logement/
+- [x] 7. Mark complete and attempt_completion
 
-## Steps:
-
-### 1. ✅ Enhanced CSS in assets/styles/app.css (cards, hovers, grids)
-### 2. ✅ Fixed sidebar.twig active logic (dynamic based on route)
-### 3. ✅ Updated templates/admin/logement/index.html.twig → Card grid with HTTPS images
-### 4. [ ] Redesign templates/admin/logement/show.html.twig → Hero detail card
-### 5. [ ] Add JS image preview to new.html.twig, edit.html.twig via _form.html.twig
-### 6. [ ] Update templates/logement/_form.html.twig for preview
-### 7. [ ] Test: Navigate admin/logement pages, check active sidebar, images, responsive cards
-
-**Completed:** Mark as done when finished.
+Updated after each step.

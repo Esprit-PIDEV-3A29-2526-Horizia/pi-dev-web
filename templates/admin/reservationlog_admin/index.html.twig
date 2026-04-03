@@ -1,0 +1,91 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}Gestion des réservations - Horozia{% endblock %}
+
+{% block admin_content %}
+<div class="container-fluid px-4">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+        <h1 class="h2 mb-0">
+            <i class="bi bi-calendar-check me-2"></i>Gestion des réservations
+            <span class="badge bg-secondary ms-2">{{ totalReservations|default(0) }}</span>
+        </h1>
+    </div>
+
+    <!-- Barre de filtre et tri -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label text-muted">Statut</label>
+                    <select name="status" class="form-select">
+                        <option value="" {{ app.request.query.get('status') == '' ? 'selected' }}>Tous</option>
+                        <option value="en_attente" {{ app.request.query.get('status') == 'en_attente' ? 'selected' }}>En attente</option>
+                        <option value="confirmée" {{ app.request.query.get('status') == 'confirmée' ? 'selected' }}>Confirmée</option>
+                        <option value="terminée" {{ app.request.query.get('status') == 'terminée' ? 'selected' }}>Terminée</option>
+                        <option value="annulée" {{ app.request.query.get('status') == 'annulée' ? 'selected' }}>Annulée</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label text-muted">Trier par montant</label>
+                    <select name="sort" class="form-select">
+                        <option value="" {{ app.request.query.get('sort') == '' ? 'selected' }}>Défaut (ID)</option>
+                        <option value="montant_asc" {{ app.request.query.get('sort') == 'montant_asc' ? 'selected' }}>Montant croissant</option>
+                        <option value="montant_desc" {{ app.request.query.get('sort') == 'montant_desc' ? 'selected' }}>Montant décroissant</option>
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <button type="submit" class="btn btn-primary w-100 rounded-pill">Filtrer / Trier</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tableau des réservations -->
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>Logement</th>
+                            <th>Client</th>
+                            <th>Arrivée</th>
+                            <th>Départ</th>
+                            <th>Montant</th>
+                            <th>Statut</th>
+                            <th>Modalité</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for reservation in reservationlogs %}
+                        <tr>
+                            <td>{{ reservation.idreslog }}</td>
+                            <td>{{ reservation.l.nom }}</td>\n                            <td>{{ reservation.u.email }}</td>
+                            <td>{{ reservation.dateDebut ? reservation.dateDebut|date('d/m/Y') : '' }}</td>
+                            <td>{{ reservation.dateFin ? reservation.dateFin|date('d/m/Y') : '' }}</td>
+                            <td>{{ reservation.montant|number_format(2, ',', ' ') }} DT</td>
+                            <td>
+                                <span class="badge 
+                                    {% if reservation.status == 'confirmée' %}bg-success
+                                    {% elseif reservation.status == 'en_attente' %}bg-warning
+                                    {% elseif reservation.status == 'terminée' %}bg-secondary
+                                    {% else %}bg-danger{% endif %}">
+                                    {{ reservation.status }}
+                                </span>
+                            </td>
+                            
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="9" class="text-center text-muted py-4">Aucune réservation trouvée.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
