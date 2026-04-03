@@ -2,11 +2,7 @@
 
 namespace App\Entity;
 
-use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
-
 use App\Repository\VoyageRepository;
 
 #[ORM\Entity(repositoryClass: VoyageRepository::class)]
@@ -71,15 +67,15 @@ class Voyage
         return $this;
     }
 
-    #[ORM\Column(type: 'decimal', nullable: false)]
-    private ?float $prix = null;
+    #[ORM\Column(type: 'decimal', precision: 10, scale: 2, nullable: false)]
+    private $prix;
 
-    public function getPrix(): ?float
+    public function getPrix()
     {
         return $this->prix;
     }
 
-    public function setPrix(float $prix): self
+    public function setPrix($prix): self
     {
         $this->prix = $prix;
         return $this;
@@ -168,77 +164,5 @@ class Voyage
         $this->places_restantes = $places_restantes;
         return $this;
     }
-
-    public function getDateDepart(): ?\DateTime
-    {
-        return $this->date_depart;
-    }
-
-    public function setDateDepart(\DateTime $date_depart): static
-    {
-        $this->date_depart = $date_depart;
-
-        return $this;
-    }
-
-    public function getDateRetour(): ?\DateTime
-    {
-        return $this->date_retour;
-    }
-
-    public function setDateRetour(\DateTime $date_retour): static
-    {
-        $this->date_retour = $date_retour;
-
-        return $this;
-    }
-
-    public function getImageUrl(): ?string
-    {
-        return $this->image_url;
-    }
-
-    public function setImageUrl(?string $image_url): static
-    {
-        $this->image_url = $image_url;
-
-        return $this;
-    }
-
-    public function getIdCategorie(): ?int
-    {
-        return $this->id_categorie;
-    }
-
-    public function setIdCategorie(?int $id_categorie): static
-    {
-        $this->id_categorie = $id_categorie;
-
-        return $this;
-    }
-
-    public function getPlacesTotal(): ?int
-    {
-        return $this->places_total;
-    }
-
-    public function setPlacesTotal(int $places_total): static
-    {
-        $this->places_total = $places_total;
-
-        return $this;
-    }
-
-    public function getPlacesRestantes(): ?int
-    {
-        return $this->places_restantes;
-    }
-
-    public function setPlacesRestantes(int $places_restantes): static
-    {
-        $this->places_restantes = $places_restantes;
-
-        return $this;
-    }
-
 }
+

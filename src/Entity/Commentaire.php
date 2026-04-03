@@ -2,10 +2,8 @@
 
 namespace App\Entity;
 
-use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
+
 
 use App\Repository\CommentaireRepository;
 
@@ -29,7 +27,7 @@ class Commentaire
         return $this;
     }
 
-    #[ORM\ManyToOne(targetEntity: Publication::class, inversedBy: 'commentaires')]
+    #[ORM\ManyToOne(targetEntity: Publication::class, inversedBy: 'commentaireList')]
     #[ORM\JoinColumn(name: 'publication_id', referencedColumnName: 'id')]
     private ?Publication $publication = null;
 
@@ -113,29 +111,5 @@ class Commentaire
         $this->modifie = $modifie;
         return $this;
     }
-
-    public function getUtilisateurId(): ?int
-    {
-        return $this->utilisateur_id;
-    }
-
-    public function setUtilisateurId(?int $utilisateur_id): static
-    {
-        $this->utilisateur_id = $utilisateur_id;
-
-        return $this;
-    }
-
-    public function getDateCreation(): ?\DateTime
-    {
-        return $this->date_creation;
-    }
-
-    public function setDateCreation(\DateTime $date_creation): static
-    {
-        $this->date_creation = $date_creation;
-
-        return $this;
-    }
-
 }
+

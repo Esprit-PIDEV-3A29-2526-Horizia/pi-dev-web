@@ -2,7 +2,6 @@
 
 namespace App\Entity;
 
-use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -82,30 +81,6 @@ class Message
     public function setTimestamp(\DateTimeInterface $timestamp): self
     {
         $this->timestamp = $timestamp;
-        return $this;
-    }
-
-    public function getUserId(): ?int
-    {
-        return $this->user_id;
-    }
-
-    public function setUserId(int $user_id): static
-    {
-        $this->user_id = $user_id;
-
-        return $this;
-    }
-
-    public function isUser(): ?bool
-    {
-        return $this->is_user;
-    }
-
-    public function setIsUser(bool $is_user): static
-    {
-        $this->is_user = $is_user;
-
         return $this;
     }
 

@@ -2,7 +2,6 @@
 
 namespace App\Entity;
 
-use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
@@ -157,7 +156,7 @@ class Publication
     }
 
     // ----- OneToMany relation (renamed to avoid conflict) -----
-    #[ORM\OneToMany(targetEntity: Commentaire::class, mappedBy: 'publication')]
+    #[ORM\OneToMany(targetEntity: Commentaire::class, mappedBy: 'publication', cascade: ['persist', 'remove'])]
     private Collection $commentaireList;
 
     public function __construct()
@@ -193,3 +192,4 @@ class Publication
         return $this;
     }
 }
+

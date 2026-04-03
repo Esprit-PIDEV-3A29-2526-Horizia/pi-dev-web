@@ -42,21 +42,4 @@ class Favori
         return $this;
     }
 
-    public function getUtilisateurId(): ?int
-    {
-        return $this->utilisateur_id;
-    }
-
-    public function getPublicationId(): ?int
-    {
-        return $this->publication_id;
-    }
-
-    public function setPublicationId(int $publication_id): static
-    {
-        $this->publication_id = $publication_id;
-
-        return $this;
-    }
-
 }

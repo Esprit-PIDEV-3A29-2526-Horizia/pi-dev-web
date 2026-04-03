@@ -59,11 +59,6 @@ class Profil
     #[ORM\OneToMany(targetEntity: User::class, mappedBy: 'profil')]
     private Collection $users;
 
-    public function __construct()
-    {
-        $this->users = new ArrayCollection();
-    }
-
     /**
      * @return Collection<int, User>
      */

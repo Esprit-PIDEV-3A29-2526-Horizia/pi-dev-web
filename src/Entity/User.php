@@ -2,11 +2,9 @@
 
 namespace App\Entity;
 
-use Doctrine\DBAL\Types\Types;
-use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
-
+use Doctrine\ORM\Mapping as ORM;
 use App\Repository\UserRepository;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
@@ -17,6 +15,39 @@ class User
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
     private ?int $id = null;
+
+    #[ORM\Column(type: 'string', nullable: false)]
+    private ?string $nom = null;
+
+    #[ORM\Column(type: 'string', nullable: false)]
+    private ?string $prenom = null;
+
+    #[ORM\Column(type: 'string', nullable: false)]
+    private ?string $email = null;
+
+    #[ORM\Column(type: 'string', nullable: false)]
+    private ?string $password = null;
+
+    #[ORM\Column(type: 'string', nullable: true)]
+    private ?string $telephone = null;
+
+    #[ORM\Column(type: 'string', nullable: true)]
+    private ?string $addresse = null;
+
+    #[ORM\ManyToOne(targetEntity: Profil::class, inversedBy: 'users')]
+    #[ORM\JoinColumn(name: 'profil_id', referencedColumnName: 'id')]
+    private ?Profil $profil = null;
+
+    #[ORM\Column(type: 'text', nullable: true)]
+    private ?string $face_descriptor = null;
+
+    #[ORM\OneToMany(targetEntity: Reservationlog::class, mappedBy: 'user')]
+    private Collection $reservationlogs;
+
+    public function __construct()
+    {
+        $this->reservationlogs = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -29,9 +60,6 @@ class User
         return $this;
     }
 
-    #[ORM\Column(type: 'string', nullable: false)]
-    private ?string $nom = null;
-
     public function getNom(): ?string
     {
         return $this->nom;
@@ -42,9 +70,6 @@ class User
         $this->nom = $nom;
         return $this;
     }
-
-    #[ORM\Column(type: 'string', nullable: false)]
-    private ?string $prenom = null;
 
     public function getPrenom(): ?string
     {
@@ -57,9 +82,6 @@ class User
         return $this;
     }
 
-    #[ORM\Column(type: 'string', nullable: false)]
-    private ?string $email = null;
-
     public function getEmail(): ?string
     {
         return $this->email;
@@ -70,9 +92,6 @@ class User
         $this->email = $email;
         return $this;
     }
-
-    #[ORM\Column(type: 'string', nullable: false)]
-    private ?string $password = null;
 
     public function getPassword(): ?string
     {
@@ -85,9 +104,6 @@ class User
         return $this;
     }
 
-    #[ORM\Column(type: 'string', nullable: true)]
-    private ?string $telephone = null;
-
     public function getTelephone(): ?string
     {
         return $this->telephone;
@@ -98,9 +114,6 @@ class User
         $this->telephone = $telephone;
         return $this;
     }
-
-    #[ORM\Column(type: 'string', nullable: true)]
-    private ?string $addresse = null;
 
     public function getAddresse(): ?string
     {
@@ -113,10 +126,6 @@ class User
         return $this;
     }
 
-    #[ORM\ManyToOne(targetEntity: Profil::class, inversedBy: 'users')]
-    #[ORM\JoinColumn(name: 'profil_id', referencedColumnName: 'id')]
-    private ?Profil $profil = null;
-
     public function getProfil(): ?Profil
     {
         return $this->profil;
@@ -128,30 +137,41 @@ class User
         return $this;
     }
 
-    #[ORM\Column(type: 'text', nullable: true)]
-    private ?string $face_descriptor = null;
-
-    public function getFace_descriptor(): ?string
-    {
-        return $this->face_descriptor;
-    }
-
-    public function setFace_descriptor(?string $face_descriptor): self
-    {
-        $this->face_descriptor = $face_descriptor;
-        return $this;
-    }
-
     public function getFaceDescriptor(): ?string
     {
         return $this->face_descriptor;
     }
 
-    public function setFaceDescriptor(?string $face_descriptor): static
+    public function setFaceDescriptor(?string $face_descriptor): self
     {
         $this->face_descriptor = $face_descriptor;
-
         return $this;
     }
 
+    /**
+     * @return Collection<int, Reservationlog>
+     */
+    public function getReservationlogs(): Collection
+    {
+        return $this->reservationlogs;
+    }
+
+    public function addReservationlog(Reservationlog $reservationlog): self
+    {
+        if (!$this->reservationlogs->contains($reservationlog)) {
+            $this->reservationlogs->add($reservationlog);
+            $reservationlog->setUser($this);
+        }
+        return $this;
+    }
+
+    public function removeReservationlog(Reservationlog $reservationlog): self
+    {
+        if ($this->reservationlogs->removeElement($reservationlog)) {
+            if ($reservationlog->getUser() === $this) {
+                $reservationlog->setUser(null);
+            }
+        }
+        return $this;
+    }
 }

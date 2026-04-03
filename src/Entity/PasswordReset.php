@@ -98,28 +98,4 @@ class PasswordReset
         return $this;
     }
 
-    public function getExpiresAt(): ?\DateTime
-    {
-        return $this->expires_at;
-    }
-
-    public function setExpiresAt(\DateTime $expires_at): static
-    {
-        $this->expires_at = $expires_at;
-
-        return $this;
-    }
-
-    public function getCreatedAt(): ?\DateTime
-    {
-        return $this->created_at;
-    }
-
-    public function setCreatedAt(\DateTime $created_at): static
-    {
-        $this->created_at = $created_at;
-
-        return $this;
-    }
-
 }

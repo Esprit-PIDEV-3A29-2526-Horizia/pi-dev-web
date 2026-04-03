@@ -9,35 +9,35 @@
         <tbody>
             <tr>
                 <th>Idreslog</th>
-                <td>{{ reservationlog.idreslog }}</td>
+                <td>{{ reservation.idreslog }}</td>
             </tr>
             <tr>
                 <th>Idlog</th>
-                <td>{{ reservationlog.idlog }}</td>
+                <td>{{ reservation.idlog }}</td>
             </tr>
             <tr>
                 <th>Idc</th>
-                <td>{{ reservationlog.idc }}</td>
+                <td>{{ reservation.idc }}</td>
             </tr>
             <tr>
                 <th>Date_debut</th>
-                <td>{{ reservationlog.dateDebut ? reservationlog.dateDebut|date('Y-m-d H:i:s') : '' }}</td>
+                <td>{{ reservation.dateDebut ? reservation.dateDebut|date('Y-m-d H:i:s') : '' }}</td>
             </tr>
             <tr>
                 <th>Date_fin</th>
-                <td>{{ reservationlog.dateFin ? reservationlog.dateFin|date('Y-m-d H:i:s') : '' }}</td>
+                <td>{{ reservation.dateFin ? reservation.dateFin|date('Y-m-d H:i:s') : '' }}</td>
             </tr>
             <tr>
                 <th>Montant</th>
-                <td>{{ reservationlog.montant }}</td>
+                <td>{{ reservation.montant }}</td>
             </tr>
             <tr>
                 <th>Status</th>
-                <td>{{ reservationlog.status }}</td>
+                <td>{{ reservation.status }}</td>
             </tr>
             <tr>
                 <th>Modalites</th>
-                <td>{{ reservationlog.modalites }}</td>
+                <td>{{ reservation.modalites }}</td>
             </tr>
         </tbody>
     </table>

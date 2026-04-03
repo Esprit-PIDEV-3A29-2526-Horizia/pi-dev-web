@@ -2,11 +2,7 @@
 
 namespace App\Entity;
 
-use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
-
 use App\Repository\LocationRepository;
 
 #[ORM\Entity(repositoryClass: LocationRepository::class)]
@@ -17,6 +13,77 @@ class Location
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
     private ?int $id_location = null;
+
+    #[ORM\Column(type: 'integer', nullable: false)]
+    private ?int $id_vehicule = null;
+
+    #[ORM\Column(type: 'string', nullable: false)]
+    private ?string $client_nom_complet = null;
+
+    #[ORM\Column(type: 'string', nullable: false)]
+    private ?string $client_telephone = null;
+
+    #[ORM\Column(type: 'string', nullable: true)]
+    private ?string $client_cin = null;
+
+    #[ORM\Column(type: 'string', nullable: true)]
+    private ?string $client_adresse = null;
+
+    #[ORM\Column(type: 'string', nullable: true)]
+    private ?string $client_ville = null;
+
+    #[ORM\Column(type: 'string', nullable: true)]
+    private ?string $client_code_postal = null;
+
+    #[ORM\Column(type: 'float', nullable: true)]
+    private ?float $client_latitude = null;
+
+    #[ORM\Column(type: 'float', nullable: true)]
+    private ?float $client_longitude = null;
+
+    #[ORM\Column(type: 'string', nullable: true)]
+    private ?string $client_permis_numero = null;
+
+    #[ORM\Column(type: 'datetime', nullable: false)]
+    private ?\DateTimeInterface $date_debut = null;
+
+    #[ORM\Column(type: 'datetime', nullable: false)]
+    private ?\DateTimeInterface $date_fin_prevue = null;
+
+    #[ORM\Column(type: 'datetime', nullable: true)]
+    private ?\DateTimeInterface $date_fin_reelle = null;
+
+    #[ORM\Column(type: 'integer', nullable: false)]
+    private ?int $kilometrage_debut = null;
+
+    #[ORM\Column(type: 'integer', nullable: true)]
+    private ?int $kilometrage_retour = null;
+
+    #[ORM\Column(type: 'decimal', precision: 10, scale: 2, nullable: false)]
+    private ?float $prix_par_jour = null;
+
+    #[ORM\Column(type: 'decimal', precision: 10, scale: 2, nullable: false)]
+    private ?float $montant_total = null;
+
+    #[ORM\Column(type: 'decimal', precision: 10, scale: 2, nullable: true)]
+    private ?float $avance = null;
+
+    #[ORM\Column(type: 'decimal', precision: 10, scale: 2, nullable: true)]
+    private ?float $reste_a_payer = null;
+
+    #[ORM\Column(type: 'string', nullable: true)]
+    private ?string $statut = null;
+
+    #[ORM\Column(type: 'text', nullable: true)]
+    private ?string $notes = null;
+
+    #[ORM\Column(type: 'datetime', nullable: false)]
+    private ?\DateTimeInterface $created_at = null;
+
+    #[ORM\Column(type: 'datetime', nullable: false)]
+    private ?\DateTimeInterface $updated_at = null;
+
+    // Getters et Setters
 
     public function getId_location(): ?int
     {
@@ -29,9 +96,6 @@ class Location
         return $this;
     }
 
-    #[ORM\Column(type: 'integer', nullable: false)]
-    private ?int $id_vehicule = null;
-
     public function getId_vehicule(): ?int
     {
         return $this->id_vehicule;
@@ -42,9 +106,6 @@ class Location
         $this->id_vehicule = $id_vehicule;
         return $this;
     }
-
-    #[ORM\Column(type: 'string', nullable: false)]
-    private ?string $client_nom_complet = null;
 
     public function getClient_nom_complet(): ?string
     {
@@ -57,9 +118,6 @@ class Location
         return $this;
     }
 
-    #[ORM\Column(type: 'string', nullable: false)]
-    private ?string $client_telephone = null;
-
     public function getClient_telephone(): ?string
     {
         return $this->client_telephone;
@@ -70,9 +128,6 @@ class Location
         $this->client_telephone = $client_telephone;
         return $this;
     }
-
-    #[ORM\Column(type: 'string', nullable: true)]
-    private ?string $client_cin = null;
 
     public function getClient_cin(): ?string
     {
@@ -85,9 +140,6 @@ class Location
         return $this;
     }
 
-    #[ORM\Column(type: 'string', nullable: true)]
-    private ?string $client_adresse = null;
-
     public function getClient_adresse(): ?string
     {
         return $this->client_adresse;
@@ -98,9 +150,6 @@ class Location
         $this->client_adresse = $client_adresse;
         return $this;
     }
-
-    #[ORM\Column(type: 'string', nullable: true)]
-    private ?string $client_ville = null;
 
     public function getClient_ville(): ?string
     {
@@ -113,9 +162,6 @@ class Location
         return $this;
     }
 
-    #[ORM\Column(type: 'string', nullable: true)]
-    private ?string $client_code_postal = null;
-
     public function getClient_code_postal(): ?string
     {
         return $this->client_code_postal;
@@ -126,9 +172,6 @@ class Location
         $this->client_code_postal = $client_code_postal;
         return $this;
     }
-
-    #[ORM\Column(type: 'decimal', nullable: true)]
-    private ?float $client_latitude = null;
 
     public function getClient_latitude(): ?float
     {
@@ -141,9 +184,6 @@ class Location
         return $this;
     }
 
-    #[ORM\Column(type: 'decimal', nullable: true)]
-    private ?float $client_longitude = null;
-
     public function getClient_longitude(): ?float
     {
         return $this->client_longitude;
@@ -154,9 +194,6 @@ class Location
         $this->client_longitude = $client_longitude;
         return $this;
     }
-
-    #[ORM\Column(type: 'string', nullable: true)]
-    private ?string $client_permis_numero = null;
 
     public function getClient_permis_numero(): ?string
     {
@@ -169,9 +206,6 @@ class Location
         return $this;
     }
 
-    #[ORM\Column(type: 'datetime', nullable: false)]
-    private ?\DateTimeInterface $date_debut = null;
-
     public function getDate_debut(): ?\DateTimeInterface
     {
         return $this->date_debut;
@@ -182,9 +216,6 @@ class Location
         $this->date_debut = $date_debut;
         return $this;
     }
-
-    #[ORM\Column(type: 'datetime', nullable: false)]
-    private ?\DateTimeInterface $date_fin_prevue = null;
 
     public function getDate_fin_prevue(): ?\DateTimeInterface
     {
@@ -197,9 +228,6 @@ class Location
         return $this;
     }
 
-    #[ORM\Column(type: 'datetime', nullable: true)]
-    private ?\DateTimeInterface $date_fin_reelle = null;
-
     public function getDate_fin_reelle(): ?\DateTimeInterface
     {
         return $this->date_fin_reelle;
@@ -210,9 +238,6 @@ class Location
         $this->date_fin_reelle = $date_fin_reelle;
         return $this;
     }
-
-    #[ORM\Column(type: 'integer', nullable: false)]
-    private ?int $kilometrage_debut = null;
 
     public function getKilometrage_debut(): ?int
     {
@@ -225,9 +250,6 @@ class Location
         return $this;
     }
 
-    #[ORM\Column(type: 'integer', nullable: true)]
-    private ?int $kilometrage_retour = null;
-
     public function getKilometrage_retour(): ?int
     {
         return $this->kilometrage_retour;
@@ -238,9 +260,6 @@ class Location
         $this->kilometrage_retour = $kilometrage_retour;
         return $this;
     }
-
-    #[ORM\Column(type: 'decimal', nullable: false)]
-    private ?float $prix_par_jour = null;
 
     public function getPrix_par_jour(): ?float
     {
@@ -253,9 +272,6 @@ class Location
         return $this;
     }
 
-    #[ORM\Column(type: 'decimal', nullable: false)]
-    private ?float $montant_total = null;
-
     public function getMontant_total(): ?float
     {
         return $this->montant_total;
@@ -266,9 +282,6 @@ class Location
         $this->montant_total = $montant_total;
         return $this;
     }
-
-    #[ORM\Column(type: 'decimal', nullable: true)]
-    private ?float $avance = null;
 
     public function getAvance(): ?float
     {
@@ -281,9 +294,6 @@ class Location
         return $this;
     }
 
-    #[ORM\Column(type: 'decimal', nullable: true)]
-    private ?float $reste_a_payer = null;
-
     public function getReste_a_payer(): ?float
     {
         return $this->reste_a_payer;
@@ -294,9 +304,6 @@ class Location
         $this->reste_a_payer = $reste_a_payer;
         return $this;
     }
-
-    #[ORM\Column(type: 'string', nullable: true)]
-    private ?string $statut = null;
 
     public function getStatut(): ?string
     {
@@ -309,9 +316,6 @@ class Location
         return $this;
     }
 
-    #[ORM\Column(type: 'text', nullable: true)]
-    private ?string $notes = null;
-
     public function getNotes(): ?string
     {
         return $this->notes;
@@ -322,9 +326,6 @@ class Location
         $this->notes = $notes;
         return $this;
     }
-
-    #[ORM\Column(type: 'datetime', nullable: false)]
-    private ?\DateTimeInterface $created_at = null;
 
     public function getCreated_at(): ?\DateTimeInterface
     {
@@ -337,9 +338,6 @@ class Location
         return $this;
     }
 
-    #[ORM\Column(type: 'datetime', nullable: false)]
-    private ?\DateTimeInterface $updated_at = null;
-
     public function getUpdated_at(): ?\DateTimeInterface
     {
         return $this->updated_at;
@@ -350,250 +348,5 @@ class Location
         $this->updated_at = $updated_at;
         return $this;
     }
-
-    public function getIdLocation(): ?int
-    {
-        return $this->id_location;
-    }
-
-    public function getIdVehicule(): ?int
-    {
-        return $this->id_vehicule;
-    }
-
-    public function setIdVehicule(int $id_vehicule): static
-    {
-        $this->id_vehicule = $id_vehicule;
-
-        return $this;
-    }
-
-    public function getClientNomComplet(): ?string
-    {
-        return $this->client_nom_complet;
-    }
-
-    public function setClientNomComplet(string $client_nom_complet): static
-    {
-        $this->client_nom_complet = $client_nom_complet;
-
-        return $this;
-    }
-
-    public function getClientTelephone(): ?string
-    {
-        return $this->client_telephone;
-    }
-
-    public function setClientTelephone(string $client_telephone): static
-    {
-        $this->client_telephone = $client_telephone;
-
-        return $this;
-    }
-
-    public function getClientCin(): ?string
-    {
-        return $this->client_cin;
-    }
-
-    public function setClientCin(?string $client_cin): static
-    {
-        $this->client_cin = $client_cin;
-
-        return $this;
-    }
-
-    public function getClientAdresse(): ?string
-    {
-        return $this->client_adresse;
-    }
-
-    public function setClientAdresse(?string $client_adresse): static
-    {
-        $this->client_adresse = $client_adresse;
-
-        return $this;
-    }
-
-    public function getClientVille(): ?string
-    {
-        return $this->client_ville;
-    }
-
-    public function setClientVille(?string $client_ville): static
-    {
-        $this->client_ville = $client_ville;
-
-        return $this;
-    }
-
-    public function getClientCodePostal(): ?string
-    {
-        return $this->client_code_postal;
-    }
-
-    public function setClientCodePostal(?string $client_code_postal): static
-    {
-        $this->client_code_postal = $client_code_postal;
-
-        return $this;
-    }
-
-    public function getClientLatitude(): ?string
-    {
-        return $this->client_latitude;
-    }
-
-    public function setClientLatitude(?string $client_latitude): static
-    {
-        $this->client_latitude = $client_latitude;
-
-        return $this;
-    }
-
-    public function getClientLongitude(): ?string
-    {
-        return $this->client_longitude;
-    }
-
-    public function setClientLongitude(?string $client_longitude): static
-    {
-        $this->client_longitude = $client_longitude;
-
-        return $this;
-    }
-
-    public function getClientPermisNumero(): ?string
-    {
-        return $this->client_permis_numero;
-    }
-
-    public function setClientPermisNumero(?string $client_permis_numero): static
-    {
-        $this->client_permis_numero = $client_permis_numero;
-
-        return $this;
-    }
-
-    public function getDateDebut(): ?\DateTime
-    {
-        return $this->date_debut;
-    }
-
-    public function setDateDebut(\DateTime $date_debut): static
-    {
-        $this->date_debut = $date_debut;
-
-        return $this;
-    }
-
-    public function getDateFinPrevue(): ?\DateTime
-    {
-        return $this->date_fin_prevue;
-    }
-
-    public function setDateFinPrevue(\DateTime $date_fin_prevue): static
-    {
-        $this->date_fin_prevue = $date_fin_prevue;
-
-        return $this;
-    }
-
-    public function getDateFinReelle(): ?\DateTime
-    {
-        return $this->date_fin_reelle;
-    }
-
-    public function setDateFinReelle(?\DateTime $date_fin_reelle): static
-    {
-        $this->date_fin_reelle = $date_fin_reelle;
-
-        return $this;
-    }
-
-    public function getKilometrageDebut(): ?int
-    {
-        return $this->kilometrage_debut;
-    }
-
-    public function setKilometrageDebut(int $kilometrage_debut): static
-    {
-        $this->kilometrage_debut = $kilometrage_debut;
-
-        return $this;
-    }
-
-    public function getKilometrageRetour(): ?int
-    {
-        return $this->kilometrage_retour;
-    }
-
-    public function setKilometrageRetour(?int $kilometrage_retour): static
-    {
-        $this->kilometrage_retour = $kilometrage_retour;
-
-        return $this;
-    }
-
-    public function getPrixParJour(): ?string
-    {
-        return $this->prix_par_jour;
-    }
-
-    public function setPrixParJour(string $prix_par_jour): static
-    {
-        $this->prix_par_jour = $prix_par_jour;
-
-        return $this;
-    }
-
-    public function getMontantTotal(): ?string
-    {
-        return $this->montant_total;
-    }
-
-    public function setMontantTotal(string $montant_total): static
-    {
-        $this->montant_total = $montant_total;
-
-        return $this;
-    }
-
-    public function getResteAPayer(): ?string
-    {
-        return $this->reste_a_payer;
-    }
-
-    public function setResteAPayer(?string $reste_a_payer): static
-    {
-        $this->reste_a_payer = $reste_a_payer;
-
-        return $this;
-    }
-
-    public function getCreatedAt(): ?\DateTime
-    {
-        return $this->created_at;
-    }
-
-    public function setCreatedAt(\DateTime $created_at): static
-    {
-        $this->created_at = $created_at;
-
-        return $this;
-    }
-
-    public function getUpdatedAt(): ?\DateTime
-    {
-        return $this->updated_at;
-    }
-
-    public function setUpdatedAt(\DateTime $updated_at): static
-    {
-        $this->updated_at = $updated_at;
-
-        return $this;
-    }
-
 }
+

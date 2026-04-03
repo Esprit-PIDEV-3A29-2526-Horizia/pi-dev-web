@@ -70,33 +70,4 @@ class Modele
         return $this;
     }
 
-    public function getIdModele(): ?int
-    {
-        return $this->id_modele;
-    }
-
-    public function getIdMarque(): ?int
-    {
-        return $this->id_marque;
-    }
-
-    public function setIdMarque(int $id_marque): static
-    {
-        $this->id_marque = $id_marque;
-
-        return $this;
-    }
-
-    public function getNomModele(): ?string
-    {
-        return $this->nom_modele;
-    }
-
-    public function setNomModele(string $nom_modele): static
-    {
-        $this->nom_modele = $nom_modele;
-
-        return $this;
-    }
-
 }

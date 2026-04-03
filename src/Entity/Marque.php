@@ -56,21 +56,4 @@ class Marque
         return $this;
     }
 
-    public function getIdMarque(): ?int
-    {
-        return $this->id_marque;
-    }
-
-    public function getNomMarque(): ?string
-    {
-        return $this->nom_marque;
-    }
-
-    public function setNomMarque(string $nom_marque): static
-    {
-        $this->nom_marque = $nom_marque;
-
-        return $this;
-    }
-
 }

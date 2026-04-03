@@ -2,10 +2,7 @@
 
 namespace App\Entity;
 
-use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 
 use App\Repository\VehiculeRepository;
 
@@ -127,7 +124,7 @@ class Vehicule
         return $this;
     }
 
-    #[ORM\Column(type: 'decimal', nullable: false)]
+    #[ORM\Column(type: 'decimal', precision: 10, scale: 2, nullable: false)]
     private ?float $prix_par_jour = null;
 
     public function getPrix_par_jour(): ?float
@@ -182,58 +179,5 @@ class Vehicule
         $this->updated_at = $updated_at;
         return $this;
     }
-
-    public function getIdVehicule(): ?int
-    {
-        return $this->id_vehicule;
-    }
-
-    public function getIdModele(): ?int
-    {
-        return $this->id_modele;
-    }
-
-    public function setIdModele(int $id_modele): static
-    {
-        $this->id_modele = $id_modele;
-
-        return $this;
-    }
-
-    public function getPrixParJour(): ?string
-    {
-        return $this->prix_par_jour;
-    }
-
-    public function setPrixParJour(string $prix_par_jour): static
-    {
-        $this->prix_par_jour = $prix_par_jour;
-
-        return $this;
-    }
-
-    public function getCreatedAt(): ?\DateTime
-    {
-        return $this->created_at;
-    }
-
-    public function setCreatedAt(\DateTime $created_at): static
-    {
-        $this->created_at = $created_at;
-
-        return $this;
-    }
-
-    public function getUpdatedAt(): ?\DateTime
-    {
-        return $this->updated_at;
-    }
-
-    public function setUpdatedAt(\DateTime $updated_at): static
-    {
-        $this->updated_at = $updated_at;
-
-        return $this;
-    }
-
 }
+

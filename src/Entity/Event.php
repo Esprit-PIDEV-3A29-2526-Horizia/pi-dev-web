@@ -2,11 +2,7 @@
 
 namespace App\Entity;
 
-use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
-
 use App\Repository\EventRepository;
 
 #[ORM\Entity(repositoryClass: EventRepository::class)]
@@ -113,15 +109,15 @@ class Event
         return $this;
     }
 
-    #[ORM\Column(type: 'float', nullable: false)]
-    private ?float $prix = null;
+    #[ORM\Column(type: 'decimal', precision: 10, scale: 2, nullable: false)]
+    private $prix;
 
-    public function getPrix(): ?float
+    public function getPrix()
     {
         return $this->prix;
     }
 
-    public function setPrix(float $prix): self
+    public function setPrix($prix): self
     {
         $this->prix = $prix;
         return $this;
@@ -210,94 +206,5 @@ class Event
         $this->created_at = $created_at;
         return $this;
     }
-
-    public function getIdEvent(): ?int
-    {
-        return $this->id_event;
-    }
-
-    public function getDateDebut(): ?\DateTime
-    {
-        return $this->date_debut;
-    }
-
-    public function setDateDebut(\DateTime $date_debut): static
-    {
-        $this->date_debut = $date_debut;
-
-        return $this;
-    }
-
-    public function getDateFin(): ?\DateTime
-    {
-        return $this->date_fin;
-    }
-
-    public function setDateFin(\DateTime $date_fin): static
-    {
-        $this->date_fin = $date_fin;
-
-        return $this;
-    }
-
-    public function getCapaciteMax(): ?int
-    {
-        return $this->capacite_max;
-    }
-
-    public function setCapaciteMax(int $capacite_max): static
-    {
-        $this->capacite_max = $capacite_max;
-
-        return $this;
-    }
-
-    public function getPlacesRestantes(): ?int
-    {
-        return $this->places_restantes;
-    }
-
-    public function setPlacesRestantes(int $places_restantes): static
-    {
-        $this->places_restantes = $places_restantes;
-
-        return $this;
-    }
-
-    public function getImageUrl(): ?string
-    {
-        return $this->image_url;
-    }
-
-    public function setImageUrl(string $image_url): static
-    {
-        $this->image_url = $image_url;
-
-        return $this;
-    }
-
-    public function getIdCreateur(): ?int
-    {
-        return $this->id_createur;
-    }
-
-    public function setIdCreateur(int $id_createur): static
-    {
-        $this->id_createur = $id_createur;
-
-        return $this;
-    }
-
-    public function getCreatedAt(): ?\DateTime
-    {
-        return $this->created_at;
-    }
-
-    public function setCreatedAt(\DateTime $created_at): static
-    {
-        $this->created_at = $created_at;
-
-        return $this;
-    }
-
 }
+

@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\LogementRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 
@@ -40,6 +42,8 @@ class Logement
     private ?int $capacite = null;
 
     #[ORM\Column(type: 'text', nullable: true)]
+        #[Assert\NotBlank(message: "Les équipements est obligatoire")]
+
     #[Assert\Length(min: 3, minMessage: "Les équipements doivent décrire au moins {{ limit }} caractères")]
     #[Assert\Regex(pattern: "/^[A-Z]/", message: "La première lettre des équipements doit être une majuscule")]
     private ?string $equipement = null;
@@ -50,14 +54,17 @@ class Logement
     private ?float $tarif_nuit = null;
 
     #[ORM\Column(type: 'boolean', nullable: false, options: ['default' => true])]
-#[Assert\IsTrue(message: "Le logement doit être disponible", groups: ["create"])]
-private ?bool $disponibilite = true;  
+    #[Assert\IsTrue(message: "Le logement doit être disponible", groups: ["create"])]
+    private ?bool $disponibilite = true;
+
+    #[ORM\OneToMany(targetEntity: Reservationlog::class, mappedBy: 'logement')]
+    private Collection $reservationlogs;
+
     public function __construct()
     {
         $this->disponibilite = true;
+        $this->reservationlogs = new ArrayCollection();
     }
-
-    
 
     public function getId(): ?int
     {
@@ -149,6 +156,33 @@ private ?bool $disponibilite = true;
     public function setDisponibilite(bool $disponibilite): self
     {
         $this->disponibilite = $disponibilite;
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Reservationlog>
+     */
+    public function getReservationlogs(): Collection
+    {
+        return $this->reservationlogs;
+    }
+
+    public function addReservationlog(Reservationlog $reservationlog): self
+    {
+        if (!$this->reservationlogs->contains($reservationlog)) {
+            $this->reservationlogs->add($reservationlog);
+            $reservationlog->setLogement($this);
+        }
+        return $this;
+    }
+
+    public function removeReservationlog(Reservationlog $reservationlog): self
+    {
+        if ($this->reservationlogs->removeElement($reservationlog)) {
+            if ($reservationlog->getLogement() === $this) {
+                $reservationlog->setLogement(null);
+            }
+        }
         return $this;
     }
 }

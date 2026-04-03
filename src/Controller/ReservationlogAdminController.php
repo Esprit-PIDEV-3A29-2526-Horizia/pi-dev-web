@@ -3,8 +3,6 @@
 namespace App\Controller;
 
 use App\Entity\Reservationlog;
-use App\Entity\Logement;
-use App\Entity\User;
 use App\Form\ReservationlogType;
 use App\Repository\ReservationlogRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -13,7 +11,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
-#[Route('/admin/reservationlog_admin', name: 'admin_reservation_')]
+#[Route('/admin/reservationlog', name: 'admin_reservation_')]
 class ReservationlogAdminController extends AbstractController
 {
     #[Route('/', name: 'index', methods: ['GET'])]
@@ -23,8 +21,8 @@ class ReservationlogAdminController extends AbstractController
         $sort = $request->query->get('sort');
 
         $qb = $reservationlogRepository->createQueryBuilder('r')
-            ->leftJoin(Logement::class, 'l', 'WITH', 'l.id = r.idlog')
-            ->leftJoin(User::class, 'u', 'WITH', 'u.id = r.idc')
+            ->leftJoin('r.logement', 'l')
+            ->leftJoin('r.user', 'u')
             ->addSelect('l', 'u');
 
         if ($status && $status !== '') {
@@ -42,10 +40,10 @@ class ReservationlogAdminController extends AbstractController
         $reservations = $qb->getQuery()->getResult();
         $totalReservations = $reservationlogRepository->count([]);
 
-        return $this->render('admin/reservationlog_admin/index.html.twig', [
-            'reservationlogs' => $reservations,
-            'totalReservations' => $totalReservations,
-        ]);
+       return $this->render('admin/reservationlog_admin/index.html.twig', [
+    'reservationlogs' => $reservations,   // ← renommer la clé
+    'totalReservations' => $totalReservations,
+]);
     }
 
     #[Route('/new', name: 'new', methods: ['GET', 'POST'])]
@@ -63,16 +61,16 @@ class ReservationlogAdminController extends AbstractController
         }
 
         return $this->render('admin/reservationlog_admin/new.html.twig', [
-            'reservationlog' => $reservationlog,
-            'form' => $form,
+            'reservation' => $reservationlog,
+            'form' => $form->createView(),
         ]);
     }
 
     #[Route('/{idreslog}', name: 'show', methods: ['GET'])]
     public function show(Reservationlog $reservationlog): Response
     {
-        return $this->render('admin/reservationlog_admin/show.html.twig', [
-            'reservationlog' => $reservationlog,
+        return $this->render('admin/reservation/show.html.twig', [
+            'reservation' => $reservationlog,
         ]);
     }
 
@@ -89,8 +87,8 @@ class ReservationlogAdminController extends AbstractController
         }
 
         return $this->render('admin/reservationlog_admin/edit.html.twig', [
-            'reservationlog' => $reservationlog,
-            'form' => $form,
+            'reservation' => $reservationlog,
+            'form' => $form->createView(),
         ]);
     }
 
@@ -105,4 +103,3 @@ class ReservationlogAdminController extends AbstractController
         return $this->redirectToRoute('admin_reservation_index');
     }
 }
-
