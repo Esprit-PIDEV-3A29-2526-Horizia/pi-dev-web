@@ -42,5 +42,46 @@ class Modele
      */
     private $image;
 
+    public function getIdModele(): ?int
+    {
+        return $this->idModele;
+    }
+
+    public function getIdMarque(): ?int
+    {
+        return $this->idMarque;
+    }
+
+    public function setIdMarque(int $idMarque): static
+    {
+        $this->idMarque = $idMarque;
+
+        return $this;
+    }
+
+    public function getNomModele(): ?string
+    {
+        return $this->nomModele;
+    }
+
+    public function setNomModele(string $nomModele): static
+    {
+        $this->nomModele = $nomModele;
+
+        return $this;
+    }
+
+    public function getImage(): ?string
+    {
+        return $this->image;
+    }
+
+    public function setImage(?string $image): static
+    {
+        $this->image = $image;
+
+        return $this;
+    }
+
 
 }

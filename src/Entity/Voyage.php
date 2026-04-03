@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use App\Entity\Categorie;
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;

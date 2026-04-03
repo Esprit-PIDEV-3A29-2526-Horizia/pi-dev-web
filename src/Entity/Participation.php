@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -55,6 +56,71 @@ class Participation
      * @ORM\Column(name="date_participation", type="datetime", nullable=false, options={"default"="CURRENT_TIMESTAMP"})
      */
     private $dateParticipation = 'CURRENT_TIMESTAMP';
+
+    public function getIdParticipation(): ?int
+    {
+        return $this->idParticipation;
+    }
+
+    public function getIdEvent(): ?int
+    {
+        return $this->idEvent;
+    }
+
+    public function setIdEvent(int $idEvent): static
+    {
+        $this->idEvent = $idEvent;
+
+        return $this;
+    }
+
+    public function getNombrePlaces(): ?int
+    {
+        return $this->nombrePlaces;
+    }
+
+    public function setNombrePlaces(int $nombrePlaces): static
+    {
+        $this->nombrePlaces = $nombrePlaces;
+
+        return $this;
+    }
+
+    public function getMontantTotal(): ?float
+    {
+        return $this->montantTotal;
+    }
+
+    public function setMontantTotal(float $montantTotal): static
+    {
+        $this->montantTotal = $montantTotal;
+
+        return $this;
+    }
+
+    public function getStatut(): ?string
+    {
+        return $this->statut;
+    }
+
+    public function setStatut(string $statut): static
+    {
+        $this->statut = $statut;
+
+        return $this;
+    }
+
+    public function getDateParticipation(): ?\DateTimeInterface
+    {
+        return $this->dateParticipation;
+    }
+
+    public function setDateParticipation(\DateTimeInterface $dateParticipation): static
+    {
+        $this->dateParticipation = $dateParticipation;
+
+        return $this;
+    }
 
 
 }

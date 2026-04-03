@@ -16,14 +16,23 @@ class ReservationController extends AbstractController
     #[Route('/', name: 'app_reservation_index', methods: ['GET'])]
     public function index(Request $request, EntityManagerInterface $entityManager): Response
     {
-        $search = $request->query->get('search');
-        $sort = $request->query->get('sort');
+        $search = trim((string) $request->query->get('search', ''));
+        $sort = (string) $request->query->get('sort', '');
 
-        $qb = $entityManager->getRepository(Reservation::class)->createQueryBuilder('r');
+        $qb = $entityManager->createQueryBuilder()
+            ->select('r', 'v', 'u')
+            ->from(Reservation::class, 'r')
+            ->leftJoin('r.voyage', 'v')
+            ->leftJoin('r.user', 'u');
 
-        if ($search) {
-            $qb->andWhere('r.statut LIKE :search')
-                ->setParameter('search', '%' . $search . '%');
+        if ($search !== '') {
+            $qb->andWhere(
+                'LOWER(r.statut) LIKE :search
+                 OR LOWER(v.titre) LIKE :search
+                 OR LOWER(u.nom) LIKE :search
+                 OR LOWER(u.prenom) LIKE :search'
+            )
+            ->setParameter('search', '%' . mb_strtolower($search) . '%');
         }
 
         switch ($sort) {
@@ -32,6 +41,15 @@ class ReservationController extends AbstractController
                 break;
             case 'date_desc':
                 $qb->orderBy('r.dateReservation', 'DESC');
+                break;
+            case 'statut_asc':
+                $qb->orderBy('r.statut', 'ASC');
+                break;
+            case 'nbr_asc':
+                $qb->orderBy('r.nbrPersonnes', 'ASC');
+                break;
+            case 'nbr_desc':
+                $qb->orderBy('r.nbrPersonnes', 'DESC');
                 break;
             default:
                 $qb->orderBy('r.id', 'DESC');
@@ -59,7 +77,6 @@ class ReservationController extends AbstractController
             $entityManager->flush();
 
             $this->addFlash('success', 'Réservation ajoutée avec succès.');
-
             return $this->redirectToRoute('app_reservation_index');
         }
 
@@ -84,7 +101,6 @@ class ReservationController extends AbstractController
             $entityManager->flush();
 
             $this->addFlash('success', 'Réservation modifiée avec succès.');
-
             return $this->redirectToRoute('app_reservation_index');
         }
 
@@ -107,14 +123,21 @@ class ReservationController extends AbstractController
         $entityManager->flush();
 
         $this->addFlash('success', 'Réservation supprimée avec succès.');
-
         return $this->redirectToRoute('app_reservation_index');
     }
 
     #[Route('/{id}', name: 'app_reservation_show', methods: ['GET'], requirements: ['id' => '\d+'])]
     public function show(int $id, EntityManagerInterface $entityManager): Response
     {
-        $reservation = $entityManager->getRepository(Reservation::class)->find($id);
+        $reservation = $entityManager->createQueryBuilder()
+            ->select('r', 'v', 'u')
+            ->from(Reservation::class, 'r')
+            ->leftJoin('r.voyage', 'v')
+            ->leftJoin('r.user', 'u')
+            ->where('r.id = :id')
+            ->setParameter('id', $id)
+            ->getQuery()
+            ->getOneOrNullResult();
 
         if (!$reservation) {
             throw $this->createNotFoundException('Réservation introuvable.');

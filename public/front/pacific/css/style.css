@@ -10084,4 +10084,172 @@ textarea.form-control {
     stroke-dashoffset: -35px; }
   100% {
     stroke-dasharray: 89, 200;
-    stroke-dashoffset: -136px; } }
+    stroke-dashoffset: -136px; } 
+  }
+/* PAGE RESERVATION */
+.reservation-page {
+  padding-top: 140px;
+  padding-bottom: 80px;
+  background: #f8f9fa;
+}
+
+.reservation-box,
+.reservation-summary {
+  border-radius: 12px;
+}
+
+.reservation-box h2,
+.reservation-summary h3 {
+  color: #111111;
+  font-weight: 700;
+}
+
+.form-group label {
+  font-weight: 600;
+  color: #444;
+}
+
+.form-control {
+  border-radius: 8px !important;
+  min-height: 48px;
+  box-shadow: none !important;
+}
+
+.form-control:focus {
+  border-color: #23779C;
+  box-shadow: 0 0 0 0.2rem rgba(35, 119, 156, 0.15) !important;
+}
+
+.alert {
+  border-radius: 8px;
+}
+
+.btn-outline-secondary {
+  border-radius: 8px !important;
+}
+
+.reservation-summary p {
+  color: #666;
+  line-height: 1.7;
+}
+
+.reservation-summary strong {
+  color: #111;
+}
+
+/* Empêche toute image parasite énorme dans la page */
+.reservation-page img,
+.reservation-box img,
+.reservation-summary img {
+  max-width: 100% !important;
+  height: auto !important;
+  display: block;
+}
+
+/* Logo navbar uniquement */
+.navbar-brand.navbar-logo img {
+  height: 55px !important;
+  width: auto !important;
+  max-width: 180px !important;
+  object-fit: contain;
+}
+
+@media (max-width: 991.98px) {
+  .reservation-page {
+    padding-top: 110px;
+  }
+}
+/* =========================
+   NAVBAR LOGO
+========================= */
+.ftco-navbar-light .navbar-brand.navbar-logo {
+  display: flex;
+  align-items: center;
+  padding: 0;
+  margin: 0;
+  line-height: 1;
+}
+
+.ftco-navbar-light .navbar-brand.navbar-logo img {
+  height: 56px !important;
+  width: auto !important;
+  max-width: 180px !important;
+  object-fit: contain;
+  display: block;
+}
+
+.ftco_navbar.scrolled .navbar-brand.navbar-logo img {
+  height: 50px !important;
+}
+
+/* =========================
+   PAGE RESERVATION
+========================= */
+.reservation-page {
+  padding-top: 140px;
+  padding-bottom: 80px;
+  background: #f8f9fa;
+}
+
+.reservation-box,
+.reservation-summary {
+  border-radius: 12px;
+}
+
+.reservation-box h2,
+.reservation-summary h3 {
+  color: #111111;
+  font-weight: 700;
+}
+
+.form-group label {
+  font-weight: 600;
+  color: #444;
+}
+
+.form-control {
+  border-radius: 8px !important;
+  min-height: 48px;
+  box-shadow: none !important;
+}
+
+.form-control:focus {
+  border-color: #23779C;
+  box-shadow: 0 0 0 0.2rem rgba(35, 119, 156, 0.15) !important;
+}
+
+.alert {
+  border-radius: 8px;
+}
+
+.btn-outline-secondary {
+  border-radius: 8px !important;
+}
+
+.reservation-summary p {
+  color: #666;
+  line-height: 1.7;
+}
+
+.reservation-summary strong {
+  color: #111;
+}
+
+.reservation-page img,
+.reservation-box img,
+.reservation-summary img {
+  max-width: 100% !important;
+  height: auto !important;
+  display: block;
+}
+
+@media (max-width: 991.98px) {
+  .reservation-page {
+    padding-top: 110px;
+  }
+
+  .ftco-navbar-light .navbar-brand.navbar-logo img {
+    height: 46px !important;
+    max-width: 150px !important;
+  }
+}

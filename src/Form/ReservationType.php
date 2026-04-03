@@ -3,6 +3,9 @@
 namespace App\Form;
 
 use App\Entity\Reservation;
+use App\Entity\User;
+use App\Entity\Voyage;
+use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\DateTimeType;
@@ -16,26 +19,47 @@ class ReservationType extends AbstractType
     {
         $builder
             ->add('dateReservation', DateTimeType::class, [
-                'label' => 'Date de réservation',
+                'label' => 'Date réservation',
                 'widget' => 'single_text',
+                'required' => true,
+                'attr' => ['class' => 'form-control']
             ])
             ->add('statut', ChoiceType::class, [
                 'label' => 'Statut',
                 'choices' => [
-                    'En attente' => 'EN_ATTENTE',
-                    'Confirmée' => 'CONFIRMEE',
-                    'Annulée' => 'ANNULEE',
+                    'EN_ATTENTE' => 'EN_ATTENTE',
+                    'CONFIRMEE' => 'CONFIRMEE',
+                    'ANNULEE' => 'ANNULEE',
                 ],
+                'attr' => ['class' => 'form-select']
             ])
-            ->add('idVoyage', IntegerType::class, [
-                'label' => 'ID Voyage',
+            ->add('voyage', EntityType::class, [
+                'class' => Voyage::class,
+                'choice_label' => 'titre',
+                'label' => 'Voyage',
+                'placeholder' => 'Choisir un voyage',
+                'attr' => ['class' => 'form-select']
             ])
-            ->add('idUser', IntegerType::class, [
-                'label' => 'ID User',
+            ->add('user', EntityType::class, [
+                'class' => User::class,
+                'choice_label' => function (User $user) {
+                    $nom = method_exists($user, 'getNom') ? $user->getNom() : '';
+                    $prenom = method_exists($user, 'getPrenom') ? $user->getPrenom() : '';
+                    $fullName = trim($nom . ' ' . $prenom);
+
+                    return $fullName !== '' ? $fullName : ('Utilisateur #' . $user->getId());
+                },
+                'label' => 'Client',
+                'placeholder' => 'Choisir un utilisateur',
                 'required' => false,
+                'attr' => ['class' => 'form-select']
             ])
             ->add('nbrPersonnes', IntegerType::class, [
                 'label' => 'Nombre de personnes',
+                'attr' => [
+                    'class' => 'form-control',
+                    'min' => 1
+                ]
             ]);
     }
 

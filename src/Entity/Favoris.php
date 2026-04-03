@@ -30,5 +30,15 @@ class Favoris
      */
     private $publicationId;
 
+    public function getUtilisateurId(): ?int
+    {
+        return $this->utilisateurId;
+    }
+
+    public function getPublicationId(): ?int
+    {
+        return $this->publicationId;
+    }
+
 
 }

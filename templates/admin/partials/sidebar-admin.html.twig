@@ -5,43 +5,45 @@
 
     <ul class="sidebar-menu">
         <li>
-            <a class="sidebar-link active" href="{{ path('app_admin') }}">
+            <a class="sidebar-link {{ app.request.attributes.get('_route') == 'app_admin' ? 'active' : '' }}" href="{{ path('app_admin') }}">
                 <i class="bi bi-grid-fill"></i>
                 <span>Dashboard</span>
             </a>
         </li>
+
         <li>
-            <a class="sidebar-link" href="{{ path('app_user_index') }}">
+            <a class="sidebar-link {{ app.request.attributes.get('_route') starts with 'app_user_' ? 'active' : '' }}" href="{{ path('app_user_index') }}">
                 <i class="bi bi-person"></i>
                 <span>Gestion Profile</span>
             </a>
         </li>
-    
+
         <li>
-            <a class="sidebar-link" href="{{ path('app_categorie_index') }}">
+            <a class="sidebar-link {{ app.request.attributes.get('_route') starts with 'app_categorie_' ? 'active' : '' }}" href="{{ path('app_categorie_index') }}">
                 <i class="bi bi-tags-fill"></i>
                 <span>Gestion Catégories</span>
             </a>
         </li>
 
         <li>
-            <a class="sidebar-link" href="{{ path('app_voyage_index') }}">
+            <a class="sidebar-link {{ app.request.attributes.get('_route') starts with 'app_voyage_' ? 'active' : '' }}" href="{{ path('app_voyage_index') }}">
                 <i class="bi bi-airplane-fill"></i>
                 <span>Gestion Voyages</span>
             </a>
         </li>
+
         <li>
-            <a class="sidebar-link" href="{{ path('app_reservation_index') }}">
+            <a class="sidebar-link {{ app.request.attributes.get('_route') starts with 'app_reservation_' ? 'active' : '' }}" href="{{ path('app_reservation_index') }}">
                 <i class="bi bi-calendar-check-fill"></i>
                 <span>Gestion Réservations</span>
             </a>
         </li>
+
         <li>
-            <a class="sidebar-link" href="{{ path('app_calendar') }}">
+            <a class="sidebar-link {{ app.request.attributes.get('_route') == 'app_calendar' ? 'active' : '' }}" href="{{ path('app_calendar') }}">
                 <i class="bi bi-calendar3"></i>
                 <span>Calendrier</span>
             </a>
         </li>
-        
     </ul>
 </div>

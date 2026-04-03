@@ -3,160 +3,169 @@
 {% block title %}Liste des réservations{% endblock %}
 
 {% block admin_content %}
-    <div class="container-fluid">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1>Liste des réservations</h1>
-            <a href="{{ path('app_reservation_new') }}" class="btn btn-horozia-secondary">
-                <i class="bi bi-plus-circle"></i> Ajouter une réservation
-            </a>
-        </div>
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Liste des réservations</h1>
+        <a href="{{ path('app_reservation_new') }}" class="btn btn-horozia-secondary">
+            <i class="bi bi-plus-circle"></i> Ajouter une réservation
+        </a>
+    </div>
 
-       {% for message in app.flashes('success') %}
-            <div class="alert alert-success alert-horozia alert-dismissible fade show d-flex align-items-center gap-2" role="alert">
-                <i class="bi bi-check-circle-fill"></i>
-                <span>{{ message }}</span>
-                <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
-             </div>
-        {% endfor %}
-
-        {% for message in app.flashes('error') %}
-            <div class="alert alert-danger alert-horozia alert-dismissible fade show d-flex align-items-center gap-2" role="alert">
-                <i class="bi bi-exclamation-triangle-fill"></i>
-                <span>{{ message }}</span>
-                <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        {% endfor %}
-
-        {% for message in app.flashes('warning') %}
-            <div class="alert alert-warning alert-horozia alert-dismissible fade show d-flex align-items-center gap-2" role="alert">
-                <i class="bi bi-exclamation-circle-fill"></i>
-                <span>{{ message }}</span>
-                <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        {% endfor %}
-
-        <div class="card card-horozia">
-            <div class="card-body">
-                <div class="row g-3 align-items-end">
-                    <div class="col-md-6">
-                        <label for="searchInput" class="form-label">Recherche d'une reservation</label>
-                        <input
-                            type="text"
-                            id="searchInput"
-                            class="form-control"
-                            placeholder="Rechercher par statut, ID voyage ou ID user"
-                        >
-                    </div>
-
-                    <div class="col-md-4">
-                        <label for="sortSelect" class="form-label">Filtrer par :</label>
-                        <select id="sortSelect" class="form-select">
-                            <option value="">Voulez-vous choisir ?</option>
-                            <option value="date_desc">Date réservation récente</option>
-                            <option value="date_asc">Date réservation ancienne</option>
-                            <option value="statut_asc">Statut A-Z</option>
-                            <option value="nbr_asc">Nb personnes croissant</option>
-                            <option value="nbr_desc">Nb personnes décroissant</option>
-                        </select>
-                    </div>
-
-                    <div class="col-md-2">
-                        <button type="button" id="resetBtn" class="btn btn-secondary w-100">
-                            Réinitialiser
-                        </button>
-                    </div>
+    <div class="card card-horozia mb-4">
+        <div class="card-body">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-6">
+                    <label for="searchInput" class="form-label">Recherche d'une réservation</label>
+                    <input
+                        type="text"
+                        id="searchInput"
+                        class="form-control"
+                        placeholder="Rechercher par statut, voyage ou client"
+                        value="{{ search }}"
+                    >
                 </div>
-            </div>
-        </div>
 
-        <div class="card shadow-sm border-0">
-            <div class="card-body">
-                <table id="reservationTable" class="table table-bordered table-hover align-middle">
-                    <thead class="table-horozia">
-                        <tr>
-                            <th>ID</th>
-                            <th>Date réservation</th>
-                            <th>Statut</th>
-                            <th>Voyage</th>
-                            <th>Client</th>
-                            <th>Nombre personnes</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    {% for reservation in reservations %}
-                        <tr
-                            data-statut="{{ reservation.statut ? reservation.statut|lower : '' }}"
-                            data-idvoyage="{{ reservation.idVoyage }}"
-                            data-voyage="{{ reservation.idVoyage and voyageTitles[reservation.idVoyage] is defined ? voyageTitles[reservation.idVoyage]|lower : '' }}"
-                            data-iduser="{{ reservation.idUser }}"
-                            data-client="{{ reservation.idUser and userNames[reservation.idUser] is defined ? userNames[reservation.idUser]|lower : '' }}"
-                            data-nbr="{{ reservation.nbrPersonnes }}"
-                            data-date="{{ reservation.dateReservation ? reservation.dateReservation|date('Y-m-d H:i:s') : '' }}">
-                            <td>{{ reservation.id }}</td>
-                            <td>{{ reservation.dateReservation ? reservation.dateReservation|date('Y-m-d H:i') : '' }}</td>
-                            <td>{{ reservation.statut }}</td>
-                            <td>{{ reservation.idVoyage and voyageTitles[reservation.idVoyage] is defined ? voyageTitles[reservation.idVoyage] : 'Voyage inconnu' }}</td>
-                            <td>{{ reservation.idUser and userNames[reservation.idUser] is defined ? userNames[reservation.idUser] : 'Utilisateur inconnu' }}</td>
-                            <td>{{ reservation.nbrPersonnes }}</td>
-                            <td>
-                                 <a href="{{ path('app_reservation_edit', {'id': reservation.id}) }}" class="btn btn-horozia-warning btn-sm">
-                                    Modifier
-                                </a>
-                                <a href="{{ path('app_reservation_delete', {'id': reservation.id}) }}" class="btn btn-danger btn-sm btn-delete-reservation" data-reservation-id="{{ reservation.id }}">
-                                    Supprimer
-                                </a>
-                            </td>
-                        </tr>
-                    {% else %}
-                        <tr id="noResultRow">
-                            <td colspan="7" class="text-center">Aucune réservation trouvée.</td>
-                        </tr>
-                    {% endfor %}
-                    </tbody>
-                </table>
+                <div class="col-md-4">
+                    <label for="sortSelect" class="form-label">Filtrer par :</label>
+                    <select id="sortSelect" class="form-select">
+                        <option value="">Voulez-vous choisir ?</option>
+                        <option value="date_desc" {{ sort == 'date_desc' ? 'selected' : '' }}>Date réservation récente</option>
+                        <option value="date_asc" {{ sort == 'date_asc' ? 'selected' : '' }}>Date réservation ancienne</option>
+                        <option value="statut_asc" {{ sort == 'statut_asc' ? 'selected' : '' }}>Statut A-Z</option>
+                        <option value="nbr_asc" {{ sort == 'nbr_asc' ? 'selected' : '' }}>Nb personnes croissant</option>
+                        <option value="nbr_desc" {{ sort == 'nbr_desc' ? 'selected' : '' }}>Nb personnes décroissant</option>
+                    </select>
+                </div>
 
-                <div id="emptySearchMessage" class="alert alert-warning mt-3 d-none">
-                    Aucune réservation ne correspond à votre recherche.
+                <div class="col-md-2">
+                    <button type="button" id="resetBtn" class="btn btn-secondary w-100">
+                        Réinitialiser
+                    </button>
                 </div>
             </div>
         </div>
     </div>
+
+    <div class="card shadow-sm border-0">
+        <div class="card-body">
+            <table id="reservationTable" class="table table-bordered table-hover align-middle">
+                <thead class="table-horozia">
+                    <tr>
+                        <th>ID</th>
+                        <th>Date réservation</th>
+                        <th>Statut</th>
+                        <th>Voyage</th>
+                        <th>Client</th>
+                        <th>Nombre personnes</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for reservation in reservations %}
+                    {% set clientName = reservation.user ? (
+                        (reservation.user.nom is defined ? reservation.user.nom : '') ~ ' ' ~
+                        (reservation.user.prenom is defined ? reservation.user.prenom : '')
+                    )|trim : '' %}
+
+                    <tr>
+                        <td>{{ reservation.id }}</td>
+                        <td>{{ reservation.dateReservation ? reservation.dateReservation|date('Y-m-d H:i') : '' }}</td>
+                        <td>{{ reservation.statut }}</td>
+                        <td>{{ reservation.voyage ? reservation.voyage.titre : 'Voyage inconnu' }}</td>
+                        <td>{{ clientName != '' ? clientName : 'Utilisateur inconnu' }}</td>
+                        <td>{{ reservation.nbrPersonnes }}</td>
+                        <td>
+                            <a href="{{ path('app_reservation_edit', {'id': reservation.id}) }}" class="btn btn-horozia-warning btn-sm">
+                                Modifier
+                            </a>
+                            <a href="{{ path('app_reservation_delete', {'id': reservation.id}) }}"
+                               class="btn btn-danger btn-sm btn-delete-reservation"
+                               data-reservation-id="{{ reservation.id }}">
+                                Supprimer
+                            </a>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center">Aucune réservation trouvée.</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block javascripts %}
     {{ parent() }}
 
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const deleteButtons = document.querySelectorAll('.btn-delete-reservation');
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const searchInput = document.getElementById('searchInput');
+            const sortSelect = document.getElementById('sortSelect');
+            const resetBtn = document.getElementById('resetBtn');
 
-        deleteButtons.forEach(button => {
-            button.addEventListener('click', function (e) {
-                e.preventDefault();
+            function applyFilters() {
+                const params = new URLSearchParams(window.location.search);
 
-                const deleteUrl = this.getAttribute('href');
-                const reservationId = this.dataset.reservationId || '';
+                if (searchInput.value.trim()) {
+                    params.set('search', searchInput.value.trim());
+                } else {
+                    params.delete('search');
+                }
 
-                Swal.fire({
-                    title: 'Supprimer cette réservation ?',
-                    html: `Vous êtes sur le point de supprimer la réservation <strong>#${reservationId}</strong>.`,
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#dc3545',
-                    cancelButtonColor: '#6c757d',
-                    confirmButtonText: 'Oui, supprimer',
-                    cancelButtonText: 'Annuler',
-                    reverseButtons: true,
-                    background: '#ffffff',
-                    borderRadius: '18px'
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        window.location.href = deleteUrl;
-                    }
+                if (sortSelect.value) {
+                    params.set('sort', sortSelect.value);
+                } else {
+                    params.delete('sort');
+                }
+
+                window.location.search = params.toString();
+            }
+
+            if (searchInput) {
+                searchInput.addEventListener('change', applyFilters);
+            }
+
+            if (sortSelect) {
+                sortSelect.addEventListener('change', applyFilters);
+            }
+
+            if (resetBtn) {
+                resetBtn.addEventListener('click', function () {
+                    window.location.href = "{{ path('app_reservation_index') }}";
+                });
+            }
+
+            const deleteButtons = document.querySelectorAll('.btn-delete-reservation');
+
+            deleteButtons.forEach(button => {
+                button.addEventListener('click', function (e) {
+                    e.preventDefault();
+
+                    const deleteUrl = this.getAttribute('href');
+                    const reservationId = this.dataset.reservationId || '';
+
+                    Swal.fire({
+                        title: 'Supprimer cette réservation ?',
+                        html: `Vous êtes sur le point de supprimer la réservation <strong>#${reservationId}</strong>.`,
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#dc3545',
+                        cancelButtonColor: '#6c757d',
+                        confirmButtonText: 'Oui, supprimer',
+                        cancelButtonText: 'Annuler',
+                        reverseButtons: true,
+                        background: '#ffffff',
+                        borderRadius: '18px'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            window.location.href = deleteUrl;
+                        }
+                    });
                 });
             });
         });
-    });
-</script>
+    </script>
 {% endblock %}

@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -65,6 +66,83 @@ class Commentaire
      * })
      */
     private $publication;
+
+    public function getId(): ?int
+    {
+        return $this->id;
+    }
+
+    public function getUtilisateurId(): ?int
+    {
+        return $this->utilisateurId;
+    }
+
+    public function setUtilisateurId(?int $utilisateurId): static
+    {
+        $this->utilisateurId = $utilisateurId;
+
+        return $this;
+    }
+
+    public function getAuteur(): ?string
+    {
+        return $this->auteur;
+    }
+
+    public function setAuteur(?string $auteur): static
+    {
+        $this->auteur = $auteur;
+
+        return $this;
+    }
+
+    public function getContenu(): ?string
+    {
+        return $this->contenu;
+    }
+
+    public function setContenu(string $contenu): static
+    {
+        $this->contenu = $contenu;
+
+        return $this;
+    }
+
+    public function getDateCreation(): ?\DateTimeInterface
+    {
+        return $this->dateCreation;
+    }
+
+    public function setDateCreation(\DateTimeInterface $dateCreation): static
+    {
+        $this->dateCreation = $dateCreation;
+
+        return $this;
+    }
+
+    public function isModifie(): ?bool
+    {
+        return $this->modifie;
+    }
+
+    public function setModifie(?bool $modifie): static
+    {
+        $this->modifie = $modifie;
+
+        return $this;
+    }
+
+    public function getPublication(): ?Publications
+    {
+        return $this->publication;
+    }
+
+    public function setPublication(?Publications $publication): static
+    {
+        $this->publication = $publication;
+
+        return $this;
+    }
 
 
 }

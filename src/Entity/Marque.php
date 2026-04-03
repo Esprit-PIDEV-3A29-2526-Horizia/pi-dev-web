@@ -35,5 +35,34 @@ class Marque
      */
     private $logo;
 
+    public function getIdMarque(): ?int
+    {
+        return $this->idMarque;
+    }
+
+    public function getNomMarque(): ?string
+    {
+        return $this->nomMarque;
+    }
+
+    public function setNomMarque(string $nomMarque): static
+    {
+        $this->nomMarque = $nomMarque;
+
+        return $this;
+    }
+
+    public function getLogo(): ?string
+    {
+        return $this->logo;
+    }
+
+    public function setLogo(?string $logo): static
+    {
+        $this->logo = $logo;
+
+        return $this;
+    }
+
 
 }

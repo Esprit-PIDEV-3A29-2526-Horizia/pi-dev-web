@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -69,6 +70,95 @@ class Reservationlog
      * @ORM\Column(name="modalites", type="string", length=255, nullable=true)
      */
     private $modalites;
+
+    public function getIdreslog(): ?int
+    {
+        return $this->idreslog;
+    }
+
+    public function getIdlog(): ?int
+    {
+        return $this->idlog;
+    }
+
+    public function setIdlog(int $idlog): static
+    {
+        $this->idlog = $idlog;
+
+        return $this;
+    }
+
+    public function getIdc(): ?int
+    {
+        return $this->idc;
+    }
+
+    public function setIdc(int $idc): static
+    {
+        $this->idc = $idc;
+
+        return $this;
+    }
+
+    public function getDateDebut(): ?\DateTimeInterface
+    {
+        return $this->dateDebut;
+    }
+
+    public function setDateDebut(\DateTimeInterface $dateDebut): static
+    {
+        $this->dateDebut = $dateDebut;
+
+        return $this;
+    }
+
+    public function getDateFin(): ?\DateTimeInterface
+    {
+        return $this->dateFin;
+    }
+
+    public function setDateFin(\DateTimeInterface $dateFin): static
+    {
+        $this->dateFin = $dateFin;
+
+        return $this;
+    }
+
+    public function getMontant(): ?float
+    {
+        return $this->montant;
+    }
+
+    public function setMontant(float $montant): static
+    {
+        $this->montant = $montant;
+
+        return $this;
+    }
+
+    public function getStatus(): ?string
+    {
+        return $this->status;
+    }
+
+    public function setStatus(string $status): static
+    {
+        $this->status = $status;
+
+        return $this;
+    }
+
+    public function getModalites(): ?string
+    {
+        return $this->modalites;
+    }
+
+    public function setModalites(?string $modalites): static
+    {
+        $this->modalites = $modalites;
+
+        return $this;
+    }
 
 
 }

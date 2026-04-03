@@ -8,13 +8,16 @@ use Symfony\Component\Validator\Constraints as Assert;
 /**
  * Reservation
  *
- * @ORM\Table(name="reservation", indexes={@ORM\Index(name="fk_res_voyage", columns={"id_voyage"})})
+ * @ORM\Table(name="reservation", indexes={
+ *     @ORM\Index(name="fk_res_voyage", columns={"id_voyage"}),
+ *     @ORM\Index(name="fk_res_user", columns={"id_user"})
+ * })
  * @ORM\Entity
  */
 class Reservation
 {
     /**
-     * @var int
+     * @var int|null
      *
      * @ORM\Column(name="id", type="integer", nullable=false)
      * @ORM\Id
@@ -23,7 +26,7 @@ class Reservation
     private $id;
 
     /**
-     * @var \DateTimeInterface
+     * @var \DateTimeInterface|null
      *
      * @ORM\Column(name="date_reservation", type="datetime", nullable=false, options={"default"="CURRENT_TIMESTAMP"})
      * @Assert\NotBlank(message="La date de réservation est obligatoire.")
@@ -31,7 +34,7 @@ class Reservation
     private $dateReservation;
 
     /**
-     * @var string
+     * @var string|null
      *
      * @ORM\Column(name="statut", type="string", length=50, nullable=false, options={"default"="EN_ATTENTE"})
      * @Assert\NotBlank(message="Le statut est obligatoire.")
@@ -39,21 +42,21 @@ class Reservation
     private $statut = 'EN_ATTENTE';
 
     /**
-     * @var int
+     * @var Voyage|null
      *
-     * @ORM\Column(name="id_voyage", type="integer", nullable=false)
-     * @Assert\NotBlank(message="L'ID du voyage est obligatoire.")
-     * @Assert\Positive(message="L'ID du voyage doit être positif.")
+     * @ORM\ManyToOne(targetEntity="App\Entity\Voyage")
+     * @ORM\JoinColumn(name="id_voyage", referencedColumnName="id", nullable=false, onDelete="CASCADE")
+     * @Assert\NotNull(message="Le voyage est obligatoire.")
      */
-    private $idVoyage;
+    private $voyage;
 
     /**
-     * @var int|null
+     * @var User|null
      *
-     * @ORM\Column(name="id_user", type="integer", nullable=true)
-     * @Assert\Positive(message="L'ID utilisateur doit être positif.")
+     * @ORM\ManyToOne(targetEntity="App\Entity\User")
+     * @ORM\JoinColumn(name="id_user", referencedColumnName="id", nullable=true, onDelete="SET NULL")
      */
-    private $idUser;
+    private $user;
 
     /**
      * @var int|null
@@ -96,25 +99,25 @@ class Reservation
         return $this;
     }
 
-    public function getIdVoyage(): ?int
+    public function getVoyage(): ?Voyage
     {
-        return $this->idVoyage;
+        return $this->voyage;
     }
 
-    public function setIdVoyage(int $idVoyage): self
+    public function setVoyage(?Voyage $voyage): self
     {
-        $this->idVoyage = $idVoyage;
+        $this->voyage = $voyage;
         return $this;
     }
 
-    public function getIdUser(): ?int
+    public function getUser(): ?User
     {
-        return $this->idUser;
+        return $this->user;
     }
 
-    public function setIdUser(?int $idUser): self
+    public function setUser(?User $user): self
     {
-        $this->idUser = $idUser;
+        $this->user = $user;
         return $this;
     }
 
