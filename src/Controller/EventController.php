@@ -78,11 +78,18 @@ class EventController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             $event->setPlaces_restantes($event->getCapacite_max());
             $event->setCreated_at(new \DateTime());
-            $event->setId_createur(1); // replace with real user id later
+            $event->setId_createur(1);
+            
             $entityManager->persist($event);
             $entityManager->flush();
+            
             $this->addFlash('success', 'Événement ajouté avec succès.');
             return $this->redirectToRoute('app_event_index');
+        }
+
+        // If form has errors, they will be displayed automatically in the template
+        if ($form->isSubmitted() && !$form->isValid()) {
+            $this->addFlash('error', 'Veuillez corriger les erreurs dans le formulaire.');
         }
 
         return $this->render('admin/event/new.html.twig', [
@@ -168,7 +175,7 @@ class EventController extends AbstractController
 
         $events = $qb->getQuery()->getResult();
 
-        return $this->render('front/events.html.twig', [
+        return $this->render('front/event/events.html.twig', [
             'events'      => $events,
             'search'      => $search,
             'price_limit' => $priceLimit,

@@ -43,8 +43,8 @@
                     <li class="nav-item {% if app.request.attributes.get('_route') == 'app_front_events' %}active{% endif %}">
                         <a href="{{ path('app_front_events') }}" class="nav-link">Events</a>
                     </li>
-                    <li class="nav-item {% if app.request.attributes.get('_route') starts with 'app_blog' %}active{% endif %}">
-                        <a href="#" class="nav-link">Blog</a>
+                    <li class="nav-item {% if app.request.attributes.get('_route') == 'app_front_mes_participations' %}active{% endif %}">
+                        <a href="{{ path('app_front_mes_participations') }}" class="nav-link">Mes Inscriptions</a>
                     </li>
                     <li class="nav-item {% if app.request.attributes.get('_route') == 'app_contact' %}active{% endif %}">
                         <a href="#" class="nav-link">Contact</a>

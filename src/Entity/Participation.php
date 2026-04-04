@@ -11,6 +11,7 @@ class Participation
 {
 
     #[ORM\Id]
+    #[ORM\GeneratedValue]
     #[ORM\Column(type: "integer")]
     private int $id_participation;
 
@@ -89,4 +90,20 @@ class Participation
     {
         $this->date_participation = $value;
     }
+
+    // camelCase aliases for Symfony Form
+    public function getNombrePlaces() { return $this->nombre_places; }
+    public function setNombrePlaces($value) { $this->nombre_places = $value; return $this; }
+
+    public function getMontantTotal() { return $this->montant_total; }
+    public function setMontantTotal($value) { $this->montant_total = $value; return $this; }
+
+    public function getDateParticipation() { return $this->date_participation; }
+    public function setDateParticipation($value) { $this->date_participation = $value; return $this; }
+
+    public function getIdParticipation() { return $this->id_participation; }
+    public function setIdParticipation($value) { $this->id_participation = $value; return $this; }
+
+    public function getIdEvent() { return $this->id_event; }
+    public function setIdEvent($value) { $this->id_event = $value; return $this; }
 }
