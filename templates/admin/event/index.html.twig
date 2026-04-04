@@ -1,100 +1,125 @@
 {% extends 'base_back.html.twig' %}
 
-{% block title %}Gestion des Événements{% endblock %}
+{% block title %}Gestion des Événements - Horozia{% endblock %}
 
 {% block body %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="h3">Gestion des Événements</h1>
-    <a href="{{ path('app_event_new') }}" class="btn btn-horozia-primary">
-        <i class="bi bi-plus-lg"></i> Ajouter un événement
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h1 class="fw-bold mb-1" style="color:#1f2d3d;">Gestion des Événements</h1>
+        <p class="text-muted mb-0">{{ events|length }} événement(s) trouvé(s)</p>
+    </div>
+    <a href="{{ path('app_event_new') }}" class="btn btn-horozia-primary d-flex align-items-center gap-2">
+        <i class="bi bi-plus-lg"></i> Nouvel Événement
     </a>
 </div>
 
-<div class="card-horozia p-4 mb-4">
-    <form method="get" class="row g-3">
-        <div class="col-md-4">
-            <input type="text" name="search" class="form-control" placeholder="Rechercher par titre ou catégorie..." value="{{ search }}">
+{# ── Search & Sort bar ── #}
+<div class="card-horozia p-3 mb-4">
+    <form method="GET" action="{{ path('app_event_index') }}" class="row g-2 align-items-end">
+        <div class="col-md-5">
+            <label class="form-label fw-semibold small text-muted">Recherche</label>
+            <div class="input-group">
+                <span class="input-group-text bg-white border-end-0">
+                    <i class="bi bi-search text-muted"></i>
+                </span>
+                <input type="text" name="search" class="form-control border-start-0"
+                       placeholder="Titre ou catégorie..." value="{{ search ?? '' }}">
+            </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-4">
+            <label class="form-label fw-semibold small text-muted">Trier par</label>
             <select name="sort" class="form-select">
-                <option value="">Trier par</option>
-                <option value="titre_asc" {% if sort == 'titre_asc' %}selected{% endif %}>Titre (A-Z)</option>
-                <option value="prix_asc" {% if sort == 'prix_asc' %}selected{% endif %}>Prix (croissant)</option>
-                <option value="prix_desc" {% if sort == 'prix_desc' %}selected{% endif %}>Prix (décroissant)</option>
-                <option value="date_asc" {% if sort == 'date_asc' %}selected{% endif %}>Date (plus ancien)</option>
+                <option value="">-- Par défaut --</option>
+                <option value="prix_asc"  {{ sort == 'prix_asc'  ? 'selected' : '' }}>Prix croissant</option>
+                <option value="prix_desc" {{ sort == 'prix_desc' ? 'selected' : '' }}>Prix décroissant</option>
+                <option value="date_asc"  {{ sort == 'date_asc'  ? 'selected' : '' }}>Date (plus proche)</option>
             </select>
         </div>
-        <div class="col-md-2">
-            <button type="submit" class="btn btn-horozia-secondary w-100">Filtrer</button>
+        <div class="col-md-3 d-flex gap-2">
+            <button type="submit" class="btn btn-horozia-primary w-100">
+                <i class="bi bi-funnel-fill me-1"></i> Filtrer
+            </button>
+            <a href="{{ path('app_event_index') }}" class="btn btn-outline-secondary w-100">
+                <i class="bi bi-x-lg"></i>
+            </a>
         </div>
     </form>
 </div>
 
-<div class="card-horozia">
-    <div class="table-responsive">
-        <table class="table table-hover mb-0">
-            <thead class="table-horozia">
-                <tr>
-                    <th>ID</th>
-                    <th>Image</th>
-                    <th>Titre</th>
-                    <th>Catégorie</th>
-                    <th>Lieu</th>
-                    <th>Date début</th>
-                    <th>Prix</th>
-                    <th>Capacité</th>
-                    <th>Places rest.</th>
-                    <th>Statut</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for event in events %}
-                <tr>
-                    <td>{{ event.id_event }}</td>
-                    <td>
-                        {% if event.image_url %}
-                            <img src="{{ asset(event.image_url) }}" alt="{{ event.titre }}" width="50" height="50" style="object-fit: cover; border-radius: 8px;">
-                        {% else %}
-                            <div class="bg-light d-flex align-items-center justify-content-center" style="width: 50px; height: 50px; border-radius: 8px;">
-                                <i class="bi bi-image text-muted"></i>
-                            </div>
-                        {% endif %}
-                    </td>
-                    <td>{{ event.titre }}</td>
-                    <td>{{ event.categorie }}</td>
-                    <td>{{ event.location }}</td>
-                    <td>{{ event.date_debut|date('d/m/Y H:i') }}</td>
-                    <td>{{ event.prix }} €</td>
-                    <td>{{ event.capacite_max }}</td>
-                    <td>{{ event.places_restantes }}</td>
-                    <td>
-                        <span class="badge {% if event.statut == 'à venir' %}bg-primary{% elseif event.statut == 'en cours' %}bg-warning{% else %}bg-secondary{% endif %}">
-                            {{ event.statut }}
-                        </span>
-                    </td>
-                    <td>
-                        <a href="{{ path('app_event_show', {'id': event.id_event}) }}" class="btn btn-sm btn-info text-white">
+{# ── Table ── #}
+<div class="card-horozia overflow-hidden">
+    <table class="table table-hover align-middle mb-0">
+        <thead class="table-horozia">
+            <tr>
+                <th>#</th>
+                <th>Titre</th>
+                <th>Catégorie</th>
+                <th>Lieu</th>
+                <th>Date début</th>
+                <th>Prix</th>
+                <th>Places</th>
+                <th>Statut</th>
+                <th class="text-center">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for event in events %}
+            <tr>
+                <td class="text-muted small">{{ event.getId_event() }}</td>
+                <td class="fw-semibold">{{ event.getTitre() }}</td>
+                <td>
+                    <span class="badge rounded-pill bg-horozia-secondary">
+                        {{ event.getCategorie() }}
+                    </span>
+                </td>
+                <td class="text-muted small"><i class="bi bi-geo-alt me-1"></i>{{ event.getLocation() }}</td>
+                <td class="small">{{ event.getDate_debut()|date('d/m/Y H:i') }}</td>
+                <td class="fw-semibold text-horozia-primary">{{ event.getPrix() }} TND</td>
+                <td>
+                    <span class="badge {{ event.getPlaces_restantes() == 0 ? 'bg-danger' : (event.getPlaces_restantes() <= 5 ? 'bg-warning text-dark' : 'bg-success') }}">
+                        {{ event.getPlaces_restantes() }} / {{ event.getCapacite_max() }}
+                    </span>
+                </td>
+                <td>
+                    {% set statut = event.getStatut() %}
+                    <span class="badge rounded-pill
+                        {{ statut == 'à venir'  ? 'bg-info text-dark' :
+                           statut == 'en cours' ? 'bg-success' :
+                           statut == 'terminé'  ? 'bg-secondary' : 'bg-warning text-dark' }}">
+                        {{ statut }}
+                    </span>
+                </td>
+                <td class="text-center">
+                    <div class="d-flex justify-content-center gap-2">
+                        <a href="{{ path('app_event_show', {id: event.getId_event()}) }}"
+                           class="btn btn-sm btn-outline-primary" title="Voir">
                             <i class="bi bi-eye"></i>
                         </a>
-                        <a href="{{ path('app_event_edit', {'id': event.id_event}) }}" class="btn btn-sm btn-warning">
+                        <a href="{{ path('app_event_edit', {id: event.getId_event()}) }}"
+                           class="btn btn-sm btn-horozia-warning" title="Modifier">
                             <i class="bi bi-pencil"></i>
                         </a>
-                        <form method="post" action="{{ path('app_event_delete', {'id': event.id_event}) }}" style="display: inline-block;" onsubmit="return confirm('Supprimer cet événement ?')">
-                            <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ event.id_event) }}">
-                            <button class="btn btn-sm btn-danger" type="submit">
+                        <form method="POST"
+                              action="{{ path('app_event_delete', {id: event.getId_event()}) }}"
+                              onsubmit="return confirm('Supprimer cet événement ?')">
+                            <input type="hidden" name="_token"
+                                   value="{{ csrf_token('delete' ~ event.getId_event()) }}">
+                            <button type="submit" class="btn btn-sm btn-horozia-danger" title="Supprimer">
                                 <i class="bi bi-trash"></i>
                             </button>
                         </form>
-                    </td>
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="11" class="text-center py-4">Aucun événement trouvé.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+                    </div>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="9" class="text-center py-5 text-muted">
+                    <i class="bi bi-calendar-x fs-1 d-block mb-2"></i>
+                    Aucun événement trouvé.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </div>
 {% endblock %}

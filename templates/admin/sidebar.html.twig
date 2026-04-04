@@ -4,18 +4,74 @@
     </div>
 
     <ul class="sidebar-menu">
+
         <li>
-            <a class="sidebar-link {{ app.request.attributes.get('_route') == 'app_admin' ? 'active' : '' }}" href="{{ path('app_admin') }}">
-                <i class="bi bi-grid-fill"></i>
-                <span>Dashboard</span>
+            <a class="sidebar-link {{ app.request.attributes.get('_route') starts with 'app_user' ? 'active' : '' }}"
+               href="#">
+                <i class="bi bi-person-fill"></i>
+                <span>Gestion Profils</span>
             </a>
         </li>
 
         <li>
-            <a class="sidebar-link {{ app.request.attributes.get('_route') starts with 'app_event' ? 'active' : '' }}" href="{{ path('app_event_index') }}">
-                <i class="bi bi-calendar-event-fill"></i>
-                <span>Gestion Événements</span>
+            <a class="sidebar-link {{ app.request.attributes.get('_route') starts with 'app_categorie' ? 'active' : '' }}"
+               href="#">
+                <i class="bi bi-tags-fill"></i>
+                <span>Gestion Catégories</span>
             </a>
         </li>
+
+        <li>
+            <a class="sidebar-link {{ app.request.attributes.get('_route') starts with 'app_voyage' ? 'active' : '' }}"
+               href="#">
+                <i class="bi bi-airplane-fill"></i>
+                <span>Gestion Voyages</span>
+            </a>
+        </li>
+
+        {# ── Events dropdown ── #}
+        <li>
+            <a class="sidebar-link d-flex justify-content-between align-items-center
+                {{ app.request.attributes.get('_route') starts with 'app_event' ? 'active' : '' }}"
+               href="#eventsSubmenu"
+               data-bs-toggle="collapse"
+               aria-expanded="{{ app.request.attributes.get('_route') starts with 'app_event' ? 'true' : 'false' }}">
+                <span class="d-flex align-items-center gap-3">
+                    <i class="bi bi-calendar-event-fill"></i>
+                    <span>Événements</span>
+                </span>
+                <i class="bi bi-chevron-down small"></i>
+            </a>
+            <div class="collapse {{ app.request.attributes.get('_route') starts with 'app_event' ? 'show' : '' }}"
+                 id="eventsSubmenu">
+                <ul class="list-unstyled ps-4 py-1">
+                    <li>
+                        <a class="sidebar-link py-2
+                            {{ app.request.attributes.get('_route') == 'app_event_dashboard' ? 'active' : '' }}"
+                           href="{{ path('app_event_dashboard') }}">
+                            <i class="bi bi-bar-chart-fill"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                    <li>
+                        <a class="sidebar-link py-2
+                            {{ app.request.attributes.get('_route') == 'app_event_index' ? 'active' : '' }}"
+                           href="{{ path('app_event_index') }}">
+                            <i class="bi bi-list-ul"></i>
+                            <span>Gestion Événements</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </li>
+
+        <li>
+            <a class="sidebar-link {{ app.request.attributes.get('_route') starts with 'app_reservation' ? 'active' : '' }}"
+               href="#">
+                <i class="bi bi-calendar-check-fill"></i>
+                <span>Gestion Réservations</span>
+            </a>
+        </li>
+
     </ul>
 </div>

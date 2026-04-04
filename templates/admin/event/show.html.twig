@@ -1,58 +1,114 @@
 {% extends 'base_back.html.twig' %}
 
-{% block title %}Détails de l'événement{% endblock %}
+{% block title %}{{ event.getTitre() }} - Horozia{% endblock %}
 
 {% block body %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1 class="h3">Détails de l'événement</h1>
+<div class="d-flex align-items-center justify-content-between mb-4">
     <div>
-        <a href="{{ path('app_event_edit', {'id': event.id_event}) }}" class="btn btn-horozia-warning">
+        <h1 class="fw-bold mb-1" style="color:#1f2d3d;">Détail de l'Événement</h1>
+        <p class="text-muted mb-0">{{ event.getTitre() }}</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{ path('app_event_edit', {id: event.getId_event()}) }}"
+           class="btn btn-horozia-warning d-flex align-items-center gap-2">
             <i class="bi bi-pencil"></i> Modifier
         </a>
-        <a href="{{ path('app_event_index') }}" class="btn btn-horozia-secondary">
+        <a href="{{ path('app_event_index') }}" class="btn btn-outline-secondary d-flex align-items-center gap-2">
             <i class="bi bi-arrow-left"></i> Retour
         </a>
     </div>
 </div>
 
-<div class="row">
-    <div class="col-md-4">
-        <div class="card-horozia p-3 text-center mb-4">
-            {% if event.image_url %}
-                <img src="{{ asset(event.image_url) }}" alt="{{ event.titre }}" class="img-fluid rounded" style="max-height: 250px; width: 100%; object-fit: cover;">
-            {% else %}
-                <div class="bg-light d-flex align-items-center justify-content-center rounded" style="height: 250px;">
-                    <i class="bi bi-image fs-1 text-muted"></i>
-                </div>
-            {% endif %}
-        </div>
+<div class="row g-4">
+    {# ── Left: Image ── #}
+    <div class="col-md-5">
+        {% if event.getImage_url() %}
+            <img src="{{ event.getImage_url() }}" alt="{{ event.getTitre() }}"
+                 class="w-100 rounded-4 object-fit-cover shadow-sm" style="height:360px; object-fit:cover;">
+        {% else %}
+            <div class="w-100 rounded-4 d-flex align-items-center justify-content-center bg-light text-muted"
+                 style="height:360px;">
+                <i class="bi bi-image fs-1"></i>
+            </div>
+        {% endif %}
     </div>
-    <div class="col-md-8">
-        <div class="card-horozia p-4">
-            <h2 class="h4 mb-3">{{ event.titre }}</h2>
-            <p class="text-muted">{{ event.description }}</p>
-            
-            <hr>
-            
-            <div class="row">
-                <div class="col-md-6">
-                    <p><strong><i class="bi bi-tag"></i> Catégorie:</strong> {{ event.categorie }}</p>
-                    <p><strong><i class="bi bi-geo-alt"></i> Lieu:</strong> {{ event.location }}</p>
-                    <p><strong><i class="bi bi-calendar"></i> Date début:</strong> {{ event.date_debut|date('d/m/Y H:i') }}</p>
-                    <p><strong><i class="bi bi-calendar-check"></i> Date fin:</strong> {{ event.date_fin|date('d/m/Y H:i') }}</p>
+
+    {# ── Right: Details ── #}
+    <div class="col-md-7">
+        <div class="card-horozia p-4 h-100">
+            <h2 class="fw-bold mb-1" style="color:#1f2d3d;">{{ event.getTitre() }}</h2>
+
+            <span class="badge rounded-pill bg-horozia-secondary mb-3">{{ event.getCategorie() }}</span>
+
+            <div class="row g-3 mb-3">
+                <div class="col-sm-6">
+                    <div class="p-3 rounded-3 bg-light">
+                        <div class="small text-muted fw-semibold mb-1"><i class="bi bi-geo-alt me-1"></i>Lieu</div>
+                        <div class="fw-semibold">{{ event.getLocation() }}</div>
+                    </div>
                 </div>
-                <div class="col-md-6">
-                    <p><strong><i class="bi bi-currency-euro"></i> Prix:</strong> {{ event.prix }} €</p>
-                    <p><strong><i class="bi bi-people"></i> Capacité max:</strong> {{ event.capacite_max }}</p>
-                    <p><strong><i class="bi bi-ticket-perforated"></i> Places restantes:</strong> {{ event.places_restantes }}</p>
-                    <p><strong><i class="bi bi-info-circle"></i> Statut:</strong> 
-                        <span class="badge {% if event.statut == 'à venir' %}bg-primary{% elseif event.statut == 'en cours' %}bg-warning{% else %}bg-secondary{% endif %}">
-                            {{ event.statut }}
+                <div class="col-sm-6">
+                    <div class="p-3 rounded-3 bg-light">
+                        <div class="small text-muted fw-semibold mb-1"><i class="bi bi-tag me-1"></i>Prix</div>
+                        <div class="fw-bold text-horozia-primary fs-5">{{ event.getPrix() }} TND</div>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="p-3 rounded-3 bg-light">
+                        <div class="small text-muted fw-semibold mb-1"><i class="bi bi-calendar me-1"></i>Date début</div>
+                        <div class="fw-semibold">{{ event.getDate_debut()|date('d/m/Y H:i') }}</div>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="p-3 rounded-3 bg-light">
+                        <div class="small text-muted fw-semibold mb-1"><i class="bi bi-calendar-check me-1"></i>Date fin</div>
+                        <div class="fw-semibold">{{ event.getDate_fin()|date('d/m/Y H:i') }}</div>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="p-3 rounded-3 bg-light">
+                        <div class="small text-muted fw-semibold mb-1"><i class="bi bi-people me-1"></i>Places</div>
+                        <div class="fw-semibold">
+                            {{ event.getPlaces_restantes() }} restantes /
+                            {{ event.getCapacite_max() }} max
+                        </div>
+                        <div class="progress mt-2" style="height:6px;">
+                            {% set pct = ((event.getCapacite_max() - event.getPlaces_restantes()) / event.getCapacite_max() * 100)|round %}
+                            <div class="progress-bar {{ pct >= 90 ? 'bg-danger' : (pct >= 60 ? 'bg-warning' : 'bg-success') }}"
+                                 style="width:{{ pct }}%"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-sm-6">
+                    <div class="p-3 rounded-3 bg-light">
+                        <div class="small text-muted fw-semibold mb-1"><i class="bi bi-info-circle me-1"></i>Statut</div>
+                        {% set statut = event.getStatut() %}
+                        <span class="badge rounded-pill
+                            {{ statut == 'à venir'  ? 'bg-info text-dark' :
+                               statut == 'en cours' ? 'bg-success' :
+                               statut == 'terminé'  ? 'bg-secondary' : 'bg-warning text-dark' }}">
+                            {{ statut }}
                         </span>
-                    </p>
+                    </div>
                 </div>
+            </div>
+
+            <div class="p-3 rounded-3 bg-light">
+                <div class="small text-muted fw-semibold mb-2"><i class="bi bi-text-paragraph me-1"></i>Description</div>
+                <p class="mb-0" style="line-height:1.8; color:#4b5563;">{{ event.getDescription() }}</p>
             </div>
         </div>
     </div>
+</div>
+
+{# ── Delete button at bottom ── #}
+<div class="mt-4">
+    <form method="POST" action="{{ path('app_event_delete', {id: event.getId_event()}) }}"
+          onsubmit="return confirm('Supprimer définitivement cet événement ?')">
+        <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ event.getId_event()) }}">
+        <button type="submit" class="btn btn-horozia-danger">
+            <i class="bi bi-trash me-1"></i> Supprimer cet événement
+        </button>
+    </form>
 </div>
 {% endblock %}

@@ -3,13 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <link rel="icon" type="image/png" href="{{ asset('images/logo.png') }}">
-    <title>{% block title %}Horozia - Administration{% endblock %}</title>
+    <title>{% block title %}Horozia Admin{% endblock %}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     {% block stylesheets %}
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-
         <style>
             :root {
                 --color-primary: #23779C;
@@ -24,269 +23,99 @@
                 --color-border: #e9edf3;
                 --color-muted: #6c757d;
             }
-
-            body {
-                background-color: var(--color-light-bg);
-                margin: 0;
-                padding: 0;
-                transition: margin-left 0.3s ease;
-            }
-
-            .admin-layout {
-                display: flex;
-                min-height: 100vh;
-            }
-
-            .admin-sidebar {
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 280px;
-                height: 100vh;
-                background: var(--color-sidebar);
-                color: #fff;
-                padding: 1.5rem 0;
-                overflow-y: auto;
-                z-index: 1030;
-                transition: transform 0.3s ease;
-            }
-
-            .sidebar-brand-center {
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                padding: 0 24px 24px;
-                text-align: center;
-            }
-
-            .sidebar-logo-large {
-                width: 120px;
-                height: 120px;
-                object-fit: contain;
-                display: block;
-                margin-bottom: 10px;
-            }
-
-            .sidebar-menu {
-                list-style: none;
-                padding: 0;
-                margin: 0;
-            }
-
-            .sidebar-menu li {
-                margin-bottom: 4px;
-            }
-
-            .sidebar-link {
-                display: flex;
-                align-items: center;
-                gap: 12px;
-                padding: 12px 24px;
-                color: rgba(255,255,255,.85);
-                text-decoration: none;
-                transition: .2s ease;
-            }
-
-            .sidebar-link:hover,
-            .sidebar-link.active {
-                background: rgba(61,148,202,.18);
-                color: #fff;
-            }
-
-            .admin-main {
-                margin-left: 280px;
-                flex-grow: 1;
-                display: flex;
-                flex-direction: column;
-                background: #f5f7fb;
-                min-width: 0;
-                min-height: 100vh;
-                transition: margin-left 0.3s ease;
-            }
-
-            body.sidebar-collapsed .admin-sidebar {
-                transform: translateX(-100%);
-            }
-
-            body.sidebar-collapsed .admin-main {
-                margin-left: 0;
-            }
-
-            .admin-topbar {
-                position: sticky;
-                top: 0;
-                z-index: 1020;
-                height: 72px;
-                background: #fff;
-                border-bottom: 1px solid var(--color-border);
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                padding: 0 24px;
-            }
-
-            .sidebar-toggle-btn {
-                background: transparent;
-                border: none;
-                color: #495057;
-                font-size: 1.8rem;
-                line-height: 1;
-                padding: 0;
-                cursor: pointer;
-            }
-
-            .sidebar-toggle-btn:hover {
-                color: var(--color-primary);
-            }
-
-            .topbar-icon-btn {
-                background: transparent;
-                border: none;
-                color: #495057;
-                position: relative;
-            }
-
-            .notification-badge {
-                position: absolute;
-                top: -4px;
-                right: -6px;
-                width: 20px;
-                height: 20px;
-                border-radius: 50%;
-                background: #3D94CA;
-                color: #fff;
-                font-size: 12px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            }
-
-            .admin-content {
-                padding: 32px;
-            }
-
-            .admin-footer {
-                background: #fff;
-                border-top: 1px solid var(--color-border);
-                color: var(--color-muted);
-                font-size: .95rem;
-            }
-
-            .card-horozia {
-                border: none;
-                box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-                border-radius: 14px;
-                background-color: #fff;
-            }
-
-            .btn-horozia-primary,
-            .btn-horozia-secondary,
-            .btn-horozia-accent,
-            .btn-horozia-warning {
-                border-radius: 10px;
-                font-weight: 600;
-                transition: 0.2s ease;
-            }
-
-            .btn-horozia-primary {
-                background-color: var(--color-primary);
-                border-color: var(--color-primary);
-                color: white;
-            }
-
-            .btn-horozia-primary:hover {
-                background-color: #1d6482;
-                border-color: #1d6482;
-                color: white;
-            }
-
-            .btn-horozia-secondary {
-                background-color: var(--color-secondary);
-                border-color: var(--color-secondary);
-                color: white;
-            }
-
-            .btn-horozia-secondary:hover {
-                background-color: #337fad;
-                border-color: #337fad;
-                color: white;
-            }
-
-            .btn-horozia-warning {
-                background-color: var(--color-warning);
-                border-color: var(--color-warning);
-                color: white;
-            }
-
-            .btn-horozia-warning:hover {
-                background-color: #d39d47;
-                border-color: #d39d47;
-                color: white;
-            }
-
-            .table-horozia {
-                background-color: var(--color-primary);
-                color: white;
-            }
-
-            .table-horozia th {
-                background-color: var(--color-primary) !important;
-                color: white !important;
-                border-color: rgba(255,255,255,0.12);
-            }
-
-            .alert-horozia {
-                border: none;
-                border-radius: 14px;
-                padding: 14px 18px;
-                font-weight: 500;
-                box-shadow: 0 8px 18px rgba(0, 0, 0, 0.06);
-            }
+            body { background-color: #f5f7fb; margin: 0; padding: 0; transition: margin-left 0.3s ease; }
+            .bg-horozia-dark { background-color: var(--color-dark) !important; }
+            .bg-horozia-primary { background-color: var(--color-primary) !important; }
+            .bg-horozia-secondary { background-color: var(--color-secondary) !important; }
+            .text-horozia-primary { color: var(--color-primary) !important; }
+            .btn-horozia-primary { background-color: var(--color-primary); border-color: var(--color-primary); color: white; border-radius: 10px; font-weight: 600; transition: 0.2s ease; }
+            .btn-horozia-primary:hover { background-color: #1d6482; border-color: #1d6482; color: white; }
+            .btn-horozia-secondary { background-color: var(--color-secondary); border-color: var(--color-secondary); color: white; border-radius: 10px; font-weight: 600; }
+            .btn-horozia-secondary:hover { background-color: #337fad; color: white; }
+            .btn-horozia-warning { background-color: var(--color-warning); border-color: var(--color-warning); color: white; border-radius: 10px; font-weight: 600; }
+            .btn-horozia-warning:hover { background-color: #d39d47; color: white; }
+            .btn-horozia-danger { background-color: #dc3545; border-color: #dc3545; color: white; border-radius: 10px; font-weight: 600; }
+            .btn-horozia-danger:hover { background-color: #bb2d3b; color: white; }
+            .card-horozia { border: none; box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,.075); border-radius: 14px; background-color: #fff; }
+            .table-horozia thead th { background-color: var(--color-primary) !important; color: white !important; border-color: rgba(255,255,255,0.12); }
+            .admin-layout { display: flex; min-height: 100vh; }
+            .admin-sidebar { position: fixed; top: 0; left: 0; width: 280px; height: 100vh; background: var(--color-sidebar); color: #fff; padding: 1.5rem 0; overflow-y: auto; z-index: 1030; transition: transform 0.3s ease; }
+            .sidebar-brand-center { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 24px 24px; text-align: center; }
+            .sidebar-logo-large { width: 120px; height: 120px; object-fit: contain; display: block; margin-bottom: 10px; }
+            .sidebar-menu { list-style: none; padding: 0; margin: 0; }
+            .sidebar-menu li { margin-bottom: 4px; }
+            .sidebar-link { display: flex; align-items: center; gap: 12px; padding: 12px 24px; color: rgba(255,255,255,.85); text-decoration: none; transition: .2s ease; }
+            .sidebar-link:hover, .sidebar-link.active { background: rgba(61,148,202,.18); color: #fff; }
+            .admin-main { margin-left: 280px; flex-grow: 1; display: flex; flex-direction: column; background: #f5f7fb; min-width: 0; min-height: 100vh; transition: margin-left 0.3s ease; }
+            body.sidebar-collapsed .admin-sidebar { transform: translateX(-100%); }
+            body.sidebar-collapsed .admin-main { margin-left: 0; }
+            .admin-topbar { position: sticky; top: 0; z-index: 1020; height: 72px; background: #fff; border-bottom: 1px solid var(--color-border); display: flex; align-items: center; justify-content: space-between; padding: 0 24px; }
+            .sidebar-toggle-btn { background: transparent; border: none; color: #495057; font-size: 1.8rem; line-height: 1; padding: 0; cursor: pointer; }
+            .sidebar-toggle-btn:hover { color: var(--color-primary); }
+            .topbar-icon-btn { background: transparent; border: none; color: #495057; position: relative; }
+            .notification-badge { position: absolute; top: -4px; right: -6px; width: 20px; height: 20px; border-radius: 50%; background: #3D94CA; color: #fff; font-size: 12px; display: flex; align-items: center; justify-content: center; }
+            .admin-content { padding: 32px; }
+            .admin-footer { background: #fff; border-top: 1px solid var(--color-border); color: var(--color-muted); font-size: .95rem; }
+            .alert-horozia { border: none; border-radius: 14px; padding: 14px 18px; font-weight: 500; box-shadow: 0 8px 18px rgba(0,0,0,.06); }
+            .alert-success.alert-horozia { background-color: rgba(129,174,141,.18); color: #2f5d3a; }
+            .alert-danger.alert-horozia { background-color: rgba(220,53,69,.12); color: #842029; }
+            .alert-warning.alert-horozia { background-color: rgba(232,177,86,.22); color: #7a5714; }
+            .alert-info.alert-horozia { background-color: rgba(61,148,202,.16); color: #174f6a; }
+            .dashboard-card { background: #fff; border-radius: 14px; padding: 22px; box-shadow: 0 0 0 1px rgba(15,23,42,.03), 0 10px 30px rgba(15,23,42,.04); }
+            .soft-blue { background: rgba(61,148,202,.16); color: #3D94CA; }
+            .soft-green { background: rgba(129,174,141,.18); color: #81AE8D; }
+            .soft-yellow { background: rgba(232,177,86,.18); color: #E8B156; }
+            .soft-red { background: rgba(220,53,69,.14); color: #dc3545; }
+            .stat-icon { width: 48px; height: 48px; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
         </style>
     {% endblock %}
 </head>
 <body>
     <div class="admin-layout">
         {% include 'admin/sidebar.html.twig' %}
-        
         <div class="admin-main">
             {% include 'admin/navbar.html.twig' %}
-            
-            <main class="admin-content">
+            <div class="admin-content">
                 {% for label, messages in app.flashes %}
                     {% for message in messages %}
-                        <div class="alert alert-{{ label }} alert-horozia alert-dismissible fade show mb-4" role="alert">
-                            {{ message }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        <div class="swal-flash-message d-none"
+                             data-type="{{ label }}"
+                             data-message="{{ message|e('html_attr') }}">
                         </div>
                     {% endfor %}
                 {% endfor %}
-                
                 {% block body %}{% endblock %}
-            </main>
-            
-            <footer class="admin-footer text-center py-3">
-                <small>© 2026 Horozia - Projet Symfony</small>
+            </div>
+            <footer class="admin-footer py-3 px-4 mt-auto">
+                <small>© {{ "now"|date("Y") }} Horozia - Espace Administrateur</small>
             </footer>
         </div>
     </div>
 
     {% block javascripts %}
         <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
         <script>
-            document.addEventListener('DOMContentLoaded', function() {
+            document.addEventListener('DOMContentLoaded', function () {
+                const flashMessages = document.querySelectorAll('.swal-flash-message');
+                flashMessages.forEach(item => {
+                    const type = item.dataset.type;
+                    const message = item.dataset.message;
+                    let icon = 'info', title = 'Information';
+                    if (type === 'success') { icon = 'success'; title = 'Succès'; }
+                    else if (type === 'error' || type === 'danger') { icon = 'error'; title = 'Erreur'; }
+                    else if (type === 'warning') { icon = 'warning'; title = 'Attention'; }
+                    Swal.fire({ icon, title, text: message, timer: 2500, showConfirmButton: false });
+                });
+
                 const toggleButton = document.getElementById('sidebarToggle');
-                const body = document.body;
-
                 if (localStorage.getItem('sidebar-collapsed') === 'true') {
-                    body.classList.add('sidebar-collapsed');
+                    document.body.classList.add('sidebar-collapsed');
                 }
-
                 if (toggleButton) {
-                    toggleButton.addEventListener('click', function() {
-                        body.classList.toggle('sidebar-collapsed');
-                        localStorage.setItem('sidebar-collapsed', body.classList.contains('sidebar-collapsed'));
+                    toggleButton.addEventListener('click', function () {
+                        document.body.classList.toggle('sidebar-collapsed');
+                        localStorage.setItem('sidebar-collapsed', document.body.classList.contains('sidebar-collapsed'));
                     });
                 }
             });
