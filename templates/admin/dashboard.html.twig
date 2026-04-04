@@ -1,0 +1,21 @@
+{% extends 'base_back.html.twig' %}
+
+{% block title %}Dashboard - Administration{% endblock %}
+
+{% block body %}
+<div class="text-center py-5">
+    <h1 class="display-5 mb-3">Bienvenue dans l'administration</h1>
+    <p class="lead">Sélectionnez une option dans le menu de gauche pour commencer.</p>
+    
+    <div class="row mt-5">
+        <div class="col-md-4 mb-3">
+            <div class="card-horozia p-4 text-center">
+                <i class="bi bi-calendar-event-fill fs-1 text-horozia-primary"></i>
+                <h3 class="h5 mt-3">Événements</h3>
+                <p class="text-muted">Gérer les événements</p>
+                <a href="{{ path('app_event_index') }}" class="btn btn-horozia-primary">Accéder</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

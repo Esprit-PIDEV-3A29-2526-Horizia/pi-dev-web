@@ -1,0 +1,21 @@
+<div class="admin-sidebar">
+    <div class="sidebar-brand-center">
+        <img src="{{ asset('images/logo.png') }}" alt="Logo Horozia" class="sidebar-logo-large">
+    </div>
+
+    <ul class="sidebar-menu">
+        <li>
+            <a class="sidebar-link {{ app.request.attributes.get('_route') == 'app_admin' ? 'active' : '' }}" href="{{ path('app_admin') }}">
+                <i class="bi bi-grid-fill"></i>
+                <span>Dashboard</span>
+            </a>
+        </li>
+
+        <li>
+            <a class="sidebar-link {{ app.request.attributes.get('_route') starts with 'app_event' ? 'active' : '' }}" href="{{ path('app_event_index') }}">
+                <i class="bi bi-calendar-event-fill"></i>
+                <span>Gestion Événements</span>
+            </a>
+        </li>
+    </ul>
+</div>

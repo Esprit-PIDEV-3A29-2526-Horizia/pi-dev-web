@@ -1,0 +1,58 @@
+{% extends 'base_back.html.twig' %}
+
+{% block title %}Détails de l'événement{% endblock %}
+
+{% block body %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3">Détails de l'événement</h1>
+    <div>
+        <a href="{{ path('app_event_edit', {'id': event.id_event}) }}" class="btn btn-horozia-warning">
+            <i class="bi bi-pencil"></i> Modifier
+        </a>
+        <a href="{{ path('app_event_index') }}" class="btn btn-horozia-secondary">
+            <i class="bi bi-arrow-left"></i> Retour
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-4">
+        <div class="card-horozia p-3 text-center mb-4">
+            {% if event.image_url %}
+                <img src="{{ asset(event.image_url) }}" alt="{{ event.titre }}" class="img-fluid rounded" style="max-height: 250px; width: 100%; object-fit: cover;">
+            {% else %}
+                <div class="bg-light d-flex align-items-center justify-content-center rounded" style="height: 250px;">
+                    <i class="bi bi-image fs-1 text-muted"></i>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    <div class="col-md-8">
+        <div class="card-horozia p-4">
+            <h2 class="h4 mb-3">{{ event.titre }}</h2>
+            <p class="text-muted">{{ event.description }}</p>
+            
+            <hr>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong><i class="bi bi-tag"></i> Catégorie:</strong> {{ event.categorie }}</p>
+                    <p><strong><i class="bi bi-geo-alt"></i> Lieu:</strong> {{ event.location }}</p>
+                    <p><strong><i class="bi bi-calendar"></i> Date début:</strong> {{ event.date_debut|date('d/m/Y H:i') }}</p>
+                    <p><strong><i class="bi bi-calendar-check"></i> Date fin:</strong> {{ event.date_fin|date('d/m/Y H:i') }}</p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong><i class="bi bi-currency-euro"></i> Prix:</strong> {{ event.prix }} €</p>
+                    <p><strong><i class="bi bi-people"></i> Capacité max:</strong> {{ event.capacite_max }}</p>
+                    <p><strong><i class="bi bi-ticket-perforated"></i> Places restantes:</strong> {{ event.places_restantes }}</p>
+                    <p><strong><i class="bi bi-info-circle"></i> Statut:</strong> 
+                        <span class="badge {% if event.statut == 'à venir' %}bg-primary{% elseif event.statut == 'en cours' %}bg-warning{% else %}bg-secondary{% endif %}">
+                            {{ event.statut }}
+                        </span>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
