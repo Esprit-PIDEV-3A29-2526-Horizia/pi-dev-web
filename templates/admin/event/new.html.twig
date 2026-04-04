@@ -14,63 +14,96 @@
 </div>
 
 <div class="card-horozia p-4" style="max-width:800px;">
-    {{ form_start(form, {attr: {novalidate: 'novalidate'}}) }}
+    {{ form_start(form, {attr: {novalidate: 'novalidate', onsubmit: 'return validateFormOnSubmit();'}}) }}
 
     <div class="row g-3">
         <div class="col-md-8">
             <label class="form-label fw-semibold">Titre <span class="text-danger">*</span></label>
-            {{ form_widget(form.titre) }}
+            {{ form_widget(form.titre, {attr: {
+                'class': 'form-control',
+                'minlength': '3',
+                'maxlength': '150',
+                'required': 'required'
+            }}) }}
+            <small class="text-muted">Minimum 3 caractères, maximum 150</small>
             {{ form_errors(form.titre) }}
         </div>
         <div class="col-md-4">
             <label class="form-label fw-semibold">Catégorie <span class="text-danger">*</span></label>
-            {{ form_widget(form.categorie) }}
+            {{ form_widget(form.categorie, {attr: {'class': 'form-control', 'required': 'required'}}) }}
             {{ form_errors(form.categorie) }}
         </div>
         <div class="col-12">
             <label class="form-label fw-semibold">Description <span class="text-danger">*</span></label>
-            {{ form_widget(form.description) }}
+            {{ form_widget(form.description, {attr: {
+                'class': 'form-control',
+                'rows': 4,
+                'minlength': '10',
+                'required': 'required'
+            }}) }}
+            <small class="text-muted">Minimum 10 caractères</small>
             {{ form_errors(form.description) }}
         </div>
         <div class="col-md-6">
             <label class="form-label fw-semibold">Lieu <span class="text-danger">*</span></label>
-            {{ form_widget(form.location) }}
+            {{ form_widget(form.location, {attr: {'class': 'form-control', 'required': 'required'}}) }}
             {{ form_errors(form.location) }}
         </div>
         <div class="col-md-6">
             <label class="form-label fw-semibold">URL de l'image</label>
-            {{ form_widget(form.image_url) }}
+            {{ form_widget(form.image_url, {attr: {'class': 'form-control', 'placeholder': 'https://example.com/image.jpg'}}) }}
             {{ form_errors(form.image_url) }}
         </div>
         <div class="col-md-6">
             <label class="form-label fw-semibold">Date de début <span class="text-danger">*</span></label>
-            {{ form_widget(form.date_debut) }}
+            {{ form_widget(form.date_debut, {attr: {
+                'class': 'form-control',
+                'required': 'required',
+                'id': 'date_debut'
+            }}) }}
+            <small class="text-muted" id="date_debut_error" style="color:#dc3545; display:none;"></small>
             {{ form_errors(form.date_debut) }}
         </div>
         <div class="col-md-6">
             <label class="form-label fw-semibold">Date de fin <span class="text-danger">*</span></label>
-            {{ form_widget(form.date_fin) }}
+            {{ form_widget(form.date_fin, {attr: {
+                'class': 'form-control',
+                'required': 'required',
+                'id': 'date_fin'
+            }}) }}
+            <small class="text-muted" id="date_fin_error" style="color:#dc3545; display:none;"></small>
             {{ form_errors(form.date_fin) }}
         </div>
         <div class="col-md-4">
             <label class="form-label fw-semibold">Prix (TND) <span class="text-danger">*</span></label>
-            {{ form_widget(form.prix) }}
+            {{ form_widget(form.prix, {attr: {
+                'class': 'form-control',
+                'type': 'number',
+                'step': '0.01',
+                'min': '0',
+                'required': 'required'
+            }}) }}
             {{ form_errors(form.prix) }}
         </div>
         <div class="col-md-4">
             <label class="form-label fw-semibold">Capacité max <span class="text-danger">*</span></label>
-            {{ form_widget(form.capacite_max) }}
+            {{ form_widget(form.capacite_max, {attr: {
+                'class': 'form-control',
+                'type': 'number',
+                'min': '1',
+                'required': 'required'
+            }}) }}
             {{ form_errors(form.capacite_max) }}
         </div>
         <div class="col-md-4">
             <label class="form-label fw-semibold">Statut <span class="text-danger">*</span></label>
-            {{ form_widget(form.statut) }}
+            {{ form_widget(form.statut, {attr: {'class': 'form-control', 'required': 'required'}}) }}
             {{ form_errors(form.statut) }}
         </div>
     </div>
 
     <div class="d-flex gap-2 mt-4">
-        <button type="submit" class="btn btn-horozia-primary px-4">
+        <button type="submit" id="submitBtn" class="btn btn-horozia-primary px-4">
             <i class="bi bi-check-lg me-1"></i> Enregistrer
         </button>
         <a href="{{ path('app_event_index') }}" class="btn btn-outline-secondary px-4">Annuler</a>
@@ -78,4 +111,126 @@
 
     {{ form_end(form) }}
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const dateDebut = document.getElementById('date_debut');
+    const dateFin = document.getElementById('date_fin');
+    const dateDebutError = document.getElementById('date_debut_error');
+    const dateFinError = document.getElementById('date_fin_error');
+    const submitBtn = document.getElementById('submitBtn');
+    
+    function getTodayDateTime() {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        return `${year}-${month}-${day}T${hours}:${minutes}`;
+    }
+    
+    function validateDates() {
+        let isValid = true;
+        
+        if (dateDebut) {
+            dateDebut.min = getTodayDateTime();
+        }
+        
+        if (dateDebut && dateDebut.value) {
+            const selectedDate = new Date(dateDebut.value);
+            const now = new Date();
+            
+            if (selectedDate < now) {
+                dateDebutError.textContent = 'La date de début doit être dans le futur.';
+                dateDebutError.style.display = 'block';
+                dateDebut.classList.add('is-invalid');
+                isValid = false;
+            } else {
+                dateDebutError.style.display = 'none';
+                dateDebut.classList.remove('is-invalid');
+                dateDebut.classList.add('is-valid');
+            }
+        }
+        
+        if (dateDebut && dateDebut.value && dateFin && dateFin.value) {
+            const debut = new Date(dateDebut.value);
+            const fin = new Date(dateFin.value);
+            
+            if (fin <= debut) {
+                dateFinError.textContent = 'La date de fin doit être postérieure à la date de début.';
+                dateFinError.style.display = 'block';
+                dateFin.classList.add('is-invalid');
+                isValid = false;
+            } else {
+                dateFinError.style.display = 'none';
+                dateFin.classList.remove('is-invalid');
+                dateFin.classList.add('is-valid');
+            }
+        }
+        
+        if (submitBtn) {
+            submitBtn.disabled = !isValid;
+        }
+        
+        return isValid;
+    }
+    
+    if (dateDebut) {
+        dateDebut.addEventListener('change', validateDates);
+        dateDebut.addEventListener('input', validateDates);
+    }
+    if (dateFin) {
+        dateFin.addEventListener('change', validateDates);
+        dateFin.addEventListener('input', validateDates);
+    }
+    
+    validateDates();
+});
+
+function validateFormOnSubmit() {
+    const dateDebut = document.getElementById('date_debut');
+    const dateFin = document.getElementById('date_fin');
+    const dateDebutError = document.getElementById('date_debut_error');
+    const dateFinError = document.getElementById('date_fin_error');
+    let isValid = true;
+    
+    if (dateDebut && dateDebut.value) {
+        const selectedDate = new Date(dateDebut.value);
+        const now = new Date();
+        
+        if (selectedDate < now) {
+            dateDebutError.textContent = 'La date de début doit être dans le futur.';
+            dateDebutError.style.display = 'block';
+            dateDebut.classList.add('is-invalid');
+            dateDebut.focus();
+            isValid = false;
+        }
+    }
+    
+    if (dateDebut && dateDebut.value && dateFin && dateFin.value) {
+        const debut = new Date(dateDebut.value);
+        const fin = new Date(dateFin.value);
+        
+        if (fin <= debut) {
+            dateFinError.textContent = 'La date de fin doit être postérieure à la date de début.';
+            dateFinError.style.display = 'block';
+            dateFin.classList.add('is-invalid');
+            dateFin.focus();
+            isValid = false;
+        }
+    }
+    
+    return isValid;
+}
+</script>
+
+<style>
+.form-control.is-invalid {
+    border-color: #dc3545 !important;
+}
+.form-control.is-valid {
+    border-color: #198754 !important;
+}
+</style>
 {% endblock %}
