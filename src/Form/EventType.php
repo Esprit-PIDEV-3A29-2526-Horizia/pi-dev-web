@@ -18,47 +18,51 @@ class EventType extends AbstractType
         $builder
             ->add('titre', TextType::class, [
                 'label' => 'Titre',
-                'attr' => ['class' => 'form-control', 'placeholder' => 'Titre de l\'événement']
+                'attr'  => ['class' => 'form-control', 'placeholder' => "Titre de l'événement"]
             ])
             ->add('description', TextareaType::class, [
                 'label' => 'Description',
-                'attr' => ['class' => 'form-control', 'rows' => 4, 'placeholder' => 'Description détaillée']
+                'attr'  => ['class' => 'form-control', 'rows' => 4, 'placeholder' => 'Description détaillée']
             ])
             ->add('categorie', TextType::class, [
                 'label' => 'Catégorie',
-                'attr' => ['class' => 'form-control', 'placeholder' => 'Ex: Concert, Conférence, Atelier']
+                'attr'  => ['class' => 'form-control', 'placeholder' => 'Ex: Concert, Conférence, Atelier'],
+                'empty_data' => 'Genéral'
             ])
             ->add('location', TextType::class, [
                 'label' => 'Lieu',
-                'attr' => ['class' => 'form-control', 'placeholder' => 'Adresse ou lieu']
+                'attr'  => ['class' => 'form-control', 'placeholder' => 'Adresse ou lieu']
             ])
             ->add('date_debut', DateTimeType::class, [
-                'label' => 'Date de début',
-                'widget' => 'single_text',
-                'attr' => ['class' => 'form-control']
+                'label'         => 'Date de début',
+                'widget'        => 'single_text',
+                'property_path' => 'date_debut',
+                'attr'          => ['class' => 'form-control']
             ])
             ->add('date_fin', DateTimeType::class, [
-                'label' => 'Date de fin',
-                'widget' => 'single_text',
-                'attr' => ['class' => 'form-control']
+                'label'         => 'Date de fin',
+                'widget'        => 'single_text',
+                'property_path' => 'date_fin',
+                'attr'          => ['class' => 'form-control']
             ])
-            ->add('prix', NumberType::class, [
-                'label' => 'Prix',
-                'attr' => ['class' => 'form-control', 'step' => '0.01'],
-                'scale' => 2
+            ->add('prix', TextType::class, [
+                'label' => 'Prix (TND)',
+                'attr'  => ['class' => 'form-control', 'placeholder' => 'Ex: 50.000']
             ])
             ->add('capacite_max', NumberType::class, [
-                'label' => 'Capacité maximale',
-                'attr' => ['class' => 'form-control']
+                'label'         => 'Capacité maximale',
+                'property_path' => 'capacite_max',
+                'attr'          => ['class' => 'form-control']
             ])
             ->add('image_url', TextType::class, [
-                'label' => 'URL de l\'image',
-                'required' => false,
-                'attr' => ['class' => 'form-control', 'placeholder' => '/uploads/images/event.jpg']
+                'label'         => "URL de l'image",
+                'required'      => false,
+                'property_path' => 'image_url',
+                'attr'          => ['class' => 'form-control', 'placeholder' => 'https://example.com/image.jpg']
             ])
             ->add('statut', TextType::class, [
                 'label' => 'Statut',
-                'attr' => ['class' => 'form-control', 'placeholder' => 'à venir, en cours, terminé']
+                'attr'  => ['class' => 'form-control', 'placeholder' => 'à venir, en cours, terminé']
             ])
         ;
     }

@@ -12,6 +12,7 @@ class Events
 {
 
     #[ORM\Id]
+    #[ORM\GeneratedValue(strategy: "IDENTITY")]
     #[ORM\Column(type: "integer")]
     private int $id_event;
 
@@ -223,4 +224,21 @@ class Events
     
             return $this;
         }
+
+
+        // camelCase aliases required by Symfony Form
+public function getDateDebut() { return $this->date_debut; }
+public function setDateDebut($value) { $this->date_debut = $value; return $this; }
+
+public function getDateFin() { return $this->date_fin; }
+public function setDateFin($value) { $this->date_fin = $value; return $this; }
+
+public function getCapaciteMax() { return $this->capacite_max; }
+public function setCapaciteMax($value) { $this->capacite_max = $value; return $this; }
+
+public function getPlacesRestantes() { return $this->places_restantes; }
+public function setPlacesRestantes($value) { $this->places_restantes = $value; return $this; }
+
+public function getImageUrl() { return $this->image_url; }
+public function setImageUrl($value) { $this->image_url = $value; return $this; }
 }
