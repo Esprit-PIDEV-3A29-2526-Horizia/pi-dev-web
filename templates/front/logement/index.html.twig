@@ -370,14 +370,10 @@
             modalContent.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Chargement...</span></div></div>';
         }
 
-        if (closeModalBtn) {
-            closeModalBtn.addEventListener('click', closeModal);
-        }
-        modalOverlay.addEventListener('click', function(e) {
-            if (e.target === modalOverlay) closeModal();
-        });
+        if (closeModalBtn) closeModalBtn.addEventListener('click', closeModal);
+        modalOverlay.addEventListener('click', (e) => { if (e.target === modalOverlay) closeModal(); });
 
-        // Écouteurs sur les boutons "Réserver"
+        // Chargement du formulaire dans la modale
         document.querySelectorAll('.btn-reserver').forEach(btn => {
             btn.addEventListener('click', function() {
                 const logementId = this.getAttribute('data-id');
@@ -389,6 +385,8 @@
                 .then(html => {
                     modalContent.innerHTML = html;
                     openModal();
+                    // Attendre que le DOM soit mis à jour
+                    setTimeout(() => initReservationForm(), 50);
                 })
                 .catch(error => {
                     console.error('Erreur:', error);
@@ -397,5 +395,41 @@
                 });
             });
         });
+
+        // Fonction d'initialisation du formulaire (calcul des nuits et du total)
+        function initReservationForm() {
+            const dateArrivee = document.getElementById('date_arrivee_modal');
+            const dateDepart = document.getElementById('date_depart_modal');
+            const totalSpan = document.getElementById('total_modal');
+            const nuitsSpan = document.getElementById('nuits_modal');
+            
+            if (!dateArrivee || !dateDepart) {
+                console.warn('Éléments du formulaire non trouvés');
+                return;
+            }
+            
+            const prixInput = document.getElementById('prix_par_nuit_data');
+            const prixParNuit = prixInput ? parseFloat(prixInput.value) : 0;
+
+            function calculerTotal() {
+                if (dateArrivee.value && dateDepart.value) {
+                    const arrivee = new Date(dateArrivee.value);
+                    const depart = new Date(dateDepart.value);
+                    if (depart > arrivee) {
+                        const nuits = (depart - arrivee) / (1000 * 60 * 60 * 24);
+                        const total = nuits * prixParNuit;
+                        if (nuitsSpan) nuitsSpan.innerText = nuits;
+                        if (totalSpan) totalSpan.innerText = total.toFixed(2) + ' DT';
+                        return;
+                    }
+                }
+                if (nuitsSpan) nuitsSpan.innerText = '0';
+                if (totalSpan) totalSpan.innerText = '0 DT';
+            }
+
+            dateArrivee.addEventListener('change', calculerTotal);
+            dateDepart.addEventListener('change', calculerTotal);
+            calculerTotal(); // appel initial
+        }
     </script>
 {% endblock %}
