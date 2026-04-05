@@ -1,0 +1,68 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}{{ publication.titre }}{% endblock %}
+
+{% block admin_content %}
+<div class="card">
+    <div class="card-header">
+        <h2>{{ publication.titre }}</h2>
+        <div class="mt-2">
+            <a href="{{ path('admin_publication_edit', {'id': publication.id}) }}" class="btn btn-warning">Modifier</a>
+            {{ include('admin/publication/_delete_form.html.twig') }}
+            <a href="{{ path('admin_commentaire_index', {'publication': publication.id}) }}" class="btn btn-info">
+                <i class="bi bi-chat-dots-fill"></i> Voir les commentaires
+            </a>
+            <a href="{{ path('admin_publication_index') }}" class="btn btn-secondary">Retour</a>
+        </div>
+    </div>
+    <div class="card-body">
+        <p><strong>Catégorie :</strong> {{ publication.categorie }}</p>
+        <p><strong>Auteur :</strong> {{ publication.auteur }}</p>
+        <p><strong>Date :</strong> {{ publication.dateCreation|date('d/m/Y H:i') }}</p>
+        {% if publication.ville or publication.pays %}
+            <p><strong>Localisation :</strong> {{ publication.ville }}{{ publication.ville and publication.pays ? ', ' : '' }}{{ publication.pays }}</p>
+        {% endif %}
+        {% if publication.tags %}
+            <p><strong>Tags :</strong> {{ publication.tags|join(', ') }}</p>
+        {% endif %}
+        <hr>
+        <p>{{ publication.description|nl2br }}</p>
+        {% if publication.image %}
+            <img src="{{ asset(publication.image) }}" class="img-fluid">
+        {% endif %}
+
+        <hr>
+        <h4>Commentaires ({{ publication.commentaires }})</h4>
+        {% if commentaires is defined and commentaires|length > 0 %}
+            <div class="table-responsive">
+                <table class="table table-sm">
+                    <thead>
+                        <tr><th>Auteur</th><th>Commentaire</th><th>Date</th><th>Actions</th></tr>
+                    </thead>
+                    <tbody>
+                    {% for com in commentaires|slice(0, 5) %}
+                        <tr>
+                            <td>{{ com.auteur }}</td>
+                            <td>{{ com.contenu|slice(0, 80) }}...</td>
+                            <td>{{ com.dateCreation|date('d/m/Y H:i') }}</td>
+                            <td>
+                                <a href="{{ path('admin_commentaire_edit', {'id': com.id}) }}" class="btn btn-sm btn-warning">Modifier</a>
+                                <form method="post" action="{{ path('admin_commentaire_delete', {'id': com.id}) }}" style="display:inline">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ com.id) }}">
+                                    <button class="btn btn-sm btn-danger" onclick="return confirm('Supprimer ?')">Supprimer</button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+                {% if publication.commentaires > 5 %}
+                    <a href="{{ path('admin_commentaire_index', {'publication': publication.id}) }}" class="btn btn-link">Voir tous les commentaires</a>
+                {% endif %}
+            </div>
+        {% else %}
+            <p>Aucun commentaire pour cette publication.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

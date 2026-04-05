@@ -1,0 +1,122 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}Modifier un commentaire{% endblock %}
+
+{% block admin_content %}
+<div class="card">
+    <div class="card-header bg-white">
+        <h2 class="h4 mb-0">Modifier le commentaire #{{ commentaire.id }}</h2>
+    </div>
+    <div class="card-body">
+        {{ form_start(form, {attr: {novalidate: 'novalidate'}}) }}
+        <div class="mb-3">
+            {{ form_label(form.auteur) }}
+            {{ form_widget(form.auteur, {attr: {class: 'form-control', readonly: true}}) }}
+        </div>
+        <div class="mb-3">
+            {{ form_label(form.contenu) }}
+            <div class="input-group">
+                {{ form_widget(form.contenu, {attr: {class: 'form-control', rows: 8, id: 'commentText'}}) }}
+                <button type="button" id="startDictation" class="btn btn-outline-secondary" title="Dictée vocale">
+                    <i class="bi bi-mic"></i>
+                </button>
+                <button type="button" id="readComment" class="btn btn-outline-secondary" title="Lire le commentaire">
+                    <i class="bi bi-volume-up"></i>
+                </button>
+            </div>
+            {{ form_errors(form.contenu) }}
+        </div>
+        <div class="d-flex justify-content-end gap-2">
+            <a href="{{ path('admin_commentaire_index', {'publication': commentaire.publication.id}) }}" class="btn btn-secondary">Annuler</a>
+            <button type="submit" class="btn btn-primary">Enregistrer</button>
+        </div>
+        {{ form_end(form) }}
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const textarea = document.getElementById('commentText');
+            if (!textarea) return;
+
+            // ---------- DICTÉE VOCALE (Speech-to-Text) ----------
+            const micBtn = document.getElementById('startDictation');
+            if (micBtn) {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                if (!SpeechRecognition) {
+                    micBtn.disabled = true;
+                    micBtn.title = 'Reconnaissance vocale non supportée par ce navigateur';
+                } else {
+                    const recognition = new SpeechRecognition();
+                    recognition.lang = 'fr-FR';
+                    recognition.interimResults = false;
+                    recognition.continuous = false;
+                    recognition.maxAlternatives = 1;
+
+                    micBtn.addEventListener('click', () => {
+                        try {
+                            recognition.start();
+                            micBtn.innerHTML = '<i class="bi bi-mic-mute"></i> Écoute...';
+                            micBtn.disabled = true;
+                        } catch (e) {
+                            alert('Impossible de démarrer la reconnaissance vocale. Vérifiez les autorisations du micro.');
+                            micBtn.innerHTML = '<i class="bi bi-mic"></i>';
+                            micBtn.disabled = false;
+                        }
+                    });
+
+                    recognition.onresult = (event) => {
+                        const transcript = event.results[0][0].transcript;
+                        const currentText = textarea.value;
+                        textarea.value = currentText ? currentText + ' ' + transcript : transcript;
+                    };
+
+                    recognition.onerror = (event) => {
+                        let msg = '';
+                        switch (event.error) {
+                            case 'not-allowed':
+                                msg = 'Microphone non autorisé. Cliquez sur l\'icône du cadenas pour autoriser.';
+                                break;
+                            case 'no-speech':
+                                msg = 'Aucune parole détectée.';
+                                break;
+                            default:
+                                msg = 'Erreur : ' + event.error;
+                        }
+                        alert(msg);
+                    };
+
+                    recognition.onend = () => {
+                        micBtn.innerHTML = '<i class="bi bi-mic"></i>';
+                        micBtn.disabled = false;
+                    };
+                }
+            }
+
+            // ---------- LECTURE AUDIO (Text-to-Speech) ----------
+            const readBtn = document.getElementById('readComment');
+            if (readBtn) {
+                readBtn.addEventListener('click', () => {
+                    const text = textarea.value.trim();
+                    if (!text) {
+                        alert('Aucun texte à lire.');
+                        return;
+                    }
+                    if (!window.speechSynthesis) {
+                        alert('Synthèse vocale non supportée.');
+                        return;
+                    }
+                    window.speechSynthesis.cancel();
+                    const utterance = new SpeechSynthesisUtterance(text);
+                    utterance.lang = 'fr-FR';
+                    utterance.rate = 0.9;
+                    utterance.pitch = 1.0;
+                    window.speechSynthesis.speak(utterance);
+                });
+            }
+        });
+    </script>
+{% endblock %}

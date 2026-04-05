@@ -1,0 +1,72 @@
+{% extends 'front/base_front.html.twig' %}
+
+{% block title %}{{ publication.titre }} - Horozia{% endblock %}
+
+{% block body %}
+<section class="ftco-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-8 ftco-animate">
+                <h1>{{ publication.titre }}</h1>
+                <p class="mb-3">
+                    <span class="text-muted">Par {{ publication.auteur }} • {{ publication.dateCreation|date('d/m/Y') }}</span>
+                    {% if publication.ville or publication.pays %}
+                        • {{ publication.ville }}{{ publication.ville and publication.pays ? ', ' : '' }}{{ publication.pays }}
+                    {% endif %}
+                </p>
+                <div class="mb-3">
+                    <span class="badge bg-secondary">{{ publication.categorie }}</span>
+                    {% for tag in publication.tags %}
+                        <span class="badge bg-light">#{{ tag }}</span>
+                    {% endfor %}
+                </div>
+                {% if publication.image %}
+                    <img src="{{ asset(publication.image) }}" class="img-fluid rounded mb-4">
+                {% endif %}
+                <div class="card mb-4">
+                    <div class="card-body">
+                        {{ publication.description|nl2br }}
+                    </div>
+                </div>
+
+                <form method="post" action="{{ path('front_publication_like', {'id': publication.id}) }}" class="d-inline">
+                    <input type="hidden" name="_token" value="{{ csrf_token('like' ~ publication.id) }}">
+                    <button type="submit" class="btn btn-outline-danger">
+                        <i class="fa fa-heart"></i> {{ publication.likes }} J'aime
+                    </button>
+                </form>
+            </div>
+
+            <div class="col-md-4 ftco-animate">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">Commentaires ({{ publication.commentaires }})</div>
+                    <div class="card-body">
+                        {{ form_start(commentForm) }}
+                            {{ form_row(commentForm.auteur, {'attr': {'class': 'form-control', 'placeholder': 'Votre nom'}}) }}
+                            {{ form_row(commentForm.contenu, {'attr': {'rows': 4, 'class': 'form-control', 'placeholder': 'Votre commentaire...'}}) }}
+                            <button type="submit" class="btn btn-primary mt-2">Publier</button>
+                        {{ form_end(commentForm) }}
+                        <hr>
+                        {% for commentaire in commentaires %}
+                            <div class="mb-3">
+                                <strong>{{ commentaire.auteur }}</strong>
+                                <small class="text-muted float-end">{{ commentaire.dateCreation|date('d/m/Y H:i') }}</small>
+                                <p>{{ commentaire.contenu }}</p>
+                                {% if app.user and (app.user.userIdentifier == commentaire.auteur or is_granted('ROLE_ADMIN')) %}
+                                    <a href="{{ path('front_commentaire_edit', {'id': commentaire.id}) }}" class="btn btn-sm btn-outline-primary">Modifier</a>
+                                    <form method="post" action="{{ path('front_commentaire_delete', {'id': commentaire.id}) }}" style="display:inline">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ commentaire.id) }}">
+                                        <button class="btn btn-sm btn-outline-danger" onclick="return confirm('Supprimer ?')">Supprimer</button>
+                                    </form>
+                                {% endif %}
+                            </div>
+                        {% else %}
+                            <p class="text-muted">Soyez le premier à commenter.</p>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

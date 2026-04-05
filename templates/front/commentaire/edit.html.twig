@@ -1,0 +1,27 @@
+{% extends 'front/base_front.html.twig' %}
+
+{% block title %}Modifier mon commentaire{% endblock %}
+
+{% block body %}
+<section class="ftco-section">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8 ftco-animate">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">Modifier votre commentaire</div>
+                    <div class="card-body">
+                        {{ form_start(form) }}
+                            {{ form_row(form.auteur, {'attr': {'readonly': true, 'class': 'form-control'}}) }}
+                            {{ form_row(form.contenu, {'attr': {'rows': 6, 'class': 'form-control'}}) }}
+                            <div class="d-flex justify-content-end gap-2 mt-3">
+                                <a href="{{ path('front_publication_show', {'id': commentaire.publication.id}) }}" class="btn btn-secondary">Annuler</a>
+                                <button type="submit" class="btn btn-primary">Enregistrer</button>
+                            </div>
+                        {{ form_end(form) }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
