@@ -23,6 +23,14 @@
 <li class="nav-item {{ app.request.attributes.get('_route') == 'app_front_logement_index' ? 'active' : '' }}">
     <a href="{{ path('app_front_logement_index') }}" class="nav-link">Logement</a>
 </li>
+<li class="nav-item dropdown">
+    <a class="nav-link dropdown-toggle" href="#" id="reservationsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+        Mes réservations
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="reservationsDropdown">
+        <li><a class="dropdown-item" href="{{ path('app_front_reservation_index') }}">Voir mes réservations</a></li>
+    </ul>
+</li>
                 <li class="nav-item"><a href="#services" class="nav-link">Services</a></li>
                 <li class="nav-item"><a href="#contact" class="nav-link">Contact</a></li>
             </ul>
