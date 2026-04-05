@@ -8,50 +8,26 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
-/**
- * Categorie
- *
- * @ORM\Table(name="categorie")
- * @ORM\Entity(repositoryClass=CategorieRepository::class)
- */
+#[ORM\Entity(repositoryClass: CategorieRepository::class)]
+#[ORM\Table(name: 'categorie')]
 class Categorie
 {
-    /**
-     * @var int|null
-     *
-     * @ORM\Column(name="id", type="integer", nullable=false)
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="IDENTITY")
-     */
-    private $id;
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
+    private ?int $id = null;
 
-    /**
-     * @var string|null
-     *
-     * @ORM\Column(name="nom", type="string", length=255, nullable=false)
-     */
-    private $nom;
+    #[ORM\Column(length: 255)]
+    private ?string $nom = null;
 
-    /**
-     * @var string|null
-     *
-     * @ORM\Column(name="description", type="text", length=65535, nullable=true)
-     */
-    private $description;
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    private ?string $description = null;
 
-    /**
-     * @var string|null
-     *
-     * @ORM\Column(name="image_url", type="string", length=255, nullable=true)
-     */
-    private $imageUrl;
+    #[ORM\Column(name: 'image_url', length: 255, nullable: true)]
+    private ?string $imageUrl = null;
 
-    /**
-     * @var Collection<int, Voyage>
-     *
-     * @ORM\OneToMany(mappedBy="categorie", targetEntity="App\Entity\Voyage")
-     */
-    private $voyages;
+    #[ORM\OneToMany(mappedBy: 'categorie', targetEntity: Voyage::class)]
+    private Collection $voyages;
 
     public function __construct()
     {

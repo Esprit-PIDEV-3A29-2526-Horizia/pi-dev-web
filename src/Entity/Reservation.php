@@ -2,77 +2,43 @@
 
 namespace App\Entity;
 
+use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 
-/**
- * Reservation
- *
- * @ORM\Table(name="reservation", indexes={
- *     @ORM\Index(name="fk_res_voyage", columns={"id_voyage"}),
- *     @ORM\Index(name="fk_res_user", columns={"id_user"})
- * })
- * @ORM\Entity
- */
+#[ORM\Entity]
+#[ORM\Table(name: 'reservation')]
 class Reservation
 {
-    /**
-     * @var int|null
-     *
-     * @ORM\Column(name="id", type="integer", nullable=false)
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="IDENTITY")
-     */
-    private $id;
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
+    private ?int $id = null;
 
-    /**
-     * @var \DateTimeInterface|null
-     *
-     * @ORM\Column(name="date_reservation", type="datetime", nullable=false, options={"default"="CURRENT_TIMESTAMP"})
-     * @Assert\NotBlank(message="La date de réservation est obligatoire.")
-     */
-    private $dateReservation;
+    #[ORM\Column(name: 'date_reservation', type: Types::DATETIME_MUTABLE)]
+    #[Assert\NotBlank(message: 'La date de réservation est obligatoire.')]
+    private ?\DateTimeInterface $dateReservation = null;
 
-    /**
-     * @var string|null
-     *
-     * @ORM\Column(name="statut", type="string", length=50, nullable=false, options={"default"="EN_ATTENTE"})
-     * @Assert\NotBlank(message="Le statut est obligatoire.")
-     */
-    private $statut = 'EN_ATTENTE';
+    #[ORM\Column(name: 'statut', type: 'string', length: 50, options: ['default' => 'EN_ATTENTE'])]
+    #[Assert\NotBlank(message: 'Le statut est obligatoire.')]
+    private ?string $statut = 'EN_ATTENTE';
 
-    /**
-     * @var Voyage|null
-     *
-     * @ORM\ManyToOne(targetEntity="App\Entity\Voyage")
-     * @ORM\JoinColumn(name="id_voyage", referencedColumnName="id", nullable=false, onDelete="CASCADE")
-     * @Assert\NotNull(message="Le voyage est obligatoire.")
-     */
-    private $voyage;
+    #[ORM\ManyToOne(targetEntity: Voyage::class)]
+    #[ORM\JoinColumn(name: 'id_voyage', referencedColumnName: 'id', nullable: false, onDelete: 'CASCADE')]
+    #[Assert\NotNull(message: 'Le voyage est obligatoire.')]
+    private ?Voyage $voyage = null;
 
-    /**
-     * @var User|null
-     *
-     * @ORM\ManyToOne(targetEntity="App\Entity\User")
-     * @ORM\JoinColumn(name="id_user", referencedColumnName="id", nullable=true, onDelete="SET NULL")
-     */
-    private $user;
+    #[ORM\ManyToOne(targetEntity: User::class)]
+    #[ORM\JoinColumn(name: 'id_user', referencedColumnName: 'id', nullable: true, onDelete: 'SET NULL')]
+    private ?User $user = null;
 
-    /**
-     * @var int|null
-     *
-     * @ORM\Column(name="nbr_personnes", type="integer", nullable=true)
-     * @Assert\NotBlank(message="Le nombre de personnes est obligatoire.")
-     * @Assert\Positive(message="Le nombre de personnes doit être positif.")
-     */
-    private $nbrPersonnes;
+    #[ORM\Column(name: 'nbr_personnes', type: 'integer', nullable: true)]
+    #[Assert\NotBlank(message: 'Le nombre de personnes est obligatoire.')]
+    #[Assert\Positive(message: 'Le nombre de personnes doit être positif.')]
+    private ?int $nbrPersonnes = null;
 
-    /**
-     * @var float|null
-     *
-     * @ORM\Column(name="prix_total", type="float", nullable=true)
-     */
-    private $prixTotal;
+    #[ORM\Column(name: 'prix_total', type: 'float', nullable: true)]
+    private ?float $prixTotal = null;
 
     public function __construct()
     {
