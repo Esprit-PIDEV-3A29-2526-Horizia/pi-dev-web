@@ -74,82 +74,73 @@
                 (reservation.user.prenom is defined ? reservation.user.prenom : '')
             )|trim : '' %}
 
-            {% set statutClass =
-                reservation.statut == 'CONFIRMEE' ? 'badge-confirmed' :
-                (reservation.statut == 'ANNULEE' ? 'badge-cancelled' : 'badge-pending')
+            {% set statusClass =
+                reservation.statut == 'CONFIRMEE' ? 'status-confirmed' :
+                (reservation.statut == 'ANNULEE' ? 'status-cancelled' : 'status-pending')
             %}
 
             <div class="col-md-6 col-xl-4">
-                <div class="reservation-card h-100">
-                    <div class="reservation-card-header">
-                        <div>
-                            <span class="reservation-id">#{{ reservation.id }}</span>
-                            <h5 class="reservation-title mb-0">
-                                {{ reservation.voyage ? reservation.voyage.titre : 'Voyage inconnu' }}
-                            </h5>
+                <div class="reservation-uiverse-card">
+                    <div class="reservation-uiverse-details">
+                        <div class="reservation-top-line">
+                            <span class="reservation-small-id">#{{ reservation.id }}</span>
+                            <span class="reservation-status-pill {{ statusClass }}">{{ reservation.statut }}</span>
                         </div>
 
-                        <span class="reservation-status {{ statutClass }}">
-                            {{ reservation.statut }}
-                        </span>
-                    </div>
+                        <p class="reservation-text-title">
+                            {{ reservation.voyage ? reservation.voyage.titre : 'Voyage inconnu' }}
+                        </p>
 
-                    <div class="reservation-card-body">
-                        <div class="reservation-info-line">
-                            <i class="bi bi-calendar-event"></i>
-                            <div>
-                                <strong>Date réservation</strong>
-                                <div>{{ reservation.dateReservation ? reservation.dateReservation|date('Y-m-d H:i') : '' }}</div>
+                        <div class="reservation-text-body">
+                            <div class="reservation-info-item">
+                                <strong>Date :</strong>
+                                <span>{{ reservation.dateReservation ? reservation.dateReservation|date('Y-m-d H:i') : '' }}</span>
                             </div>
-                        </div>
 
-                        <div class="reservation-info-line">
-                            <i class="bi bi-person-circle"></i>
-                            <div>
-                                <strong>Client</strong>
-                               <div class="{{ clientName == '' ? 'reservation-empty-client' : '' }}">{{ clientName != '' ? clientName : 'Utilisateur non lié' }}</div>
+                            <div class="reservation-info-item">
+                                <strong>Client :</strong>
+                                <span class="{{ clientName == '' ? 'reservation-empty-client' : '' }}">
+                                    {{ clientName != '' ? clientName : 'Utilisateur non lié' }}
+                                </span>
                             </div>
-                        </div>
 
-                        <div class="reservation-info-line">
-                            <i class="bi bi-people"></i>
-                            <div>
-                                <strong>Nombre de personnes</strong>
-                                <div>{{ reservation.nbrPersonnes }}</div>
+                            <div class="reservation-info-item">
+                                <strong>Personnes :</strong>
+                                <span>{{ reservation.nbrPersonnes }}</span>
                             </div>
                         </div>
                     </div>
 
-                    <div class="reservation-card-footer d-flex flex-wrap gap-2">
+                    <div class="reservation-actions">
                         {% if reservation.statut == 'EN_ATTENTE' %}
                             <form method="post"
                                   action="{{ path('app_reservation_confirmer', {'id': reservation.id}) }}"
                                   class="confirm-reservation-form"
                                   data-reservation-id="{{ reservation.id }}">
-                                <button type="submit" class="btn btn-success btn-sm">
+                                <button type="submit" class="reservation-uiverse-button btn-confirm">
                                     Confirmer
                                 </button>
                             </form>
                         {% elseif reservation.statut == 'CONFIRMEE' %}
-                            <button class="btn btn-secondary btn-sm" disabled>
+                            <button type="button" class="reservation-uiverse-button btn-confirmed" disabled>
                                 Confirmée
                             </button>
                         {% elseif reservation.statut == 'ANNULEE' %}
-                            <button class="btn btn-danger btn-sm" disabled>
+                            <button type="button" class="reservation-uiverse-button btn-cancelled" disabled>
                                 Annulée
                             </button>
                         {% endif %}
 
                         <a href="{{ path('app_reservation_edit', {'id': reservation.id}) }}"
-                           class="btn btn-horozia-warning btn-sm">
+                           class="reservation-uiverse-button btn-edit">
                             Modifier
                         </a>
 
                         <a href="{{ path('app_reservation_delete', {'id': reservation.id}) }}"
-                            class="btn btn-danger btn-sm btn-delete-reservation ms-auto"
-                            data-reservation-id="{{ reservation.id }}">
-                                Supprimer
-                            </a>
+                           class="reservation-uiverse-button btn-delete btn-delete-reservation"
+                           data-reservation-id="{{ reservation.id }}">
+                            Supprimer
+                        </a>
                     </div>
                 </div>
             </div>

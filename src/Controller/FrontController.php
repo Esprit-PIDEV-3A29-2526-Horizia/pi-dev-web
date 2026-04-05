@@ -233,63 +233,80 @@ public function reserver(
 
 
     #[Route('/mes-reservations', name: 'app_front_mes_reservations')]
-    public function mesReservations(ManagerRegistry $doctrine): Response
-    {
-        $reservations = $doctrine->getRepository(Reservation::class)->findBy(
-            [],
-            ['dateReservation' => 'DESC']
-        );
+public function mesReservations(
+    Request $request,
+    ManagerRegistry $doctrine
+): Response {
+    $statut = trim((string) $request->query->get('statut', ''));
 
-        return $this->render('front/mes_reservations.html.twig', [
-            'reservations' => $reservations,
-        ]);
+    $qb = $doctrine->getRepository(Reservation::class)->createQueryBuilder('r')
+        ->leftJoin('r.voyage', 'v')
+        ->addSelect('v')
+        ->orderBy('r.dateReservation', 'DESC');
+
+    if ($this->getUser()) {
+        $qb->andWhere('r.user = :user')
+           ->setParameter('user', $this->getUser());
     }
 
-    #[Route('/reservation/{id}/annuler', name: 'app_front_annuler_reservation', requirements: ['id' => '\d+'], methods: ['POST'])]
-    public function annulerReservation(
-        int $id,
-        ManagerRegistry $doctrine,
-        EntityManagerInterface $entityManager
-    ): Response {
-        $reservation = $doctrine->getRepository(Reservation::class)->find($id);
+    if ($statut !== '') {
+        $qb->andWhere('r.statut = :statut')
+           ->setParameter('statut', $statut);
+    }
 
-        if (!$reservation) {
-            throw $this->createNotFoundException('Réservation introuvable.');
-        }
+    $reservations = $qb->getQuery()->getResult();
 
-        $user = $this->getUser();
-        if (!$user || $reservation->getUser() !== $user) {
-            $this->addFlash('error', 'Vous n’êtes pas autorisé à annuler cette réservation.');
-            return $this->redirectToRoute('app_front_mes_reservations');
-        }
+    return $this->render('front/mes_reservations.html.twig', [
+        'reservations' => $reservations,
+        'selectedStatut' => $statut,
+    ]);
+}
 
-        if ($reservation->getStatut() === 'ANNULEE') {
-            $this->addFlash('error', 'Cette réservation est déjà annulée.');
-            return $this->redirectToRoute('app_front_mes_reservations');
-        }
+#[Route('/reservation/{id}/annuler', name: 'app_front_annuler_reservation', methods: ['POST'])]
+public function annulerReservation(
+    int $id,
+    Request $request,
+    ManagerRegistry $doctrine,
+    EntityManagerInterface $entityManager
+): Response {
+    $reservation = $doctrine->getRepository(Reservation::class)->find($id);
 
-        if ($reservation->getStatut() === 'CONFIRMEE') {
-            $this->addFlash('error', 'Une réservation confirmée ne peut pas être annulée.');
-            return $this->redirectToRoute('app_front_mes_reservations');
-        }
+    if (!$reservation) {
+        throw $this->createNotFoundException('Réservation introuvable.');
+    }
 
-        $reservation->setStatut('ANNULEE');
-
-        $voyage = $reservation->getVoyage();
-        if ($voyage) {
-            $voyage->setPlacesRestantes(
-                $voyage->getPlacesRestantes() + $reservation->getNbrPersonnes()
-            );
-            $entityManager->persist($voyage);
-        }
-
-        $entityManager->persist($reservation);
-        $entityManager->flush();
-
-        $this->addFlash('success', 'La réservation a bien été annulée.');
-
+    if (!$this->isCsrfTokenValid('annuler_reservation_' . $reservation->getId(), $request->request->get('_token'))) {
+        $this->addFlash('error', 'Jeton CSRF invalide.');
         return $this->redirectToRoute('app_front_mes_reservations');
     }
+
+    if ($reservation->getStatut() === 'CONFIRMEE') {
+        $this->addFlash('error', 'Une réservation confirmée ne peut pas être annulée.');
+        return $this->redirectToRoute('app_front_mes_reservations');
+    }
+
+    if ($reservation->getStatut() === 'ANNULEE') {
+        $this->addFlash('error', 'Cette réservation est déjà annulée.');
+        return $this->redirectToRoute('app_front_mes_reservations');
+    }
+
+    $voyage = $reservation->getVoyage();
+
+    if ($voyage) {
+        $voyage->setPlacesRestantes(
+            $voyage->getPlacesRestantes() + $reservation->getNbrPersonnes()
+        );
+        $entityManager->persist($voyage);
+    }
+
+    $reservation->setStatut('ANNULEE');
+    $entityManager->persist($reservation);
+    $entityManager->flush();
+
+    $this->addFlash('success', 'La réservation a été annulée avec succès.');
+
+    return $this->redirectToRoute('app_front_mes_reservations');
+}
 
     #[Route('/reservation/{id}/modifier', name: 'app_front_modifier_reservation', requirements: ['id' => '\d+'])]
     public function modifierReservation(
