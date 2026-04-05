@@ -2,48 +2,6 @@
 
 namespace App\Entity;
 
-<<<<<<< HEAD
-use Doctrine\ORM\Mapping as ORM;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
-use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
-use Symfony\Component\Security\Core\User\UserInterface;
-
-use App\Repository\UserRepository;
-
-#[ORM\Entity(repositoryClass: UserRepository::class)]
-#[ORM\Table(name: 'user')]
-class User implements UserInterface, PasswordAuthenticatedUserInterface
-{
-    #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column(type: 'integer')]
-    private ?int $id = null;
-
-    #[ORM\Column(type: 'string', nullable: false)]
-    private ?string $nom = null;
-
-    #[ORM\Column(type: 'string', nullable: false)]
-    private ?string $prenom = null;
-
-    #[ORM\Column(type: 'string', nullable: false)]
-    private ?string $email = null;
-
-    #[ORM\Column(type: 'string', nullable: false)]
-    private ?string $password = null;
-
-    #[ORM\Column(type: 'string', nullable: true)]
-    private ?string $telephone = null;
-
-    #[ORM\Column(type: 'string', nullable: true)]
-    private ?string $addresse = null;
-
-    #[ORM\ManyToOne(targetEntity: Profil::class, inversedBy: 'users')]
-    #[ORM\JoinColumn(name: 'profil_id', referencedColumnName: 'id')]
-    private ?Profil $profil = null;
-
-    // ===== GETTERS & SETTERS =====
-=======
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -127,7 +85,6 @@ class User
      * @ORM\JoinColumn(name="profil_id", referencedColumnName="id", nullable=true)
      */
     private $profil;
->>>>>>> origin/gestion_voyage
 
     public function getId(): ?int
     {
@@ -138,11 +95,7 @@ class User
     {
         return $this->nom;
     }
-<<<<<<< HEAD
-    
-=======
 
->>>>>>> origin/gestion_voyage
     public function setNom(string $nom): self
     {
         $this->nom = $nom;
@@ -204,8 +157,6 @@ class User
         return $this;
     }
 
-<<<<<<< HEAD
-=======
     public function getFaceDescriptor(): ?string
     {
         return $this->faceDescriptor;
@@ -217,7 +168,6 @@ class User
         return $this;
     }
 
->>>>>>> origin/gestion_voyage
     public function getProfil(): ?Profil
     {
         return $this->profil;
@@ -228,28 +178,4 @@ class User
         $this->profil = $profil;
         return $this;
     }
-<<<<<<< HEAD
-
-    // ===== MÉTHODES REQUISES PAR UserInterface =====
-
-    public function getRoles(): array
-    {
-        // Si l'utilisateur a le profil ADMIN
-        if ($this->profil && $this->profil->getType() === 'ADMIN') {
-            return ['ROLE_ADMIN', 'ROLE_USER'];
-        }
-        return ['ROLE_USER'];
-    }
-
-    public function getUserIdentifier(): string
-    {
-        return $this->email;
-    }
-
-    public function eraseCredentials(): void
-    {
-        // Efface les informations sensibles temporaires
-    }
-=======
->>>>>>> origin/gestion_voyage
 }
