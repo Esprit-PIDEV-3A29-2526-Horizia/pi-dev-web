@@ -1,0 +1,184 @@
+{% extends 'admin/base_admin.html.twig' %}
+
+{% block title %}Ajouter un voyage{% endblock %}
+
+{% block admin_content %}
+    <div class="container-fluid">
+        <div class="dashboard-card">
+            <div class="mb-4">
+                <h2 class="fw-bold mb-1">Ajouter un voyage</h2>
+                <p class="text-muted mb-0">Remplissez les informations du voyage puis enregistrez.</p>
+            </div>
+
+            {{ form_start(form, {'attr': {'novalidate': 'novalidate'}}) }}
+
+            {% if form.vars.errors|length > 0 %}
+                <div class="validation-error mb-3">
+                    {{ form_errors(form) }}
+                </div>
+            {% endif %}
+
+            <div class="row">
+                <div class="col-md-6 mb-3 {% if form.titre.vars.errors|length > 0 %}field-error{% endif %}">
+                    {{ form_label(form.titre) }}
+                    {{ form_widget(form.titre, {'attr': {'class': 'form-control'}}) }}
+                    {% if form.titre.vars.errors|length > 0 %}
+                        <div class="validation-error">{{ form_errors(form.titre) }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="col-md-6 mb-3 {% if form.destination.vars.errors|length > 0 %}field-error{% endif %}">
+                    {{ form_label(form.destination) }}
+                    {{ form_widget(form.destination, {'attr': {'class': 'form-control'}}) }}
+                    {% if form.destination.vars.errors|length > 0 %}
+                        <div class="validation-error">{{ form_errors(form.destination) }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="mb-3 {% if form.description.vars.errors|length > 0 %}field-error{% endif %}">
+                {{ form_label(form.description) }}
+                {{ form_widget(form.description, {'attr': {'class': 'form-control', 'rows': 4}}) }}
+                {% if form.description.vars.errors|length > 0 %}
+                    <div class="validation-error">{{ form_errors(form.description) }}</div>
+                {% endif %}
+            </div>
+
+            <div class="row">
+                <div class="col-md-4 mb-3 {% if form.prix.vars.errors|length > 0 %}field-error{% endif %}">
+                    {{ form_label(form.prix) }}
+                    {{ form_widget(form.prix, {'attr': {'class': 'form-control'}}) }}
+                    {% if form.prix.vars.errors|length > 0 %}
+                        <div class="validation-error">{{ form_errors(form.prix) }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="col-md-4 mb-3 {% if form.dateDepart.vars.errors|length > 0 %}field-error{% endif %}">
+                    {{ form_label(form.dateDepart) }}
+                    {{ form_widget(form.dateDepart, {'attr': {'class': 'form-control'}}) }}
+                    {% if form.dateDepart.vars.errors|length > 0 %}
+                        <div class="validation-error">{{ form_errors(form.dateDepart) }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="col-md-4 mb-3 {% if form.dateRetour.vars.errors|length > 0 %}field-error{% endif %}">
+                    {{ form_label(form.dateRetour) }}
+                    {{ form_widget(form.dateRetour, {'attr': {'class': 'form-control'}}) }}
+                    {% if form.dateRetour.vars.errors|length > 0 %}
+                        <div class="validation-error">{{ form_errors(form.dateRetour) }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-4 mb-3 {% if form.categorie.vars.errors|length > 0 %}field-error{% endif %}">
+                    {{ form_label(form.categorie) }}
+                    {{ form_widget(form.categorie, {'attr': {'class': 'form-select'}}) }}
+                    {% if form.categorie.vars.errors|length > 0 %}
+                        <div class="validation-error">{{ form_errors(form.categorie) }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="col-md-4 mb-3 {% if form.placesTotal.vars.errors|length > 0 %}field-error{% endif %}">
+                    {{ form_label(form.placesTotal) }}
+                    {{ form_widget(form.placesTotal, {'attr': {'class': 'form-control'}}) }}
+                    {% if form.placesTotal.vars.errors|length > 0 %}
+                        <div class="validation-error">{{ form_errors(form.placesTotal) }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="col-md-4 mb-3 {% if form.placesRestantes.vars.errors|length > 0 %}field-error{% endif %}">
+                    {{ form_label(form.placesRestantes) }}
+                    {{ form_widget(form.placesRestantes, {'attr': {'class': 'form-control'}}) }}
+                    {% if form.placesRestantes.vars.errors|length > 0 %}
+                        <div class="validation-error">{{ form_errors(form.placesRestantes) }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="mb-3 {% if form.imageUrl.vars.errors|length > 0 %}field-error{% endif %}">
+                {{ form_label(form.imageUrl) }}
+                {{ form_widget(form.imageUrl, {'attr': {
+                    'class': 'form-control',
+                    'id': 'image-url-input',
+                    'placeholder': '/images/Grece.jpg ou https://...'
+                }}) }}
+
+                <div class="form-text">
+                    Utilisez une URL publique comme <strong>/images/Grece.jpg</strong> ou une URL complète.
+                </div>
+
+                {% if form.imageUrl.vars.errors|length > 0 %}
+                    <div class="validation-error">{{ form_errors(form.imageUrl) }}</div>
+                {% endif %}
+
+                {% set currentImage = form.vars.value.imageUrl %}
+
+                <div class="mt-3">
+                    <div class="small text-muted mb-2">Aperçu de l’image</div>
+                    <div class="image-preview-wrapper">
+                        <img
+                            id="image-preview"
+                            src="{% if currentImage %}
+                                    {% if currentImage starts with 'http://' or currentImage starts with 'https://' %}
+                                        {{ currentImage }}
+                                    {% else %}
+                                        {{ asset(currentImage starts with '/' ? currentImage|slice(1) : currentImage) }}
+                                    {% endif %}
+                                 {% else %}
+                                    https://via.placeholder.com/500x280?text=Apercu+Voyage
+                                 {% endif %}"
+                            alt="Aperçu de l'image"
+                            class="image-preview-element"
+                        >
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex gap-2 mt-4">
+                <button type="submit" class="btn btn-horozia-secondary">
+                    <i class="bi bi-check-circle me-1"></i> Enregistrer
+                </button>
+                <a href="{{ path('app_voyage_index') }}" class="btn btn-horozia-neutral">
+                    Retour
+                </a>
+            </div>
+
+            {{ form_end(form) }}
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const input = document.getElementById('image-url-input');
+            const preview = document.getElementById('image-preview');
+            const placeholder = 'https://via.placeholder.com/500x280?text=Apercu+Voyage';
+
+            if (input && preview) {
+                input.addEventListener('input', function () {
+                    const value = input.value.trim();
+
+                    if (value === '') {
+                        preview.src = placeholder;
+                        return;
+                    }
+
+                    if (value.startsWith('http://') || value.startsWith('https://')) {
+                        preview.src = value;
+                    } else {
+                        const cleanPath = value.startsWith('/') ? value.substring(1) : value;
+                        preview.src = '/' + cleanPath;
+                    }
+                });
+
+                preview.addEventListener('error', function () {
+                    preview.src = placeholder;
+                });
+            }
+        });
+    </script>
+{% endblock %}

@@ -1,0 +1,47 @@
+{% extends 'admin/base_admin.html.twig' %}
+
+{% block title %}Ajouter une catégorie{% endblock %}
+
+{% block admin_content %}
+<div class="container-fluid">
+    <div class="mb-4">
+        <h2 class="fw-bold mb-1">Ajouter une catégorie</h2>
+        <p class="text-muted mb-0">Créez une nouvelle catégorie avec image et description.</p>
+    </div>
+
+    <div class="dashboard-card">
+        {% include 'admin/categorie/form.html.twig' with {
+            form: form,
+            button_label: 'Enregistrer'
+        } %}
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const imageInput = document.getElementById('categorie_image_url');
+            const preview = document.getElementById('categorie-image-preview');
+
+            function updatePreview() {
+                if (!imageInput || !preview) return;
+
+                const value = imageInput.value.trim();
+
+                if (!value) {
+                    preview.src = 'https://via.placeholder.com/800x400?text=Aper%C3%A7u+image';
+                    return;
+                }
+
+                preview.src = value;
+            }
+
+            if (imageInput) {
+                imageInput.addEventListener('input', updatePreview);
+            }
+        });
+    </script>
+{% endblock %}

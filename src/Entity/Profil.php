@@ -3,6 +3,7 @@
 namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+<<<<<<< HEAD
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 
@@ -16,12 +17,46 @@ class Profil
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
     private ?int $id = null;
+=======
+
+/**
+ * Profil
+ *
+ * @ORM\Table(name="profil")
+ * @ORM\Entity
+ */
+class Profil
+{
+    /**
+     * @var int
+     *
+     * @ORM\Column(name="id", type="integer", nullable=false)
+     * @ORM\Id
+     * @ORM\GeneratedValue(strategy="IDENTITY")
+     */
+    private $id;
+
+    /**
+     * @var string|null
+     *
+     * @ORM\Column(name="type", type="string", length=30, nullable=true)
+     */
+    private $type;
+
+    /**
+     * @var string|null
+     *
+     * @ORM\Column(name="statut", type="string", length=30, nullable=true)
+     */
+    private $statut;
+>>>>>>> origin/gestion_voyage
 
     public function getId(): ?int
     {
         return $this->id;
     }
 
+<<<<<<< HEAD
     public function setId(int $id): self
     {
         $this->id = $id;
@@ -67,15 +102,23 @@ class Profil
         return $this;
     }
 
+=======
+>>>>>>> origin/gestion_voyage
     public function getType(): ?string
     {
         return $this->type;
     }
 
+<<<<<<< HEAD
     public function setType(?string $type): static
     {
         $this->type = $type;
 
+=======
+    public function setType(?string $type): self
+    {
+        $this->type = $type;
+>>>>>>> origin/gestion_voyage
         return $this;
     }
 
@@ -84,6 +127,7 @@ class Profil
         return $this->statut;
     }
 
+<<<<<<< HEAD
     public function setStatut(?string $statut): static
     {
         $this->statut = $statut;
@@ -92,3 +136,16 @@ class Profil
     }
 
 }
+=======
+    public function setStatut(?string $statut): self
+    {
+        $this->statut = $statut;
+        return $this;
+    }
+
+    public function __toString(): string
+    {
+        return $this->type ?? 'Profil';
+    }
+}
+>>>>>>> origin/gestion_voyage
