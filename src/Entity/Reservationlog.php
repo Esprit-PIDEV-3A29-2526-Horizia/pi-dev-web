@@ -23,18 +23,25 @@ class Reservationlog
     private ?User $user = null;
 
     #[ORM\Column(type: 'datetime', nullable: false)]
+     #[Assert\NotNull(message: "La date d'arrivée est obligatoire.")]
+    #[Assert\GreaterThanOrEqual(value: "today", message: "La date d'arrivée ne peut pas être dans le passé.")]
     private ?\DateTimeInterface $date_debut = null;
 
     #[ORM\Column(type: 'datetime', nullable: false)]
+    #[Assert\NotNull(message: "La date de départ est obligatoire.")]
+    #[Assert\GreaterThan(propertyPath: "date_debut", message: "La date de départ doit être postérieure à la date d'arrivée.")]
     private ?\DateTimeInterface $date_fin = null;
 
     #[ORM\Column(type: 'float', nullable: false)]
+    #[Assert\NotNull(message: "Le montant est obligatoire.")]
+    #[Assert\Positive(message: "Le montant doit être positif.")]
     private ?float $montant = null;
 
     #[ORM\Column(type: 'string', nullable: false)]
     private ?string $status = null;
 
     #[ORM\Column(type: 'string', nullable: true)]
+     #[Assert\Choice(choices: ['En ligne', 'Sur place'], message: "Modalité invalide.")]
     private ?string $modalites = null;
 
     public function getIdreslog(): ?int

@@ -330,6 +330,14 @@
                     <li><a href="{{ path('app_front_home') }}" class="text-white-50">Accueil</a></li>
                     <li><a href="{{ path('app_front_home') }}#voyages" class="text-white-50">Voyages</a></li>
                     <li><a href="{{ path('app_front_logement_index') }}" class="text-white-50">Logement</a></li>
+                    <li class="nav-item dropdown">
+    <a class="nav-link dropdown-toggle" href="#" id="reservationsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+        Mes réservations
+    </a>
+    <ul class="dropdown-menu" aria-labelledby="reservationsDropdown">
+        <li><a class="dropdown-item" href="{{ path('app_front_reservation_index') }}">Voir mes réservations</a></li>
+    </ul>
+</li>
                     <li><a href="{{ path('app_front_home') }}#services" class="text-white-50">Services</a></li>
                     <li><a href="{{ path('app_front_home') }}#contact" class="text-white-50">Contact</a></li>
                 </ul>
@@ -396,40 +404,101 @@
             });
         });
 
-        // Fonction d'initialisation du formulaire (calcul des nuits et du total)
-        function initReservationForm() {
-            const dateArrivee = document.getElementById('date_arrivee_modal');
-            const dateDepart = document.getElementById('date_depart_modal');
-            const totalSpan = document.getElementById('total_modal');
-            const nuitsSpan = document.getElementById('nuits_modal');
-            
-            if (!dateArrivee || !dateDepart) {
-                console.warn('Éléments du formulaire non trouvés');
+      function initReservationForm() {
+    const dateArrivee = document.getElementById('date_arrivee_modal');
+    const dateDepart = document.getElementById('date_depart_modal');
+    const totalSpan = document.getElementById('total_modal');
+    const nuitsSpan = document.getElementById('nuits_modal');
+    const form = document.getElementById('reservationFormModal');
+    const formErrorsDiv = document.getElementById('formErrors');
+    const modaliteRadios = document.querySelectorAll('input[name="modalite"]');
+    
+    if (!dateArrivee || !dateDepart) return;
+    
+    const prixInput = document.getElementById('prix_par_nuit_data');
+    const prixParNuit = prixInput ? parseFloat(prixInput.value) : 0;
+
+    // Calcul du total
+    function calculerTotal() {
+        if (dateArrivee.value && dateDepart.value) {
+            const arrivee = new Date(dateArrivee.value);
+            const depart = new Date(dateDepart.value);
+            if (depart > arrivee) {
+                const nuits = (depart - arrivee) / (1000 * 60 * 60 * 24);
+                const total = nuits * prixParNuit;
+                if (nuitsSpan) nuitsSpan.innerText = nuits;
+                if (totalSpan) totalSpan.innerText = total.toFixed(2) + ' DT';
                 return;
             }
-            
-            const prixInput = document.getElementById('prix_par_nuit_data');
-            const prixParNuit = prixInput ? parseFloat(prixInput.value) : 0;
-
-            function calculerTotal() {
-                if (dateArrivee.value && dateDepart.value) {
-                    const arrivee = new Date(dateArrivee.value);
-                    const depart = new Date(dateDepart.value);
-                    if (depart > arrivee) {
-                        const nuits = (depart - arrivee) / (1000 * 60 * 60 * 24);
-                        const total = nuits * prixParNuit;
-                        if (nuitsSpan) nuitsSpan.innerText = nuits;
-                        if (totalSpan) totalSpan.innerText = total.toFixed(2) + ' DT';
-                        return;
-                    }
-                }
-                if (nuitsSpan) nuitsSpan.innerText = '0';
-                if (totalSpan) totalSpan.innerText = '0 DT';
-            }
-
-            dateArrivee.addEventListener('change', calculerTotal);
-            dateDepart.addEventListener('change', calculerTotal);
-            calculerTotal(); // appel initial
         }
+        if (nuitsSpan) nuitsSpan.innerText = '0';
+        if (totalSpan) totalSpan.innerText = '0 DT';
+    }
+
+    // Validation
+    function validateForm(event) {
+        let isValid = true;
+        let errorMessages = [];
+
+        dateArrivee.classList.remove('is-invalid');
+        dateDepart.classList.remove('is-invalid');
+        document.getElementById('modaliteError').style.display = 'none';
+        formErrorsDiv.classList.add('d-none');
+        formErrorsDiv.innerHTML = '';
+
+        // Date d'arrivée
+        if (!dateArrivee.value) {
+            errorMessages.push('La date d\'arrivée est obligatoire.');
+            dateArrivee.classList.add('is-invalid');
+            isValid = false;
+        } else {
+            const arrivee = new Date(dateArrivee.value);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            if (arrivee < today) {
+                errorMessages.push('La date d\'arrivée ne peut pas être dans le passé.');
+                dateArrivee.classList.add('is-invalid');
+                isValid = false;
+            }
+        }
+
+        // Date de départ
+        if (!dateDepart.value) {
+            errorMessages.push('La date de départ est obligatoire.');
+            dateDepart.classList.add('is-invalid');
+            isValid = false;
+        } else if (dateArrivee.value) {
+            const arrivee = new Date(dateArrivee.value);
+            const depart = new Date(dateDepart.value);
+            if (depart <= arrivee) {
+                errorMessages.push('La date de départ doit être postérieure à la date d\'arrivée.');
+                dateDepart.classList.add('is-invalid');
+                isValid = false;
+            }
+        }
+
+        // Modalité
+        let modaliteChecked = false;
+        modaliteRadios.forEach(radio => { if (radio.checked) modaliteChecked = true; });
+        if (!modaliteChecked) {
+            errorMessages.push('Veuillez choisir une modalité de paiement.');
+            document.getElementById('modaliteError').style.display = 'block';
+            isValid = false;
+        }
+
+        if (!isValid) {
+            event.preventDefault();
+            formErrorsDiv.innerHTML = errorMessages.join('<br>');
+            formErrorsDiv.classList.remove('d-none');
+            form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }
+
+    form.addEventListener('submit', validateForm);
+    dateArrivee.addEventListener('change', calculerTotal);
+    dateDepart.addEventListener('change', calculerTotal);
+    calculerTotal();
+}
     </script>
+
 {% endblock %}

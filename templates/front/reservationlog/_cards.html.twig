@@ -1,0 +1,54 @@
+{# templates/front/reservation/_cards.html.twig #}
+{% for reservation in reservations %}
+    <div class="col-md-6 col-lg-4">
+        <div class="reservation-card">
+            <div class="reservation-card-content">
+                <div class="card-header">
+                    <h5>{{ reservation.logement.nom }}</h5>
+                    <span class="badge-status 
+                        {% if reservation.status == 'confirmée' %}confirmed
+                        {% elseif reservation.status == 'en_attente' %}pending
+                        {% else %}cancelled{% endif %}">
+                        {{ reservation.status }}
+                    </span>
+                </div>
+                <div class="card-details">
+                    <div class="detail-item">
+                        <small><i class="fa fa-calendar"></i> Arrivée</small>
+                        <p>{{ reservation.dateDebut|date('d/m/Y') }}</p>
+                    </div>
+                    <div class="detail-item">
+                        <small><i class="fa fa-calendar"></i> Départ</small>
+                        <p>{{ reservation.dateFin|date('d/m/Y') }}</p>
+                    </div>
+                    <div class="detail-item">
+                        <small><i class="fa fa-money"></i> Montant</small>
+                        <p>{{ reservation.montant|number_format(2, ',', ' ') }} DT</p>
+                    </div>
+                    <div class="detail-item">
+                        <small><i class="fa fa-credit-card"></i> Modalité</small>
+                        <p>{{ reservation.modalites }}</p>
+                    </div>
+                </div>
+                <div class="card-actions">
+                    <a href="#" class="btn-action" title="Modifier"><i class="fa fa-pencil"></i> Modifier</a>
+                    <a href="#" class="btn-action btn-delete" title="Supprimer" onclick="return confirm('Supprimer cette réservation ?');"><i class="fa fa-trash"></i> Supprimer</a>
+                    {% if reservation.status == 'confirmée' %}
+                        <a href="#" class="btn-action btn-qr" title="QR Code"><i class="fa fa-qrcode"></i> QR Code</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+{% else %}
+    <div class="col-12">
+        <div class="text-center py-5 bg-light rounded-4">
+            <i class="bi bi-calendar-x display-1 text-muted mb-4 d-block"></i>
+            <h3 class="text-muted mb-3">Aucune réservation</h3>
+            <p class="text-muted mb-4">Commencez par réserver un logement.</p>
+            <a href="{{ path('app_front_logement_index') }}" class="btn btn-horozia-primary btn-lg px-5 rounded-pill">
+                <i class="bi bi-house-door me-2"></i> Découvrir les logements
+            </a>
+        </div>
+    </div>
+{% endfor %}
