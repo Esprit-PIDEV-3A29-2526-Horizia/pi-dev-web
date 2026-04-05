@@ -5,7 +5,7 @@
 {% block stylesheets %}
     {{ parent() }}
     <style>
-        /* Conteneur de la carte avec perspective 3D */
+        /* ========== STYLES FLIP CARD (inchangés) ========== */
         .flip-card {
             background-color: transparent;
             width: 100%;
@@ -14,7 +14,6 @@
             margin-bottom: 30px;
         }
 
-        /* Intérieur de la carte qui effectue le flip */
         .flip-card-inner {
             position: relative;
             width: 100%;
@@ -24,15 +23,13 @@
             transform-style: preserve-3d;
             border-radius: 20px;
             box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            border: 2px solid #23779C;   /* Contour bleu ajouté */
+            border: 2px solid #23779C;
         }
 
-        /* Effet flip au survol */
         .flip-card:hover .flip-card-inner {
             transform: rotateY(180deg);
         }
 
-        /* Face avant et arrière */
         .flip-card-front, .flip-card-back {
             position: absolute;
             width: 100%;
@@ -42,7 +39,6 @@
             overflow: hidden;
         }
 
-        /* Face avant */
         .flip-card-front {
             background-color: #fff;
             color: #333;
@@ -97,7 +93,6 @@
             margin-bottom: 15px;
         }
 
-        /* Face arrière */
         .flip-card-back {
             background: linear-gradient(135deg, #23779C, #3D94CA);
             color: white;
@@ -138,6 +133,7 @@
             transition: all 0.3s;
             border: none;
             cursor: pointer;
+            width: 100%;
         }
 
         .btn-reserver:hover {
@@ -156,23 +152,62 @@
             margin-right: 6px;
             margin-bottom: 6px;
         }
+
+        /* ========== MODALE PERSONNALISÉE ========== */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal-container {
+            background: white;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 20px;
+            position: relative;
+            border: 2px solid #23779C;
+        }
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 28px;
+            cursor: pointer;
+            color: #23779C;
+        }
+        body.modal-open {
+            overflow: hidden;
+        }
     </style>
 {% endblock %}
 
 {% block body %}
 
+<!-- NAVBAR -->
 <nav class="navbar navbar-expand-lg navbar-dark ftco_navbar ftco-navbar-light" id="ftco-navbar">
     <div class="container">
         <a class="navbar-brand" href="{{ path('app_front_home') }}">
             Horozia
             <span>TRAVEL AGENCY</span>
         </a>
-
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#ftco-nav"
                 aria-controls="ftco-nav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="fa fa-bars"></span> Menu
         </button>
-
         <div class="collapse navbar-collapse" id="ftco-nav">
             <ul class="navbar-nav ml-auto">
                 <li class="nav-item"><a href="{{ path('app_front_home') }}" class="nav-link">Accueil</a></li>
@@ -185,6 +220,7 @@
     </div>
 </nav>
 
+<!-- HERO SECTION -->
 <section class="hero-wrap js-fullheight" style="background-image: url('{{ asset('front/pacific/images/back.jpg') }}');">
     <div class="overlay"></div>
     <div class="container">
@@ -201,6 +237,7 @@
     </div>
 </section>
 
+<!-- LISTE DES LOGEMENTS (CARTES FLIP) -->
 <section class="ftco-section">
     <div class="container">
         <div class="row justify-content-center pb-4">
@@ -210,7 +247,7 @@
             </div>
         </div>
 
-        <div class="row">
+        <div class="cards-container row g-4">
             {% for logement in logements %}
                 <div class="col-md-4 ftco-animate mb-4">
                     <div class="flip-card">
@@ -249,9 +286,9 @@
                                         </div>
                                     {% endif %}
                                 </div>
-                                <a href="{{ path('app_front_reservation_new', {'id': logement.id}) }}" class="btn-reserver">
+                                <button type="button" class="btn-reserver" data-id="{{ logement.id }}">
                                     <i class="fa fa-calendar-check-o"></i> Réserver
-                                </a>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -263,6 +300,102 @@
     </div>
 </section>
 
+<!-- MODALE DE RÉSERVATION -->
+<div id="reservationModalOverlay" class="modal-overlay">
+    <div class="modal-container">
+        <span class="modal-close">&times;</span>
+        <div id="modalContent">
+            <div class="text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Chargement...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <footer class="ftco-footer bg-bottom" style="background-color: #23779C;">
+    <div class="container py-5">
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <h2 class="ftco-heading-2 text-white">Horozia</h2>
+                <p class="text-white-50">
+                    Horozia est une plateforme dédiée à la gestion des voyages et des réservations,
+                    offrant une expérience élégante et moderne aux voyageurs.
+                </p>
+            </div>
+            <div class="col-md-4 mb-4">
+                <h2 class="ftco-heading-2 text-white">Liens rapides</h2>
+                <ul class="list-unstyled">
+                    <li><a href="{{ path('app_front_home') }}" class="text-white-50">Accueil</a></li>
+                    <li><a href="{{ path('app_front_home') }}#voyages" class="text-white-50">Voyages</a></li>
+                    <li><a href="{{ path('app_front_logement_index') }}" class="text-white-50">Logement</a></li>
+                    <li><a href="{{ path('app_front_home') }}#services" class="text-white-50">Services</a></li>
+                    <li><a href="{{ path('app_front_home') }}#contact" class="text-white-50">Contact</a></li>
+                </ul>
+            </div>
+            <div class="col-md-4 mb-4">
+                <h2 class="ftco-heading-2 text-white">Contact</h2>
+                <p class="text-white-50 mb-1">Tunisie</p>
+                <p class="text-white-50 mb-1">contact@horozia.com</p>
+                <p class="text-white-50">+216 00 000 000</p>
+            </div>
+        </div>
+        <div class="row mt-4">
+            <div class="col-md-12 text-center">
+                <p class="text-white-50 mb-0">© {{ "now"|date("Y") }} Horozia. Tous droits réservés.</p>
+            </div>
+        </div>
+    </div>
 </footer>
+
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        // Gestion de la modale
+        const modalOverlay = document.getElementById('reservationModalOverlay');
+        const modalContent = document.getElementById('modalContent');
+        const closeModalBtn = document.querySelector('.modal-close');
+
+        function openModal() {
+            modalOverlay.classList.add('active');
+            document.body.classList.add('modal-open');
+        }
+
+        function closeModal() {
+            modalOverlay.classList.remove('active');
+            document.body.classList.remove('modal-open');
+            modalContent.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Chargement...</span></div></div>';
+        }
+
+        if (closeModalBtn) {
+            closeModalBtn.addEventListener('click', closeModal);
+        }
+        modalOverlay.addEventListener('click', function(e) {
+            if (e.target === modalOverlay) closeModal();
+        });
+
+        // Écouteurs sur les boutons "Réserver"
+        document.querySelectorAll('.btn-reserver').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const logementId = this.getAttribute('data-id');
+                fetch(`/logement/${logementId}/reserver-modal`, {
+                    method: 'GET',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                })
+                .then(response => response.text())
+                .then(html => {
+                    modalContent.innerHTML = html;
+                    openModal();
+                })
+                .catch(error => {
+                    console.error('Erreur:', error);
+                    modalContent.innerHTML = '<div class="alert alert-danger">Une erreur est survenue.</div>';
+                    openModal();
+                });
+            });
+        });
+    </script>
 {% endblock %}
