@@ -1,0 +1,68 @@
+# config/routes.yaml
+# Routes Front
+app_home:
+    path: /
+    controller: App\Controller\Front\HomeController::index
+
+app_login:
+    path: /login
+    controller: App\Controller\Front\UserController::login
+
+app_register:
+    path: /register
+    controller: App\Controller\Front\UserController::register
+
+app_profile:
+    path: /profile
+    controller: App\Controller\Front\UserController::profile
+
+app_profile_edit:
+    path: /profile/edit
+    controller: App\Controller\Front\UserController::editProfile
+
+app_logout:
+    path: /logout
+    controller: App\Controller\Front\UserController::logout
+
+# Routes Admin (existantes)
+app_admin:
+    path: /admin
+    controller: App\Controller\admin\DashboardController::index
+app_user_search:
+    path: /admin/user/search
+    controller: App\Controller\admin\UserController::search
+app_user_index:
+    path: /admin/user
+    controller: App\Controller\admin\UserController::index
+
+app_user_new:
+    path: /admin/user/new
+    controller: App\Controller\admin\UserController::new
+
+app_user_show:
+    path: /admin/user/{id}
+    controller: App\Controller\admin\UserController::show
+
+app_user_edit:
+    path: /admin/user/{id}/edit
+    controller: App\Controller\admin\UserController::edit
+
+app_user_delete:
+    path: /admin/user/{id}
+    controller: App\Controller\admin\UserController::delete
+
+app_profil_index:
+    path: /admin/profil
+    controller: App\Controller\admin\ProfilController::index
+
+app_profil_new:
+    path: /admin/profil/new
+    controller: App\Controller\admin\ProfilController::new
+
+app_profil_edit:
+    path: /admin/profil/{id}/edit
+    controller: App\Controller\admin\ProfilController::edit
+
+app_profil_delete:
+    path: /admin/profil/{id}
+    controller: App\Controller\admin\ProfilController::delete

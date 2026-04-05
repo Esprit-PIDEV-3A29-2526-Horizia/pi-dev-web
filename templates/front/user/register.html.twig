@@ -1,0 +1,55 @@
+{% extends 'front/base.html.twig' %}
+
+{% block title %}Inscription - Horozia{% endblock %}
+
+{% block body %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card auth-card">
+                <div class="card-header">
+                    <i class="bi bi-person-plus me-2"></i> Inscription
+                </div>
+                <div class="card-body p-4">
+                    <form method="post">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Nom <span class="text-danger">*</span></label>
+                                <input type="text" name="nom" class="form-control" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Prénom <span class="text-danger">*</span></label>
+                                <input type="text" name="prenom" class="form-control" required>
+                            </div>
+                            <div class="col-md-12 mb-3">
+                                <label class="form-label">Email <span class="text-danger">*</span></label>
+                                <input type="email" name="email" class="form-control" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Mot de passe <span class="text-danger">*</span></label>
+                                <input type="password" name="password" class="form-control" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Téléphone</label>
+                                <input type="tel" name="telephone" class="form-control">
+                            </div>
+                            <div class="col-md-12 mb-3">
+                                <label class="form-label">Adresse</label>
+                                <textarea name="addresse" class="form-control" rows="2"></textarea>
+                            </div>
+                        </div>
+                        <div class="d-grid gap-2 mt-3">
+                            <button type="submit" class="btn btn-horozia-primary">
+                                <i class="bi bi-check-lg me-2"></i> S'inscrire
+                            </button>
+                            <a href="{{ path('app_login') }}" class="btn btn-horozia-neutral">
+                                <i class="bi bi-box-arrow-in-right me-2"></i> Déjà inscrit ? Se connecter
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

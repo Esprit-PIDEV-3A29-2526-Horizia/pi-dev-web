@@ -1,0 +1,53 @@
+{% extends 'front/base.html.twig' %}
+
+{% block title %}Connexion - Horozia{% endblock %}
+
+{% block body %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card auth-card">
+                <div class="card-header">
+                    <i class="bi bi-box-arrow-in-right me-2"></i> Connexion
+                </div>
+                <div class="card-body p-4">
+                    {% if error %}
+                        <div class="alert alert-danger alert-horozia mb-4">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i> {{ error.messageKey|trans(error.messageData, 'security') }}
+                        </div>
+                    {% endif %}
+
+                    <form method="post">
+    <div class="mb-3">
+        <label class="form-label">Email</label>
+        <div class="input-group">
+            <span class="input-group-text bg-white"><i class="bi bi-envelope" style="color: var(--color-primary);"></i></span>
+            <input type="email" name="_username" value="{{ last_username }}" class="form-control" required autofocus>
+        </div>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Mot de passe</label>
+        <div class="input-group">
+            <span class="input-group-text bg-white"><i class="bi bi-lock" style="color: var(--color-primary);"></i></span>
+            <input type="password" name="_password" class="form-control" required>
+        </div>
+    </div>
+
+    <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+
+    <div class="d-grid gap-2 mt-4">
+        <button type="submit" class="btn btn-horozia-primary">
+            <i class="bi bi-box-arrow-in-right me-2"></i> Se connecter
+        </button>
+        <a href="{{ path('app_register') }}" class="btn btn-horozia-neutral">
+            <i class="bi bi-person-plus me-2"></i> Créer un compte
+        </a>
+    </div>
+</form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
