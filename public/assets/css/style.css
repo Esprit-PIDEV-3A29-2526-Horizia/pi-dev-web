@@ -8416,7 +8416,7 @@ h1, h2, h3, h4, h5,
       padding-left: 20px;
       padding-right: 20px;
       color: #fff;
-      font-weight: 500;
+      font-weight: 600;
       opacity: 1 !important; }
       .ftco-navbar-light .navbar-nav > .nav-item > .nav-link:hover, .ftco-navbar-light .navbar-nav > .nav-item > .nav-link:focus {
         color: #fff; }
@@ -8474,10 +8474,15 @@ h1, h2, h3, h4, h5,
       border: 1px solid #040e26;
       background: #040e26 !important; }
     .ftco-navbar-light .navbar-nav > .nav-item.active > a {
-      color: #f15d30; }
+      color: #B5D7C5;
+    }
     @media (max-width: 991.98px) {
       .ftco-navbar-light .navbar-nav > .nav-item.active > a {
-        color: #f15d30; } }
+        color: #B5D7C5;
+       } }
+    .ftco-navbar-light .navbar-nav > .nav-item:first-child > .nav-link {
+      font-weight: 700 !important;
+    }
   .ftco-navbar-light .navbar-toggler {
     border: none;
     color: rgba(255, 255, 255, 0.5) !important;
@@ -8488,7 +8493,7 @@ h1, h2, h3, h4, h5,
     letter-spacing: .1em; }
     .ftco-navbar-light .navbar-toggler:hover, .ftco-navbar-light .navbar-toggler:focus {
       text-decoration: none;
-      color: #f15d30;
+      color: #B5D7C5 !important;
       outline: none !important; }
   .ftco-navbar-light.scrolled {
     position: fixed;
@@ -8505,10 +8510,10 @@ h1, h2, h3, h4, h5,
         padding-right: 0 !important;
         padding-bottom: 0 !important; } }
     .ftco-navbar-light.scrolled .nav-item.active > a {
-      color: #f15d30 !important; }
+      color: #B5D7C5 !important; }
     .ftco-navbar-light.scrolled .nav-item.cta > a {
       color: #fff !important;
-      background: #f15d30;
+      background: #B5D7C5 !important;
       border: none !important;
       padding-top: 0.5rem !important;
       padding-bottom: .5rem !important;
@@ -8565,7 +8570,7 @@ h1, h2, h3, h4, h5,
     font-size: 10px;
     font-weight: 600;
     color: rgba(255, 255, 255, 0.9);
-    color: #f15d30;
+    color: #B5D7C5;
     display: block;
     letter-spacing: 1px;
     text-transform: uppercase; }
@@ -8593,9 +8598,11 @@ h1, h2, h3, h4, h5,
 .slider-text {
   position: relative; }
   .slider-text .subheading {
-    font-size: 30px;
-    color: #f15d30;
-    font-family: "Arizonia", cursive; }
+    font-size: 40px;
+    color: #DACEB6;
+    font-weight: 550;
+    text-shadow: 2px 2px 4px black;
+    font-family: "Arizonia"; }
   .slider-text h1 {
     font-size: 55px;
     color: #fff;
@@ -8677,7 +8684,7 @@ h1, h2, h3, h4, h5,
       position: relative;
       display: inline-block;
       border: 1px solid transparent;
-      background: #f15d30;
+      background: #3D94CA;
       -webkit-border-radius: 5px;
       -moz-border-radius: 5px;
       -ms-border-radius: 5px;
@@ -8691,7 +8698,7 @@ h1, h2, h3, h4, h5,
         transition: all 0.3s ease;
         border: 1px solid transparent;
         background: white;
-        background: #f15d30; }
+        background: #23779C; }
         .ftco-search .nav-pills .nav-link:hover:after {
           opacity: 1; }
         @media (max-width: 767.98px) {
@@ -8751,7 +8758,7 @@ h1, h2, h3, h4, h5,
     font-weight: 700;
     font-size: 14px;
     color: rgba(0, 0, 0, 0.8);
-    color: #f15d30;
+    color: #3D94CA;
     text-transform: uppercase; }
   .search-property-1 .form-group .form-field {
     position: relative;
@@ -8780,11 +8787,13 @@ h1, h2, h3, h4, h5,
       color: rgba(0, 0, 0, 0.4) !important; }
     .search-property-1 .form-group .form-control.btn {
       font-size: 16px;
+      text-align: center;
       font-weight: 700;
       text-transform: uppercase;
-      background: #f15d30 !important;
+      background: #81AE8D !important;
       border: none !important;
       color: #fff !important;
+      -webkit-text-stroke: 0.2px #ECECEC;
       -webkit-border-radius: 0;
       -moz-border-radius: 0;
       -ms-border-radius: 0;
@@ -9392,7 +9401,7 @@ textarea.form-control {
       font-size: 28px; } }
 
 .heading-section.heading-section-white .subheading {
-  color: rgba(255, 255, 255, 0.9); }
+  color: #E8B156; }
 
 .heading-section.heading-section-white h2 {
   font-size: 40px;
@@ -10085,3 +10094,6 @@ textarea.form-control {
   100% {
     stroke-dasharray: 89, 200;
     stroke-dashoffset: -136px; } }
+
+
+
