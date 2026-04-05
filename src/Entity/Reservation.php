@@ -67,6 +67,13 @@ class Reservation
      */
     private $nbrPersonnes;
 
+    /**
+     * @var float|null
+     *
+     * @ORM\Column(name="prix_total", type="float", nullable=true)
+     */
+    private $prixTotal;
+
     public function __construct()
     {
         $this->dateReservation = new \DateTime();
@@ -129,6 +136,17 @@ class Reservation
     public function setNbrPersonnes(?int $nbrPersonnes): self
     {
         $this->nbrPersonnes = $nbrPersonnes;
+        return $this;
+    }
+
+    public function getPrixTotal(): ?float
+    {
+        return $this->prixTotal;
+    }
+
+    public function setPrixTotal(?float $prixTotal): self
+    {
+        $this->prixTotal = $prixTotal;
         return $this;
     }
 }

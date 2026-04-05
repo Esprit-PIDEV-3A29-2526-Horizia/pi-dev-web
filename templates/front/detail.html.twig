@@ -26,9 +26,9 @@
     </script>
 {% endfor %}
 
-<nav class="navbar navbar-expand-lg navbar-dark ftco_navbar ftco-navbar-light scrolled" id="ftco-navbar">
+<nav class="navbar navbar-expand-lg navbar-dark ftco_navbar ftco-navbar-light" id="ftco-navbar">
     <div class="container">
-        <a class="navbar-brand navbar-logo" href="{{ path('app_front_home') }}">
+       <a class="navbar-brand navbar-logo" href="{{ path('app_front_home') }}">
             <img src="{{ asset('images/logo.png') }}" alt="Horozia Logo">
         </a>
 
@@ -39,12 +39,11 @@
 
         <div class="collapse navbar-collapse" id="ftco-nav">
             <ul class="navbar-nav ml-auto">
-                <li class="nav-item">
-                    <a href="{{ path('app_front_home') }}" class="nav-link">Accueil</a>
-                </li>
-                <li class="nav-item active">
-                    <a href="#" class="nav-link">Détail voyage</a>
-                </li>
+                <li class="nav-item "><a href="{{ path('app_front_home') }}" class="nav-link">Accueil</a></li>
+                <li class="nav-item"><a href="{{ path('app_front_voyages') }}" class="nav-link">Voyages</a></li>
+                <li class="nav-item"><a href="{{ path('app_front_mes_reservations') }}" class="nav-link">Mes réservations</a></li>
+                <li class="nav-item"><a href="#services" class="nav-link">Services</a></li>
+                <li class="nav-item"><a href="#contact" class="nav-link">Contact</a></li>
             </ul>
         </div>
     </div>
@@ -112,15 +111,6 @@
 
                     <h4 class="mb-3">Description</h4>
                     <p style="white-space: pre-line;">{{ voyage.description }}</p>
-
-                    <div class="mt-4">
-                        <a href="{{ path('app_front_home') }}#voyages" class="btn btn-outline-secondary mr-2">
-                            Retour
-                        </a>
-                        <a href="{{ path('app_front_reserver_voyage', {'id': voyage.id}) }}" class="btn btn-primary">
-                            Réserver
-                        </a>
-                    </div>
                 </div>
             </div>
 
@@ -136,7 +126,16 @@
                         <li class="mb-3"><strong>Retour :</strong> {{ voyage.dateRetour|date('d/m/Y') }}</li>
                         <li class="mb-3"><strong>Places :</strong> {{ voyage.placesRestantes }}</li>
                     </ul>
+                      <div class="mt-4">
+                        <a href="{{ path('app_front_home') }}#voyages" class="btn btn-outline-secondary mr-2">
+                            Retour
+                        </a>
+                        <a href="{{ path('app_front_reserver_voyage', {'id': voyage.id}) }}" class="btn btn-primary">
+                            Réserver
+                        </a>
+                    </div>
                 </div>
+
             </div>
         </div>
     </div>

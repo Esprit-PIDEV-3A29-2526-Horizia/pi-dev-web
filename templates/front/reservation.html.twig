@@ -4,42 +4,37 @@
 
 {% block body %}
 
-<nav class="navbar navbar-expand-lg navbar-dark ftco_navbar ftco-navbar-light scrolled" id="ftco-navbar">
+<section class="hero-wrap hero-wrap-2 js-fullheight" style="background-image: url('{{ asset('front/pacific/images/back.jpg') }}');">
+    <div class="overlay"></div>
     <div class="container">
-        <a class="navbar-brand navbar-logo" href="{{ path('app_front_home') }}">
-            <img src="{{ asset('images/logo.png') }}" alt="Horozia Logo">
-        </a>
-
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#ftco-nav"
-                aria-controls="ftco-nav" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="fa fa-bars"></span> Menu
-        </button>
-
-        <div class="collapse navbar-collapse" id="ftco-nav">
-            <ul class="navbar-nav ml-auto">
-                <li class="nav-item">
-                    <a href="{{ path('app_front_home') }}" class="nav-link">Accueil</a>
-                </li>
-                <li class="nav-item">
-                    <a href="{{ path('app_front_voyage_detail', {'id': voyage.id}) }}" class="nav-link">Détail voyage</a>
-                </li>
-                <li class="nav-item active">
-                    <a href="#" class="nav-link">Réserver</a>
-                </li>
-            </ul>
+        <div class="row no-gutters slider-text js-fullheight align-items-end justify-content-center">
+            <div class="col-md-9 ftco-animate pb-5 text-center">
+                <p class="breadcrumbs">
+                    <span class="mr-2">
+                        <a href="{{ path('app_front_home') }}">Accueil <i class="fa fa-chevron-right"></i></a>
+                    </span>
+                    <span class="mr-2">
+                        <a href="{{ path('app_front_voyage_detail', {'id': voyage.id}) }}">
+                            {{ voyage.titre }} <i class="fa fa-chevron-right"></i>
+                        </a>
+                    </span>
+                    <span>Réserver <i class="fa fa-chevron-right"></i></span>
+                </p>
+                <h1 class="mb-0 bread">Réserver - {{ voyage.titre }}</h1>
+            </div>
         </div>
     </div>
-</nav>
+</section>
 
 <section class="ftco-section reservation-page">
     <div class="container">
 
-        {% for message in app.flashes('success') %}
-            <div class="alert alert-success mb-4">{{ message }}</div>
-        {% endfor %}
-
         {% for message in app.flashes('error') %}
             <div class="alert alert-danger mb-4">{{ message }}</div>
+        {% endfor %}
+
+        {% for message in app.flashes('success') %}
+            <div class="alert alert-success mb-4">{{ message }}</div>
         {% endfor %}
 
         <div class="row">
@@ -47,25 +42,88 @@
                 <div class="reservation-box bg-white p-4 p-md-5 rounded shadow-sm h-100">
                     <h2 class="mb-4">Réserver votre voyage</h2>
 
-                    <form method="post">
+                    <form method="post" novalidate>
                         <div class="form-group">
                             <label for="nom">Nom</label>
-                            <input id="nom" type="text" name="nom" class="form-control" required>
+                            <input
+                                id="nom"
+                                type="text"
+                                name="nom"
+                                class="form-control {{ errors.nom is defined ? 'is-invalid' : '' }}"
+                                value="{{ formData.nom|default('') }}"
+                            >
+                            {% if errors.nom is defined %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in errors.nom %}
+                                        <div>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
                         </div>
 
                         <div class="form-group">
                             <label for="prenom">Prénom</label>
-                            <input id="prenom" type="text" name="prenom" class="form-control" required>
+                            <input
+                                id="prenom"
+                                type="text"
+                                name="prenom"
+                                class="form-control {{ errors.prenom is defined ? 'is-invalid' : '' }}"
+                                value="{{ formData.prenom|default('') }}"
+                            >
+                            {% if errors.prenom is defined %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in errors.prenom %}
+                                        <div>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
                         </div>
 
                         <div class="form-group">
                             <label for="email">Email</label>
-                            <input id="email" type="email" name="email" class="form-control" required>
+                            <input
+                                id="email"
+                                type="text"
+                                name="email"
+                                class="form-control {{ errors.email is defined ? 'is-invalid' : '' }}"
+                                value="{{ formData.email|default('') }}"
+                            >
+                            {% if errors.email is defined %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in errors.email %}
+                                        <div>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
                         </div>
 
                         <div class="form-group">
                             <label for="nb_personnes">Nombre de personnes</label>
-                            <input id="nb_personnes" type="number" name="nb_personnes" class="form-control" min="1" max="{{ voyage.placesRestantes }}" value="1" required>
+                            <input
+                                id="nb_personnes"
+                                type="number"
+                                name="nb_personnes"
+                                class="form-control {{ errors.nb_personnes is defined ? 'is-invalid' : '' }}"
+                                min="1"
+                                value="{{ formData.nb_personnes|default(1) }}"
+                            >
+                            {% if errors.nb_personnes is defined %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in errors.nb_personnes %}
+                                        <div>{{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="form-group">
+                            <label for="prix-total-input">Prix total</label>
+                            <input
+                                type="text"
+                                id="prix-total-input"
+                                class="form-control"
+                                readonly
+                            >
                         </div>
 
                         <div class="mt-4 d-flex flex-wrap align-items-center">
@@ -84,11 +142,31 @@
                 <div class="reservation-summary bg-white p-4 rounded shadow-sm h-100">
                     <h3 class="mb-4">{{ voyage.titre }}</h3>
 
-                    <p><strong>Destination :</strong> {{ voyage.destination }}</p>
-                    <p><strong>Prix :</strong> {{ voyage.prix|number_format(0, ',', ' ') }} DT / personne</p>
-                    <p><strong>Date départ :</strong> {{ voyage.dateDepart|date('d/m/Y') }}</p>
-                    <p><strong>Date retour :</strong> {{ voyage.dateRetour|date('d/m/Y') }}</p>
-                    <p><strong>Places restantes :</strong> {{ voyage.placesRestantes }}</p>
+                    <p>
+                        <strong>Destination :</strong> {{ voyage.destination }}
+                    </p>
+
+                    <p>
+                        <strong>Prix :</strong>
+                        <span id="prix-unitaire">{{ voyage.prix }}</span> DT / personne
+                    </p>
+
+                    <p>
+                        <strong>Prix total :</strong>
+                        <span id="prix-total">{{ voyage.prix }}</span> DT
+                    </p>
+
+                    <p>
+                        <strong>Date départ :</strong> {{ voyage.dateDepart|date('d/m/Y') }}
+                    </p>
+
+                    <p>
+                        <strong>Date retour :</strong> {{ voyage.dateRetour|date('d/m/Y') }}
+                    </p>
+
+                    <p>
+                        <strong>Places restantes :</strong> {{ voyage.placesRestantes }}
+                    </p>
 
                     <hr>
 
@@ -100,5 +178,42 @@
         </div>
     </div>
 </section>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const nbInput = document.getElementById('nb_personnes');
+    const prixUnitaireElement = document.getElementById('prix-unitaire');
+    const prixTotalElement = document.getElementById('prix-total');
+    const prixTotalInput = document.getElementById('prix-total-input');
+
+    if (!nbInput || !prixUnitaireElement || !prixTotalElement) {
+        return;
+    }
+
+    const prixUnitaire = parseFloat(prixUnitaireElement.textContent) || 0;
+
+    function updatePrixTotal() {
+        let nbPersonnes = parseInt(nbInput.value, 10);
+
+        if (isNaN(nbPersonnes) || nbPersonnes < 1) {
+            nbPersonnes = 1;
+        }
+
+        const prixTotal = prixUnitaire * nbPersonnes;
+        const prixFormatte = prixTotal.toLocaleString('fr-FR');
+
+        prixTotalElement.textContent = prixFormatte;
+
+        if (prixTotalInput) {
+            prixTotalInput.value = prixFormatte + ' DT';
+        }
+    }
+
+    nbInput.addEventListener('input', updatePrixTotal);
+    nbInput.addEventListener('change', updatePrixTotal);
+
+    updatePrixTotal();
+});
+</script>
 
 {% endblock %}
