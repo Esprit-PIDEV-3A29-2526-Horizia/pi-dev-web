@@ -1,0 +1,137 @@
+{% extends 'front/base_front.html.twig' %}
+
+{% block title %}Réserver {{ logement.nom }} - Horozia{% endblock %}
+
+{% block body %}
+<nav class="navbar navbar-expand-lg navbar-dark ftco_navbar ftco-navbar-light" id="ftco-navbar">
+    <div class="container">
+        <a class="navbar-brand" href="{{ path('app_front_home') }}">Horozia<span>TRAVEL AGENCY</span></a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#ftco-nav">
+            <span class="fa fa-bars"></span> Menu
+        </button>
+        <div class="collapse navbar-collapse" id="ftco-nav">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item"><a href="{{ path('app_front_home') }}" class="nav-link">Accueil</a></li>
+                <li class="nav-item"><a href="{{ path('app_front_home') }}#voyages" class="nav-link">Voyages</a></li>
+                <li class="nav-item"><a href="{{ path('app_front_logement_index') }}" class="nav-link">Logement</a></li>
+                <li class="nav-item"><a href="{{ path('app_front_home') }}#services" class="nav-link">Services</a></li>
+                <li class="nav-item"><a href="{{ path('app_front_home') }}#contact" class="nav-link">Contact</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<section class="ftco-section">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h3 class="mb-0">Réserver {{ logement.nom }}</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <img src="{{ logement.image ? logement.image : asset('front/pacific/images/destination-1.jpg') }}" class="img-fluid rounded" alt="{{ logement.nom }}">
+                            </div>
+                            <div class="col-md-6">
+                                <h4>{{ logement.nom }}</h4>
+                                <p><i class="fa fa-map-marker"></i> {{ logement.adresse }}</p>
+                                <p>Capacité : {{ logement.capacite }} personnes</p>
+                                <p>Type : {{ logement.type }}</p>
+                                <p>Prix / nuit : {{ logement.tarifNuit|number_format(0, ',', ' ') }} DT</p>
+                            </div>
+                        </div>
+
+                        <form method="post">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="date_arrivee">Date d'arrivée</label>
+                                        <input type="date" id="date_arrivee" name="date_arrivee" class="form-control" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="date_depart">Date de départ</label>
+                                        <input type="date" id="date_depart" name="date_depart" class="form-control" required>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="adultes">Adultes</label>
+                                        <input type="number" id="adultes" name="adultes" class="form-control" min="1" max="{{ logement.capacite }}" value="1" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label for="enfants">Enfants</label>
+                                        <input type="number" id="enfants" name="enfants" class="form-control" min="0" max="{{ logement.capacite - 1 }}" value="0">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Modalité de paiement</label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="modalite" id="enLigne" value="En ligne" checked>
+                                    <label class="form-check-label" for="enLigne">En ligne</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="modalite" id="surPlace" value="Sur place">
+                                    <label class="form-check-label" for="surPlace">Sur place</label>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>Total à payer : <strong id="total">0</strong> DT</label>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary btn-block">Confirmer la réservation</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<footer class="ftco-footer bg-bottom" style="background-color: #23779C;">
+    {# même footer que l’accueil #}
+</footer>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+    const dateArrivee = document.getElementById('date_arrivee');
+    const dateDepart = document.getElementById('date_depart');
+    const adultes = document.getElementById('adultes');
+    const enfants = document.getElementById('enfants');
+    const totalSpan = document.getElementById('total');
+    const prixParNuit = {{ logement.tarifNuit }};
+
+    function calculerTotal() {
+        if (dateArrivee.value && dateDepart.value) {
+            const arrivee = new Date(dateArrivee.value);
+            const depart = new Date(dateDepart.value);
+            if (depart > arrivee) {
+                const nuits = (depart - arrivee) / (1000 * 60 * 60 * 24);
+                totalSpan.innerText = (nuits * prixParNuit).toFixed(2);
+            } else {
+                totalSpan.innerText = '0';
+            }
+        } else {
+            totalSpan.innerText = '0';
+        }
+    }
+
+    dateArrivee.addEventListener('change', calculerTotal);
+    dateDepart.addEventListener('change', calculerTotal);
+    adultes.addEventListener('change', calculerTotal);
+    enfants.addEventListener('change', calculerTotal);
+    calculerTotal();
+</script>
+{% endblock %}

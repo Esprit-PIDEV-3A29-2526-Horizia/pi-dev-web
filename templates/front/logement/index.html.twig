@@ -1,0 +1,268 @@
+{% extends 'front/base_front.html.twig' %}
+
+{% block title %}Nos logements - Horozia{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        /* Conteneur de la carte avec perspective 3D */
+        .flip-card {
+            background-color: transparent;
+            width: 100%;
+            height: 450px;
+            perspective: 1000px;
+            margin-bottom: 30px;
+        }
+
+        /* Intérieur de la carte qui effectue le flip */
+        .flip-card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border: 2px solid #23779C;   /* Contour bleu ajouté */
+        }
+
+        /* Effet flip au survol */
+        .flip-card:hover .flip-card-inner {
+            transform: rotateY(180deg);
+        }
+
+        /* Face avant et arrière */
+        .flip-card-front, .flip-card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 20px;
+            overflow: hidden;
+        }
+
+        /* Face avant */
+        .flip-card-front {
+            background-color: #fff;
+            color: #333;
+        }
+
+        .flip-card-front-img {
+            height: 220px;
+            background-size: cover;
+            background-position: center;
+            position: relative;
+        }
+
+        .price-badge {
+            position: absolute;
+            bottom: 15px;
+            right: 15px;
+            background: #23779C;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 30px;
+            font-weight: bold;
+            font-size: 1rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            z-index: 2;
+        }
+
+        .flip-card-front-content {
+            padding: 20px;
+            text-align: left;
+        }
+
+        .flip-card-front-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #1f2d3d;
+            margin-bottom: 5px;
+        }
+
+        .flip-card-front-type {
+            color: #23779C;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .flip-card-front-location {
+            color: #6c757d;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-bottom: 15px;
+        }
+
+        /* Face arrière */
+        .flip-card-back {
+            background: linear-gradient(135deg, #23779C, #3D94CA);
+            color: white;
+            transform: rotateY(180deg);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 25px;
+            text-align: left;
+        }
+
+        .flip-card-back h3 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: white;
+        }
+
+        .flip-card-back p {
+            margin-bottom: 12px;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-reserver {
+            display: block;
+            background: white;
+            color: #23779C;
+            text-align: center;
+            padding: 14px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 1rem;
+            margin-top: 20px;
+            transition: all 0.3s;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-reserver:hover {
+            background: #f0f0f0;
+            transform: scale(1.02);
+            color: #1a5c7a;
+        }
+
+        .equipement-badge {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            margin-right: 6px;
+            margin-bottom: 6px;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+
+<nav class="navbar navbar-expand-lg navbar-dark ftco_navbar ftco-navbar-light" id="ftco-navbar">
+    <div class="container">
+        <a class="navbar-brand" href="{{ path('app_front_home') }}">
+            Horozia
+            <span>TRAVEL AGENCY</span>
+        </a>
+
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#ftco-nav"
+                aria-controls="ftco-nav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="fa fa-bars"></span> Menu
+        </button>
+
+        <div class="collapse navbar-collapse" id="ftco-nav">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item"><a href="{{ path('app_front_home') }}" class="nav-link">Accueil</a></li>
+                <li class="nav-item"><a href="{{ path('app_front_home') }}#voyages" class="nav-link">Voyages</a></li>
+                <li class="nav-item active"><a href="{{ path('app_front_logement_index') }}" class="nav-link">Logement</a></li>
+                <li class="nav-item"><a href="{{ path('app_front_home') }}#services" class="nav-link">Services</a></li>
+                <li class="nav-item"><a href="{{ path('app_front_home') }}#contact" class="nav-link">Contact</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<section class="hero-wrap js-fullheight" style="background-image: url('{{ asset('front/pacific/images/back.jpg') }}');">
+    <div class="overlay"></div>
+    <div class="container">
+        <div class="row no-gutters slider-text js-fullheight align-items-center">
+            <div class="col-md-8 ftco-animate">
+                <span class="subheading">Bienvenue chez Horozia</span>
+                <h1 class="mb-4">Découvrez votre prochain logement</h1>
+                <p class="mb-4">
+                    Horozia vous propose des hébergements soigneusement sélectionnés, une réservation simple
+                    et une expérience moderne pour vos séjours.
+                </p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="ftco-section">
+    <div class="container">
+        <div class="row justify-content-center pb-4">
+            <div class="col-md-8 heading-section text-center ftco-animate">
+                <span class="subheading">Nos hébergements</span>
+                <h2 class="mb-4">Logements disponibles</h2>
+            </div>
+        </div>
+
+        <div class="row">
+            {% for logement in logements %}
+                <div class="col-md-4 ftco-animate mb-4">
+                    <div class="flip-card">
+                        <div class="flip-card-inner">
+                            <!-- Face avant -->
+                            <div class="flip-card-front">
+                                <div class="flip-card-front-img" style="background-image: url('{{ logement.image ? logement.image : asset('front/pacific/images/destination-1.jpg') }}');">
+                                    <div class="price-badge">{{ logement.tarifNuit|number_format(0, ',', ' ') }} DT / nuit</div>
+                                </div>
+                                <div class="flip-card-front-content">
+                                    <div class="flip-card-front-title">{{ logement.nom }}</div>
+                                    <div class="flip-card-front-type">{{ logement.type }}</div>
+                                    <div class="flip-card-front-location">
+                                        <i class="fa fa-map-marker"></i> {{ logement.adresse|slice(0, 40) }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Face arrière -->
+                            <div class="flip-card-back">
+                                <div>
+                                    <h3>{{ logement.nom }}</h3>
+                                    <p><i class="fa fa-users"></i> Capacité : {{ logement.capacite }} personnes</p>
+                                    <p><i class="fa fa-tag"></i> Type : {{ logement.type }}</p>
+                                    <p><i class="fa fa-map-marker"></i> {{ logement.adresse }}</p>
+                                    <p><i class="fa fa-money"></i> {{ logement.tarifNuit|number_format(0, ',', ' ') }} DT / nuit</p>
+                                    {% if logement.equipement %}
+                                        <div>
+                                            {% set equipements = logement.equipement|split(',') %}
+                                            {% for equip in equipements|slice(0, 4) %}
+                                                <span class="equipement-badge">{{ equip|trim }}</span>
+                                            {% endfor %}
+                                            {% if equipements|length > 4 %}
+                                                <span class="equipement-badge">+{{ equipements|length - 4 }}</span>
+                                            {% endif %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <a href="{{ path('app_front_reservation_new', {'id': logement.id}) }}" class="btn-reserver">
+                                    <i class="fa fa-calendar-check-o"></i> Réserver
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="col-12 text-center">Aucun logement disponible.</div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+<footer class="ftco-footer bg-bottom" style="background-color: #23779C;">
+</footer>
+{% endblock %}
