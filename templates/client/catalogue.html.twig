@@ -1,0 +1,256 @@
+{% extends 'base.html.twig' %}
+{% block title %}Horizia - Catalogue de Voitures{% endblock %}
+
+{% block body %}
+<div class="hz-client">
+
+  {# ── NAVBAR ── #}
+  <nav class="hz-navbar">
+    <div class="hz-nav-brand">
+      <span class="hz-brand-text">HORIZIA</span>
+    </div>
+    <div class="hz-nav-links">
+      <a href="{{ path('client_accueil') }}" class="hz-nav-link">Accueil</a>
+      <a href="{{ path('client_catalogue') }}" class="hz-nav-link active">Catalogue</a>
+      <a href="{{ path('client_mes_reservations') }}" class="hz-nav-link">Mes Réservations</a>
+      <a href="{{ path('client_planning') }}" class="hz-nav-link">Planning</a>
+    </div>
+    <div class="hz-nav-right">
+      <div class="hz-user-badge"><i class="bi bi-person-fill me-1"></i>Client</div>
+    </div>
+  </nav>
+
+  {# ── HERO BANNER ── #}
+  <div class="hz-page-banner">
+    <h1><i class="bi bi-car-front-fill me-3"></i>Catalogue de Voitures</h1>
+    <p id="nb-resultats">{{ vehicules|length }} voiture(s) disponible(s)</p>
+  </div>
+
+  {# ── FILTRES ── #}
+  <div class="hz-filters-bar">
+    <div class="hz-filter-group">
+      <label class="hz-filter-label">Rechercher</label>
+      <input type="text" id="f-recherche" class="hz-filter-input"
+             placeholder="Modèle ou immatriculation...">
+    </div>
+    <div class="hz-filter-group">
+      <label class="hz-filter-label">Carburant</label>
+      <select id="f-carburant" class="hz-filter-input">
+        <option value="">Tous</option>
+        <option>Essence</option>
+        <option>Diesel</option>
+        <option>Hybride</option>
+        <option>Électrique</option>
+      </select>
+    </div>
+    <div class="hz-filter-group">
+      <label class="hz-filter-label">Trier par</label>
+      <select id="f-tri" class="hz-filter-input">
+        <option value="prix_asc">Prix croissant</option>
+        <option value="prix_desc">Prix décroissant</option>
+        <option value="modele_az">Modèle A-Z</option>
+        <option value="km_asc">Kilométrage croissant</option>
+      </select>
+    </div>
+    <div class="hz-filter-group hz-prix-group">
+      <label class="hz-filter-label">Prix max : <strong id="lbl-prix">300 TND/jour</strong></label>
+      <input type="range" id="f-prix" min="0" max="300" value="300" class="hz-slider">
+    </div>
+    <button class="hz-btn-reset" onclick="resetFiltres()">
+      <i class="bi bi-arrow-counterclockwise me-1"></i>Réinitialiser
+    </button>
+  </div>
+
+  {# ── GRID VOITURES ── #}
+  <div class="hz-catalogue-grid" id="catalogue-grid">
+    {% for v in vehicules %}
+    <div class="hz-car-card"
+         data-modele="{{ v.modele is defined ? v.modele.nomModele : 'Véhicule' }}"
+         data-immat="{{ v.immatriculation }}"
+         data-carburant="{{ v.carburant }}"
+         data-prix="{{ v.prixParJour }}"
+         data-km="{{ v.kilometrage }}">
+
+      {# Image #}
+      <div class="hz-card-img-wrap">
+        {% if v.imageUrl is defined and v.imageUrl %}
+          <img src="{{ asset('uploads/vehicules/' ~ v.imageUrl) }}"
+               alt="{{ v.immatriculation }}" class="hz-card-img"
+               onerror="this.src='{{ asset('images/car-placeholder.png') }}'">
+        {% else %}
+          <div class="hz-card-img-placeholder">
+            <i class="bi bi-car-front-fill"></i>
+          </div>
+        {% endif %}
+        <div class="hz-carburant-badge">
+          {{ v.carburant == 'Essence' ? '⛽' : (v.carburant == 'Diesel' ? '🛢️' : (v.carburant == 'Électrique' ? '⚡' : '🔋')) }}
+          {{ v.carburant }}
+        </div>
+      </div>
+
+      {# Infos #}
+      <div class="hz-card-body">
+        <div class="hz-card-title">
+          {% if v.modele is defined %}
+            {{ v.modele.nomModele ?? 'Véhicule' }}
+          {% else %}
+            {{ v.immatriculation }}
+          {% endif %}
+        </div>
+        <div class="hz-card-details">
+          {{ v.annee ?? '' }}{% if v.couleur is defined and v.couleur %} • {{ v.couleur }}{% endif %}
+        </div>
+        <div class="hz-card-specs">
+          <span><i class="bi bi-speedometer2 me-1"></i>{{ v.kilometrage|number_format(0, '.', ' ') }} km</span>
+          <span><i class="bi bi-tag me-1"></i>{{ v.immatriculation }}</span>
+        </div>
+        <div class="hz-card-footer">
+          <div class="hz-prix">
+            <span class="hz-prix-val">{{ v.prixParJour|number_format(2, '.', ' ') }} TND</span>
+            <span class="hz-prix-unit">par jour</span>
+          </div>
+          <a href="{{ path('client_reservation', {'id': v.idVehicule, 'date_debut': date_debut, 'date_fin': date_fin}) }}"
+             class="hz-btn-reserver">Réserver</a>
+        </div>
+      </div>
+    </div>
+    {% else %}
+    <div class="hz-empty-state" id="empty-state">
+      <i class="bi bi-car-front"></i>
+      <p>Aucun véhicule disponible pour le moment.</p>
+    </div>
+    {% endfor %}
+  </div>
+
+  {# Message aucun résultat (affiché par JS) #}
+  <div class="hz-empty-state d-none" id="no-results">
+    <i class="bi bi-search"></i>
+    <p>Aucun véhicule ne correspond à vos critères.</p>
+    <button class="hz-btn-reset mt-3" onclick="resetFiltres()">Réinitialiser les filtres</button>
+  </div>
+
+  {# Footer #}
+  <footer class="hz-footer">
+    <div class="hz-footer-left">
+      <i class="bi bi-car-front-fill me-2"></i>HORIZIA
+      <span class="ms-3 text-white-50">Agence de Voyage — Tunis, Tunisie</span>
+    </div>
+    <div class="hz-footer-right">
+      <span><i class="bi bi-telephone me-1"></i>+216 53661445</span>
+      <span class="ms-4">© 2025 Horizia</span>
+    </div>
+  </footer>
+</div>
+
+{% block javascripts %}{{ parent() }}<script>
+const cards = document.querySelectorAll('.hz-car-card');
+const grid  = document.getElementById('catalogue-grid');
+const noRes = document.getElementById('no-results');
+
+function filtrer() {
+  const rech      = document.getElementById('f-recherche').value.toLowerCase();
+  const carburant = document.getElementById('f-carburant').value;
+  const prixMax   = parseFloat(document.getElementById('f-prix').value);
+  const tri       = document.getElementById('f-tri').value;
+
+  let visible = [];
+  cards.forEach(c => {
+    const modele  = c.dataset.modele.toLowerCase();
+    const immat   = c.dataset.immat.toLowerCase();
+    const carb    = c.dataset.carburant;
+    const prix    = parseFloat(c.dataset.prix);
+    const show    = (!rech      || modele.includes(rech) || immat.includes(rech))
+                 && (!carburant || carb === carburant)
+                 && prix <= prixMax;
+    c.style.display = show ? '' : 'none';
+    if (show) visible.push(c);
+  });
+
+  // Tri
+  visible.sort((a, b) => {
+    if (tri === 'prix_asc')   return parseFloat(a.dataset.prix) - parseFloat(b.dataset.prix);
+    if (tri === 'prix_desc')  return parseFloat(b.dataset.prix) - parseFloat(a.dataset.prix);
+    if (tri === 'modele_az')  return a.dataset.modele.localeCompare(b.dataset.modele);
+    if (tri === 'km_asc')     return parseInt(a.dataset.km) - parseInt(b.dataset.km);
+  });
+  visible.forEach(c => grid.appendChild(c));
+
+  document.getElementById('nb-resultats').textContent = visible.length + ' voiture(s) disponible(s)';
+  noRes.classList.toggle('d-none', visible.length > 0);
+}
+
+function resetFiltres() {
+  document.getElementById('f-recherche').value = '';
+  document.getElementById('f-carburant').value = '';
+  document.getElementById('f-tri').value       = 'prix_asc';
+  document.getElementById('f-prix').value      = 300;
+  document.getElementById('lbl-prix').textContent = '300 TND/jour';
+  filtrer();
+}
+
+document.getElementById('f-recherche').addEventListener('input', filtrer);
+document.getElementById('f-carburant').addEventListener('change', filtrer);
+document.getElementById('f-tri').addEventListener('change', filtrer);
+document.getElementById('f-prix').addEventListener('input', function() {
+  document.getElementById('lbl-prix').textContent = this.value + ' TND/jour';
+  filtrer();
+});
+filtrer();
+</script>{% endblock %}
+
+<style>
+:root { --hz-primary:#23779C; --hz-accent:#e8a020; --hz-nav-bg:#1a3a4a; }
+.hz-client { font-family:'Segoe UI',sans-serif; background:#f0f4f7; min-height:100vh; }
+
+/* Navbar (même que accueil) */
+.hz-navbar { background:var(--hz-nav-bg); display:flex; align-items:center; justify-content:space-between; padding:0 32px; height:64px; position:sticky; top:0; z-index:100; }
+.hz-brand-text { color:white; font-size:18px; font-weight:700; letter-spacing:1px; }
+.hz-nav-links { display:flex; gap:8px; }
+.hz-nav-link { color:rgba(255,255,255,.75); text-decoration:none; padding:8px 16px; border-radius:20px; font-size:14px; font-weight:500; transition:all .2s; }
+.hz-nav-link:hover,.hz-nav-link.active { background:var(--hz-accent); color:white; }
+.hz-nav-right { display:flex; align-items:center; gap:12px; }
+.hz-user-badge { background:rgba(255,255,255,.15); color:white; padding:6px 16px; border-radius:20px; font-size:13px; }
+.hz-btn-logout { background:var(--hz-accent); color:white; text-decoration:none; padding:8px 18px; border-radius:20px; font-size:13px; font-weight:600; }
+
+/* Banner */
+.hz-page-banner { background:linear-gradient(135deg,#23779C,#1a5a7a); padding:40px 32px; text-align:center; color:white; }
+.hz-page-banner h1 { font-size:30px; font-weight:800; margin-bottom:6px; }
+.hz-page-banner p { font-size:15px; opacity:.85; }
+
+/* Filtres */
+.hz-filters-bar { background:white; padding:24px 32px; display:flex; align-items:flex-end; gap:20px; flex-wrap:wrap; box-shadow:0 2px 8px rgba(0,0,0,.06); }
+.hz-filter-group { display:flex; flex-direction:column; gap:6px; }
+.hz-filter-label { font-size:12px; font-weight:600; color:#6b7c8d; text-transform:uppercase; }
+.hz-filter-input { border:1.5px solid #e0e8f0; border-radius:10px; padding:10px 14px; font-size:14px; outline:none; background:#f8fbfd; min-width:160px; }
+.hz-filter-input:focus { border-color:var(--hz-primary); }
+.hz-prix-group { min-width:200px; }
+.hz-slider { width:100%; accent-color:var(--hz-primary); }
+.hz-btn-reset { background:#e74c3c; color:white; border:none; padding:10px 20px; border-radius:20px; font-size:13px; font-weight:600; cursor:pointer; margin-left:auto; }
+
+/* Grid */
+.hz-catalogue-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:24px; padding:32px; }
+.hz-car-card { background:white; border-radius:16px; overflow:hidden; border:1.5px solid #e0e0e0; box-shadow:0 4px 12px rgba(0,0,0,.08); transition:all .25s; }
+.hz-car-card:hover { border-color:var(--hz-primary); box-shadow:0 8px 24px rgba(35,119,156,.2); transform:translateY(-4px); }
+.hz-card-img-wrap { position:relative; height:180px; overflow:hidden; background:#f0f4f7; }
+.hz-card-img { width:100%; height:100%; object-fit:cover; }
+.hz-card-img-placeholder { height:100%; display:flex; align-items:center; justify-content:center; font-size:60px; color:#bcd; }
+.hz-carburant-badge { position:absolute; top:10px; right:10px; background:var(--hz-primary); color:white; padding:4px 10px; border-radius:12px; font-size:11px; font-weight:700; }
+.hz-card-body { padding:16px; }
+.hz-card-title { font-size:18px; font-weight:700; color:#1a2a3a; margin-bottom:4px; }
+.hz-card-details { font-size:13px; color:#6b7c8d; margin-bottom:8px; }
+.hz-card-specs { display:flex; gap:12px; font-size:12px; color:#9ca3af; margin-bottom:12px; }
+.hz-card-footer { display:flex; align-items:center; justify-content:space-between; border-top:1px solid #f0f0f0; padding-top:12px; }
+.hz-prix { display:flex; flex-direction:column; }
+.hz-prix-val { font-size:22px; font-weight:800; color:#27ae60; }
+.hz-prix-unit { font-size:11px; color:#9ca3af; }
+.hz-btn-reserver { background:var(--hz-primary); color:white; text-decoration:none; padding:10px 20px; border-radius:20px; font-size:13px; font-weight:700; transition:opacity .2s; }
+.hz-btn-reserver:hover { opacity:.85; color:white; }
+
+/* Empty state */
+.hz-empty-state { text-align:center; padding:60px; color:#9ca3af; font-size:15px; }
+.hz-empty-state i { font-size:60px; display:block; margin-bottom:16px; }
+
+/* Footer */
+.hz-footer { background:#1a3a4a; color:rgba(255,255,255,.7); padding:18px 32px; display:flex; align-items:center; justify-content:space-between; font-size:13px; margin-top:20px; }
+</style>
+{% endblock %}

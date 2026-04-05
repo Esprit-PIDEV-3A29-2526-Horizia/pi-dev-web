@@ -1,0 +1,89 @@
+{% extends 'admin/layout.html.twig' %}
+{% block title %}Planning {{ moisNom }} â€“ Horizia{% endblock %}
+{% block topbar_title %}Planning{% endblock %}
+{% block admin_content %}
+<div class="page-header">
+    <div class="page-header-left">
+        <div class="page-header-icon"><i class="bi bi-calendar3"></i></div>
+        <div>
+            <h2>{{ moisNom }}</h2>
+            <p class="text-muted mb-0" style="font-size:.92rem;">{{ locationsduMois|length }} location(s) ce mois</p>
+        </div>
+    </div>
+    <div class="d-flex gap-2 align-items-center flex-wrap">
+        {% set prevMois = mois - 1 %}{% set prevAnnee = annee %}
+        {% if prevMois < 1 %}{% set prevMois = 12 %}{% set prevAnnee = annee - 1 %}{% endif %}
+        {% set nextMois = mois + 1 %}{% set nextAnnee = annee %}
+        {% if nextMois > 12 %}{% set nextMois = 1 %}{% set nextAnnee = annee + 1 %}{% endif %}
+        <a href="{{ path('admin_planning_mois', {annee: prevAnnee, mois: prevMois}) }}" class="btn btn-horozia-outline btn-sm"><i class="bi bi-chevron-left"></i></a>
+        <a href="{{ path('admin_planning_index') }}" class="btn btn-horozia-outline btn-sm">Aujourd'hui</a>
+        <a href="{{ path('admin_planning_mois', {annee: nextAnnee, mois: nextMois}) }}" class="btn btn-horozia-outline btn-sm"><i class="bi bi-chevron-right"></i></a>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-6 col-lg-3"><div class="dashboard-card text-center"><div style="font-size:1.8rem;font-weight:800;color:var(--color-primary);">{{ tauxOccupation }}%</div><div style="font-size:.85rem;color:#6c757d;">Taux d'occupation</div></div></div>
+    <div class="col-6 col-lg-3"><div class="dashboard-card text-center"><div style="font-size:1.5rem;font-weight:800;color:var(--color-primary);">{{ caMois|number_format(0) }} TND</div><div style="font-size:.85rem;color:#6c757d;">CA du mois</div></div></div>
+    <div class="col-6 col-lg-3"><div class="dashboard-card text-center"><div style="font-size:1.8rem;font-weight:800;color:var(--color-accent);">{{ statuts['en_cours'] ?? 0 }}</div><div style="font-size:.85rem;color:#6c757d;">En cours</div></div></div>
+    <div class="col-6 col-lg-3"><div class="dashboard-card text-center"><div style="font-size:1.8rem;font-weight:800;color:var(--color-secondary);">{{ statuts['reservee'] ?? 0 }}</div><div style="font-size:.85rem;color:#6c757d;">Reservees</div></div></div>
+</div>
+
+<div class="dashboard-card mb-3">
+    <div class="row mb-2">
+        {% for jour in ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'] %}
+        <div class="col" style="text-align:center;font-weight:700;font-size:.82rem;color:#6c757d;padding-bottom:8px;">{{ jour }}</div>
+        {% endfor %}
+    </div>
+    {% set today = "now"|date('Y-m-d') %}
+    <div class="calendar-grid">
+        {% for i in 1..premierJourSemaine %}
+            <div class="calendar-cell empty"></div>
+        {% endfor %}
+        {% for jour in 1..nbJours %}
+            {% set dateStr = annee ~ '-' ~ mois|format('%02d') ~ '-' ~ jour|format('%02d') %}
+            {% set locsJour = calendrier[dateStr] is defined ? calendrier[dateStr] : [] %}
+            {% set isToday = dateStr == today %}
+            <div class="calendar-cell {{ isToday ? 'today' : '' }}" onclick="window.location='{{ path('admin_planning_jour', {date: dateStr}) }}'" style="cursor:pointer;">
+                <div class="calendar-day-num {{ isToday ? 'text-primary fw-800' : '' }}">{{ jour }}</div>
+                {% for loc in locsJour|slice(0, 2) %}
+                    <div class="calendar-event" title="{{ loc.vehicule.immatriculation }}">{{ loc.vehicule.immatriculation }}</div>
+                {% endfor %}
+                {% if locsJour|length > 2 %}
+                    <div style="font-size:.7rem;color:#6c757d;">+{{ locsJour|length - 2 }} de plus</div>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="dashboard-card">
+    <div style="font-weight:700;color:#1f2d3d;margin-bottom:14px;">Locations de {{ moisNom }} ({{ locationsduMois|length }})</div>
+    {% if locationsduMois|length > 0 %}
+    <div class="table-responsive">
+        <table class="table dashboard-table mb-0">
+            <thead><tr class="table-horozia"><th>#</th><th>Client</th><th>Vehicule</th><th>Debut</th><th>Fin prevue</th><th>Statut</th><th>Actions</th></tr></thead>
+            <tbody>
+                {% for loc in locationsduMois %}
+                <tr>
+                    <td style="font-weight:700;color:var(--color-primary);">#{{ loc.idLocation }}</td>
+                    <td>{{ loc.clientNomComplet }}</td>
+                    <td><span style="background:rgba(61,148,202,.12);color:#174f6a;padding:3px 10px;border-radius:20px;font-size:.82rem;font-weight:700;">{{ loc.vehicule.immatriculation }}</span></td>
+                    <td>{{ loc.dateDebut|date('d/m/Y') }}</td>
+                    <td>{{ loc.dateFinPrevue|date('d/m/Y') }}</td>
+                    <td>
+                        {% if loc.statut == 'en_cours' %}<span class="badge-en-cours">En cours</span>
+                        {% elseif loc.statut == 'reservee' or loc.statut == 'reservee' %}<span class="badge-reservee">Reservee</span>
+                        {% elseif loc.statut == 'terminee' or loc.statut == 'terminee' %}<span class="badge-terminee">Terminee</span>
+                        {% else %}<span class="badge-terminee">{{ loc.statut }}</span>{% endif %}
+                    </td>
+                    <td><a href="{{ path('admin_location_show', {id: loc.idLocation}) }}" class="action-btn action-btn-view"><i class="bi bi-eye"></i></a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="text-center py-4" style="color:#6c757d;"><i class="bi bi-calendar-x" style="font-size:2rem;opacity:.3;display:block;margin-bottom:8px;"></i>Aucune location ce mois.</div>
+    {% endif %}
+</div>
+{% endblock %}

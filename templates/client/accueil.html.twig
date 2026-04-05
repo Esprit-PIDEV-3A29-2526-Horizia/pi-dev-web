@@ -1,0 +1,255 @@
+{% extends 'base.html.twig' %}
+{% block title %}Horizia - Location de Voitures{% endblock %}
+
+{% block body %}
+<div class="hz-client">
+
+  {# ── NAVBAR ── #}
+  <nav class="hz-navbar">
+    <div class="hz-nav-brand">
+      <img src="{{ asset('images/logo.png') }}" alt="Horizia" class="hz-logo" onerror="this.style.display='none'">
+      <span class="hz-brand-text">HORIZIA</span>
+    </div>
+    <div class="hz-nav-links">
+      <a href="{{ path('client_accueil') }}" class="hz-nav-link active">Accueil</a>
+      <a href="{{ path('client_catalogue') }}" class="hz-nav-link">Catalogue</a>
+      <a href="{{ path('client_mes_reservations') }}" class="hz-nav-link">Mes Réservations</a>
+      <a href="{{ path('client_planning') }}" class="hz-nav-link">Planning</a>
+    </div>
+    <div class="hz-nav-right">
+      <div class="hz-user-badge"><i class="bi bi-person-fill me-1"></i>Client</div>
+    
+    </div>
+  </nav>
+
+  {# ── HERO ── #}
+  <section class="hz-hero">
+    <div class="hz-hero-content">
+      <h1 class="hz-hero-title">Louez votre voiture idéale</h1>
+      <p class="hz-hero-subtitle">Des centaines de véhicules disponibles, des prix transparents</p>
+
+      <form class="hz-search-bar" action="{{ path('client_catalogue') }}" method="GET">
+        <div class="hz-search-field">
+          <i class="bi bi-calendar-event hz-field-icon"></i>
+          <input type="date" name="date_debut" class="hz-date-input"
+                 value="{{ "now"|date("Y-m-d") }}" min="{{ "now"|date("Y-m-d") }}">
+        </div>
+        <div class="hz-search-field">
+          <i class="bi bi-calendar-check hz-field-icon"></i>
+          <input type="date" name="date_fin" class="hz-date-input"
+                 value="{{ "+3 days"|date("Y-m-d") }}" min="{{ "now"|date("Y-m-d") }}">
+        </div>
+        <div class="hz-search-field">
+          <select name="type" class="hz-select-input">
+            <option>Tous les types</option>
+            <option>Essence</option>
+            <option>Diesel</option>
+            <option>Hybride</option>
+            <option>Électrique</option>
+          </select>
+        </div>
+        <button type="submit" class="hz-btn-search">
+          <i class="bi bi-search me-2"></i>Rechercher
+        </button>
+      </form>
+
+      <a href="{{ path('client_catalogue') }}" class="hz-hero-link">Voir tous les véhicules</a>
+    </div>
+  </section>
+
+  {# ── STATS ── #}
+  <section class="hz-stats">
+    <div class="hz-stat-item">
+      <div class="hz-stat-number" style="color:#23779C;">{{ nb_disponibles }}</div>
+      <div class="hz-stat-label">Véhicules disponibles</div>
+    </div>
+    <div class="hz-stat-divider"></div>
+    <div class="hz-stat-item">
+      <div class="hz-stat-number" style="color:#e8a020;">{{ nb_actives }}</div>
+      <div class="hz-stat-label">Locations actives</div>
+    </div>
+    <div class="hz-stat-divider"></div>
+    <div class="hz-stat-item">
+      <div class="hz-stat-number" style="color:#27ae60;">100%</div>
+      <div class="hz-stat-label">Digital et rapide</div>
+    </div>
+  </section>
+
+  {# ── COMMENT ÇA MARCHE ── #}
+  <section class="hz-steps">
+    <h2 class="hz-section-title">Comment ça marche ?</h2>
+    <div class="hz-steps-grid">
+      <div class="hz-step">
+        <div class="hz-step-num" style="background:#23779C;">1</div>
+        <div class="hz-step-icon"><i class="bi bi-search"></i></div>
+        <div class="hz-step-arrow">→</div>
+        <div class="hz-step-title">Choisissez</div>
+        <div class="hz-step-desc">Parcourez le catalogue</div>
+      </div>
+      <div class="hz-step">
+        <div class="hz-step-num" style="background:#23779C;">2</div>
+        <div class="hz-step-icon"><i class="bi bi-file-earmark-text"></i></div>
+        <div class="hz-step-arrow">→</div>
+        <div class="hz-step-title">Réservez</div>
+        <div class="hz-step-desc">Remplissez le formulaire</div>
+      </div>
+      <div class="hz-step">
+        <div class="hz-step-num" style="background:#2ecc71;">3</div>
+        <div class="hz-step-icon"><i class="bi bi-qr-code"></i></div>
+        <div class="hz-step-arrow">→</div>
+        <div class="hz-step-title">QR + Email</div>
+        <div class="hz-step-desc">Recevez votre confirmation</div>
+      </div>
+      <div class="hz-step">
+        <div class="hz-step-num" style="background:#2ecc71;">4</div>
+        <div class="hz-step-icon"><i class="bi bi-car-front-fill"></i></div>
+        <div class="hz-step-title">Prenez la route</div>
+        <div class="hz-step-desc">Présentez votre QR Code</div>
+      </div>
+    </div>
+  </section>
+
+  {# ── FOOTER ── #}
+  <footer class="hz-footer">
+    <div class="hz-footer-left">
+      <i class="bi bi-car-front-fill me-2"></i>HORIZIA
+      <span class="ms-3 text-white-50">Agence de Voyage — Tunis, Tunisie</span>
+    </div>
+    <div class="hz-footer-right">
+      <span><i class="bi bi-telephone me-1"></i>+216 53661445</span>
+      <span class="ms-4">© 2025 Horizia</span>
+    </div>
+  </footer>
+
+</div>
+
+<style>
+/* ── Variables ── */
+:root {
+  --hz-primary:   #23779C;
+  --hz-accent:    #e8a020;
+  --hz-bg:        #f0f4f7;
+  --hz-white:     #ffffff;
+  --hz-text:      #1a2a3a;
+  --hz-muted:     #6b7c8d;
+  --hz-nav-bg:    #1a3a4a;
+}
+
+.hz-client { font-family: 'Segoe UI', sans-serif; background: var(--hz-bg); min-height: 100vh; }
+
+/* ── Navbar ── */
+.hz-navbar {
+  background: var(--hz-nav-bg);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 32px; height: 64px; position: sticky; top: 0; z-index: 100;
+}
+.hz-nav-brand { display: flex; align-items: center; gap: 10px; }
+.hz-logo { height: 36px; }
+.hz-brand-text { color: white; font-size: 18px; font-weight: 700; letter-spacing: 1px; }
+.hz-nav-links { display: flex; gap: 8px; }
+.hz-nav-link {
+  color: rgba(255,255,255,0.75); text-decoration: none;
+  padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: 500;
+  transition: all .2s;
+}
+.hz-nav-link:hover, .hz-nav-link.active {
+  background: var(--hz-accent); color: white;
+}
+.hz-nav-right { display: flex; align-items: center; gap: 12px; }
+.hz-user-badge {
+  background: rgba(255,255,255,0.15); color: white;
+  padding: 6px 16px; border-radius: 20px; font-size: 13px;
+}
+.hz-btn-logout {
+  background: var(--hz-accent); color: white; text-decoration: none;
+  padding: 8px 18px; border-radius: 20px; font-size: 13px; font-weight: 600;
+  transition: opacity .2s;
+}
+.hz-btn-logout:hover { opacity: .85; color: white; }
+
+/* ── Hero ── */
+.hz-hero {
+  background: linear-gradient(135deg, #23779C 0%, #1a5a7a 100%);
+  padding: 60px 32px 50px;
+  text-align: center;
+}
+.hz-hero-title {
+  color: white; font-size: 36px; font-weight: 800; margin-bottom: 8px;
+}
+.hz-hero-subtitle {
+  color: rgba(255,255,255,0.85); font-size: 16px; margin-bottom: 30px;
+}
+.hz-search-bar {
+  display: flex; align-items: center; gap: 12px; justify-content: center;
+  flex-wrap: wrap; margin-bottom: 20px;
+}
+.hz-search-field {
+  background: white; border-radius: 10px;
+  display: flex; align-items: center; padding: 0 14px; gap: 8px;
+}
+.hz-field-icon { color: var(--hz-muted); font-size: 15px; }
+.hz-date-input, .hz-select-input {
+  border: none; outline: none; padding: 12px 4px;
+  font-size: 14px; color: var(--hz-text); background: transparent;
+  min-width: 140px;
+}
+.hz-btn-search {
+  background: var(--hz-accent); color: white; border: none;
+  padding: 12px 28px; border-radius: 10px; font-size: 15px;
+  font-weight: 700; cursor: pointer; transition: opacity .2s;
+}
+.hz-btn-search:hover { opacity: .88; }
+.hz-hero-link {
+  color: rgba(255,255,255,0.85); text-decoration: underline;
+  font-size: 14px;
+}
+
+/* ── Stats ── */
+.hz-stats {
+  background: white; padding: 40px 32px;
+  display: flex; align-items: center; justify-content: center; gap: 40px;
+}
+.hz-stat-item { text-align: center; }
+.hz-stat-number { font-size: 42px; font-weight: 800; }
+.hz-stat-label { font-size: 13px; color: var(--hz-muted); margin-top: 4px; }
+.hz-stat-divider { width: 1px; height: 60px; background: #e0e0e0; }
+
+/* ── Steps ── */
+.hz-steps { padding: 60px 32px; }
+.hz-section-title {
+  font-size: 24px; font-weight: 700; color: var(--hz-text);
+  margin-bottom: 40px;
+}
+.hz-steps-grid {
+  display: flex; gap: 0; align-items: flex-start; flex-wrap: wrap;
+  justify-content: center;
+}
+.hz-step {
+  text-align: center; position: relative; flex: 1; min-width: 160px; max-width: 220px;
+  padding: 0 10px;
+}
+.hz-step-num {
+  width: 48px; height: 48px; border-radius: 50%; color: white;
+  font-size: 20px; font-weight: 800;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 12px;
+}
+.hz-step-icon {
+  font-size: 28px; color: var(--hz-muted); margin-bottom: 10px;
+}
+.hz-step-arrow {
+  position: absolute; right: -20px; top: 10px;
+  font-size: 20px; color: var(--hz-muted);
+}
+.hz-step-title { font-size: 15px; font-weight: 700; color: var(--hz-text); }
+.hz-step-desc  { font-size: 13px; color: var(--hz-muted); margin-top: 4px; }
+
+/* ── Footer ── */
+.hz-footer {
+  background: #1a3a4a; color: rgba(255,255,255,0.7);
+  padding: 18px 32px; display: flex;
+  align-items: center; justify-content: space-between;
+  font-size: 13px; margin-top: 60px;
+}
+</style>
+{% endblock %}

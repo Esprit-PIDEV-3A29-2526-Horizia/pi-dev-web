@@ -1,0 +1,248 @@
+{% extends 'admin/layout.html.twig' %}
+{% block title %}Location #{{ location.idLocation }} – Horizia{% endblock %}
+{% block topbar_title %}Détail location{% endblock %}
+{% block admin_content %}
+
+<div class="page-header">
+    <div class="page-header-left">
+        <div class="page-header-icon"><i class="bi bi-calendar-check-fill"></i></div>
+        <div>
+            <h2>Location <span class="badge-count">#{{ location.idLocation }}</span></h2>
+            <p class="text-muted mb-0" style="font-size:.92rem;">{{ location.clientNomComplet }}</p>
+        </div>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{ path('admin_location_edit', {id: location.idLocation}) }}" class="btn btn-horozia-primary btn-sm">
+            <i class="bi bi-pencil me-1"></i>Modifier
+        </a>
+        <a href="{{ path('admin_location_index') }}" class="btn btn-horozia-outline btn-sm">
+            <i class="bi bi-arrow-left me-1"></i>Retour
+        </a>
+    </div>
+</div>
+
+<div class="row g-3">
+
+    {# ── Colonne gauche ── #}
+    <div class="col-lg-4">
+
+        {# Client + statut #}
+        <div class="dashboard-card text-center mb-3">
+            <div style="width:70px;height:70px;border-radius:50%;background:linear-gradient(135deg,#23779C,#3D94CA);display:flex;align-items:center;justify-content:center;color:#fff;font-size:28px;margin:0 auto 14px;">
+                <i class="bi bi-person-fill"></i>
+            </div>
+            <h4 style="font-weight:800;margin-bottom:4px;">{{ location.clientNomComplet }}</h4>
+            {% if location.clientTelephone %}
+            <p style="color:#6c757d;font-size:.9rem;margin-bottom:4px;">
+                <i class="bi bi-telephone me-1"></i>{{ location.clientTelephone }}
+            </p>
+            {% endif %}
+            {% if location.clientCin %}
+            <p style="color:#6c757d;font-size:.9rem;margin-bottom:4px;">
+                <i class="bi bi-card-text me-1"></i>CIN : {{ location.clientCin }}
+            </p>
+            {% endif %}
+            {% if location.clientPermisNumero %}
+            <p style="color:#6c757d;font-size:.9rem;margin-bottom:12px;">
+                <i class="bi bi-file-earmark-person me-1"></i>Permis : {{ location.clientPermisNumero }}
+            </p>
+            {% endif %}
+
+            {# Badge statut #}
+            {% if location.statut == 'réservée' or location.statut == 'reservee' %}
+                <span class="badge-reservee">Réservée</span>
+            {% elseif location.statut == 'en_cours' %}
+                <span class="badge-en-cours">En cours</span>
+            {% elseif location.statut == 'terminée' or location.statut == 'terminee' %}
+                <span class="badge-terminee">Terminée</span>
+            {% elseif location.statut == 'annulée' or location.statut == 'annulee' %}
+                <span class="badge-annulee">Annulée</span>
+            {% elseif location.statut == 'no_show' %}
+                <span class="badge-noshow">No show</span>
+            {% else %}
+                <span class="badge-terminee">{{ location.statut }}</span>
+            {% endif %}
+
+            {% if location.montantTotal %}
+            <div style="margin-top:16px;padding-top:16px;border-top:1px solid #eef2f7;">
+                <div style="font-size:.82rem;color:#6c757d;font-weight:600;">Montant total</div>
+                <div style="font-size:2rem;font-weight:800;color:var(--color-primary);">
+                    {{ location.montantTotal|number_format(3, ',', ' ') }} TND
+                </div>
+                {% if location.avance %}
+                <div style="font-size:.85rem;color:#28a745;margin-top:4px;">
+                    Avance : {{ location.avance|number_format(3, ',', ' ') }} TND
+                </div>
+                <div style="font-size:.85rem;color:#dc3545;">
+                    Reste : {{ location.resteAPayer|number_format(3, ',', ' ') }} TND
+                </div>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+
+        {# Véhicule #}
+        <div class="dashboard-card mb-3">
+            <div style="font-weight:700;color:#1f2d3d;margin-bottom:12px;">
+                <i class="bi bi-truck me-2" style="color:var(--color-primary);"></i>Véhicule
+            </div>
+            {% if location.vehicule.photo %}
+            <img src="{{ location.vehicule.photo }}" alt="{{ location.vehicule.immatriculation }}"
+                 style="width:100%;height:120px;object-fit:cover;border-radius:10px;margin-bottom:12px;">
+            {% endif %}
+            <div class="d-flex justify-content-between mb-1" style="font-size:.9rem;">
+                <span style="color:#6c757d;">Immatriculation</span>
+                <span style="font-weight:700;">{{ location.vehicule.immatriculation }}</span>
+            </div>
+            {% if location.vehicule.modele is defined %}
+            <div class="d-flex justify-content-between mb-1" style="font-size:.9rem;">
+                <span style="color:#6c757d;">Modèle</span>
+                <span>{{ location.vehicule.modele.marque.nomMarque ?? '' }} {{ location.vehicule.modele.nomModele ?? '' }}</span>
+            </div>
+            {% endif %}
+            <div class="d-flex justify-content-between" style="font-size:.9rem;">
+                <span style="color:#6c757d;">Prix/jour</span>
+                <span style="font-weight:700;color:var(--color-primary);">
+                    {{ location.vehicule.prixParJour|number_format(3, ',', ' ') }} TND
+                </span>
+            </div>
+        </div>
+    </div>
+
+    {# ── Colonne droite ── #}
+    <div class="col-lg-8">
+
+        {# Période #}
+        <div class="dashboard-card mb-3">
+            <div style="font-weight:700;color:#1f2d3d;margin-bottom:16px;">
+                <i class="bi bi-calendar-range me-2" style="color:var(--color-primary);"></i>Période
+            </div>
+            <div class="row g-3 text-center">
+                <div class="col-md-4">
+                    <div style="background:#f5f7fb;border-radius:10px;padding:16px;">
+                        <div style="font-size:.82rem;color:#6c757d;margin-bottom:4px;"><i class="bi bi-calendar-event me-1"></i>Début</div>
+                        <div style="font-weight:700;">{{ location.dateDebut|date('d/m/Y') }}</div>
+                        <div style="font-size:.78rem;color:#6c757d;">{{ location.dateDebut|date('H:i') }}</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div style="background:#f5f7fb;border-radius:10px;padding:16px;">
+                        <div style="font-size:.82rem;color:#6c757d;margin-bottom:4px;"><i class="bi bi-hourglass me-1"></i>Durée</div>
+                        {% set jours = ((location.dateFinPrevue|date('U') - location.dateDebut|date('U')) / 86400)|round %}
+                        <div style="font-weight:800;color:var(--color-primary);font-size:1.3rem;">{{ jours }}</div>
+                        <div style="font-size:.78rem;color:#6c757d;">jour(s)</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div style="background:#f5f7fb;border-radius:10px;padding:16px;">
+                        <div style="font-size:.82rem;color:#6c757d;margin-bottom:4px;"><i class="bi bi-calendar-check me-1"></i>Fin prévue</div>
+                        <div style="font-weight:700;">{{ location.dateFinPrevue|date('d/m/Y') }}</div>
+                        <div style="font-size:.78rem;color:#6c757d;">{{ location.dateFinPrevue|date('H:i') }}</div>
+                    </div>
+                </div>
+            </div>
+            {% if location.dateFinReelle %}
+            <div style="background:rgba(129,174,141,.12);border:1px solid rgba(129,174,141,.3);border-radius:10px;padding:12px 16px;margin-top:12px;font-size:.9rem;">
+                <i class="bi bi-calendar2-check me-2" style="color:var(--color-accent);"></i>
+                Date fin réelle : <strong>{{ location.dateFinReelle|date('d/m/Y') }}</strong>
+            </div>
+            {% endif %}
+        </div>
+
+        {# Détail financier + extras #}
+        <div class="dashboard-card mb-3">
+            <div style="font-weight:700;color:#1f2d3d;margin-bottom:16px;">
+                <i class="bi bi-receipt me-2" style="color:var(--color-primary);"></i>Détails financiers
+            </div>
+
+            {% set jours = ((location.dateFinPrevue|date('U') - location.dateDebut|date('U')) / 86400)|round %}
+            <div class="d-flex justify-content-between py-2" style="border-bottom:1px solid #eef2f7;font-size:.92rem;">
+                <span style="color:#6c757d;">Prix/jour × {{ jours }} jour(s)</span>
+                <span style="font-weight:700;">
+                    {{ (location.prixParJour * jours)|number_format(3, ',', ' ') }} TND
+                </span>
+            </div>
+
+            {% if location.extras %}
+                {% for cle, prix in location.extras %}
+                <div class="d-flex justify-content-between py-2" style="border-bottom:1px solid #eef2f7;font-size:.88rem;">
+                    <span style="color:#6c757d;">
+                        <i class="bi bi-plus-circle me-1" style="color:var(--color-primary);"></i>
+                        {{ extras_dispo[cle].label ?? cle }}
+                    </span>
+                    <span>{{ prix|number_format(3, ',', ' ') }} TND</span>
+                </div>
+                {% endfor %}
+                <div class="d-flex justify-content-between py-2" style="border-bottom:1px solid #eef2f7;font-size:.88rem;">
+                    <span style="color:#6c757d;font-style:italic;">Total extras</span>
+                    <span style="color:var(--color-primary);">{{ location.extrasTotal|number_format(3, ',', ' ') }} TND</span>
+                </div>
+            {% endif %}
+
+            {% if location.montantTotal %}
+            <div class="d-flex justify-content-between py-2" style="border-bottom:1px solid #eef2f7;font-size:.92rem;">
+                <span style="color:#6c757d;font-weight:700;">Montant total</span>
+                <span style="font-weight:800;color:var(--color-primary);">{{ location.montantTotal|number_format(3, ',', ' ') }} TND</span>
+            </div>
+            {% endif %}
+            {% if location.avance %}
+            <div class="d-flex justify-content-between py-2" style="border-bottom:1px solid #eef2f7;font-size:.92rem;">
+                <span style="color:#6c757d;">Avance versée</span>
+                <span style="font-weight:700;color:#28a745;">{{ location.avance|number_format(3, ',', ' ') }} TND</span>
+            </div>
+            <div class="d-flex justify-content-between py-2" style="font-size:.92rem;">
+                <span style="font-weight:700;">Reste à payer</span>
+                <span style="font-weight:800;color:#dc3545;">{{ location.resteAPayer|number_format(3, ',', ' ') }} TND</span>
+            </div>
+            {% endif %}
+
+            {% if location.kilometrageDebut %}
+            <div class="d-flex justify-content-between py-2 mt-2" style="border-top:1px solid #eef2f7;font-size:.9rem;">
+                <span style="color:#6c757d;">Km départ</span>
+                <span>{{ location.kilometrageDebut|number_format(0, ',', ' ') }} km</span>
+            </div>
+            {% endif %}
+            {% if location.kilometrageRetour %}
+            <div class="d-flex justify-content-between py-1" style="font-size:.9rem;">
+                <span style="color:#6c757d;">Km retour</span>
+                <span>{{ location.kilometrageRetour|number_format(0, ',', ' ') }} km</span>
+            </div>
+            {% endif %}
+        </div>
+
+        {# Notes #}
+        {% if location.notes %}
+        <div class="dashboard-card mb-3">
+            <div style="font-weight:700;color:#1f2d3d;margin-bottom:12px;">
+                <i class="bi bi-chat-text me-2" style="color:var(--color-primary);"></i>Notes
+            </div>
+            <p style="font-size:.92rem;white-space:pre-wrap;margin:0;">{{ location.notes }}</p>
+        </div>
+        {% endif %}
+
+        {# Actions #}
+        <div class="dashboard-card">
+            <div style="font-weight:700;color:#1f2d3d;margin-bottom:14px;">Actions</div>
+            <div class="d-flex gap-2 flex-wrap">
+                <a href="{{ path('admin_location_edit', {id: location.idLocation}) }}" class="btn btn-horozia-primary btn-sm">
+                    <i class="bi bi-pencil me-1"></i>Modifier
+                </a>
+                <a href="{{ path('admin_documents_qrcode', {id: location.idLocation}) }}" class="btn btn-horozia-secondary btn-sm">
+                    <i class="bi bi-qr-code me-1"></i>QR Code
+                </a>
+                {# ✅ Contrat généré en PDF #}
+                <a href="{{ path('admin_documents_contrat', {id: location.idLocation}) }}" class="btn btn-horozia-accent btn-sm" target="_blank">
+                    <i class="bi bi-file-earmark-pdf me-1"></i>Contrat PDF
+                </a>
+                <form method="post" action="{{ path('admin_location_delete', {id: location.idLocation}) }}"
+                      onsubmit="return confirm('Supprimer cette location ?')">
+                    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ location.idLocation) }}">
+                    <button type="submit" class="btn btn-horozia-danger btn-sm">
+                        <i class="bi bi-trash me-1"></i>Supprimer
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

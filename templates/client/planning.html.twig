@@ -1,0 +1,157 @@
+{% extends 'base.html.twig' %}
+{% block title %}Horizia - Planning{% endblock %}
+{% block body %}
+<div class="hz-client">
+  {# ── NAVBAR ── #}
+  <nav class="hz-navbar">
+    <div class="hz-nav-brand"><span class="hz-brand-text">HORIZIA</span></div>
+    <div class="hz-nav-links">
+      <a href="{{ path('client_accueil') }}" class="hz-nav-link">Accueil</a>
+      <a href="{{ path('client_catalogue') }}" class="hz-nav-link">Catalogue</a>
+      <a href="{{ path('client_mes_reservations') }}" class="hz-nav-link">Mes Réservations</a>
+      <a href="{{ path('client_planning') }}" class="hz-nav-link active">Planning</a>
+    </div>
+    <div class="hz-nav-right">
+      <div class="hz-user-badge"><i class="bi bi-person-fill me-1"></i>Client</div>
+    </div>
+  </nav>
+
+  <div class="hz-page-banner">
+    <h1><i class="bi bi-calendar3 me-3"></i>Planning des Disponibilités</h1>
+    <p>Consultez en temps réel les disponibilités des véhicules</p>
+  </div>
+
+  <div class="hz-main-content">
+
+    {# Sélecteur véhicule #}
+    <div class="hz-planning-select-bar">
+      <label class="hz-filter-label">Sélectionner un véhicule :</label>
+      <form method="GET" action="{{ path('client_planning') }}" style="display:inline">
+        <input type="hidden" name="mois"   value="{{ mois }}">
+        <input type="hidden" name="annee"  value="{{ annee }}">
+        <select name="vehicule_id" class="hz-vehicule-select" onchange="this.form.submit()">
+          {% for v in vehicules %}
+          <option value="{{ v.idVehicule }}" {{ v.idVehicule == vehicule_id ? 'selected' : '' }}>
+            {{ v.immatriculation }} — {{ v.prixParJour|number_format(2) }} TND/jour
+          </option>
+          {% endfor %}
+        </select>
+      </form>
+    </div>
+
+    {# Navigation mois #}
+    {% set mois_precedent = mois == 1 ? 12 : mois - 1 %}
+    {% set annee_precedent = mois == 1 ? annee - 1 : annee %}
+    {% set mois_suivant = mois == 12 ? 1 : mois + 1 %}
+    {% set annee_suivant = mois == 12 ? annee + 1 : annee %}
+    {% set noms_mois = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'] %}
+
+    <div class="hz-calendar-nav">
+      <a href="{{ path('client_planning', {vehicule_id: vehicule_id, mois: mois_precedent, annee: annee_precedent}) }}"
+         class="hz-cal-nav-btn">◀</a>
+      <span class="hz-cal-title">{{ noms_mois[mois - 1]|upper }} {{ annee }}</span>
+      <a href="{{ path('client_planning', {vehicule_id: vehicule_id, mois: mois_suivant, annee: annee_suivant}) }}"
+         class="hz-cal-nav-btn">▶</a>
+      <a href="{{ path('client_planning', {vehicule_id: vehicule_id, mois: 'now'|date('n'), annee: 'now'|date('Y')}) }}"
+         class="hz-cal-today-btn"><i class="bi bi-calendar-event me-1"></i>Aujourd'hui</a>
+    </div>
+
+    {# Calendrier #}
+    {% set jours_semaine = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'] %}
+    {% set premier_jour = ("#{annee}-#{mois}-01")|date('N') %}
+    {% set nb_jours = date("#{annee}-#{mois}-01")|date_modify('last day of this month')|date('j') %}
+    {% set today_day = 'now'|date('j') %}
+    {% set today_month = 'now'|date('n') %}
+    {% set today_year  = 'now'|date('Y') %}
+
+    <div class="hz-calendar">
+      {# En-têtes jours #}
+      {% for jour in jours_semaine %}
+      <div class="hz-cal-header {{ jour in ['Sam','Dim'] ? 'hz-cal-weekend-hdr' : '' }}">{{ jour }}</div>
+      {% endfor %}
+
+      {# Cases vides avant le 1er #}
+      {% for i in 1..(premier_jour - 1) %}
+      <div class="hz-cal-cell hz-cal-empty"></div>
+      {% endfor %}
+
+      {# Jours du mois #}
+      {% for j in 1..nb_jours %}
+        {% set est_occupe = j in jours_occupes %}
+        {% set est_today  = j == today_day and mois == today_month and annee == today_year %}
+        {% set jour_semaine = ((premier_jour + j - 2) % 7) + 1 %}
+        {% set est_weekend  = jour_semaine in [6, 7] %}
+        <div class="hz-cal-cell
+          {{ est_occupe ? 'hz-cal-occupied' : 'hz-cal-free' }}
+          {{ est_today  ? 'hz-cal-today'    : '' }}
+          {{ est_weekend ? 'hz-cal-weekend'  : '' }}">
+          <span class="hz-cal-num {{ est_weekend ? 'hz-cal-num-weekend' : '' }}">{{ j }}</span>
+          {% if est_occupe %}
+            <span class="hz-cal-status hz-cal-status-occupied">✗ Loué</span>
+          {% else %}
+            <span class="hz-cal-status hz-cal-status-free">✓ Libre</span>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+
+    {# Légende #}
+    <div class="hz-cal-legend">
+      <span class="hz-legend-item"><span class="hz-legend-dot hz-dot-free"></span>Disponible</span>
+      <span class="hz-legend-item"><span class="hz-legend-dot hz-dot-occupied"></span>Loué</span>
+      <span class="hz-legend-item"><span class="hz-legend-dot hz-dot-today"></span>Aujourd'hui</span>
+    </div>
+
+  </div>
+
+  <footer class="hz-footer">
+    <div><i class="bi bi-car-front-fill me-2"></i>HORIZIA <span class="ms-3 text-white-50">Agence de Voyage — Tunis, Tunisie</span></div>
+    <div><span><i class="bi bi-telephone me-1"></i>+216 53661445</span><span class="ms-4">© 2025 Horizia</span></div>
+  </footer>
+</div>
+
+<style>
+:root { --hz-primary:#23779C; --hz-accent:#e8a020; --hz-nav-bg:#1a3a4a; }
+.hz-client { font-family:'Segoe UI',sans-serif; background:#f0f4f7; min-height:100vh; }
+.hz-navbar { background:var(--hz-nav-bg); display:flex; align-items:center; justify-content:space-between; padding:0 32px; height:64px; position:sticky; top:0; z-index:100; }
+.hz-brand-text { color:white; font-size:18px; font-weight:700; }
+.hz-nav-links { display:flex; gap:8px; }
+.hz-nav-link { color:rgba(255,255,255,.75); text-decoration:none; padding:8px 16px; border-radius:20px; font-size:14px; font-weight:500; transition:all .2s; }
+.hz-nav-link:hover,.hz-nav-link.active { background:var(--hz-accent); color:white; }
+.hz-nav-right { display:flex; align-items:center; gap:12px; }
+.hz-user-badge { background:rgba(255,255,255,.15); color:white; padding:6px 16px; border-radius:20px; font-size:13px; }
+.hz-btn-logout { background:var(--hz-accent); color:white; text-decoration:none; padding:8px 18px; border-radius:20px; font-size:13px; font-weight:600; }
+.hz-page-banner { background:linear-gradient(135deg,#23779C,#1a5a7a); padding:40px 32px; text-align:center; color:white; }
+.hz-page-banner h1 { font-size:30px; font-weight:800; margin-bottom:6px; }
+.hz-page-banner p { opacity:.85; }
+.hz-main-content { max-width:1100px; margin:0 auto; padding:32px; }
+.hz-planning-select-bar { background:white; border-radius:14px; padding:20px 24px; margin-bottom:24px; display:flex; align-items:center; gap:20px; box-shadow:0 2px 10px rgba(0,0,0,.06); }
+.hz-filter-label { font-size:14px; font-weight:600; color:#374151; white-space:nowrap; }
+.hz-vehicule-select { border:1.5px solid #e0e8f0; border-radius:10px; padding:10px 16px; font-size:14px; outline:none; min-width:280px; }
+.hz-calendar-nav { display:flex; align-items:center; gap:16px; margin-bottom:20px; }
+.hz-cal-nav-btn { background:var(--hz-primary); color:white; text-decoration:none; width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:700; }
+.hz-cal-title { font-size:22px; font-weight:800; color:var(--hz-primary); flex:1; text-align:center; }
+.hz-cal-today-btn { background:var(--hz-accent); color:white; text-decoration:none; padding:8px 18px; border-radius:20px; font-size:13px; font-weight:700; }
+.hz-calendar { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; background:white; border-radius:16px; padding:20px; box-shadow:0 2px 12px rgba(0,0,0,.06); }
+.hz-cal-header { text-align:center; font-weight:700; font-size:13px; color:#374151; padding:10px 0; }
+.hz-cal-weekend-hdr { color:var(--hz-primary); }
+.hz-cal-cell { min-height:70px; border-radius:10px; padding:8px; display:flex; flex-direction:column; align-items:center; gap:4px; border:1px solid #f0f0f0; }
+.hz-cal-empty { background:transparent; border:none; }
+.hz-cal-free { background:#f8fbfd; }
+.hz-cal-occupied { background:#fff5f5; }
+.hz-cal-today { background:#fff8e1; border:2px solid var(--hz-accent) !important; }
+.hz-cal-weekend { background:#f9fafb; }
+.hz-cal-num { font-size:15px; font-weight:600; color:#374151; }
+.hz-cal-num-weekend { color:var(--hz-primary); }
+.hz-cal-status { font-size:11px; font-weight:600; }
+.hz-cal-status-free { color:#27ae60; }
+.hz-cal-status-occupied { color:#e74c3c; }
+.hz-cal-legend { display:flex; gap:24px; margin-top:16px; padding:16px 0; }
+.hz-legend-item { display:flex; align-items:center; gap:8px; font-size:13px; color:#374151; }
+.hz-legend-dot { width:14px; height:14px; border-radius:50%; }
+.hz-dot-free { background:#27ae60; }
+.hz-dot-occupied { background:#e74c3c; }
+.hz-dot-today { background:var(--hz-accent); }
+.hz-footer { background:#1a3a4a; color:rgba(255,255,255,.7); padding:18px 32px; display:flex; align-items:center; justify-content:space-between; font-size:13px; margin-top:40px; }
+</style>
+{% endblock %}

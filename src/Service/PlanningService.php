@@ -1,0 +1,346 @@
+<?php
+
+namespace App\Service;
+
+use App\Entity\Location;
+use App\Repository\LocationRepository;
+use App\Repository\VehiculeRepository;
+use Doctrine\ORM\EntityManagerInterface;
+use DateTime;
+
+class PlanningService
+{
+    private LocationRepository $locationRepository;
+    private VehiculeRepository $vehiculeRepository;
+    private EntityManagerInterface $entityManager;
+
+    public function __construct(
+        LocationRepository $locationRepository,
+        VehiculeRepository $vehiculeRepository,
+        EntityManagerInterface $entityManager
+    ) {
+        $this->locationRepository = $locationRepository;
+        $this->vehiculeRepository = $vehiculeRepository;
+        $this->entityManager = $entityManager;
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // RÉCUPÉRATION DES LOCATIONS PAR PÉRIODE
+    // ─────────────────────────────────────────────────────────────
+
+    /**
+     * Récupère les locations d'un mois donné
+     */
+    public function getLocationsDuMois(int $annee, int $mois): array
+    {
+        $debut = new DateTime("{$annee}-{$mois}-01 00:00:00");
+        $fin = new DateTime("{$annee}-{$mois}-" . date('t', $debut->getTimestamp()) . " 23:59:59");
+
+        return $this->locationRepository->createQueryBuilder('l')
+            ->where('l.dateDebut <= :fin')
+            ->andWhere('l.dateFinPrevue >= :debut')
+            ->andWhere('l.statut NOT IN (:statutsExclus)')
+            ->setParameter('debut', $debut)
+            ->setParameter('fin', $fin)
+            ->setParameter('statutsExclus', ['annulée', 'no_show'])
+            ->orderBy('l.dateDebut', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * Récupère les locations pour une période donnée
+     */
+    public function getLocationsPeriode(DateTime $debut, DateTime $fin): array
+    {
+        return $this->locationRepository->createQueryBuilder('l')
+            ->where('l.dateDebut <= :fin')
+            ->andWhere('l.dateFinPrevue >= :debut')
+            ->andWhere('l.statut NOT IN (:statutsExclus)')
+            ->setParameter('debut', $debut)
+            ->setParameter('fin', $fin)
+            ->setParameter('statutsExclus', ['annulée', 'no_show'])
+            ->orderBy('l.dateDebut', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * Récupère les locations pour une date spécifique
+     */
+    public function getLocationsParDate(DateTime $date): array
+    {
+        $debut = clone $date;
+        $debut->setTime(0, 0, 0);
+        $fin = clone $date;
+        $fin->setTime(23, 59, 59);
+
+        return $this->getLocationsPeriode($debut, $fin);
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // DÉTECTION DE CONFLITS
+    // ─────────────────────────────────────────────────────────────
+
+    /**
+     * Vérifie si un véhicule est disponible pour une période
+     */
+    public function isVehiculeDisponible(int $idVehicule, DateTime $debut, DateTime $fin, ?int $excludeLocationId = null): bool
+    {
+        $qb = $this->locationRepository->createQueryBuilder('l')
+            ->select('COUNT(l.idLocation)')
+            ->where('l.vehicule = :idVehicule')
+            ->andWhere('l.statut NOT IN (:statutsExclus)')
+            ->andWhere('l.dateDebut < :fin')
+            ->andWhere('l.dateFinPrevue > :debut')
+            ->setParameter('idVehicule', $idVehicule)
+            ->setParameter('debut', $debut)
+            ->setParameter('fin', $fin)
+            ->setParameter('statutsExclus', ['annulée', 'no_show', 'terminée']);
+
+        if ($excludeLocationId) {
+            $qb->andWhere('l.idLocation != :excludeId')
+               ->setParameter('excludeId', $excludeLocationId);
+        }
+
+        $count = (int) $qb->getQuery()->getSingleScalarResult();
+        
+        return $count === 0;
+    }
+
+    /**
+     * Détecte les conflits de location pour un mois donné
+     * @return array<int, array> [idVehicule => [locations en conflit]]
+     */
+    public function detecterConflitsDuMois(int $annee, int $mois): array
+    {
+        $locations = $this->getLocationsDuMois($annee, $mois);
+        $conflits = [];
+
+        // Grouper par véhicule
+        $parVehicule = [];
+        foreach ($locations as $loc) {
+            $idVehicule = $loc->getVehicule()?->getIdVehicule();
+            if ($idVehicule) {
+                $parVehicule[$idVehicule][] = $loc;
+            }
+        }
+
+        // Détecter les chevauchements
+        foreach ($parVehicule as $idVehicule => $locs) {
+            for ($i = 0; $i < count($locs); $i++) {
+                for ($j = $i + 1; $j < count($locs); $j++) {
+                    if ($this->seChevauchent($locs[$i], $locs[$j])) {
+                        if (!isset($conflits[$idVehicule])) {
+                            $conflits[$idVehicule] = [];
+                        }
+                        $conflits[$idVehicule][] = $locs[$i];
+                        $conflits[$idVehicule][] = $locs[$j];
+                    }
+                }
+            }
+        }
+
+        return $conflits;
+    }
+
+    /**
+     * Vérifie si deux locations se chevauchent
+     */
+    public function seChevauchent(Location $l1, Location $l2): bool
+    {
+        $debut1 = $l1->getDateDebut();
+        $fin1 = $l1->getDateFinPrevue();
+        $debut2 = $l2->getDateDebut();
+        $fin2 = $l2->getDateFinPrevue();
+
+        if (!$debut1 || !$fin1 || !$debut2 || !$fin2) {
+            return false;
+        }
+
+        return $debut1 < $fin2 && $debut2 < $fin1;
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // STATISTIQUES DE PLANNING
+    // ─────────────────────────────────────────────────────────────
+
+    /**
+     * Calcule le taux d'occupation pour un mois donné
+     */
+    public function calculerTauxOccupation(int $annee, int $mois): float
+    {
+        $nbJoursMois = (int) date('t', mktime(0, 0, 0, $mois, 1, $annee));
+        $nbVehicules = $this->getNbVehiculesTotal();
+
+        if ($nbVehicules === 0) {
+            return 0;
+        }
+
+        $joursOccupes = $this->calculerJoursOccupes($annee, $mois, $nbJoursMois);
+        
+        return ($joursOccupes / ($nbVehicules * $nbJoursMois)) * 100;
+    }
+
+    /**
+     * Calcule le chiffre d'affaires pour un mois donné
+     */
+    public function calculerCADuMois(int $annee, int $mois): float
+    {
+        $debut = new DateTime("{$annee}-{$mois}-01 00:00:00");
+        $fin = new DateTime("{$annee}-{$mois}-" . date('t', $debut->getTimestamp()) . " 23:59:59");
+
+        $result = $this->locationRepository->createQueryBuilder('l')
+            ->select('SUM(l.montantTotal) as total')
+            ->where('l.dateDebut BETWEEN :debut AND :fin')
+            ->andWhere('l.statut NOT IN (:statutsExclus)')
+            ->setParameter('debut', $debut)
+            ->setParameter('fin', $fin)
+            ->setParameter('statutsExclus', ['annulée', 'no_show'])
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        return (float) ($result ?? 0);
+    }
+
+    /**
+     * Récupère les statuts des locations pour un mois
+     */
+    public function getStatutsParMois(int $annee, int $mois): array
+    {
+        $debut = new DateTime("{$annee}-{$mois}-01 00:00:00");
+        $fin = new DateTime("{$annee}-{$mois}-" . date('t', $debut->getTimestamp()) . " 23:59:59");
+
+        $results = $this->locationRepository->createQueryBuilder('l')
+            ->select('l.statut as statut, COUNT(l.idLocation) as total')
+            ->where('l.dateDebut BETWEEN :debut AND :fin')
+            ->groupBy('l.statut')
+            ->orderBy('total', 'DESC')
+            ->setParameter('debut', $debut)
+            ->setParameter('fin', $fin)
+            ->getQuery()
+            ->getResult();
+
+        $statuts = [];
+        foreach ($results as $result) {
+            $statuts[$result['statut']] = $result['total'];
+        }
+
+        return $statuts;
+    }
+
+    /**
+     * Récupère les locations qui se terminent bientôt
+     */
+    public function getLocationsQuiTerminentBientot(int $nbJours): array
+    {
+        $debut = new DateTime('now');
+        $fin = new DateTime('+' . $nbJours . ' days');
+
+        return $this->locationRepository->createQueryBuilder('l')
+            ->where('l.dateFinPrevue BETWEEN :debut AND :fin')
+            ->andWhere('l.statut = :statut')
+            ->orderBy('l.dateFinPrevue', 'ASC')
+            ->setParameter('debut', $debut)
+            ->setParameter('fin', $fin)
+            ->setParameter('statut', 'en_cours')
+            ->getQuery()
+            ->getResult();
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // UTILITAIRES CALENDRIER
+    // ─────────────────────────────────────────────────────────────
+
+    /**
+     * Formate le nom du mois en français
+     */
+    public function getNomMois(int $mois, int $annee): string
+    {
+        $nomsMois = [
+            1 => 'Janvier', 2 => 'Février', 3 => 'Mars', 4 => 'Avril',
+            5 => 'Mai', 6 => 'Juin', 7 => 'Juillet', 8 => 'Août',
+            9 => 'Septembre', 10 => 'Octobre', 11 => 'Novembre', 12 => 'Décembre'
+        ];
+        
+        return $nomsMois[$mois] . ' ' . $annee;
+    }
+
+    /**
+     * Couleur associée au statut (pour CSS)
+     */
+    public function getCouleurStatut(?string $statut): string
+    {
+        if (!$statut) return '#95a5a6';
+        
+        return match ($statut) {
+            'réservée' => '#3498db',
+            'en_cours' => '#27ae60',
+            'terminée' => '#95a5a6',
+            'annulée' => '#e74c3c',
+            'no_show' => '#e67e22',
+            default => '#95a5a6',
+        };
+    }
+
+    /**
+     * Emoji associé au statut
+     */
+    public function getEmojiStatut(?string $statut): string
+    {
+        if (!$statut) return '❓';
+        
+        return match ($statut) {
+            'réservée' => '📅',
+            'en_cours' => '🚗',
+            'terminée' => '✅',
+            'annulée' => '❌',
+            'no_show' => '⚠️',
+            default => '❓',
+        };
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // MÉTHODES PRIVÉES
+    // ─────────────────────────────────────────────────────────────
+
+    private function getNbVehiculesTotal(): int
+    {
+        return (int) $this->vehiculeRepository->createQueryBuilder('v')
+            ->select('COUNT(v.idVehicule)')
+            ->where('v.etat != :etat')
+            ->setParameter('etat', 'hors_service')
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    private function calculerJoursOccupes(int $annee, int $mois, int $nbJoursMois): int
+    {
+        $locations = $this->getLocationsDuMois($annee, $mois);
+        $debutMois = new DateTime("{$annee}-{$mois}-01");
+        $finMois = new DateTime("{$annee}-{$mois}-{$nbJoursMois}");
+        
+        $joursOccupes = [];
+
+        foreach ($locations as $loc) {
+            $vehicule = $loc->getVehicule();
+            if (!$vehicule) continue;
+            
+            $idVehicule = $vehicule->getIdVehicule();
+            $locDebut = $loc->getDateDebut();
+            $locFin = $loc->getDateFinPrevue();
+            
+            if (!$locDebut || !$locFin) continue;
+            
+            $d = $locDebut > $debutMois ? clone $locDebut : clone $debutMois;
+            $f = $locFin < $finMois ? clone $locFin : clone $finMois;
+            
+            while ($d <= $f) {
+                $joursOccupes[$idVehicule . '-' . $d->format('Y-m-d')] = true;
+                $d->modify('+1 day');
+            }
+        }
+        
+        return count($joursOccupes);
+    }
+}

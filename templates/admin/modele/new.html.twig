@@ -1,0 +1,25 @@
+{% extends 'admin/layout.html.twig' %}
+{% block title %}Nouveau modele â€“ Horizia{% endblock %}
+{% block topbar_title %}Nouveau modele{% endblock %}
+{% block admin_content %}
+<div class="page-header">
+    <div class="page-header-left">
+        <div class="page-header-icon"><i class="bi bi-plus-circle-fill"></i></div>
+        <div><h2>Nouveau modele</h2></div>
+    </div>
+    <a href="{{ path('admin_modele_index') }}" class="btn btn-horozia-outline btn-sm"><i class="bi bi-arrow-left me-1"></i>Retour</a>
+</div>
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="form-section">
+            <div class="form-section-title"><i class="bi bi-list-ul" style="color:var(--color-primary);"></i>Informations modele</div>
+            {{ form_start(form) }}
+            <div class="mb-3">{{ form_label(form.marque) }}{{ form_widget(form.marque) }}{{ form_errors(form.marque) }}</div>
+            <div class="mb-3">{{ form_label(form.nomModele) }}{{ form_widget(form.nomModele) }}{{ form_errors(form.nomModele) }}</div>
+            <div class="mb-3">{{ form_label(form.image) }}{{ form_widget(form.image) }}{{ form_errors(form.image) }}<div style="font-size:.8rem;color:#6c757d;margin-top:4px;">URL de l'image du modele (optionnel)</div></div>
+            <button type="submit" class="btn btn-horozia-primary w-100"><i class="bi bi-check-lg me-2"></i>Enregistrer</button>
+            {{ form_end(form) }}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,23 @@
+{% extends 'admin/layout.html.twig' %}
+{% block title %}{{ marque.nomMarque }} â€“ Horizia{% endblock %}
+{% block topbar_title %}Marque{% endblock %}
+{% block admin_content %}
+<div class="page-header">
+    <div class="page-header-left">
+        <div class="page-header-icon"><i class="bi bi-tags-fill"></i></div>
+        <div><h2>{{ marque.nomMarque }}</h2></div>
+    </div>
+    <a href="{{ path('admin_marque_index') }}" class="btn btn-horozia-outline btn-sm"><i class="bi bi-arrow-left me-1"></i>Retour</a>
+</div>
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="form-section">
+            {{ form_start(form) }}
+            <div class="mb-3">{{ form_label(form.nomMarque) }}{{ form_widget(form.nomMarque) }}{{ form_errors(form.nomMarque) }}</div>
+            <div class="mb-3">{{ form_label(form.logo) }}{{ form_widget(form.logo) }}{{ form_errors(form.logo) }}</div>
+            <button type="submit" class="btn btn-horozia-primary w-100"><i class="bi bi-check-lg me-2"></i>Enregistrer</button>
+            {{ form_end(form) }}
+        </div>
+    </div>
+</div>
+{% endblock %}

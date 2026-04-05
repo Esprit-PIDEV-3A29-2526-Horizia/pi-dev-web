@@ -1,0 +1,45 @@
+{% set route = app.request.attributes.get('_route') %}
+<div class="admin-sidebar">
+    <div class="sidebar-brand-center">
+        <img src="{{ asset('images/logo.png') }}" alt="Horizia" class="sidebar-logo-large">
+        <span style="color:#fff;font-weight:800;font-size:1.1rem;letter-spacing:1px;">HORIZIA</span>
+        <span style="color:rgba(255,255,255,.5);font-size:.75rem;">Location de Vehicules</span>
+    </div>
+    <ul class="sidebar-menu">
+        <li>
+            <a class="sidebar-link {{ route starts with 'admin_dashboard' ? 'active' : '' }}" href="{{ path('admin_dashboard') }}">
+                <i class="bi bi-grid-fill"></i><span>Dashboard</span>
+            </a>
+        </li>
+        <li>
+            <a class="sidebar-link {{ route starts with 'admin_vehicule' ? 'active' : '' }}" href="{{ path('admin_vehicule_index') }}">
+                <i class="bi bi-truck-front-fill"></i><span>Vehicules</span>
+            </a>
+        </li>
+        <li>
+            <a class="sidebar-link {{ route starts with 'admin_location' ? 'active' : '' }}" href="{{ path('admin_location_index') }}">
+                <i class="bi bi-calendar-check-fill"></i><span>Locations</span>
+            </a>
+        </li>
+        <li>
+            <a class="sidebar-link {{ route starts with 'admin_planning' ? 'active' : '' }}" href="{{ path('admin_planning_index') }}">
+                <i class="bi bi-calendar3"></i><span>Planning</span>
+            </a>
+        </li>
+        <li>
+            <a class="sidebar-link {{ route starts with 'admin_documents' ? 'active' : '' }}" href="{{ path('admin_documents_index') }}">
+                <i class="bi bi-file-earmark-text-fill"></i><span>Documents</span>
+            </a>
+        </li>
+        <li style="border-top:1px solid rgba(255,255,255,.08);margin-top:8px;padding-top:8px;">
+            <a class="sidebar-link {{ route starts with 'admin_marque' ? 'active' : '' }}" href="{{ path('admin_marque_index') }}">
+                <i class="bi bi-tags-fill"></i><span>Marques</span>
+            </a>
+        </li>
+        <li>
+            <a class="sidebar-link {{ route starts with 'admin_modele' ? 'active' : '' }}" href="{{ path('admin_modele_index') }}">
+                <i class="bi bi-list-ul"></i><span>Modeles</span>
+            </a>
+        </li>
+    </ul>
+</div>

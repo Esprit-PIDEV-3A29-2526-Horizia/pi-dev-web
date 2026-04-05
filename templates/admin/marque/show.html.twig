@@ -1,0 +1,44 @@
+{% extends 'admin/layout.html.twig' %}
+{% block title %}{{ marque.nomMarque }} â€“ Horizia{% endblock %}
+{% block topbar_title %}Detail marque{% endblock %}
+{% block admin_content %}
+<div class="page-header">
+    <div class="page-header-left">
+        <div class="page-header-icon"><i class="bi bi-tags-fill"></i></div>
+        <div><h2>{{ marque.nomMarque }}</h2><p class="text-muted mb-0" style="font-size:.92rem;">{{ marque.modeles|length }} modele(s)</p></div>
+    </div>
+    <a href="{{ path('admin_marque_index') }}" class="btn btn-horozia-outline btn-sm"><i class="bi bi-arrow-left me-1"></i>Retour</a>
+</div>
+<div class="row g-3">
+    <div class="col-lg-4">
+        <div class="dashboard-card text-center">
+            {% if marque.logo %}
+            <img src="{{ marque.logo }}" alt="{{ marque.nomMarque }}" style="width:120px;height:120px;object-fit:contain;margin-bottom:16px;">
+            {% else %}
+            <div style="width:100px;height:100px;border-radius:50%;background:linear-gradient(135deg,rgba(61,148,202,.15),rgba(35,119,156,.2));display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:2.5rem;color:var(--color-primary);"><i class="bi bi-truck"></i></div>
+            {% endif %}
+            <h3 style="font-weight:800;">{{ marque.nomMarque }}</h3>
+            <div style="font-size:.9rem;color:#6c757d;">{{ marque.modeles|length }} modele(s) enregistre(s)</div>
+        </div>
+    </div>
+    <div class="col-lg-8">
+        <div class="dashboard-card">
+            <div style="font-weight:700;color:#1f2d3d;margin-bottom:14px;"><i class="bi bi-list-ul me-2" style="color:var(--color-primary);"></i>Modeles de cette marque</div>
+            {% if marque.modeles|length > 0 %}
+            <div class="row g-2">
+                {% for modele in marque.modeles %}
+                <div class="col-md-6">
+                    <div style="background:#f5f7fb;border-radius:10px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;">
+                        <span style="font-weight:600;">{{ modele.nomModele }}</span>
+                        <a href="{{ path('admin_modele_show', {id: modele.idModele}) }}" class="action-btn action-btn-view" style="width:28px;height:28px;"><i class="bi bi-eye"></i></a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div style="text-align:center;color:#6c757d;padding:20px;font-size:.9rem;">Aucun modele pour cette marque.</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

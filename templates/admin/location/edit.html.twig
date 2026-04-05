@@ -1,0 +1,236 @@
+{% extends 'admin/layout.html.twig' %}
+{% block title %}Modifier location #{{ location.idLocation }} – Horizia{% endblock %}
+{% block topbar_title %}Modifier location{% endblock %}
+{% block admin_content %}
+
+<div class="page-header">
+    <div class="page-header-left">
+        <div class="page-header-icon"><i class="bi bi-pencil-fill"></i></div>
+        <div>
+            <h2>Modifier location <span class="badge-count">#{{ location.idLocation }}</span></h2>
+            <p class="text-muted mb-0" style="font-size:.92rem;">{{ location.clientNomComplet }}</p>
+        </div>
+    </div>
+    <a href="{{ path('admin_location_index') }}" class="btn btn-horozia-outline btn-sm">
+        <i class="bi bi-arrow-left me-1"></i>Retour
+    </a>
+</div>
+
+{{ form_start(form) }}
+<div class="row g-3">
+
+    {# ── Colonne principale ── #}
+    <div class="col-lg-8">
+
+        {# CLIENT #}
+        <div class="form-section">
+            <div class="form-section-title">
+                <i class="bi bi-person-fill" style="color:var(--color-primary);"></i> Informations client
+            </div>
+            <div class="row g-3">
+                <div class="col-md-6">{{ form_label(form.clientNomComplet) }}{{ form_widget(form.clientNomComplet) }}{{ form_errors(form.clientNomComplet) }}</div>
+                <div class="col-md-6">{{ form_label(form.clientTelephone) }}{{ form_widget(form.clientTelephone) }}{{ form_errors(form.clientTelephone) }}</div>
+                <div class="col-md-6">{{ form_label(form.clientCin) }}{{ form_widget(form.clientCin) }}{{ form_errors(form.clientCin) }}</div>
+                <div class="col-md-6">{{ form_label(form.clientPermisNumero) }}{{ form_widget(form.clientPermisNumero) }}{{ form_errors(form.clientPermisNumero) }}</div>
+                <div class="col-md-6">{{ form_label(form.clientVille) }}{{ form_widget(form.clientVille) }}{{ form_errors(form.clientVille) }}</div>
+                <div class="col-md-6">{{ form_label(form.clientCodePostal) }}{{ form_widget(form.clientCodePostal) }}{{ form_errors(form.clientCodePostal) }}</div>
+                <div class="col-12">{{ form_label(form.clientAdresse) }}{{ form_widget(form.clientAdresse) }}{{ form_errors(form.clientAdresse) }}</div>
+            </div>
+        </div>
+
+        {# VEHICULE & PERIODE #}
+        <div class="form-section">
+            <div class="form-section-title">
+                <i class="bi bi-truck-front-fill" style="color:var(--color-primary);"></i> Véhicule et période
+            </div>
+            <div class="row g-3">
+                <div class="col-12">{{ form_label(form.vehicule) }}{{ form_widget(form.vehicule) }}{{ form_errors(form.vehicule) }}</div>
+                <div class="col-md-6">{{ form_label(form.dateDebut) }}{{ form_widget(form.dateDebut) }}{{ form_errors(form.dateDebut) }}</div>
+                <div class="col-md-6">{{ form_label(form.dateFinPrevue) }}{{ form_widget(form.dateFinPrevue) }}{{ form_errors(form.dateFinPrevue) }}</div>
+                <div class="col-md-6">{{ form_label(form.dateFinReelle) }}{{ form_widget(form.dateFinReelle) }}{{ form_errors(form.dateFinReelle) }}</div>
+                <div class="col-md-6">{{ form_label(form.statut) }}{{ form_widget(form.statut) }}{{ form_errors(form.statut) }}</div>
+                <div class="col-md-6">{{ form_label(form.kilometrageDebut) }}{{ form_widget(form.kilometrageDebut) }}{{ form_errors(form.kilometrageDebut) }}</div>
+                <div class="col-md-6">{{ form_label(form.kilometrageRetour) }}{{ form_widget(form.kilometrageRetour) }}{{ form_errors(form.kilometrageRetour) }}</div>
+            </div>
+        </div>
+
+        {# EXTRAS — pré-cochés selon location.extras #}
+        <div class="form-section">
+            <div class="form-section-title">
+                <i class="bi bi-plus-circle" style="color:var(--color-primary);"></i> Options supplémentaires
+            </div>
+            <div class="row g-2">
+                {% set extras_icons = {
+                    'siege_bebe': 'bi-person-fill',
+                    'gps': 'bi-geo-alt-fill',
+                    'plein_carburant': 'bi-fuel-pump-fill',
+                    'conducteur_supplementaire': 'bi-person-plus-fill',
+                    'wifi': 'bi-wifi',
+                    'assurance_complementaire': 'bi-shield-check'
+                } %}
+                {% set extras_actifs = location.extras ? location.extras|keys : [] %}
+                {% for cle, extra in extras_dispo %}
+                {% set est_coche = cle in extras_actifs %}
+                <div class="col-md-4">
+                    <label class="extra-card {{ est_coche ? 'selected' : '' }}" id="card_{{ cle }}">
+                        <input type="checkbox" name="extras[]" value="{{ cle }}"
+                               {{ est_coche ? 'checked' : '' }}
+                               onchange="calculerTotal(); toggleCard(this)">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bi {{ extras_icons[cle] ?? 'bi-star' }}"
+                               style="color:var(--color-primary);font-size:20px;flex-shrink:0;"></i>
+                            <div>
+                                <div class="fw-600" style="font-size:.88rem;">{{ extra.label }}</div>
+                                <div style="font-size:.8rem;color:#6c757d;">+{{ extra.prix }} TND</div>
+                            </div>
+                        </div>
+                    </label>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        {# FACTURATION #}
+        <div class="form-section">
+            <div class="form-section-title">
+                <i class="bi bi-receipt" style="color:var(--color-primary);"></i> Facturation
+            </div>
+            <div class="row g-3">
+                <div class="col-md-6">{{ form_label(form.prixParJour) }}{{ form_widget(form.prixParJour) }}{{ form_errors(form.prixParJour) }}</div>
+                <div class="col-md-6">{{ form_label(form.avance) }}{{ form_widget(form.avance) }}{{ form_errors(form.avance) }}</div>
+            </div>
+
+            {# Montant total auto #}
+            <div class="mt-3 p-3" style="background:linear-gradient(135deg,rgba(35,119,156,.08),rgba(35,119,156,.15));border:2px solid var(--color-primary);border-radius:12px;">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div style="font-size:.82rem;color:#6c757d;font-weight:600;">Calcul automatique</div>
+                        <div id="resume_calcul" style="font-size:.78rem;color:#6c757d;margin-top:2px;">chargement...</div>
+                    </div>
+                    <div style="font-size:26px;font-weight:800;color:var(--color-primary);">
+                        <span id="montant_affiche">{{ location.montantTotal|number_format(3, ',', ' ') }}</span> TND
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {# NOTES #}
+        <div class="form-section">
+            <div class="form-section-title">
+                <i class="bi bi-chat-text" style="color:var(--color-primary);"></i> Notes
+            </div>
+            {{ form_widget(form.notes) }}{{ form_errors(form.notes) }}
+        </div>
+    </div>
+
+    {# ── Colonne latérale ── #}
+    <div class="col-lg-4">
+        <div class="form-section">
+            <div class="form-section-title">Actions</div>
+            <button type="submit" class="btn btn-horozia-primary w-100 mb-2">
+                <i class="bi bi-check-lg me-2"></i>Enregistrer
+            </button>
+            <a href="{{ path('admin_location_show', {id: location.idLocation}) }}" class="btn btn-horozia-outline w-100 mb-2">
+                Voir la location
+            </a>
+            <a href="{{ path('admin_location_index') }}" class="btn btn-horozia-outline w-100">Annuler</a>
+        </div>
+
+        {# Résumé extras actifs #}
+        {% if location.extras %}
+        <div class="form-section">
+            <div class="form-section-title">
+                <i class="bi bi-list-check" style="color:var(--color-primary);"></i> Extras actuels
+            </div>
+            {% for cle, prix in location.extras %}
+            <div class="d-flex justify-content-between py-1" style="font-size:.85rem;border-bottom:1px solid #eef2f7;">
+                <span>{{ extras_dispo[cle].label ?? cle }}</span>
+                <span style="color:var(--color-primary);font-weight:700;">{{ prix }} TND</span>
+            </div>
+            {% endfor %}
+            <div class="d-flex justify-content-between py-2 mt-1" style="font-size:.88rem;font-weight:700;">
+                <span>Total extras</span>
+                <span style="color:var(--color-primary);">{{ location.extrasTotal }} TND</span>
+            </div>
+        </div>
+        {% endif %}
+
+        {# Zone danger #}
+        <div class="form-section">
+            <div class="form-section-title" style="color:#dc3545;">
+                <i class="bi bi-trash me-1"></i>Zone dangereuse
+            </div>
+            <form method="post" action="{{ path('admin_location_delete', {id: location.idLocation}) }}"
+                  onsubmit="return confirm('Supprimer définitivement cette location ?')">
+                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ location.idLocation) }}">
+                <button type="submit" class="btn btn-horozia-danger w-100 btn-sm">
+                    <i class="bi bi-trash me-1"></i>Supprimer
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{{ form_end(form) }}
+
+<style>
+.extra-card {
+    display: block;
+    padding: 10px 14px;
+    border: 2px solid rgba(0,0,0,.08);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all .2s;
+    background: rgba(255,255,255,.03);
+    margin-bottom: 0;
+}
+.extra-card:hover { border-color: var(--color-primary); }
+.extra-card.selected {
+    border-color: var(--color-primary);
+    background: rgba(35,119,156,.1);
+}
+.extra-card input[type=checkbox] { display: none; }
+</style>
+
+<script>
+const EXTRAS_PRIX = {
+    siege_bebe: 15,
+    gps: 10,
+    plein_carburant: 50,
+    conducteur_supplementaire: 20,
+    wifi: 8,
+    assurance_complementaire: 25
+};
+
+function toggleCard(cb) {
+    cb.closest('label').classList.toggle('selected', cb.checked);
+}
+
+function calculerTotal() {
+    const debut = document.querySelector('[id$="_dateDebut"]')?.value || '';
+    const fin   = document.querySelector('[id$="_dateFinPrevue"]')?.value || '';
+    const prix  = parseFloat(document.querySelector('[id$="_prixParJour"]')?.value || 0);
+
+    let jours = 0;
+    if (debut && fin) {
+        const d1 = new Date(debut), d2 = new Date(fin);
+        jours = Math.max(1, Math.ceil((d2 - d1) / 86400000));
+    }
+
+    let extras = 0;
+    document.querySelectorAll('input[name="extras[]"]:checked').forEach(cb => {
+        extras += EXTRAS_PRIX[cb.value] || 0;
+    });
+
+    const total = (prix * jours) + extras;
+    document.getElementById('montant_affiche').textContent = total.toFixed(3).replace('.', ',');
+    document.getElementById('resume_calcul').textContent =
+        prix + ' × ' + jours + ' jour(s) + ' + extras + ' TND extras = ' + total.toFixed(3) + ' TND';
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('[id$="_dateDebut"], [id$="_dateFinPrevue"], [id$="_prixParJour"]')
+        .forEach(el => el.addEventListener('change', calculerTotal));
+    calculerTotal();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,93 @@
+{# ═══════════════════════════════════════════════════════════════
+   MES RÉSERVATIONS  →  templates/client/mes_reservations.html.twig
+═══════════════════════════════════════════════════════════════ #}
+{% extends 'base.html.twig' %}
+{% block title %}Horizia - Mes Réservations{% endblock %}
+{% block body %}
+<div class="hz-client">
+  {% include 'client/_navbar.html.twig' with {active: 'reservations'} %}
+
+  <div class="hz-page-banner">
+    <h1><i class="bi bi-clipboard-check me-3"></i>Mes Réservations</h1>
+    <p>Retrouvez toutes vos réservations en saisissant votre CIN</p>
+  </div>
+
+  <div class="hz-main-content">
+    {# Barre de recherche #}
+    <div class="hz-search-card">
+      <h5 class="hz-search-title"><i class="bi bi-search me-2"></i>Rechercher mes réservations</h5>
+      <hr>
+      <form action="{{ path('client_mes_reservations') }}" method="GET" class="hz-cin-form">
+        <input type="text" name="cin" value="{{ cin }}"
+               class="hz-cin-input" placeholder="Entrez votre CIN ou numéro de Passport...">
+        <button type="submit" class="hz-btn-primary">Rechercher</button>
+      </form>
+    </div>
+
+    {# Résultats #}
+    {% if recherche %}
+      {% if locations is empty %}
+        <div class="hz-empty-state mt-4">
+          <i class="bi bi-inbox"></i>
+          <p>Aucune réservation trouvée pour "<strong>{{ cin }}</strong>".</p>
+        </div>
+      {% else %}
+        <div class="hz-reservations-list">
+          {% for loc in locations %}
+          <div class="hz-resa-card">
+            <div class="hz-resa-header">
+              <div>
+                <span class="hz-resa-num"># {{ loc.idLocation }}</span>
+                <span class="hz-resa-statut hz-statut-{{ loc.statut|replace({' ': '_', 'é': 'e', 'é': 'e'}) }}">
+                  {{ loc.statut|capitalize }}
+                </span>
+              </div>
+              <div class="hz-resa-date">
+                {{ loc.dateDebut ? loc.dateDebut|date('d/m/Y') : '—' }}
+                →
+                {{ loc.dateFinPrevue ? loc.dateFinPrevue|date('d/m/Y') : '—' }}
+              </div>
+            </div>
+            <div class="hz-resa-body">
+              <div class="hz-resa-info">
+                <i class="bi bi-person-fill me-2" style="color:var(--hz-primary)"></i>
+                {{ loc.clientNomComplet }}
+              </div>
+              <div class="hz-resa-info">
+                <i class="bi bi-car-front-fill me-2" style="color:var(--hz-primary)"></i>
+                {{ loc.vehicule ? loc.vehicule.immatriculation : '—' }}
+              </div>
+              <div class="hz-resa-info">
+                <i class="bi bi-cash-coin me-2" style="color:#27ae60"></i>
+                <strong style="color:#27ae60">{{ loc.montantTotal|number_format(3,'.','') }} TND</strong>
+                <span class="text-muted ms-2">(avance : {{ loc.avance|number_format(3,'.','') }} TND)</span>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endif %}
+  </div>
+
+  {% include 'client/_footer.html.twig' %}
+</div>
+
+<style>
+{% include 'client/_styles.css.twig' %}
+.hz-search-card { background:white; border-radius:16px; padding:28px 32px; box-shadow:0 2px 12px rgba(0,0,0,.06); }
+.hz-search-title { font-size:17px; font-weight:700; color:#1a2a3a; }
+.hz-cin-form { display:flex; gap:12px; margin-top:16px; }
+.hz-cin-input { flex:1; border:1.5px solid #e0e8f0; border-radius:30px; padding:12px 20px; font-size:14px; outline:none; }
+.hz-cin-input:focus { border-color:var(--hz-primary); }
+.hz-btn-primary { background:var(--hz-primary); color:white; border:none; padding:12px 28px; border-radius:30px; font-weight:700; cursor:pointer; }
+.hz-reservations-list { display:flex; flex-direction:column; gap:16px; margin-top:24px; }
+.hz-resa-card { background:white; border-radius:14px; overflow:hidden; box-shadow:0 2px 10px rgba(0,0,0,.06); border-left:4px solid var(--hz-primary); }
+.hz-resa-header { background:#f8fbfd; padding:14px 20px; display:flex; align-items:center; justify-content:space-between; }
+.hz-resa-num { font-weight:800; font-size:16px; color:#1a2a3a; margin-right:12px; }
+.hz-resa-statut { padding:4px 12px; border-radius:12px; font-size:12px; font-weight:700; background:#e8f5e9; color:#27ae60; }
+.hz-resa-date { font-size:13px; color:#6b7c8d; }
+.hz-resa-body { padding:16px 20px; display:flex; gap:28px; flex-wrap:wrap; }
+.hz-resa-info { font-size:14px; color:#374151; }
+</style>
+{% endblock %}
