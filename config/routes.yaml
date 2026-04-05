@@ -1,8 +1,10 @@
 # config/routes.yaml
-# Routes Front
-app_home:
-    path: /
-    controller: App\Controller\Front\HomeController::index
+
+controllers:
+    resource:
+        path: ../src/Controller/
+        namespace: App\Controller
+    type: attribute
 
 app_login:
     path: /login
@@ -24,13 +26,14 @@ app_logout:
     path: /logout
     controller: App\Controller\Front\UserController::logout
 
-# Routes Admin (existantes)
 app_admin:
     path: /admin
     controller: App\Controller\admin\DashboardController::index
+
 app_user_search:
     path: /admin/user/search
     controller: App\Controller\admin\UserController::search
+
 app_user_index:
     path: /admin/user
     controller: App\Controller\admin\UserController::index
@@ -66,3 +69,71 @@ app_profil_edit:
 app_profil_delete:
     path: /admin/profil/{id}
     controller: App\Controller\admin\ProfilController::delete
+
+app_categorie_index:
+    path: /admin/categorie
+    controller: App\Controller\CategorieController::index
+
+app_categorie_new:
+    path: /admin/categorie/new
+    controller: App\Controller\CategorieController::new
+
+app_categorie_show:
+    path: /admin/categorie/{id}
+    controller: App\Controller\CategorieController::show
+
+app_categorie_edit:
+    path: /admin/categorie/edit/{id}
+    controller: App\Controller\CategorieController::edit
+
+app_categorie_delete:
+    path: /admin/categorie/delete/{id}
+    controller: App\Controller\CategorieController::delete
+
+app_voyage_index:
+    path: /admin/voyage
+    controller: App\Controller\VoyageController::index
+
+app_voyage_new:
+    path: /admin/voyage/new
+    controller: App\Controller\VoyageController::new
+
+app_voyage_show:
+    path: /admin/voyage/{id}
+    controller: App\Controller\VoyageController::show
+
+app_voyage_edit:
+    path: /admin/voyage/edit/{id}
+    controller: App\Controller\VoyageController::edit
+
+app_voyage_delete:
+    path: /admin/voyage/delete/{id}
+    controller: App\Controller\VoyageController::delete
+
+app_reservation_index:
+    path: /admin/reservation
+    controller: App\Controller\ReservationController::index
+
+app_reservation_new:
+    path: /admin/reservation/new
+    controller: App\Controller\ReservationController::new
+
+app_reservation_show:
+    path: /admin/reservation/{id}
+    controller: App\Controller\ReservationController::show
+
+app_reservation_edit:
+    path: /admin/reservation/edit/{id}
+    controller: App\Controller\ReservationController::edit
+
+app_reservation_delete:
+    path: /admin/reservation/delete/{id}
+    controller: App\Controller\ReservationController::delete
+
+app_reservation_confirmer:
+    path: /admin/reservation/confirmer/{id}
+    controller: App\Controller\ReservationController::confirmer
+
+app_calendar:
+    path: /admin/calendar
+    controller: App\Controller\CalendarController::index

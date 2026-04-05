@@ -70,10 +70,35 @@ class ReservationController extends AbstractController
     public function new(Request $request, EntityManagerInterface $entityManager): Response
     {
         $reservation = new Reservation();
-        $form = $this->createForm(ReservationType::class, $reservation);
+
+        $form = $this->createForm(ReservationType::class, $reservation, [
+            'places_restantes' => 9999
+        ]);
+
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            $voyage = $reservation->getVoyage();
+
+            if (!$voyage) {
+                $this->addFlash('error', 'Veuillez choisir un voyage.');
+                return $this->render('admin/reservation/new.html.twig', [
+                    'form' => $form->createView(),
+                ]);
+            }
+
+            if ($reservation->getNbrPersonnes() > $voyage->getPlacesRestantes()) {
+                $this->addFlash('error', 'Le nombre de personnes ne peut pas dépasser les places disponibles.');
+
+                return $this->render('admin/reservation/new.html.twig', [
+                    'form' => $form->createView(),
+                ]);
+            }
+
+            $voyage->setPlacesRestantes(
+                $voyage->getPlacesRestantes() - $reservation->getNbrPersonnes()
+            );
+
             $entityManager->persist($reservation);
             $entityManager->flush();
 
@@ -95,10 +120,70 @@ class ReservationController extends AbstractController
             throw $this->createNotFoundException('Réservation introuvable.');
         }
 
-        $form = $this->createForm(ReservationType::class, $reservation);
+        $ancienVoyage = $reservation->getVoyage();
+        $ancienNbrPersonnes = $reservation->getNbrPersonnes();
+
+        $placesRestantes = 9999;
+        if ($ancienVoyage) {
+            $placesRestantes = $ancienVoyage->getPlacesRestantes() + $ancienNbrPersonnes;
+        }
+
+        $form = $this->createForm(ReservationType::class, $reservation, [
+            'places_restantes' => $placesRestantes
+        ]);
+
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            $nouveauVoyage = $reservation->getVoyage();
+            $nouveauNbrPersonnes = $reservation->getNbrPersonnes();
+
+            if (!$nouveauVoyage) {
+                $this->addFlash('error', 'Veuillez choisir un voyage.');
+                return $this->render('admin/reservation/edit.html.twig', [
+                    'form' => $form->createView(),
+                    'reservation' => $reservation,
+                ]);
+            }
+
+            // Cas 1 : même voyage
+            if ($ancienVoyage && $nouveauVoyage->getId() === $ancienVoyage->getId()) {
+                $difference = $nouveauNbrPersonnes - $ancienNbrPersonnes;
+
+                if ($difference > 0 && $difference > $ancienVoyage->getPlacesRestantes()) {
+                    $this->addFlash('error', 'Le nombre de personnes ne peut pas dépasser les places disponibles.');
+
+                    return $this->render('admin/reservation/edit.html.twig', [
+                        'form' => $form->createView(),
+                        'reservation' => $reservation,
+                    ]);
+                }
+
+                $ancienVoyage->setPlacesRestantes(
+                    $ancienVoyage->getPlacesRestantes() - $difference
+                );
+            } else {
+                // Cas 2 : changement de voyage
+                if ($ancienVoyage) {
+                    $ancienVoyage->setPlacesRestantes(
+                        $ancienVoyage->getPlacesRestantes() + $ancienNbrPersonnes
+                    );
+                }
+
+                if ($nouveauNbrPersonnes > $nouveauVoyage->getPlacesRestantes()) {
+                    $this->addFlash('error', 'Le nombre de personnes ne peut pas dépasser les places disponibles.');
+
+                    return $this->render('admin/reservation/edit.html.twig', [
+                        'form' => $form->createView(),
+                        'reservation' => $reservation,
+                    ]);
+                }
+
+                $nouveauVoyage->setPlacesRestantes(
+                    $nouveauVoyage->getPlacesRestantes() - $nouveauNbrPersonnes
+                );
+            }
+
             $entityManager->flush();
 
             $this->addFlash('success', 'Réservation modifiée avec succès.');
@@ -118,6 +203,14 @@ class ReservationController extends AbstractController
 
         if (!$reservation) {
             throw $this->createNotFoundException('Réservation introuvable.');
+        }
+
+        $voyage = $reservation->getVoyage();
+
+        if ($voyage) {
+            $voyage->setPlacesRestantes(
+                $voyage->getPlacesRestantes() + $reservation->getNbrPersonnes()
+            );
         }
 
         $entityManager->remove($reservation);

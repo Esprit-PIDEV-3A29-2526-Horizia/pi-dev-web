@@ -11,12 +11,18 @@ use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\DateTimeType;
 use Symfony\Component\Form\Extension\Core\Type\IntegerType;
 use Symfony\Component\Form\FormBuilderInterface;
+use Symfony\Component\Form\FormError;
+use Symfony\Component\Form\FormEvent;
+use Symfony\Component\Form\FormEvents;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Validator\Constraints as Assert;
 
 class ReservationType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
+        $placesRestantes = $options['places_restantes'];
+
         $builder
             ->add('dateReservation', DateTimeType::class, [
                 'label' => 'Date réservation',
@@ -58,15 +64,49 @@ class ReservationType extends AbstractType
                 'label' => 'Nombre de personnes',
                 'attr' => [
                     'class' => 'form-control',
-                    'min' => 1
+                    'min' => 1,
+                    'max' => $placesRestantes,
+                ],
+                'constraints' => [
+                    new Assert\NotBlank([
+                        'message' => 'Veuillez saisir le nombre de personnes.'
+                    ]),
+                    new Assert\Positive([
+                        'message' => 'Le nombre de personnes doit être supérieur à 0.'
+                    ]),
+                    new Assert\LessThanOrEqual([
+                        'value' => $placesRestantes,
+                        'message' => 'Le nombre de personnes ne peut pas dépasser les places disponibles.'
+                    ]),
                 ]
             ]);
+
+        $builder->addEventListener(FormEvents::POST_SUBMIT, function (FormEvent $event) {
+            $reservation = $event->getData();
+            $form = $event->getForm();
+
+            if (!$reservation) {
+                return;
+            }
+
+            $voyage = $reservation->getVoyage();
+            $nbrPersonnes = $reservation->getNbrPersonnes();
+
+            if ($voyage && $nbrPersonnes && $nbrPersonnes > $voyage->getPlacesRestantes()) {
+                $form->get('nbrPersonnes')->addError(
+                    new FormError('Le nombre de personnes ne peut pas dépasser les places disponibles.')
+                );
+            }
+        });
     }
 
     public function configureOptions(OptionsResolver $resolver): void
     {
         $resolver->setDefaults([
             'data_class' => Reservation::class,
+            'places_restantes' => 9999,
         ]);
+
+        $resolver->setAllowedTypes('places_restantes', 'int');
     }
 }

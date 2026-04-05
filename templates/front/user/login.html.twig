@@ -1,53 +1,129 @@
-{% extends 'front/base.html.twig' %}
+{% extends 'front/base_front.html.twig' %}
 
 {% block title %}Connexion - Horozia{% endblock %}
 
 {% block body %}
-<div class="container py-5">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card auth-card">
-                <div class="card-header">
-                    <i class="bi bi-box-arrow-in-right me-2"></i> Connexion
-                </div>
-                <div class="card-body p-4">
+
+<nav class="navbar navbar-expand-lg navbar-dark ftco_navbar ftco-navbar-light" id="ftco-navbar">
+    <div class="container">
+        <a class="navbar-brand navbar-logo" href="{{ path('app_front_home') }}">
+            <img src="{{ asset('images/logo.png') }}" alt="Horozia Logo">
+        </a>
+
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#ftco-nav"
+                aria-controls="ftco-nav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="fa fa-bars"></span> Menu
+        </button>
+
+        <div class="collapse navbar-collapse" id="ftco-nav">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item {% if app.request.attributes.get('_route') == 'app_front_home' %}active{% endif %}">
+                    <a href="{{ path('app_front_home') }}" class="nav-link">Accueil</a>
+                </li>
+
+                <li class="nav-item {% if app.request.attributes.get('_route') == 'app_front_voyages' %}active{% endif %}">
+                    <a href="{{ path('app_front_voyages') }}" class="nav-link">Voyages</a>
+                </li>
+                
+                <li class="nav-item">
+                    <a href="#services" class="nav-link">Services</a>
+                </li>
+
+                <li class="nav-item">
+                    <a href="#contact" class="nav-link">Contact</a>
+                </li>
+
+                {% if app.user %}
+                    <li class="nav-item">
+                        <a href="{{ path('app_logout') }}" class="nav-link">Déconnexion</a>
+                    </li>
+                {% else %}
+                    <li class="nav-item {% if app.request.attributes.get('_route') == 'app_login' %}active{% endif %}">
+                        <a href="{{ path('app_login') }}" class="nav-link">Connexion</a>
+                    </li>
+
+                    <li class="nav-item {% if app.request.attributes.get('_route') == 'app_register' %}active{% endif %}">
+                        <a href="{{ path('app_register') }}" class="nav-link">Inscription</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+</nav>
+<section class="hero-wrap hero-wrap-2" style="background-image: url('{{ asset('front/pacific/images/back.jpg') }}'); min-height: 320px;">
+    <div class="overlay"></div>
+    <div class="container">
+        <div class="row no-gutters slider-text align-items-end justify-content-center" style="min-height: 320px;">
+            <div class="col-md-9 text-center mb-5">
+                <p class="breadcrumbs mb-0">
+                    <span class="mr-2"><a href="{{ path('app_front_home') }}">Accueil <i class="fa fa-chevron-right"></i></a></span>
+                    <span>Connexion <i class="fa fa-chevron-right"></i></span>
+                </p>
+                <h1 class="mb-0 bread">Connexion</h1>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="ftco-section bg-light">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="bg-white p-5 rounded shadow-sm">
+                    <h3 class="mb-4 text-center">Se connecter</h3>
+
                     {% if error %}
-                        <div class="alert alert-danger alert-horozia mb-4">
-                            <i class="bi bi-exclamation-triangle-fill me-2"></i> {{ error.messageKey|trans(error.messageData, 'security') }}
+                        <div class="alert alert-danger">
+                            Email ou mot de passe incorrect.
+                        </div>
+                    {% endif %}
+
+                    {% if app.user %}
+                        <div class="alert alert-info">
+                            Vous êtes connecté en tant que {{ app.user.userIdentifier }}.
+                            <a href="{{ path('app_logout') }}">Déconnexion</a>
                         </div>
                     {% endif %}
 
                     <form method="post">
-    <div class="mb-3">
-        <label class="form-label">Email</label>
-        <div class="input-group">
-            <span class="input-group-text bg-white"><i class="bi bi-envelope" style="color: var(--color-primary);"></i></span>
-            <input type="email" name="_username" value="{{ last_username }}" class="form-control" required autofocus>
-        </div>
-    </div>
+                        <div class="form-group">
+                            <label for="username">Email</label>
+                            <input type="email"
+                                   value="{{ last_username }}"
+                                   name="_username"
+                                   id="username"
+                                   class="form-control"
+                                   placeholder="Entrez votre email"
+                                   required
+                                   autofocus>
+                        </div>
 
-    <div class="mb-3">
-        <label class="form-label">Mot de passe</label>
-        <div class="input-group">
-            <span class="input-group-text bg-white"><i class="bi bi-lock" style="color: var(--color-primary);"></i></span>
-            <input type="password" name="_password" class="form-control" required>
-        </div>
-    </div>
+                        <div class="form-group">
+                            <label for="password">Mot de passe</label>
+                            <input type="password"
+                                   name="_password"
+                                   id="password"
+                                   class="form-control"
+                                   placeholder="Entrez votre mot de passe"
+                                   required>
+                        </div>
 
-    <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+                        <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
 
-    <div class="d-grid gap-2 mt-4">
-        <button type="submit" class="btn btn-horozia-primary">
-            <i class="bi bi-box-arrow-in-right me-2"></i> Se connecter
-        </button>
-        <a href="{{ path('app_register') }}" class="btn btn-horozia-neutral">
-            <i class="bi bi-person-plus me-2"></i> Créer un compte
-        </a>
-    </div>
-</form>
+                        <div class="form-group mt-4">
+                            <button class="btn btn-primary btn-block py-3" type="submit">
+                                Connexion
+                            </button>
+                        </div>
+                    </form>
+
+                    <p class="text-center mt-3 mb-0">
+                        Vous n'avez pas de compte ?
+                        <a href="{{ path('app_register') }}">Créer un compte</a>
+                    </p>
                 </div>
             </div>
         </div>
     </div>
-</div>
+</section>
 {% endblock %}

@@ -2,89 +2,50 @@
 
 namespace App\Entity;
 
-use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
+use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Validator\Constraints as Assert;
 
-/**
- * User
- *
- * @ORM\Table(name="user", uniqueConstraints={@ORM\UniqueConstraint(name="email", columns={"email"})}, indexes={@ORM\Index(name="fk_user_profil", columns={"profil_id"})})
- * @ORM\Entity
- */
-class User
+#[ORM\Entity]
+#[ORM\Table(name: 'user')]
+class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
-    /**
-     * @var int
-     *
-     * @ORM\Column(name="id", type="integer", nullable=false)
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="IDENTITY")
-     */
-    private $id;
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
+    private ?int $id = null;
 
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="nom", type="string", length=100, nullable=false)
-     * @Assert\NotBlank(message="Le nom est obligatoire.")
-     */
-    private $nom;
+    #[ORM\Column(length: 100)]
+    #[Assert\NotBlank(message: 'Le nom est obligatoire.')]
+    private ?string $nom = null;
 
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="prenom", type="string", length=100, nullable=false)
-     * @Assert\NotBlank(message="Le prénom est obligatoire.")
-     */
-    private $prenom;
+    #[ORM\Column(length: 100)]
+    #[Assert\NotBlank(message: 'Le prénom est obligatoire.')]
+    private ?string $prenom = null;
 
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="email", type="string", length=255, nullable=false)
-     * @Assert\NotBlank(message="L'email est obligatoire.")
-     * @Assert\Email(message="Veuillez saisir un email valide.")
-     */
-    private $email;
+    #[ORM\Column(length: 255, unique: true)]
+    #[Assert\NotBlank(message: "L'email est obligatoire.")]
+    #[Assert\Email(message: 'Veuillez saisir un email valide.')]
+    private ?string $email = null;
 
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="password", type="string", length=255, nullable=false)
-     * @Assert\NotBlank(message="Le mot de passe est obligatoire.")
-     * @Assert\Length(min=6, minMessage="Le mot de passe doit contenir au moins 6 caractères.")
-     */
-    private $password;
+    #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(message: 'Le mot de passe est obligatoire.')]
+    #[Assert\Length(min: 6, minMessage: 'Le mot de passe doit contenir au moins 6 caractères.')]
+    private ?string $password = null;
 
-    /**
-     * @var string|null
-     *
-     * @ORM\Column(name="telephone", type="string", length=20, nullable=true)
-     */
-    private $telephone;
+    #[ORM\Column(length: 20, nullable: true)]
+    private ?string $telephone = null;
 
-    /**
-     * @var string|null
-     *
-     * @ORM\Column(name="addresse", type="string", length=255, nullable=true)
-     */
-    private $addresse;
+    #[ORM\Column(length: 255, nullable: true)]
+    private ?string $addresse = null;
 
-    /**
-     * @var string|null
-     *
-     * @ORM\Column(name="face_descriptor", type="text", length=65535, nullable=true)
-     */
-    private $faceDescriptor;
+    #[ORM\Column(type: 'text', nullable: true)]
+    private ?string $faceDescriptor = null;
 
-    /**
-     * @var \App\Entity\Profil|null
-     *
-     * @ORM\ManyToOne(targetEntity="App\Entity\Profil")
-     * @ORM\JoinColumn(name="profil_id", referencedColumnName="id", nullable=true)
-     */
-    private $profil;
+    #[ORM\ManyToOne(targetEntity: Profil::class, inversedBy: 'users')]
+    #[ORM\JoinColumn(name: 'profil_id', referencedColumnName: 'id', nullable: true)]
+    private ?Profil $profil = null;
 
     public function getId(): ?int
     {
@@ -122,6 +83,34 @@ class User
     {
         $this->email = $email;
         return $this;
+    }
+
+    public function getUserIdentifier(): string
+    {
+        return $this->email ?? '';
+    }
+
+ public function getRoles(): array
+{
+    $roles = ['ROLE_USER'];
+
+    if ($this->profil) {
+        $type = strtoupper($this->profil->getType());
+
+        if ($type === 'ADMIN') {
+            $roles[] = 'ROLE_ADMIN';
+        } elseif ($type === 'AGENT') {
+            $roles[] = 'ROLE_AGENT';
+        } elseif ($type === 'CLIENT') {
+            $roles[] = 'ROLE_CLIENT';
+        }
+    }
+
+    return array_unique($roles);
+}
+
+    public function eraseCredentials(): void
+    {
     }
 
     public function getPassword(): ?string

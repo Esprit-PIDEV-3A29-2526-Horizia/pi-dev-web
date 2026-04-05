@@ -1,7 +1,6 @@
 security:
     password_hashers:
-        App\Entity\User:
-            algorithm: auto
+        Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: 'auto'
 
     providers:
         app_user_provider:
@@ -13,21 +12,28 @@ security:
         dev:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
+
         main:
             lazy: true
             provider: app_user_provider
+
             form_login:
                 login_path: app_login
                 check_path: app_login
-                default_target_path: app_home
-                always_use_default_target_path: false
+                default_target_path: app_after_login_redirect
+                always_use_default_target_path: true
+                username_parameter: _username
+                password_parameter: _password
+                enable_csrf: true
+
             logout:
                 path: app_logout
-                target: app_home
+                target: app_front_home
 
     access_control:
-        - { path: ^/admin, roles: ROLE_ADMIN }
-        - { path: ^/profile, roles: ROLE_USER }
         - { path: ^/login, roles: PUBLIC_ACCESS }
         - { path: ^/register, roles: PUBLIC_ACCESS }
+        - { path: ^/profile, roles: ROLE_USER }
+        - { path: ^/mes-reservations, roles: ROLE_USER }
+        - { path: ^/admin, roles: ROLE_ADMIN }
         - { path: ^/, roles: PUBLIC_ACCESS }

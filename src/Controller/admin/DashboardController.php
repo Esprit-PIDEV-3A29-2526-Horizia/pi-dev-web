@@ -2,16 +2,60 @@
 
 namespace App\Controller\admin;
 
+use App\Entity\Categorie;
+use App\Entity\Reservation;
+use App\Entity\User;
+use App\Entity\Voyage;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Annotation\Route;
 
-#[Route('/admin', name: 'app_admin_')]
 class DashboardController extends AbstractController
 {
-    #[Route('/', name: 'dashboard')]
-    public function index(): Response
+    public function index(EntityManagerInterface $entityManager): Response
     {
-        return $this->render('admin/dashboard/index.html.twig');
+        $nbVoyages = $entityManager->getRepository(Voyage::class)->count([]);
+        $nbReservations = $entityManager->getRepository(Reservation::class)->count([]);
+        $nbUsers = $entityManager->getRepository(User::class)->count([]);
+        $nbCategories = $entityManager->getRepository(Categorie::class)->count([]);
+
+        $nbReservationsConfirmees = $entityManager->getRepository(Reservation::class)->count(['statut' => 'CONFIRMEE']);
+        $nbReservationsEnAttente = $entityManager->getRepository(Reservation::class)->count(['statut' => 'EN_ATTENTE']);
+        $nbReservationsAnnulees = $entityManager->getRepository(Reservation::class)->count(['statut' => 'ANNULEE']);
+
+        $recentReservations = $entityManager->getRepository(Reservation::class)->findBy([], ['id' => 'DESC'], 5);
+        $recentVoyages = $entityManager->getRepository(Voyage::class)->findBy([], ['id' => 'DESC'], 5);
+
+        $voyages = $entityManager->getRepository(Voyage::class)->findAll();
+        $nbVoyagesPlacesFaibles = 0;
+
+        foreach ($voyages as $voyage) {
+            if (method_exists($voyage, 'getPlacesRestantes') && $voyage->getPlacesRestantes() !== null && $voyage->getPlacesRestantes() <= 10) {
+                $nbVoyagesPlacesFaibles++;
+            }
+        }
+
+        $chartLabels = ['Voyages', 'Réservations', 'Utilisateurs', 'Catégories'];
+        $chartData = [$nbVoyages, $nbReservations, $nbUsers, $nbCategories];
+
+        $lineChartLabels = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin'];
+        $lineChartData = [5, 8, 12, 10, 15, 18];
+
+        return $this->render('admin/dashboard.html.twig', [
+            'nbVoyages' => $nbVoyages,
+            'nbReservations' => $nbReservations,
+            'nbUsers' => $nbUsers,
+            'nbCategories' => $nbCategories,
+            'nbReservationsConfirmees' => $nbReservationsConfirmees,
+            'nbReservationsEnAttente' => $nbReservationsEnAttente,
+            'nbReservationsAnnulees' => $nbReservationsAnnulees,
+            'nbVoyagesPlacesFaibles' => $nbVoyagesPlacesFaibles,
+            'recentReservations' => $recentReservations,
+            'recentVoyages' => $recentVoyages,
+            'chartLabels' => $chartLabels,
+            'chartData' => $chartData,
+            'lineChartLabels' => $lineChartLabels,
+            'lineChartData' => $lineChartData,
+        ]);
     }
 }
