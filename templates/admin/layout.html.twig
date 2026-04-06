@@ -8,13 +8,15 @@
         <div class="admin-content">
             {% for type, messages in app.flashes %}
                 {% for message in messages %}
-                    <div class="swal-flash-message d-none" data-type="{{ type }}" data-message="{{ message|e('html_attr') }}"></div>
+                    <div class="swal-flash-message d-none"
+                         data-type="{{ type }}"
+                         data-message="{{ message|e('html_attr') }}"></div>
                 {% endfor %}
             {% endfor %}
             {% block admin_content %}{% endblock %}
         </div>
         <footer class="admin-footer text-center py-3">
-            <small>Â© 2025 Horizia - Agence de Location de Vehicules</small>
+            <small>© 2025 Horizia - Agence de Location de Vehicules</small>
         </footer>
     </main>
 </div>

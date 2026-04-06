@@ -1,93 +1,145 @@
-{# ═══════════════════════════════════════════════════════════════
-   MES RÉSERVATIONS  →  templates/client/mes_reservations.html.twig
-═══════════════════════════════════════════════════════════════ #}
-{% extends 'base.html.twig' %}
+{% extends 'client/base_client.html.twig' %}
 {% block title %}Horizia - Mes Réservations{% endblock %}
+{% block navbar_extra_class %}nav-static{% endblock %}
+{% block nav_reservations %}active{% endblock %}
+
 {% block body %}
-<div class="hz-client">
-  {% include 'client/_navbar.html.twig' with {active: 'reservations'} %}
 
-  <div class="hz-page-banner">
-    <h1><i class="bi bi-clipboard-check me-3"></i>Mes Réservations</h1>
-    <p>Retrouvez toutes vos réservations en saisissant votre CIN</p>
-  </div>
-
-  <div class="hz-main-content">
-    {# Barre de recherche #}
-    <div class="hz-search-card">
-      <h5 class="hz-search-title"><i class="bi bi-search me-2"></i>Rechercher mes réservations</h5>
-      <hr>
-      <form action="{{ path('client_mes_reservations') }}" method="GET" class="hz-cin-form">
-        <input type="text" name="cin" value="{{ cin }}"
-               class="hz-cin-input" placeholder="Entrez votre CIN ou numéro de Passport...">
-        <button type="submit" class="hz-btn-primary">Rechercher</button>
-      </form>
+<div class="hero-banner">
+    <div class="inner">
+        <h1><i class="fas fa-clipboard-check mr-2"></i>Mes Réservations</h1>
+        <p>Retrouvez toutes vos réservations en saisissant votre CIN</p>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ path('client_accueil') }}">Accueil</a></li>
+                <li class="breadcrumb-item active">Mes Réservations</li>
+            </ol>
+        </nav>
     </div>
-
-    {# Résultats #}
-    {% if recherche %}
-      {% if locations is empty %}
-        <div class="hz-empty-state mt-4">
-          <i class="bi bi-inbox"></i>
-          <p>Aucune réservation trouvée pour "<strong>{{ cin }}</strong>".</p>
-        </div>
-      {% else %}
-        <div class="hz-reservations-list">
-          {% for loc in locations %}
-          <div class="hz-resa-card">
-            <div class="hz-resa-header">
-              <div>
-                <span class="hz-resa-num"># {{ loc.idLocation }}</span>
-                <span class="hz-resa-statut hz-statut-{{ loc.statut|replace({' ': '_', 'é': 'e', 'é': 'e'}) }}">
-                  {{ loc.statut|capitalize }}
-                </span>
-              </div>
-              <div class="hz-resa-date">
-                {{ loc.dateDebut ? loc.dateDebut|date('d/m/Y') : '—' }}
-                →
-                {{ loc.dateFinPrevue ? loc.dateFinPrevue|date('d/m/Y') : '—' }}
-              </div>
-            </div>
-            <div class="hz-resa-body">
-              <div class="hz-resa-info">
-                <i class="bi bi-person-fill me-2" style="color:var(--hz-primary)"></i>
-                {{ loc.clientNomComplet }}
-              </div>
-              <div class="hz-resa-info">
-                <i class="bi bi-car-front-fill me-2" style="color:var(--hz-primary)"></i>
-                {{ loc.vehicule ? loc.vehicule.immatriculation : '—' }}
-              </div>
-              <div class="hz-resa-info">
-                <i class="bi bi-cash-coin me-2" style="color:#27ae60"></i>
-                <strong style="color:#27ae60">{{ loc.montantTotal|number_format(3,'.','') }} TND</strong>
-                <span class="text-muted ms-2">(avance : {{ loc.avance|number_format(3,'.','') }} TND)</span>
-              </div>
-            </div>
-          </div>
-          {% endfor %}
-        </div>
-      {% endif %}
-    {% endif %}
-  </div>
-
-  {% include 'client/_footer.html.twig' %}
 </div>
 
-<style>
-{% include 'client/_styles.css.twig' %}
-.hz-search-card { background:white; border-radius:16px; padding:28px 32px; box-shadow:0 2px 12px rgba(0,0,0,.06); }
-.hz-search-title { font-size:17px; font-weight:700; color:#1a2a3a; }
-.hz-cin-form { display:flex; gap:12px; margin-top:16px; }
-.hz-cin-input { flex:1; border:1.5px solid #e0e8f0; border-radius:30px; padding:12px 20px; font-size:14px; outline:none; }
-.hz-cin-input:focus { border-color:var(--hz-primary); }
-.hz-btn-primary { background:var(--hz-primary); color:white; border:none; padding:12px 28px; border-radius:30px; font-weight:700; cursor:pointer; }
-.hz-reservations-list { display:flex; flex-direction:column; gap:16px; margin-top:24px; }
-.hz-resa-card { background:white; border-radius:14px; overflow:hidden; box-shadow:0 2px 10px rgba(0,0,0,.06); border-left:4px solid var(--hz-primary); }
-.hz-resa-header { background:#f8fbfd; padding:14px 20px; display:flex; align-items:center; justify-content:space-between; }
-.hz-resa-num { font-weight:800; font-size:16px; color:#1a2a3a; margin-right:12px; }
-.hz-resa-statut { padding:4px 12px; border-radius:12px; font-size:12px; font-weight:700; background:#e8f5e9; color:#27ae60; }
-.hz-resa-date { font-size:13px; color:#6b7c8d; }
-.hz-resa-body { padding:16px 20px; display:flex; gap:28px; flex-wrap:wrap; }
-.hz-resa-info { font-size:14px; color:#374151; }
-</style>
+<section class="section">
+    <div class="container">
+
+        {# ── Recherche ── #}
+        <div class="row justify-content-center mb-5">
+            <div class="col-md-7">
+                <div class="card">
+                    <div class="card-header-teal">
+                        <i class="fas fa-search mr-2"></i>Rechercher mes réservations
+                    </div>
+                    <div class="card-body p-4">
+                        <form method="GET" action="{{ path('client_mes_reservations') }}">
+                            <div class="input-group">
+                                <input type="text" name="cin" class="form-control"
+                                       placeholder="Entrez votre CIN"
+                                       value="{{ cin ?? '' }}">
+                                <div class="input-group-append">
+                                    <button class="btn-orange" type="submit"
+                                            style="border:none; padding:0 24px; border-radius:0 8px 8px 0; font-weight:600; cursor:pointer;">
+                                        <i class="fas fa-search mr-1"></i> Rechercher
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {# ── Résultats — le controller envoie "locations" pas "reservations" ── #}
+        {% if recherche %}
+            {% if locations is empty %}
+            <div class="text-center py-4">
+                <i class="fas fa-inbox fa-4x mb-4" style="color:#ccc;"></i>
+                <h4 class="text-muted">Aucune réservation trouvée pour ce CIN.</h4>
+                <a href="{{ path('client_catalogue') }}" class="btn-orange mt-3"
+                   style="display:inline-block; text-decoration:none; padding:12px 28px; border-radius:30px; font-weight:600;">
+                    <i class="fas fa-car mr-2"></i>Voir le catalogue
+                </a>
+            </div>
+            {% else %}
+            <div class="row">
+                {% for loc in locations %}
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100">
+
+                        {# Photo véhicule → vehicule.photo #}
+                        <div style="position:relative; overflow:hidden;">
+                            {% if loc.vehicule and loc.vehicule.photo %}
+                                <img src="{{ asset('uploads/vehicules/' ~ loc.vehicule.photo) }}"
+                                     style="height:180px; object-fit:cover; width:100%;"
+                                     alt="Véhicule">
+                            {% else %}
+                                <div class="d-flex align-items-center justify-content-center"
+                                     style="height:180px; background:#23779C;">
+                                    <i class="fas fa-car fa-3x text-white opacity-50"></i>
+                                </div>
+                            {% endif %}
+
+                            {# Badge statut #}
+                            <span style="position:absolute;top:10px;right:10px;padding:4px 12px;border-radius:20px;font-size:.75rem;font-weight:700;
+                                {% if loc.statut == 'réservée' %}background:#f39c12;color:#fff;
+                                {% elseif loc.statut == 'en_cours' %}background:#27ae60;color:#fff;
+                                {% elseif loc.statut == 'terminée' %}background:#6c757d;color:#fff;
+                                {% elseif loc.statut == 'annulée' %}background:#e74c3c;color:#fff;
+                                {% else %}background:#23779C;color:#fff;{% endif %}">
+                                {{ loc.statut|capitalize }}
+                            </span>
+                        </div>
+
+                        <div class="card-body p-3">
+                            {# Marque + Modèle via relations #}
+                            <h6 class="font-weight-700 mb-2">
+                                {% if loc.vehicule %}
+                                    {{ loc.vehicule.modele.marque.nomMarque }}
+                                    {{ loc.vehicule.modele.nomModele }}
+                                {% else %}
+                                    Véhicule
+                                {% endif %}
+                            </h6>
+
+                            <p class="text-muted small mb-1">
+                                <i class="fas fa-hashtag mr-1" style="color:var(--teal);"></i>
+                                Réf #{{ loc.idLocation }}
+                            </p>
+                            <p class="text-muted small mb-1">
+                                <i class="fas fa-calendar mr-1" style="color:var(--teal);"></i>
+                                {{ loc.dateDebut ? loc.dateDebut|date('d/m/Y') : 'N/A' }}
+                                →
+                                {{ loc.dateFinPrevue ? loc.dateFinPrevue|date('d/m/Y') : 'N/A' }}
+                            </p>
+                            <p class="text-muted small mb-1">
+                                <i class="fas fa-user mr-1" style="color:var(--teal);"></i>
+                                {{ loc.clientNomComplet }}
+                            </p>
+                            <p class="font-weight-700 mt-2 mb-0" style="color:var(--orange);">
+                                {{ loc.montantTotal }} DT
+                            </p>
+                        </div>
+
+                        <div class="card-footer bg-white border-0 pb-3">
+                            <a href="{{ path('client_confirmation', {id: loc.idLocation}) }}"
+                               class="btn btn-block"
+                               style="display:block; text-align:center; text-decoration:none; padding:8px;
+                                      border-radius:30px; font-weight:600; border:2px solid var(--teal); color:var(--teal);">
+                                <i class="fas fa-eye mr-1"></i>Voir détails
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+        {% else %}
+        {# Pas encore de recherche #}
+        <div class="text-center py-4">
+            <i class="fas fa-search fa-4x mb-4" style="color:var(--teal); opacity:.3;"></i>
+            <h5>Entrez votre CIN pour retrouver vos réservations.</h5>
+        </div>
+        {% endif %}
+
+    </div>
+</section>
 {% endblock %}

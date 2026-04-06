@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Horizia{% endblock %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+
+    <style>
+        /* =============================================
+           HORIZIA LOCATION — Style équipe intégration
+           Orange  #e84a3e  |  Teal  #23779C
+        ============================================= */
+        :root {
+            --orange  : #e84a3e;
+            --orange-dk: #c73a2e;
+            --teal    : #23779C;
+            --teal-dk : #1a5a78;
+            --dark    : #1a1a2e;
+        }
+        * { box-sizing: border-box; }
+        body { font-family: 'Poppins', sans-serif; margin: 0; padding: 0; color: #333; }
+
+        /* ─── NAVBAR ──────────────────────────── */
+        #ftco-navbar {
+            background: transparent !important;
+            padding: 18px 0;
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            z-index: 999;
+            transition: all .3s ease;
+        }
+        /* Scrolled : blanc */
+        #ftco-navbar.scrolled {
+            background: #fff !important;
+            padding: 10px 0;
+            position: fixed;
+            box-shadow: 0 2px 16px rgba(0,0,0,.1);
+        }
+        #ftco-navbar.scrolled .navbar-brand        { color: var(--dark) !important; }
+        #ftco-navbar.scrolled .navbar-brand small  { color: #666 !important; }
+        #ftco-navbar.scrolled .nav-link            { color: #333 !important; }
+        #ftco-navbar.scrolled .nav-item.active .nav-link,
+        #ftco-navbar.scrolled .nav-link:hover      { color: var(--orange) !important; }
+
+        /* Statique (pages sans hero full) */
+        #ftco-navbar.nav-static {
+            background: #fff !important;
+            position: relative !important;
+            box-shadow: 0 2px 12px rgba(0,0,0,.08);
+        }
+        #ftco-navbar.nav-static .navbar-brand       { color: var(--dark) !important; }
+        #ftco-navbar.nav-static .navbar-brand small { color: #666 !important; }
+        #ftco-navbar.nav-static .nav-link           { color: #333 !important; }
+        #ftco-navbar.nav-static .nav-item.active .nav-link,
+        #ftco-navbar.nav-static .nav-link:hover     { color: var(--orange) !important; }
+
+        /* Logo */
+        .navbar-brand {
+            font-size: 1.55rem;
+            font-weight: 800;
+            color: #fff !important;
+            letter-spacing: .3px;
+            line-height: 1;
+        }
+        .navbar-brand small {
+            display: block;
+            font-size: .6rem;
+            font-weight: 400;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: rgba(255,255,255,.65) !important;
+            margin-top: 2px;
+        }
+
+        /* Links */
+        .nav-item .nav-link {
+            color: rgba(255,255,255,.85) !important;
+            font-size: .9rem;
+            font-weight: 500;
+            padding: 6px 14px !important;
+            transition: color .2s;
+        }
+        .nav-item.active .nav-link,
+        .nav-item .nav-link:hover { color: var(--orange) !important; }
+        .navbar-toggler { border-color: rgba(255,255,255,.4); }
+
+        /* ─── HERO (page accueil) ──────────────── */
+        .hero-full {
+            position: relative;
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--teal-dk) 0%, var(--dark) 100%);
+            display: flex;
+            align-items: center;
+            overflow: hidden;
+        }
+        .hero-full .hero-bg {
+            position: absolute; inset: 0;
+            background-size: cover;
+            background-position: center;
+            opacity: .25;
+        }
+        .hero-full .hero-overlay {
+            position: absolute; inset: 0;
+            background: rgba(26,26,46,.5);
+        }
+        .hero-full .hero-content {
+            position: relative; z-index: 2;
+            padding-top: 100px;
+        }
+        .hero-subtitle {
+            font-family: 'Dancing Script', cursive;
+            font-size: 1.9rem;
+            color: var(--orange);
+            display: block;
+            margin-bottom: 10px;
+        }
+        .hero-title {
+            font-size: 3.2rem;
+            font-weight: 800;
+            color: #fff;
+            line-height: 1.2;
+            margin-bottom: 18px;
+        }
+        .hero-desc {
+            color: rgba(255,255,255,.75);
+            font-size: 1rem;
+            max-width: 500px;
+            margin-bottom: 36px;
+            line-height: 1.7;
+        }
+
+        /* ─── HERO BANNER (pages internes) ────── */
+        .hero-banner {
+            background: linear-gradient(135deg, var(--teal), var(--teal-dk));
+            padding: 110px 0 55px;
+            position: relative;
+            text-align: center;
+        }
+        .hero-banner::before {
+            content: ''; position: absolute; inset: 0;
+            background: rgba(0,0,0,.2);
+        }
+        .hero-banner .inner { position: relative; z-index: 2; }
+        .hero-banner h1     { color:#fff; font-size:2.3rem; font-weight:800; margin-bottom:8px; }
+        .hero-banner p      { color:rgba(255,255,255,.8); }
+        .breadcrumb         { background:transparent; padding:0; margin:8px 0 0; justify-content:center; }
+        .breadcrumb-item a  { color:rgba(255,255,255,.7); text-decoration:none; }
+        .breadcrumb-item.active { color:#fff; }
+        .breadcrumb-item+.breadcrumb-item::before { color:rgba(255,255,255,.4); }
+
+        /* ─── BUTTONS ──────────────────────────── */
+        .btn-orange {
+            background: var(--orange); color:#fff;
+            border:none; border-radius:30px;
+            padding:12px 32px; font-weight:600;
+            transition: all .3s;
+        }
+        .btn-orange:hover {
+            background: var(--orange-dk); color:#fff;
+            transform:translateY(-2px);
+            box-shadow:0 8px 24px rgba(232,74,62,.35);
+        }
+        .btn-teal {
+            background:var(--teal); color:#fff;
+            border:none; border-radius:30px;
+            padding:12px 32px; font-weight:600;
+            transition: all .3s;
+        }
+        .btn-teal:hover { background:var(--teal-dk); color:#fff; transform:translateY(-2px); }
+        .btn-outline-teal {
+            border:2px solid var(--teal); color:var(--teal);
+            background:transparent; border-radius:30px;
+            padding:10px 28px; font-weight:600; transition:all .3s;
+        }
+        .btn-outline-teal:hover { background:var(--teal); color:#fff; }
+
+        /* Override Bootstrap primary → orange */
+        .btn-primary { background:var(--orange) !important; border-color:var(--orange) !important; border-radius:30px !important; font-weight:600 !important; }
+        .btn-primary:hover { background:var(--orange-dk) !important; border-color:var(--orange-dk) !important; }
+
+        /* ─── CARDS ────────────────────────────── */
+        .card {
+            border:none; border-radius:14px;
+            box-shadow:0 4px 20px rgba(0,0,0,.08);
+            overflow:hidden; transition:transform .3s, box-shadow .3s;
+        }
+        .card:hover { transform:translateY(-6px); box-shadow:0 14px 36px rgba(0,0,0,.15); }
+
+        /* Card teal (style logement collègue) */
+        .card-teal { background:var(--teal); color:#fff; }
+        .card-teal * { color:#fff !important; }
+        .card-teal .text-muted { color:rgba(255,255,255,.7) !important; }
+        .card-teal .btn-outline-light { border-color:rgba(255,255,255,.6); color:#fff; border-radius:30px; }
+        .card-teal .btn-outline-light:hover { background:#fff; color:var(--teal) !important; }
+
+        .card-header-teal { background:var(--teal); color:#fff; padding:14px 20px; font-weight:700; }
+
+        /* ─── SECTIONS ─────────────────────────── */
+        .section { padding:72px 0; }
+        .section-gray { background:#f4f6f9; }
+
+        .section-title .sub {
+            color:var(--orange); font-size:.78rem; font-weight:700;
+            letter-spacing:3px; text-transform:uppercase;
+            display:block; margin-bottom:6px;
+        }
+        .section-title h2 { font-size:2rem; font-weight:800; color:var(--dark); }
+
+        /* ─── PRICE ─────────────────────────────── */
+        .price-tag { font-size:1.3rem; font-weight:800; color:var(--teal); }
+        .price-tag small { font-size:.75rem; color:#999; font-weight:400; }
+
+        /* Badge prix flottant (style collègue) */
+        .price-badge {
+            position:absolute; bottom:16px; right:16px;
+            background:var(--teal); color:#fff;
+            padding:6px 16px; border-radius:20px;
+            font-size:.9rem; font-weight:700;
+        }
+
+        /* ─── STATUS BADGES ─────────────────────── */
+        .badge-ok  { background:#27ae60; color:#fff; padding:4px 14px; border-radius:20px; font-size:.8rem; }
+        .badge-pnd { background:#f39c12; color:#fff; padding:4px 14px; border-radius:20px; font-size:.8rem; }
+        .badge-err { background:#e74c3c; color:#fff; padding:4px 14px; border-radius:20px; font-size:.8rem; }
+
+        /* ─── TABLE ─────────────────────────────── */
+        .table thead th { background:var(--teal); color:#fff; border:none; font-weight:600; }
+        .table tbody tr:hover { background:#f0f8fc; }
+
+        /* ─── FORMS ─────────────────────────────── */
+        .form-control { border-radius:8px; padding:11px 16px; font-size:.95rem; border:1.5px solid #ddd; }
+        .form-control:focus { border-color:var(--teal); box-shadow:0 0 0 .2rem rgba(35,119,156,.18); }
+        label { font-weight:600; font-size:.88rem; color:#444; margin-bottom:5px; }
+
+        /* ─── MODAL ─────────────────────────────── */
+        .modal-content { border:none; border-radius:16px; overflow:hidden; }
+        .modal-header  { background:var(--teal); color:#fff; border:none; padding:18px 24px; }
+        .modal-title   { font-weight:700; }
+        .modal-header .close { color:#fff; opacity:1; font-size:1.4rem; }
+        .modal-body    { padding:28px 32px; }
+        .payment-box   { background:#f8f9fa; border-radius:10px; padding:18px; margin-top:12px; }
+        .payment-row   { display:flex; justify-content:space-between; align-items:center; padding:6px 0; font-size:.9rem; }
+        .payment-row.total {
+            border-top:2px solid #ddd; margin-top:8px; padding-top:12px;
+            font-weight:700; font-size:1rem; color:var(--teal);
+        }
+
+        /* ─── FOOTER ─────────────────────────────── */
+        .site-footer { background:var(--teal); color:#fff; padding:60px 0 0; }
+        .site-footer h5 {
+            font-weight:700; margin-bottom:20px;
+            position:relative; padding-bottom:10px;
+        }
+        .site-footer h5::after {
+            content:''; position:absolute; bottom:0; left:0;
+            width:36px; height:3px; background:var(--orange);
+        }
+        .site-footer p,
+        .site-footer li,
+        .site-footer a { color:rgba(255,255,255,.7); font-size:.9rem; }
+        .site-footer a  { text-decoration:none; transition:color .2s; }
+        .site-footer a:hover { color:#fff; }
+        .site-footer ul { list-style:none; padding:0; margin:0; }
+        .site-footer ul li { margin-bottom:9px; }
+        .site-footer ul li i { margin-right:8px; color:var(--orange); width:14px; }
+        .site-footer .socials a {
+            display:inline-flex; align-items:center; justify-content:center;
+            width:36px; height:36px; border-radius:50%;
+            background:rgba(255,255,255,.12); color:#fff; margin-right:6px;
+            transition:background .2s;
+        }
+        .site-footer .socials a:hover { background:var(--orange); }
+        .footer-bottom {
+            border-top:1px solid rgba(255,255,255,.15);
+            padding:18px 0; margin-top:40px;
+            text-align:center; color:rgba(255,255,255,.5); font-size:.85rem;
+        }
+
+        /* ─── MISC ──────────────────────────────── */
+        .text-orange { color:var(--orange) !important; }
+        .text-teal   { color:var(--teal)   !important; }
+        .icon-circle {
+            width:68px; height:68px; border-radius:50%;
+            background:rgba(35,119,156,.1);
+            display:inline-flex; align-items:center; justify-content:center;
+        }
+
+        @media(max-width:768px) {
+            .hero-title { font-size:2.1rem; }
+            .section { padding:48px 0; }
+            .hero-full { min-height:auto; }
+        }
+    </style>
+
+    {% block stylesheets %}{% endblock %}
+</head>
+<body>
+
+{# ══ NAVBAR ══ #}
+{% block navbar %}
+<nav class="navbar navbar-expand-lg navbar-dark {% block navbar_extra_class %}{% endblock %}" id="ftco-navbar">
+    <div class="container">
+        <a class="navbar-brand" href="{{ path('client_accueil') }}">
+            Horizia<small>LOCATION</small>
+        </a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#nav-menu">
+            <span class="fa fa-bars"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="nav-menu">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item {% block nav_accueil %}{% endblock %}">
+                    <a href="{{ path('client_accueil') }}" class="nav-link">Accueil</a>
+                </li>
+                <li class="nav-item {% block nav_catalogue %}{% endblock %}">
+                    <a href="{{ path('client_catalogue') }}" class="nav-link">Catalogue</a>
+                </li>
+                <li class="nav-item {% block nav_planning %}{% endblock %}">
+                    <a href="{{ path('client_planning') }}" class="nav-link">Planning</a>
+                </li>
+                <li class="nav-item {% block nav_reservations %}{% endblock %}">
+                    <a href="{{ path('client_mes_reservations') }}" class="nav-link">Mes Réservations</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+{% endblock %}
+
+{# ══ CONTENU ══ #}
+{% block body %}{% endblock %}
+
+{# ══ FOOTER ══ #}
+{% block footer %}
+<footer class="site-footer">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-4 mb-5">
+                <h5>Horizia Location</h5>
+                <p>Plateforme de location de véhicules premium. Simple, rapide et sécurisé.</p>
+                <div class="socials mt-3">
+                    <a href="#"><i class="fab fa-twitter"></i></a>
+                    <a href="#"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                </div>
+            </div>
+            <div class="col-md-4 mb-5">
+                <h5>Liens rapides</h5>
+                <ul>
+                    <li><i class="fas fa-chevron-right"></i><a href="{{ path('client_accueil') }}">Accueil</a></li>
+                    <li><i class="fas fa-chevron-right"></i><a href="{{ path('client_catalogue') }}">Catalogue</a></li>
+                    <li><i class="fas fa-chevron-right"></i><a href="{{ path('client_planning') }}">Planning</a></li>
+                    <li><i class="fas fa-chevron-right"></i><a href="{{ path('client_mes_reservations') }}">Mes Réservations</a></li>
+                </ul>
+            </div>
+            <div class="col-md-4 mb-5">
+                <h5>Contact</h5>
+                <ul>
+                    <li><i class="fas fa-map-marker-alt"></i>Tunis, Tunisie</li>
+                    <li><i class="fas fa-phone"></i><a href="tel:+21653661445">+216 53 661 445</a></li>
+                    <li><i class="fas fa-envelope"></i><a href="mailto:contact@horizia.com">contact@horizia.com</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="footer-bottom">
+        <p class="mb-0">© {{ "now"|date("Y") }} Horizia. Tous droits réservés.</p>
+    </div>
+</footer>
+{% endblock %}
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+    const navbar = document.getElementById('ftco-navbar');
+    if (navbar && !navbar.classList.contains('nav-static')) {
+        window.addEventListener('scroll', () => {
+            navbar.classList.toggle('scrolled', window.scrollY > 60);
+        });
+    }
+</script>
+{% block javascripts %}{% endblock %}
+</body>
+</html>
