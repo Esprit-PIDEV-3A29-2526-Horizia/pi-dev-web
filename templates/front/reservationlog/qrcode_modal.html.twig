@@ -11,7 +11,7 @@
         <div class="card shadow-sm mx-auto" style="max-width: 500px;">
             <div class="card-body text-center">
                 <img src="{{ qrCodeDataUri }}" alt="QR Code" class="img-fluid mb-3" style="max-width: 250px;">
-                <h5>Réservation #{{ reservation.idreslog }}</h5>
+                <h5>Réservation </h5>
                 <p class="mb-1"><strong>{{ reservation.logement.nom }}</strong></p>
                 <p class="mb-1">{{ reservation.dateDebut|date('d/m/Y') }} → {{ reservation.dateFin|date('d/m/Y') }}</p>
                 <p class="mb-3">{{ reservation.montant|number_format(2, ',', ' ') }} DT</p>
@@ -28,19 +28,15 @@
             const msgDiv = document.getElementById('emailMessage');
             btn.disabled = true;
             btn.innerHTML = '<i class="fa fa-spinner fa-spin"></i> Envoi...';
-            
-            fetch('{{ path('app_front_reservation_send_email', {'id': reservation.idreslog}) }}', {
-                method: 'POST',
-                headers: { 'X-Requested-With': 'XMLHttpRequest' }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    msgDiv.innerHTML = '<div class="alert alert-success mt-2">Email envoyé !</div>';
-                } else {
-                    msgDiv.innerHTML = '<div class="alert alert-danger mt-2">Erreur : ' + (data.error || 'Envoi échoué') + '</div>';
-                }
-            })
+           fetch(url, { method: 'POST', headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+.then(response => response.json())
+.then(data => {
+    if (data.success) {
+        msgDiv.innerHTML = '<div class="alert alert-success mt-2">' + data.message + '</div>';
+    } else {
+        msgDiv.innerHTML = '<div class="alert alert-danger mt-2">Erreur : ' + (data.error || 'Envoi échoué') + '</div>';
+    }
+})
             .catch(() => {
                 msgDiv.innerHTML = '<div class="alert alert-danger mt-2">Erreur réseau.</div>';
             })

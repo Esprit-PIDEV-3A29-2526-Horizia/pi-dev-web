@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirmation de réservation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #ffffff;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #23779C, #3D94CA);
+            padding: 20px;
+            text-align: center;
+            color: white;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .content {
+            padding: 25px;
+        }
+        .greeting {
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+        }
+        .label {
+            font-weight: bold;
+            color: #23779C;
+            width: 40%;
+        }
+        .value {
+            color: #333;
+        }
+        .note {
+            background: #f8f9fa;
+            padding: 12px;
+            border-left: 4px solid #81AE8D;
+            margin: 20px 0;
+            font-style: italic;
+        }
+        .footer {
+            background: #f4f4f4;
+            padding: 15px;
+            text-align: center;
+            font-size: 12px;
+            color: #777;
+        }
+        .btn {
+            display: inline-block;
+            background: #23779C;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 30px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Confirmation de réservation</h1>
+        </div>
+        <div class="content">
+            <p class="greeting">Bonjour {{ reservation.user.prenom }} {{ reservation.user.nom }},</p>
+            <p>Nous vous confirmons votre réservation chez <strong>Horozia</strong>.</p>
+
+            <table>
+                <tr><td class="label">Logement</td><td class="value">{{ reservation.logement.nom }}</td></tr>
+                <tr><td class="label">Adresse</td><td class="value">{{ reservation.logement.adresse }}</td></tr>
+                <tr><td class="label">Arrivée</td><td class="value">{{ reservation.dateDebut|date('d/m/Y') }}</td></tr>
+                <tr><td class="label">Départ</td><td class="value">{{ reservation.dateFin|date('d/m/Y') }}</td></tr>
+                <tr><td class="label">Montant total</td><td class="value">{{ reservation.montant|number_format(2, ',', ' ') }} DT</td></tr>
+                <tr><td class="label">Modalité</td><td class="value">{{ reservation.modalites }}</td></tr>
+                <tr><td class="label">Statut</td><td class="value">{{ reservation.status }}</td></tr>
+            </table>
+
+            <div class="note">
+                {% if reservation.modalites == 'Sur place' %}
+                    Veuillez régler le montant sur place.
+                {% else %}
+                    Paiement en ligne effectué avec succès.
+                {% endif %}
+            </div>
+
+            <p>Veuillez trouver en pièce jointe votre QR code et le récapitulatif détaillé.</p>
+
+            <p>Merci de votre confiance !</p>
+        </div>
+        <div class="footer">
+            Tunis, Tunisie | 📞 +216 5 861 445 | 📧 info@horozia.com
+        </div>
+    </div>
+</body>
+</html>

@@ -1,6 +1,5 @@
 <?php
 namespace App\Service;
-use App\Entity\Reservationlog;
 use Twig\Environment;
 use Dompdf\Dompdf;
 use Dompdf\Options;
@@ -14,9 +13,9 @@ class PdfService
         $this->twig = $twig;
     }
 
-    public function generateReservationPdf(Reservationlog $reservation): string
+    public function generateReservationPdf($reservation): string
     {
-        $html = $this->twig->render('front/reservationlog/reservation_pdf.html.twig', [
+        $html = $this->twig->render('front/email/reservation_pdf.html.twig', [
             'reservation' => $reservation,
         ]);
 

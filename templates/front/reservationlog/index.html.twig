@@ -236,13 +236,14 @@
         <!-- Les cartes seront chargées ici par AJAX -->
     </div>
 </div>
+
 <!-- Modale QR Code -->
 <div class="modal fade" id="qrModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title">QR Code de réservation</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" id="closeQrModalBtn" class="btn-close btn-close-white" aria-label="Fermer"></button>
             </div>
             <div class="modal-body text-center" id="qrModalBody">
                 <div class="spinner-border text-primary" role="status">
@@ -261,27 +262,26 @@
         const statusSelect = document.getElementById('statusSelect');
         const container = document.getElementById('reservationsContainer');
         const spinner = document.getElementById('loadingSpinner');
-
-        function fetchReservations() {
-            const search = searchInput.value;
-            const status = statusSelect.value;
-            const url = `{{ path('app_front_reservation_ajax') }}?search=${encodeURIComponent(search)}&status=${encodeURIComponent(status)}`;
-            
-            spinner.classList.add('active');
-            fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.html) container.innerHTML = data.html;
-                    spinner.classList.remove('active');
-                    attachDeleteEvents();
-                    attachQrEvents(); // ← Appel manquant ajouté ici
-                })
-                .catch(error => {
-                    console.error('Erreur:', error);
-                    spinner.classList.remove('active');
-                });
-        }
-
+function fetchReservations() {
+    const search = searchInput.value;
+    const status = statusSelect.value;
+    const url = `{{ path('app_front_reservation_ajax') }}?search=${encodeURIComponent(search)}&status=${encodeURIComponent(status)}`;
+    
+    spinner.classList.add('active');
+    fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+        .then(response => response.json())
+        .then(data => {
+            if (data.html) container.innerHTML = data.html;
+            spinner.classList.remove('active');
+            attachDeleteEvents();
+            attachQrEvents();
+            attachEditEvents(); // <-- AJOUT OBLIGATOIRE
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+            spinner.classList.remove('active');
+        });
+}
         function deleteReservation(id, element) {
             Swal.fire({
                 title: 'Confirmation',
@@ -339,7 +339,64 @@
                 }
             });
         }
-
+        function attachEditEvents() {
+    document.querySelectorAll('.btn-edit').forEach(btn => {
+        btn.removeEventListener('click', window.editHandler);
+        const handler = function(e) {
+            e.preventDefault();
+            const id = this.getAttribute('data-id');
+            const modal = new bootstrap.Modal(document.getElementById('qrModal'));
+            const modalBody = document.getElementById('qrModalBody');
+            
+            modalBody.innerHTML = '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Chargement...</span></div>';
+            modal.show();
+            
+            fetch(`/reservation/edit-modal/${id}`, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(response => response.text())
+            .then(html => {
+                modalBody.innerHTML = html;
+                document.querySelector('#qrModal .modal-title').innerText = 'Modifier la réservation';
+                
+                const editForm = document.getElementById('editReservationForm');
+                if (editForm) {
+                    editForm.addEventListener('submit', function(e) {
+                        e.preventDefault();
+                        const formData = new FormData(editForm);
+                        fetch(editForm.action, {
+                            method: 'POST',
+                            body: formData,
+                            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                modal.hide();
+                                fetchReservations();
+                                Swal.fire({
+                                    title: 'Succès',
+                                    text: data.message,
+                                    icon: 'success',
+                                    timer: 1500,
+                                    showConfirmButton: false
+                                });
+                            } else {
+                                document.getElementById('formErrors').innerHTML = '<div class="alert alert-danger">' + (data.error || 'Erreur') + '</div>';
+                                document.getElementById('formErrors').classList.remove('d-none');
+                            }
+                        });
+                    });
+                }
+            })
+            .catch(error => {
+                modalBody.innerHTML = '<div class="alert alert-danger">Erreur lors du chargement du formulaire.</div>';
+            });
+        };
+        btn.addEventListener('click', handler);
+        btn.editHandler = handler;
+    });
+}
         function attachDeleteEvents() {
             document.querySelectorAll('.btn-delete').forEach(btn => {
                 btn.removeEventListener('click', window.deleteHandler);
@@ -353,33 +410,40 @@
             });
         }
 
-       function attachQrEvents() {
-    document.querySelectorAll('.btn-qr').forEach(btn => {
-        btn.removeEventListener('click', window.qrHandler);
-        const handler = function(e) {
-            e.preventDefault();
-            const id = this.getAttribute('data-id');
-            const modal = new bootstrap.Modal(document.getElementById('qrModal'));
-            const modalBody = document.getElementById('qrModalBody');
-            
-            modalBody.innerHTML = '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Chargement...</span></div>';
-            modal.show();
-            
-            fetch(`/reservation/qrcode/${id}`, {
-                headers: { 'X-Requested-With': 'XMLHttpRequest' }
-            })
-            .then(response => response.text())
-            .then(html => {
-                modalBody.innerHTML = html;
-            })
-            .catch(error => {
-                modalBody.innerHTML = '<div class="alert alert-danger">Erreur lors du chargement du QR code.</div>';
+        function attachQrEvents() {
+            document.querySelectorAll('.btn-qr').forEach(btn => {
+                btn.removeEventListener('click', window.qrHandler);
+                const handler = function(e) {
+                    e.preventDefault();
+                    const id = this.getAttribute('data-id');
+                    const modal = new bootstrap.Modal(document.getElementById('qrModal'));
+                    const modalBody = document.getElementById('qrModalBody');
+                    
+                    modalBody.innerHTML = '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Chargement...</span></div>';
+                    modal.show();
+                    
+                    fetch(`/reservation/qrcode/${id}`, {
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                    })
+                    .then(response => response.text())
+                    .then(html => {
+                        modalBody.innerHTML = html;
+                    })
+                    .catch(error => {
+                        modalBody.innerHTML = '<div class="alert alert-danger">Erreur lors du chargement du QR code.</div>';
+                    });
+                };
+                btn.addEventListener('click', handler);
+                btn.qrHandler = handler;
             });
-        };
-        btn.addEventListener('click', handler);
-        btn.qrHandler = handler;
-    });
-}
+        }
+
+        // Fermeture manuelle de la modale QR
+        document.getElementById('closeQrModalBtn').addEventListener('click', function() {
+            const modalElement = document.getElementById('qrModal');
+            const modal = bootstrap.Modal.getInstance(modalElement);
+            if (modal) modal.hide();
+        });
 
         let debounceTimer;
         searchInput.addEventListener('input', function() {
@@ -390,5 +454,4 @@
         
         fetchReservations();
     </script>
-    
 {% endblock %}

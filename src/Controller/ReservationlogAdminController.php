@@ -1,10 +1,9 @@
 <?php
-
 namespace App\Controller;
-
 use App\Entity\Reservationlog;
 use App\Form\ReservationlogType;
 use App\Repository\ReservationlogRepository;
+use App\Service\ReservationlogSearchService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -15,35 +14,36 @@ use Symfony\Component\Routing\Attribute\Route;
 class ReservationlogAdminController extends AbstractController
 {
     #[Route('/', name: 'index', methods: ['GET'])]
-    public function index(Request $request, ReservationlogRepository $reservationlogRepository): Response
-    {
-        $status = $request->query->get('status');
-        $sort = $request->query->get('sort');
+    public function index(
+        Request $request,
+        ReservationlogSearchService $searchService,
+        ReservationlogRepository $reservationlogRepository
+    ): Response {
+        // Récupération des paramètres GET
+        $search = $request->query->get('search', '');
+        $status = $request->query->get('status', '');
+        $sort   = $request->query->get('sort', '');
+        $page   = max(1, $request->query->getInt('page', 1));
+        $limit  = 10; // Nombre d'éléments par page
 
-        $qb = $reservationlogRepository->createQueryBuilder('r')
-            ->leftJoin('r.logement', 'l')
-            ->leftJoin('r.user', 'u')
-            ->addSelect('l', 'u');
+        // Utilisation du service pour obtenir les réservations filtrées + paginées
+        $result = $searchService->getFilteredReservations($search, $status, $sort, $page, $limit);
+        $reservations = $result['reservations'];
+        $total = $result['total'];
 
-        if ($status && $status !== '') {
-            $qb->andWhere('r.status = :status')->setParameter('status', $status);
-        }
-
-        if ($sort === 'montant_asc') {
-            $qb->orderBy('r.montant', 'ASC');
-        } elseif ($sort === 'montant_desc') {
-            $qb->orderBy('r.montant', 'DESC');
-        } else {
-            $qb->orderBy('r.idreslog', 'DESC');
-        }
-
-        $reservations = $qb->getQuery()->getResult();
+        // Nombre total de réservations (sans filtre) pour le badge
         $totalReservations = $reservationlogRepository->count([]);
 
-       return $this->render('admin/reservationlog_admin/index.html.twig', [
-    'reservationlogs' => $reservations,   // ← renommer la clé
-    'totalReservations' => $totalReservations,
-]);
+        return $this->render('admin/reservationlog_admin/index.html.twig', [
+            'reservationlogs'   => $reservations,
+            'total'             => $total,
+            'totalReservations' => $totalReservations,
+            'currentPage'       => $page,
+            'search'            => $search,
+            'status'            => $status,
+            'sort'              => $sort,
+            'limit'             => $limit,
+        ]);
     }
 
     #[Route('/new', name: 'new', methods: ['GET', 'POST'])]
@@ -69,7 +69,7 @@ class ReservationlogAdminController extends AbstractController
     #[Route('/{idreslog}', name: 'show', methods: ['GET'])]
     public function show(Reservationlog $reservationlog): Response
     {
-        return $this->render('admin/reservation/show.html.twig', [
+        return $this->render('admin/reservationlog_admin/show.html.twig', [
             'reservation' => $reservationlog,
         ]);
     }

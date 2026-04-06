@@ -1,11 +1,13 @@
 <?php
+// src/Controller/LogementController.php
 
 namespace App\Controller;
 
 use App\Entity\Logement;
 use App\Form\LogementType;
-use App\Repository\LogementRepository;
+use App\Service\LogementSearchService;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -15,69 +17,35 @@ use Symfony\Component\Routing\Annotation\Route;
 class LogementController extends AbstractController
 {
     #[Route('/', name: 'index')]
-    public function index(Request $request, LogementRepository $logementRepository): Response
-    {
-        // Paramètres GET avec valeurs par défaut
+    public function index(
+        Request $request,
+        LogementSearchService $searchService,
+        ManagerRegistry $doctrine  // Injection du ManagerRegistry
+    ): Response {
         $search = $request->query->get('search');
         $disponibilite = $request->query->get('disponibilite', 'all');
         $sort = $request->query->get('sort', '');
         $page = max(1, $request->query->getInt('page', 1));
         $limit = 9;
 
-        // Construction de la requête
-        $qb = $logementRepository->createQueryBuilder('l');
+        // Nombre total de logements (avec filtres)
+        $total = $searchService->countForAdmin($search, $disponibilite);
 
-        // Recherche
-        if ($search) {
-            $qb->andWhere('l.nom LIKE :search OR l.adresse LIKE :search')
-               ->setParameter('search', '%' . $search . '%');
-        }
+        // Récupération des logements paginés
+        $logements = $searchService->searchAndSortForAdmin($search, $disponibilite, $sort, $page, $limit);
 
-        // Filtre disponibilité
-        if ($disponibilite === 'available') {
-            $qb->andWhere('l.disponibilite = :dispo')->setParameter('dispo', true);
-        } elseif ($disponibilite === 'unavailable') {
-            $qb->andWhere('l.disponibilite = :dispo')->setParameter('dispo', false);
-        }
-
-        // Comptage total pour pagination
-        $total = (clone $qb)->select('COUNT(l.id)')->getQuery()->getSingleScalarResult();
-
-        // Tri
-        switch ($sort) {
-            case 'price_asc':
-                $qb->orderBy('l.tarif_nuit', 'ASC');
-                break;
-            case 'price_desc':
-                $qb->orderBy('l.tarif_nuit', 'DESC');
-                break;
-            case 'dispo_asc':
-                $qb->orderBy('l.disponibilite', 'ASC');
-                break;
-            case 'dispo_desc':
-                $qb->orderBy('l.disponibilite', 'DESC');
-                break;
-            default:
-                $qb->orderBy('l.id', 'DESC');
-        }
-
-        // Pagination
-        $qb->setFirstResult(($page - 1) * $limit)
-           ->setMaxResults($limit);
-
-        $logements = $qb->getQuery()->getResult();
-
-        // Nombre total de logements (sans filtre)
-        $totalLogements = $logementRepository->count([]);
+        // Nombre total de logements (sans aucun filtre, pour le badge)
+        $totalLogements = $doctrine->getRepository(Logement::class)->count([]);
 
         return $this->render('admin/logement/index.html.twig', [
-            'logements' => $logements,
-            'total' => $total,
+            'logements'      => $logements,
+            'total'          => $total,
             'totalLogements' => $totalLogements,
-            'currentPage' => $page,
-            'search' => $search,
-            'disponibilite' => $disponibilite,
-            'sort' => $sort,
+            'currentPage'    => $page,
+            'search'         => $search,
+            'disponibilite'  => $disponibilite,
+            'sort'           => $sort,
+            'limit'          => $limit,
         ]);
     }
 
@@ -85,7 +53,7 @@ class LogementController extends AbstractController
     public function new(Request $request, EntityManagerInterface $entityManager): Response
     {
         $logement = new Logement();
-$form = $this->createForm(LogementType::class, $logement, ['validation_groups' => ['Default', 'create']]);
+        $form = $this->createForm(LogementType::class, $logement, ['validation_groups' => ['Default', 'create']]);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
@@ -108,28 +76,29 @@ $form = $this->createForm(LogementType::class, $logement, ['validation_groups' =
             'logement' => $logement,
         ]);
     }
-#[Route('/{id}/edit', name: 'edit', methods: ['GET', 'POST'])]
-public function edit(Request $request, Logement $logement, EntityManagerInterface $entityManager): Response
-{
-    $form = $this->createForm(LogementType::class, $logement);
-    $form->handleRequest($request);
 
-    if ($form->isSubmitted() && $form->isValid()) {
-        $entityManager->flush();
-        $this->addFlash('success', 'Logement modifié avec succès.');
-        return $this->redirectToRoute('admin_logement_index');
+    #[Route('/{id}/edit', name: 'edit', methods: ['GET', 'POST'])]
+    public function edit(Request $request, Logement $logement, EntityManagerInterface $entityManager): Response
+    {
+        $form = $this->createForm(LogementType::class, $logement);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $entityManager->flush();
+            $this->addFlash('success', 'Logement modifié avec succès.');
+            return $this->redirectToRoute('admin_logement_index');
+        }
+
+        if ($form->isSubmitted() && !$form->isValid()) {
+            $this->addFlash('error', 'Erreur de validation. Vérifiez les champs.');
+        }
+
+        return $this->render('admin/logement/edit.html.twig', [
+            'logement' => $logement,
+            'form' => $form->createView(),
+        ]);
     }
 
-    // En cas d’erreur, afficher les messages
-    if ($form->isSubmitted() && !$form->isValid()) {
-        $this->addFlash('error', 'Erreur de validation. Vérifiez les champs.');
-    }
-
-    return $this->render('admin/logement/edit.html.twig', [
-        'logement' => $logement,
-        'form' => $form->createView(),
-    ]);
-}
     #[Route('/{id}', name: 'delete', methods: ['POST'])]
     public function delete(Request $request, Logement $logement, EntityManagerInterface $entityManager): Response
     {

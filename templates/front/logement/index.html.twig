@@ -5,7 +5,7 @@
 {% block stylesheets %}
     {{ parent() }}
     <style>
-        /* ========== STYLES FLIP CARD (inchangés) ========== */
+        /* ========== STYLES FLIP CARD ========== */
         .flip-card {
             background-color: transparent;
             width: 100%;
@@ -13,7 +13,6 @@
             perspective: 1000px;
             margin-bottom: 30px;
         }
-
         .flip-card-inner {
             position: relative;
             width: 100%;
@@ -25,11 +24,9 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.1);
             border: 2px solid #23779C;
         }
-
         .flip-card:hover .flip-card-inner {
             transform: rotateY(180deg);
         }
-
         .flip-card-front, .flip-card-back {
             position: absolute;
             width: 100%;
@@ -38,19 +35,16 @@
             border-radius: 20px;
             overflow: hidden;
         }
-
         .flip-card-front {
             background-color: #fff;
             color: #333;
         }
-
         .flip-card-front-img {
             height: 220px;
             background-size: cover;
             background-position: center;
             position: relative;
         }
-
         .price-badge {
             position: absolute;
             bottom: 15px;
@@ -64,26 +58,22 @@
             box-shadow: 0 2px 8px rgba(0,0,0,0.2);
             z-index: 2;
         }
-
         .flip-card-front-content {
             padding: 20px;
             text-align: left;
         }
-
         .flip-card-front-title {
             font-size: 1.3rem;
             font-weight: 700;
             color: #1f2d3d;
             margin-bottom: 5px;
         }
-
         .flip-card-front-type {
             color: #23779C;
             font-size: 0.85rem;
             font-weight: 600;
             margin-bottom: 10px;
         }
-
         .flip-card-front-location {
             color: #6c757d;
             font-size: 0.9rem;
@@ -92,7 +82,6 @@
             gap: 5px;
             margin-bottom: 15px;
         }
-
         .flip-card-back {
             background: linear-gradient(135deg, #23779C, #3D94CA);
             color: white;
@@ -103,14 +92,12 @@
             padding: 25px;
             text-align: left;
         }
-
         .flip-card-back h3 {
             font-size: 1.4rem;
             font-weight: 700;
             margin-bottom: 15px;
             color: white;
         }
-
         .flip-card-back p {
             margin-bottom: 12px;
             font-size: 0.95rem;
@@ -118,7 +105,6 @@
             align-items: center;
             gap: 10px;
         }
-
         .btn-reserver {
             display: block;
             background: white;
@@ -135,13 +121,11 @@
             cursor: pointer;
             width: 100%;
         }
-
         .btn-reserver:hover {
             background: #f0f0f0;
             transform: scale(1.02);
             color: #1a5c7a;
         }
-
         .equipement-badge {
             display: inline-block;
             background: rgba(255,255,255,0.2);
@@ -153,7 +137,7 @@
             margin-bottom: 6px;
         }
 
-        /* ========== MODALE PERSONNALISÉE ========== */
+        /* ========== MODALE ========== */
         .modal-overlay {
             display: none;
             position: fixed;
@@ -192,6 +176,64 @@
         body.modal-open {
             overflow: hidden;
         }
+
+        /* ========== STYLES RECHERCHE DYNAMIQUE ========== */
+        .custom-input, .custom-select {
+            border: none;
+            outline: none;
+            border-radius: 15px;
+            padding: 1em;
+            background-color: #ccc;
+            box-shadow: inset 2px 5px 10px rgba(0,0,0,0.3);
+            transition: 300ms ease-in-out;
+            width: 100%;
+            font-size: 1rem;
+        }
+        .custom-input:focus, .custom-select:focus {
+            background-color: white;
+            transform: scale(1.05);
+            box-shadow: 13px 13px 100px #969696, -13px -13px 100px #ffffff;
+        }
+        .search-wrapper {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+        .search-wrapper .search-field {
+            flex: 2;
+            min-width: 200px;
+        }
+        .search-wrapper .type-field {
+            flex: 1;
+            min-width: 180px;
+        }
+        .search-wrapper .sort-field {
+            flex: 1;
+            min-width: 180px;
+        }
+        @media (max-width: 768px) {
+            .search-wrapper { flex-direction: column; gap: 15px; }
+        }
+
+        /* Message dans la modale */
+        .modal-message {
+            padding: 12px;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            font-size: 0.9rem;
+        }
+        .modal-message.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .modal-message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
     </style>
 {% endblock %}
 
@@ -200,10 +242,7 @@
 <!-- NAVBAR -->
 <nav class="navbar navbar-expand-lg navbar-dark ftco_navbar ftco-navbar-light" id="ftco-navbar">
     <div class="container">
-        <a class="navbar-brand" href="{{ path('app_front_home') }}">
-            Horozia
-            <span>TRAVEL AGENCY</span>
-        </a>
+        <a class="navbar-brand" href="{{ path('app_front_home') }}">Horozia<span>TRAVEL AGENCY</span></a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#ftco-nav"
                 aria-controls="ftco-nav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="fa fa-bars"></span> Menu
@@ -213,6 +252,14 @@
                 <li class="nav-item"><a href="{{ path('app_front_home') }}" class="nav-link">Accueil</a></li>
                 <li class="nav-item"><a href="{{ path('app_front_home') }}#voyages" class="nav-link">Voyages</a></li>
                 <li class="nav-item active"><a href="{{ path('app_front_logement_index') }}" class="nav-link">Logement</a></li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="reservationsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        Mes réservations
+                    </a>
+                    <ul class="dropdown-menu" aria-labelledby="reservationsDropdown">
+                        <li><a class="dropdown-item" href="{{ path('app_front_reservation_index') }}">Voir mes réservations</a></li>
+                    </ul>
+                </li>
                 <li class="nav-item"><a href="{{ path('app_front_home') }}#services" class="nav-link">Services</a></li>
                 <li class="nav-item"><a href="{{ path('app_front_home') }}#contact" class="nav-link">Contact</a></li>
             </ul>
@@ -220,7 +267,7 @@
     </div>
 </nav>
 
-<!-- HERO SECTION -->
+<!-- HERO SECTION avec barre de recherche -->
 <section class="hero-wrap js-fullheight" style="background-image: url('{{ asset('front/pacific/images/back.jpg') }}');">
     <div class="overlay"></div>
     <div class="container">
@@ -228,16 +275,36 @@
             <div class="col-md-8 ftco-animate">
                 <span class="subheading">Bienvenue chez Horozia</span>
                 <h1 class="mb-4">Découvrez votre prochain logement</h1>
-                <p class="mb-4">
-                    Horozia vous propose des hébergements soigneusement sélectionnés, une réservation simple
-                    et une expérience moderne pour vos séjours.
-                </p>
+                <p class="mb-4">Horozia vous propose des hébergements soigneusement sélectionnés, une réservation simple et une expérience moderne pour vos séjours.</p>
+
+                <form id="filtersForm" method="get" action="{{ path('app_front_logement_index') }}" class="search-wrapper">
+                    <div class="search-field">
+                        <input type="text" name="q" id="searchInput" class="custom-input" placeholder="Rechercher par nom, adresse ou type..." value="{{ currentSearch }}">
+                    </div>
+                    <div class="type-field">
+                        <select name="type" id="typeSelect" class="custom-select">
+                            <option value="tous" {% if currentType == 'tous' or currentType is empty %}selected{% endif %}>Tous les types</option>
+                            {% for typeOption in allTypes %}
+                                <option value="{{ typeOption }}" {% if currentType == typeOption %}selected{% endif %}>
+                                    {{ typeOption|capitalize }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="sort-field">
+                        <select name="sort" id="sortSelect" class="custom-select">
+                            <option value="" {% if currentSort is empty %}selected{% endif %}>Trier par défaut</option>
+                            <option value="prix_asc" {% if currentSort == 'prix_asc' %}selected{% endif %}>Prix croissant</option>
+                            <option value="prix_desc" {% if currentSort == 'prix_desc' %}selected{% endif %}>Prix décroissant</option>
+                        </select>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
 </section>
 
-<!-- LISTE DES LOGEMENTS (CARTES FLIP) -->
+<!-- LISTE DES LOGEMENTS -->
 <section class="ftco-section">
     <div class="container">
         <div class="row justify-content-center pb-4">
@@ -252,7 +319,6 @@
                 <div class="col-md-4 ftco-animate mb-4">
                     <div class="flip-card">
                         <div class="flip-card-inner">
-                            <!-- Face avant -->
                             <div class="flip-card-front">
                                 <div class="flip-card-front-img" style="background-image: url('{{ logement.image ? logement.image : asset('front/pacific/images/destination-1.jpg') }}');">
                                     <div class="price-badge">{{ logement.tarifNuit|number_format(0, ',', ' ') }} DT / nuit</div>
@@ -265,8 +331,6 @@
                                     </div>
                                 </div>
                             </div>
-
-                            <!-- Face arrière -->
                             <div class="flip-card-back">
                                 <div>
                                     <h3>{{ logement.nom }}</h3>
@@ -319,10 +383,7 @@
         <div class="row">
             <div class="col-md-4 mb-4">
                 <h2 class="ftco-heading-2 text-white">Horozia</h2>
-                <p class="text-white-50">
-                    Horozia est une plateforme dédiée à la gestion des voyages et des réservations,
-                    offrant une expérience élégante et moderne aux voyageurs.
-                </p>
+                <p class="text-white-50">Horozia est une plateforme dédiée à la gestion des voyages et des réservations, offrant une expérience élégante et moderne aux voyageurs.</p>
             </div>
             <div class="col-md-4 mb-4">
                 <h2 class="ftco-heading-2 text-white">Liens rapides</h2>
@@ -330,14 +391,6 @@
                     <li><a href="{{ path('app_front_home') }}" class="text-white-50">Accueil</a></li>
                     <li><a href="{{ path('app_front_home') }}#voyages" class="text-white-50">Voyages</a></li>
                     <li><a href="{{ path('app_front_logement_index') }}" class="text-white-50">Logement</a></li>
-                    <li class="nav-item dropdown">
-    <a class="nav-link dropdown-toggle" href="#" id="reservationsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-        Mes réservations
-    </a>
-    <ul class="dropdown-menu" aria-labelledby="reservationsDropdown">
-        <li><a class="dropdown-item" href="{{ path('app_front_reservation_index') }}">Voir mes réservations</a></li>
-    </ul>
-</li>
                     <li><a href="{{ path('app_front_home') }}#services" class="text-white-50">Services</a></li>
                     <li><a href="{{ path('app_front_home') }}#contact" class="text-white-50">Contact</a></li>
                 </ul>
@@ -361,8 +414,30 @@
 
 {% block javascripts %}
     {{ parent() }}
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-        // Gestion de la modale
+        // Variables globales
+        const isConnected = {{ isConnected|default(false) ? 'true' : 'false' }};
+        const loginUrl = "/login";
+
+        // ========== SOUMISSION AUTOMATIQUE (recherche) ==========
+        const searchForm = document.getElementById('filtersForm');
+        const searchInput = document.getElementById('searchInput');
+        const typeSelect = document.getElementById('typeSelect');
+        const sortSelect = document.getElementById('sortSelect');
+
+        let timeoutId = null;
+        function submitSearchForm() { searchForm.submit(); }
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                if (timeoutId) clearTimeout(timeoutId);
+                timeoutId = setTimeout(submitSearchForm, 500);
+            });
+        }
+        if (typeSelect) typeSelect.addEventListener('change', submitSearchForm);
+        if (sortSelect) sortSelect.addEventListener('change', submitSearchForm);
+
+        // ========== GESTION DE LA MODALE ==========
         const modalOverlay = document.getElementById('reservationModalOverlay');
         const modalContent = document.getElementById('modalContent');
         const closeModalBtn = document.querySelector('.modal-close');
@@ -371,19 +446,29 @@
             modalOverlay.classList.add('active');
             document.body.classList.add('modal-open');
         }
-
         function closeModal() {
             modalOverlay.classList.remove('active');
             document.body.classList.remove('modal-open');
             modalContent.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Chargement...</span></div></div>';
         }
-
         if (closeModalBtn) closeModalBtn.addEventListener('click', closeModal);
         modalOverlay.addEventListener('click', (e) => { if (e.target === modalOverlay) closeModal(); });
 
-        // Chargement du formulaire dans la modale
+        // ========== BOUTONS "RÉSERVER" ==========
         document.querySelectorAll('.btn-reserver').forEach(btn => {
             btn.addEventListener('click', function() {
+                if (!isConnected) {
+                    Swal.fire({
+                        title: 'Connexion requise',
+                        text: 'Veuillez vous connecter pour effectuer une réservation.',
+                        icon: 'warning',
+                        confirmButtonColor: '#23779C',
+                        confirmButtonText: 'Se connecter'
+                    }).then((result) => {
+                        if (result.isConfirmed) window.location.href = loginUrl;
+                    });
+                    return;
+                }
                 const logementId = this.getAttribute('data-id');
                 fetch(`/logement/${logementId}/reserver-modal`, {
                     method: 'GET',
@@ -393,112 +478,221 @@
                 .then(html => {
                     modalContent.innerHTML = html;
                     openModal();
-                    // Attendre que le DOM soit mis à jour
-                    setTimeout(() => initReservationForm(), 50);
+                    setTimeout(() => initReservationForm(), 100);
                 })
                 .catch(error => {
-                    console.error('Erreur:', error);
-                    modalContent.innerHTML = '<div class="alert alert-danger">Une erreur est survenue.</div>';
-                    openModal();
+                    console.error(error);
+                    Swal.fire({
+                        title: 'Erreur',
+                        text: 'Impossible de charger le formulaire.',
+                        icon: 'error',
+                        confirmButtonColor: '#23779C'
+                    });
+                    closeModal();
                 });
             });
         });
 
-      function initReservationForm() {
-    const dateArrivee = document.getElementById('date_arrivee_modal');
-    const dateDepart = document.getElementById('date_depart_modal');
-    const totalSpan = document.getElementById('total_modal');
-    const nuitsSpan = document.getElementById('nuits_modal');
-    const form = document.getElementById('reservationFormModal');
-    const formErrorsDiv = document.getElementById('formErrors');
-    const modaliteRadios = document.querySelectorAll('input[name="modalite"]');
-    
-    if (!dateArrivee || !dateDepart) return;
-    
-    const prixInput = document.getElementById('prix_par_nuit_data');
-    const prixParNuit = prixInput ? parseFloat(prixInput.value) : 0;
+        // ========== FORMULAIRE DE RÉSERVATION ==========
+        function initReservationForm() {
+            const dateArrivee = document.getElementById('date_arrivee_modal');
+            const dateDepart = document.getElementById('date_depart_modal');
+            const totalSpan = document.getElementById('total_modal');
+            const nuitsSpan = document.getElementById('nuits_modal');
+            const reservationForm = document.getElementById('reservationFormModal');
+            const formErrorsDiv = document.getElementById('formErrors');
+            const modaliteRadios = document.querySelectorAll('input[name="modalite"]');
 
-    // Calcul du total
-    function calculerTotal() {
-        if (dateArrivee.value && dateDepart.value) {
-            const arrivee = new Date(dateArrivee.value);
-            const depart = new Date(dateDepart.value);
-            if (depart > arrivee) {
-                const nuits = (depart - arrivee) / (1000 * 60 * 60 * 24);
-                const total = nuits * prixParNuit;
-                if (nuitsSpan) nuitsSpan.innerText = nuits;
-                if (totalSpan) totalSpan.innerText = total.toFixed(2) + ' DT';
-                return;
+            if (!dateArrivee || !dateDepart) return;
+
+            const prixInput = document.getElementById('prix_par_nuit_data');
+            const prixParNuit = prixInput ? parseFloat(prixInput.value) : 0;
+
+            function calculerTotal() {
+                if (dateArrivee.value && dateDepart.value) {
+                    const arrivee = new Date(dateArrivee.value);
+                    const depart = new Date(dateDepart.value);
+                    if (depart > arrivee) {
+                        const nuits = (depart - arrivee) / (1000 * 60 * 60 * 24);
+                        const total = nuits * prixParNuit;
+                        if (nuitsSpan) nuitsSpan.innerText = nuits;
+                        if (totalSpan) totalSpan.innerText = total.toFixed(2) + ' DT';
+                        return;
+                    }
+                }
+                if (nuitsSpan) nuitsSpan.innerText = '0';
+                if (totalSpan) totalSpan.innerText = '0 DT';
             }
-        }
-        if (nuitsSpan) nuitsSpan.innerText = '0';
-        if (totalSpan) totalSpan.innerText = '0 DT';
-    }
 
-    // Validation
-    function validateForm(event) {
-        let isValid = true;
-        let errorMessages = [];
+            let isSubmitting = false;
 
-        dateArrivee.classList.remove('is-invalid');
-        dateDepart.classList.remove('is-invalid');
-        document.getElementById('modaliteError').style.display = 'none';
-        formErrorsDiv.classList.add('d-none');
-        formErrorsDiv.innerHTML = '';
-
-        // Date d'arrivée
-        if (!dateArrivee.value) {
-            errorMessages.push('La date d\'arrivée est obligatoire.');
-            dateArrivee.classList.add('is-invalid');
-            isValid = false;
-        } else {
-            const arrivee = new Date(dateArrivee.value);
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            if (arrivee < today) {
-                errorMessages.push('La date d\'arrivée ne peut pas être dans le passé.');
-                dateArrivee.classList.add('is-invalid');
-                isValid = false;
+            // Fonction pour afficher un message dans la modale (sous le formulaire)
+            function showModalMessage(message, type = 'success') {
+                // Supprimer l'ancien message s'il existe
+                const oldMsg = document.getElementById('dynamicModalMessage');
+                if (oldMsg) oldMsg.remove();
+                // Créer le nouveau message
+                const msgDiv = document.createElement('div');
+                msgDiv.id = 'dynamicModalMessage';
+                msgDiv.className = `modal-message ${type}`;
+                msgDiv.innerText = message;
+                // Insérer après le bouton ou avant le formulaire
+                const submitBtn = reservationForm.querySelector('button[type="submit"]');
+                if (submitBtn) {
+                    submitBtn.parentNode.insertBefore(msgDiv, submitBtn.nextSibling);
+                } else {
+                    reservationForm.appendChild(msgDiv);
+                }
+                // Scroll pour voir le message
+                msgDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             }
-        }
 
-        // Date de départ
-        if (!dateDepart.value) {
-            errorMessages.push('La date de départ est obligatoire.');
-            dateDepart.classList.add('is-invalid');
-            isValid = false;
-        } else if (dateArrivee.value) {
-            const arrivee = new Date(dateArrivee.value);
-            const depart = new Date(dateDepart.value);
-            if (depart <= arrivee) {
-                errorMessages.push('La date de départ doit être postérieure à la date d\'arrivée.');
-                dateDepart.classList.add('is-invalid');
-                isValid = false;
+            function clearModalMessage() {
+                const oldMsg = document.getElementById('dynamicModalMessage');
+                if (oldMsg) oldMsg.remove();
             }
-        }
 
-        // Modalité
-        let modaliteChecked = false;
-        modaliteRadios.forEach(radio => { if (radio.checked) modaliteChecked = true; });
-        if (!modaliteChecked) {
-            errorMessages.push('Veuillez choisir une modalité de paiement.');
-            document.getElementById('modaliteError').style.display = 'block';
-            isValid = false;
-        }
+            async function submitReservation(event) {
+                event.preventDefault();
+                if (isSubmitting) return;
+                isSubmitting = true;
+                clearModalMessage();
 
-        if (!isValid) {
-            event.preventDefault();
-            formErrorsDiv.innerHTML = errorMessages.join('<br>');
-            formErrorsDiv.classList.remove('d-none');
-            form.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-    }
+                // Réinitialisation
+                dateArrivee.classList.remove('is-invalid');
+                dateDepart.classList.remove('is-invalid');
+                const modaliteError = document.getElementById('modaliteError');
+                if (modaliteError) modaliteError.style.display = 'none';
+                if (formErrorsDiv) {
+                    formErrorsDiv.classList.add('d-none');
+                    formErrorsDiv.innerHTML = '';
+                }
 
-    form.addEventListener('submit', validateForm);
-    dateArrivee.addEventListener('change', calculerTotal);
-    dateDepart.addEventListener('change', calculerTotal);
-    calculerTotal();
-}
+                let errorMessages = [];
+
+                // Validation date arrivée
+                if (!dateArrivee.value) {
+                    errorMessages.push('La date d\'arrivée est obligatoire.');
+                    dateArrivee.classList.add('is-invalid');
+                } else {
+                    const arrivee = new Date(dateArrivee.value);
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    if (arrivee < today) {
+                        errorMessages.push('La date d\'arrivée ne peut pas être dans le passé.');
+                        dateArrivee.classList.add('is-invalid');
+                    }
+                }
+
+                // Validation date départ
+                if (!dateDepart.value) {
+                    errorMessages.push('La date de départ est obligatoire.');
+                    dateDepart.classList.add('is-invalid');
+                } else if (dateArrivee.value) {
+                    const arrivee = new Date(dateArrivee.value);
+                    const depart = new Date(dateDepart.value);
+                    if (depart <= arrivee) {
+                        errorMessages.push('La date de départ doit être postérieure à la date d\'arrivée.');
+                        dateDepart.classList.add('is-invalid');
+                    }
+                }
+
+                // Validation modalité
+                let selectedModalite = null;
+                modaliteRadios.forEach(radio => {
+                    if (radio.checked) selectedModalite = radio.value;
+                });
+                if (!selectedModalite) {
+                    errorMessages.push('Veuillez choisir une modalité de paiement.');
+                    if (modaliteError) modaliteError.style.display = 'block';
+                }
+
+                if (errorMessages.length > 0) {
+                    if (formErrorsDiv) {
+                        formErrorsDiv.innerHTML = errorMessages.join('<br>');
+                        formErrorsDiv.classList.remove('d-none');
+                    }
+                    isSubmitting = false;
+                    return;
+                }
+
+                const logementId = reservationForm.querySelector('input[name="logement_id"]').value;
+                let paiementImmediat = false;
+
+                // Choix pour paiement en ligne (SweetAlert)
+                if (selectedModalite === 'En ligne') {
+                    const result = await Swal.fire({
+                        title: 'Paiement en ligne',
+                        text: 'Choisissez une option :',
+                        icon: 'question',
+                        showDenyButton: true,
+                        showCancelButton: false,
+                        confirmButtonText: 'Payer maintenant',
+                        denyButtonText: 'Payer plus tard',
+                        confirmButtonColor: '#23779C',
+                        denyButtonColor: '#6c757d'
+                    });
+                    if (result.isConfirmed) {
+                        paiementImmediat = true;
+                    } else if (result.isDenied) {
+                        paiementImmediat = false;
+                    } else {
+                        isSubmitting = false;
+                        return;
+                    }
+                }
+
+                const data = {
+                    logement_id: logementId,
+                    date_arrivee: dateArrivee.value,
+                    date_depart: dateDepart.value,
+                    modalite: selectedModalite,
+                    paiement_immediat: paiementImmediat
+                };
+
+                try {
+                    const response = await fetch('/reservation/create-ajax', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                        body: JSON.stringify(data)
+                    });
+
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        console.error('HTTP error:', response.status, errorText);
+                        showModalMessage(`Erreur serveur (${response.status})`, 'error');
+                        isSubmitting = false;
+                        return;
+                    }
+
+                    const result = await response.json();
+                    if (result.success) {
+                        showModalMessage(result.message, 'success');
+                        // Fermer la modale après 2 secondes et rediriger
+                        setTimeout(() => {
+                            closeModal();
+                            window.location.href = "{{ path('app_front_reservation_index') }}";
+                        }, 2000);
+                    } else {
+                        showModalMessage(result.message, 'error');
+                        isSubmitting = false;
+                    }
+                } catch (err) {
+                    console.error(err);
+                    showModalMessage('Une erreur technique est survenue. Veuillez réessayer.', 'error');
+                    isSubmitting = false;
+                }
+            }
+
+            if (reservationForm) {
+                reservationForm.removeEventListener('submit', reservationForm.submitHandler);
+                reservationForm.submitHandler = submitReservation;
+                reservationForm.addEventListener('submit', reservationForm.submitHandler);
+            }
+
+            dateArrivee.addEventListener('change', calculerTotal);
+            dateDepart.addEventListener('change', calculerTotal);
+            calculerTotal();
+        }
     </script>
-
 {% endblock %}

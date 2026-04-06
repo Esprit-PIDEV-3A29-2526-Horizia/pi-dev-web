@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Controller;
 
 use App\Entity\Reservationlog;
@@ -71,7 +70,7 @@ class MesReservationslogController extends AbstractController
                             </div>
                         </div>
                         <div class="card-actions">
-                            <a href="#" class="btn-action" title="Modifier"><i class="fa fa-pencil"></i> Modifier</a>
+                            <a href="#" class="btn-action btn-edit" data-id="' . $reservation->getIdreslog() . '" title="Modifier"><i class="fa fa-pencil"></i> Modifier</a>
                             <a href="#" class="btn-action btn-delete" data-id="' . $reservation->getIdreslog() . '" title="Supprimer"><i class="fa fa-trash"></i> Supprimer</a>';
             if ($reservation->getStatus() == 'confirmée') {
                 $html .= '<a href="#" class="btn-action btn-qr" data-id="' . $reservation->getIdreslog() . '" title="QR Code"><i class="fa fa-qrcode"></i> QR Code</a>';
@@ -116,26 +115,26 @@ class MesReservationslogController extends AbstractController
     }
 
     #[Route('/reservation/qrcode/{id}', name: 'app_front_reservation_qrcode', methods: ['GET'])]
-public function qrcode(int $id, EntityManagerInterface $em, QrCodeService $qrCodeService): Response
-{
-    $reservation = $em->getRepository(Reservationlog::class)->find($id);
-    if (!$reservation || $reservation->getUser()->getId() !== 4) {
-        throw $this->createNotFoundException();
-    }
-    
-    $content = "Réservation #" . $reservation->getIdreslog() . "\n";
-    $content .= "Logement: " . $reservation->getLogement()->getNom() . "\n";
-    $content .= "Arrivée: " . $reservation->getDateDebut()->format('d/m/Y') . "\n";
-    $content .= "Départ: " . $reservation->getDateFin()->format('d/m/Y') . "\n";
-    $content .= "Montant: " . number_format($reservation->getMontant(), 2, ',', ' ') . " DT\n";
-    $content .= "Modalité: " . $reservation->getModalites();
-    
-    $qrCodeDataUri = $qrCodeService->generateQrCodeDataUri($content);
-    
-    $html = '
+    public function qrcode(int $id, EntityManagerInterface $em, QrCodeService $qrCodeService): Response
+    {
+        $reservation = $em->getRepository(Reservationlog::class)->find($id);
+        if (!$reservation || $reservation->getUser()->getId() !== 4) {
+            throw $this->createNotFoundException();
+        }
+        
+        $content = "Réservation \n";
+        $content .= "Logement: " . $reservation->getLogement()->getNom() . "\n";
+        $content .= "Arrivée: " . $reservation->getDateDebut()->format('d/m/Y') . "\n";
+        $content .= "Départ: " . $reservation->getDateFin()->format('d/m/Y') . "\n";
+        $content .= "Montant: " . number_format($reservation->getMontant(), 2, ',', ' ') . " DT\n";
+        $content .= "Modalité: " . $reservation->getModalites();
+        
+        $qrCodeDataUri = $qrCodeService->generateQrCodeDataUri($content);
+        
+        $html = '
         <div class="text-center">
             <img src="' . $qrCodeDataUri . '" class="img-fluid mb-3" style="max-width: 250px;">
-            <h5>Réservation #' . $reservation->getIdreslog() . '</h5>
+            <h5>Réservation </h5>
             <p><strong>' . htmlspecialchars($reservation->getLogement()->getNom()) . '</strong></p>
             <p>' . $reservation->getDateDebut()->format('d/m/Y') . ' → ' . $reservation->getDateFin()->format('d/m/Y') . '</p>
             <p>' . number_format($reservation->getMontant(), 2, ',', ' ') . ' DT</p>
@@ -169,9 +168,10 @@ public function qrcode(int $id, EntityManagerInterface $em, QrCodeService $qrCod
                 });
             });
         </script>';
-    
-    return new Response($html);
-}
+        
+        return new Response($html);
+    }
+
     #[Route('/reservation/send-email/{id}', name: 'app_front_reservation_send_email', methods: ['POST'])]
     public function sendEmail(int $id, EntityManagerInterface $em, PdfService $pdfService, EmailService $emailService): JsonResponse
     {
@@ -180,13 +180,69 @@ public function qrcode(int $id, EntityManagerInterface $em, QrCodeService $qrCod
             return $this->json(['success' => false, 'error' => 'Réservation non trouvée'], 404);
         }
         
-        $user = $reservation->getUser();
-        $pdfContent = $pdfService->generateReservationPdf($reservation);
-        $emailSent = $emailService->sendReservationEmail($user->getEmail(), $reservation, $pdfContent);
-        
-        if ($emailSent) {
-            return $this->json(['success' => true]);
+        try {
+            $pdfContent = $pdfService->generateReservationPdf($reservation);
+            $success = $emailService->sendReservationEmail($reservation->getUser()->getEmail(), $reservation, $pdfContent);
+            
+            if ($success) {
+                return $this->json(['success' => true, 'message' => '✅ Email envoyé avec succès !']);
+            } else {
+                return $this->json(['success' => false, 'error' => '❌ Échec de l\'envoi. Vérifiez les logs.']);
+            }
+        } catch (\Exception $e) {
+            return $this->json(['success' => false, 'error' => $e->getMessage()]);
         }
-        return $this->json(['success' => false, 'error' => 'Erreur lors de l\'envoi de l\'email']);
+    }
+
+    #[Route('/reservation/edit-modal/{id}', name: 'app_front_reservation_edit_modal', methods: ['GET'])]
+    public function editModal(int $id, EntityManagerInterface $em): Response
+    {
+        $reservation = $em->getRepository(Reservationlog::class)->find($id);
+        if (!$reservation || $reservation->getUser()->getId() !== 4) {
+            throw $this->createNotFoundException();
+        }
+        $logement = $reservation->getLogement();
+
+        $html = $this->renderView('front/reservationlog/edit.html.twig', [
+            'reservation' => $reservation,
+            'logement' => $logement,
+        ]);
+        return new Response($html);
+    }
+
+    #[Route('/reservation/edit/{id}', name: 'app_front_reservation_edit', methods: ['POST'])]
+    public function edit(int $id, Request $request, EntityManagerInterface $em): JsonResponse
+    {
+        $reservation = $em->getRepository(Reservationlog::class)->find($id);
+        if (!$reservation || $reservation->getUser()->getId() !== 4) {
+            return $this->json(['success' => false, 'error' => 'Réservation non trouvée'], 404);
+        }
+        $logement = $reservation->getLogement();
+
+        $dateArrivee = \DateTime::createFromFormat('Y-m-d', $request->request->get('date_arrivee'));
+        $dateDepart  = \DateTime::createFromFormat('Y-m-d', $request->request->get('date_depart'));
+        $modalite    = $request->request->get('modalite');
+
+        $errors = [];
+        if (!$dateArrivee || !$dateDepart) {
+            $errors[] = 'Dates invalides.';
+        } elseif ($dateArrivee < new \DateTime() || $dateDepart <= $dateArrivee) {
+            $errors[] = 'Les dates doivent être valides (départ après arrivée, et non passées).';
+        }
+
+        if (!empty($errors)) {
+            return $this->json(['success' => false, 'error' => implode(' ', $errors)]);
+        }
+
+        $nuits = $dateArrivee->diff($dateDepart)->days;
+        $montant = $nuits * $logement->getTarifNuit();
+
+        $reservation->setDateDebut($dateArrivee);
+        $reservation->setDateFin($dateDepart);
+        $reservation->setMontant($montant);
+        $reservation->setModalites($modalite);
+        $em->flush();
+
+        return $this->json(['success' => true, 'message' => 'Réservation modifiée avec succès']);
     }
 }
