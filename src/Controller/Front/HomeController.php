@@ -224,11 +224,11 @@ class HomeController extends AbstractController
     }
 
     #[Route('/mes-reservations', name: 'app_front_mes_reservations')]
-    public function mesReservations(Request $request, ManagerRegistry $doctrine): Response
+    public function mesReservations(Request $request, EntityManagerInterface $entityManager): Response
     {
         $statut = trim((string) $request->query->get('statut', ''));
 
-        $qb = $doctrine->getRepository(Reservation::class)->createQueryBuilder('r')
+        $qb = $entityManager->getRepository(Reservation::class)->createQueryBuilder('r')
             ->leftJoin('r.voyage', 'v')
             ->addSelect('v')
             ->orderBy('r.dateReservation', 'DESC');

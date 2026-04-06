@@ -1,6 +1,7 @@
 security:
     password_hashers:
         Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: 'auto'
+        App\Entity\User: 'auto'
 
     providers:
         app_user_provider:
@@ -16,6 +17,7 @@ security:
         main:
             lazy: true
             provider: app_user_provider
+            security: false
 
             form_login:
                 login_path: app_login
@@ -37,3 +39,5 @@ security:
         - { path: ^/mes-reservations, roles: ROLE_USER }
         - { path: ^/admin, roles: ROLE_ADMIN }
         - { path: ^/, roles: PUBLIC_ACCESS }
+        - { path: ^/events, roles: PUBLIC_ACCESS }
+        - { path: ^/event/, roles: PUBLIC_ACCESS }

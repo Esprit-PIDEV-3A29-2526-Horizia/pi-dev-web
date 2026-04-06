@@ -2,120 +2,77 @@
 
 namespace App\Entity;
 
-use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Doctrine\Common\Collections\Collection;
+use App\Entity\Participation;
+use Symfony\Component\Validator\Constraints as Assert;
+use Symfony\Component\Validator\Context\ExecutionContextInterface;
 
-/**
- * Events
- *
- * @ORM\Table(name="events")
- * @ORM\Entity
- */
+#[ORM\Entity]
 class Events
 {
-    /**
-     * @var int
-     *
-     * @ORM\Column(name="id_event", type="integer", nullable=false)
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="IDENTITY")
-     */
-    private $idEvent;
+    #[ORM\Id]
+    #[ORM\GeneratedValue(strategy: "IDENTITY")]
+    #[ORM\Column(type: "integer")]
+    private int $id_event;
 
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="titre", type="string", length=150, nullable=false)
-     */
-    private $titre;
+    #[ORM\Column(type: "string", length: 150)]
+    private string $titre;
 
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="description", type="text", length=65535, nullable=false)
-     */
-    private $description;
+    #[ORM\Column(type: "text")]
+    private string $description;
 
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="categorie", type="string", length=150, nullable=false)
-     */
-    private $categorie;
+    #[ORM\Column(type: "string", length: 150)]
+    private string $categorie;
 
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="location", type="string", length=150, nullable=false)
-     */
-    private $location;
+    #[ORM\Column(type: "string", length: 150)]
+    private string $location;
 
-    /**
-     * @var \DateTime
-     *
-     * @ORM\Column(name="date_debut", type="datetime", nullable=false)
-     */
-    private $dateDebut;
+    #[ORM\Column(type: "datetime")]
+    private \DateTimeInterface $date_debut;
 
-    /**
-     * @var \DateTime
-     *
-     * @ORM\Column(name="date_fin", type="datetime", nullable=false)
-     */
-    private $dateFin;
+    #[ORM\Column(type: "datetime")]
+    private \DateTimeInterface $date_fin;
 
-    /**
-     * @var float
-     *
-     * @ORM\Column(name="prix", type="float", precision=10, scale=0, nullable=false)
-     */
-    private $prix;
+    #[ORM\Column(type: "string")]
+    private string $prix;
 
-    /**
-     * @var int
-     *
-     * @ORM\Column(name="capacite_max", type="integer", nullable=false)
-     */
-    private $capaciteMax;
+    #[ORM\Column(type: "integer")]
+    private int $capacite_max;
 
-    /**
-     * @var int
-     *
-     * @ORM\Column(name="places_restantes", type="integer", nullable=false)
-     */
-    private $placesRestantes;
+    #[ORM\Column(type: "integer")]
+    private int $places_restantes;
 
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="image_url", type="string", length=255, nullable=false)
-     */
-    private $imageUrl;
+    #[ORM\Column(type: "string", length: 255)]
+    private string $image_url;
 
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="statut", type="string", length=50, nullable=false, options={"default"="'en_attente'"})
-     */
-    private $statut = '\'en_attente\'';
+    #[ORM\Column(type: "string", length: 50)]
+    private string $statut;
 
-    /**
-     * @var int
-     *
-     * @ORM\Column(name="id_createur", type="integer", nullable=false)
-     */
-    private $idCreateur;
+    #[ORM\Column(type: "integer")]
+    private int $id_createur;
 
-    /**
-     * @var \DateTime
-     *
-     * @ORM\Column(name="created_at", type="datetime", nullable=false, options={"default"="CURRENT_TIMESTAMP"})
-     */
-    private $createdAt = 'CURRENT_TIMESTAMP';
+    #[ORM\Column(type: "datetime")]
+    private \DateTimeInterface $created_at;
 
-    public function getIdEvent(): ?int
+    #[ORM\OneToMany(mappedBy: "id_event", targetEntity: Participation::class)]
+    private Collection $participations;
+
+    public function __construct()
     {
-        return $this->idEvent;
+        $this->participations = new \Doctrine\Common\Collections\ArrayCollection();
+    }
+
+    // Getters and Setters
+    public function getId_event(): ?int
+    {
+        return $this->id_event;
+    }
+
+    public function setId_event(int $value): self
+    {
+        $this->id_event = $value;
+        return $this;
     }
 
     public function getTitre(): ?string
@@ -123,10 +80,9 @@ class Events
         return $this->titre;
     }
 
-    public function setTitre(string $titre): static
+    public function setTitre(string $value): self
     {
-        $this->titre = $titre;
-
+        $this->titre = $value;
         return $this;
     }
 
@@ -135,10 +91,9 @@ class Events
         return $this->description;
     }
 
-    public function setDescription(string $description): static
+    public function setDescription(string $value): self
     {
-        $this->description = $description;
-
+        $this->description = $value;
         return $this;
     }
 
@@ -147,10 +102,9 @@ class Events
         return $this->categorie;
     }
 
-    public function setCategorie(string $categorie): static
+    public function setCategorie(string $value): self
     {
-        $this->categorie = $categorie;
-
+        $this->categorie = $value;
         return $this;
     }
 
@@ -159,82 +113,75 @@ class Events
         return $this->location;
     }
 
-    public function setLocation(string $location): static
+    public function setLocation(string $value): self
     {
-        $this->location = $location;
-
+        $this->location = $value;
         return $this;
     }
 
-    public function getDateDebut(): ?\DateTimeInterface
+    public function getDate_debut(): ?\DateTimeInterface
     {
-        return $this->dateDebut;
+        return $this->date_debut;
     }
 
-    public function setDateDebut(\DateTimeInterface $dateDebut): static
+    public function setDate_debut(\DateTimeInterface $value): self
     {
-        $this->dateDebut = $dateDebut;
-
+        $this->date_debut = $value;
         return $this;
     }
 
-    public function getDateFin(): ?\DateTimeInterface
+    public function getDate_fin(): ?\DateTimeInterface
     {
-        return $this->dateFin;
+        return $this->date_fin;
     }
 
-    public function setDateFin(\DateTimeInterface $dateFin): static
+    public function setDate_fin(\DateTimeInterface $value): self
     {
-        $this->dateFin = $dateFin;
-
+        $this->date_fin = $value;
         return $this;
     }
 
-    public function getPrix(): ?float
+    public function getPrix(): ?string
     {
         return $this->prix;
     }
 
-    public function setPrix(float $prix): static
+    public function setPrix(string $value): self
     {
-        $this->prix = $prix;
-
+        $this->prix = $value;
         return $this;
     }
 
-    public function getCapaciteMax(): ?int
+    public function getCapacite_max(): ?int
     {
-        return $this->capaciteMax;
+        return $this->capacite_max;
     }
 
-    public function setCapaciteMax(int $capaciteMax): static
+    public function setCapacite_max(int $value): self
     {
-        $this->capaciteMax = $capaciteMax;
-
+        $this->capacite_max = $value;
         return $this;
     }
 
-    public function getPlacesRestantes(): ?int
+    public function getPlaces_restantes(): ?int
     {
-        return $this->placesRestantes;
+        return $this->places_restantes;
     }
 
-    public function setPlacesRestantes(int $placesRestantes): static
+    public function setPlaces_restantes(int $value): self
     {
-        $this->placesRestantes = $placesRestantes;
-
+        $this->places_restantes = $value;
         return $this;
     }
 
-    public function getImageUrl(): ?string
+    public function getImage_url(): ?string
     {
-        return $this->imageUrl;
+        return $this->image_url;
     }
 
-    public function setImageUrl(string $imageUrl): static
+    public function setImage_url(string $value): self
     {
-        $this->imageUrl = $imageUrl;
-
+        $this->image_url = $value;
         return $this;
     }
 
@@ -243,36 +190,88 @@ class Events
         return $this->statut;
     }
 
-    public function setStatut(string $statut): static
+    public function setStatut(string $value): self
     {
-        $this->statut = $statut;
-
+        $this->statut = $value;
         return $this;
     }
 
-    public function getIdCreateur(): ?int
+    public function getId_createur(): ?int
     {
-        return $this->idCreateur;
+        return $this->id_createur;
     }
 
-    public function setIdCreateur(int $idCreateur): static
+    public function setId_createur(int $value): self
     {
-        $this->idCreateur = $idCreateur;
-
+        $this->id_createur = $value;
         return $this;
     }
 
-    public function getCreatedAt(): ?\DateTimeInterface
+    public function getCreated_at(): ?\DateTimeInterface
     {
-        return $this->createdAt;
+        return $this->created_at;
     }
 
-    public function setCreatedAt(\DateTimeInterface $createdAt): static
+    public function setCreated_at(\DateTimeInterface $value): self
     {
-        $this->createdAt = $createdAt;
-
+        $this->created_at = $value;
         return $this;
     }
 
+    public function getParticipations(): Collection
+    {
+        return $this->participations;
+    }
 
+    public function addParticipation(Participation $participation): self
+    {
+        if (!$this->participations->contains($participation)) {
+            $this->participations[] = $participation;
+            $participation->setId_event($this);
+        }
+        return $this;
+    }
+
+    public function removeParticipation(Participation $participation): self
+    {
+        if ($this->participations->removeElement($participation)) {
+            if ($participation->getId_event() === $this) {
+                $participation->setId_event(null);
+            }
+        }
+        return $this;
+    }
+
+    // CamelCase aliases for Symfony Form
+    public function getDateDebut() { return $this->date_debut; }
+    public function setDateDebut($value) { $this->date_debut = $value; return $this; }
+    public function getDateFin() { return $this->date_fin; }
+    public function setDateFin($value) { $this->date_fin = $value; return $this; }
+    public function getCapaciteMax() { return $this->capacite_max; }
+    public function setCapaciteMax($value) { $this->capacite_max = $value; return $this; }
+    public function getPlacesRestantes() { return $this->places_restantes; }
+    public function setPlacesRestantes($value) { $this->places_restantes = $value; return $this; }
+    public function getImageUrl() { return $this->image_url; }
+    public function setImageUrl($value) { $this->image_url = $value; return $this; }
+
+    /**
+     * @Assert\Callback
+     */
+    public function validateDates(ExecutionContextInterface $context): void
+    {
+        // Check date_debut is in the future
+        $now = new \DateTime();
+        if ($this->date_debut && $this->date_debut <= $now) {
+            $context->buildViolation('La date de début doit être dans le futur.')
+                ->atPath('date_debut')
+                ->addViolation();
+        }
+
+        // Check date_fin is after date_debut
+        if ($this->date_debut && $this->date_fin && $this->date_fin <= $this->date_debut) {
+            $context->buildViolation('La date de fin doit être postérieure à la date de début.')
+                ->atPath('date_fin')
+                ->addViolation();
+        }
+    }
 }

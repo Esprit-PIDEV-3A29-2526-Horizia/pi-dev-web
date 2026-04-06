@@ -2,125 +2,108 @@
 
 namespace App\Entity;
 
-use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
-/**
- * Participation
- *
- * @ORM\Table(name="participation", indexes={@ORM\Index(name="fk_participation_event", columns={"id_event"})})
- * @ORM\Entity
- */
+use App\Entity\Events;
+
+#[ORM\Entity]
 class Participation
 {
-    /**
-     * @var int
-     *
-     * @ORM\Column(name="id_participation", type="integer", nullable=false)
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="IDENTITY")
-     */
-    private $idParticipation;
 
-    /**
-     * @var int
-     *
-     * @ORM\Column(name="id_event", type="integer", nullable=false)
-     */
-    private $idEvent;
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: "integer")]
+    private int $id_participation;
 
-    /**
-     * @var int
-     *
-     * @ORM\Column(name="nombre_places", type="integer", nullable=false)
-     */
-    private $nombrePlaces;
+        #[ORM\ManyToOne(targetEntity: Events::class, inversedBy: "participations")]
+    #[ORM\JoinColumn(name: 'id_event', referencedColumnName: 'id_event', onDelete: 'CASCADE')]
+    private Events $id_event;
 
-    /**
-     * @var float
-     *
-     * @ORM\Column(name="montant_total", type="float", precision=10, scale=0, nullable=false)
-     */
-    private $montantTotal;
+    #[ORM\Column(type: "integer")]
+    private int $nombre_places;
 
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="statut", type="string", length=50, nullable=false, options={"default"="'confirmée'"})
-     */
-    private $statut = '\'confirmée\'';
+    #[ORM\Column(type: "string")]
+    private string $montant_total;
 
-    /**
-     * @var \DateTime
-     *
-     * @ORM\Column(name="date_participation", type="datetime", nullable=false, options={"default"="CURRENT_TIMESTAMP"})
-     */
-    private $dateParticipation = 'CURRENT_TIMESTAMP';
+    #[ORM\Column(type: "string", length: 50)]
+    private string $statut;
 
-    public function getIdParticipation(): ?int
+    #[ORM\Column(type: "datetime")]
+    private \DateTimeInterface $date_participation;
+
+    public function getId_participation()
     {
-        return $this->idParticipation;
+        return $this->id_participation;
     }
 
-    public function getIdEvent(): ?int
+    public function setId_participation($value)
     {
-        return $this->idEvent;
+        $this->id_participation = $value;
     }
 
-    public function setIdEvent(int $idEvent): static
+    public function getId_event()
     {
-        $this->idEvent = $idEvent;
-
-        return $this;
+        return $this->id_event;
     }
 
-    public function getNombrePlaces(): ?int
+    public function setId_event($value)
     {
-        return $this->nombrePlaces;
+        $this->id_event = $value;
     }
 
-    public function setNombrePlaces(int $nombrePlaces): static
+    public function getNombre_places()
     {
-        $this->nombrePlaces = $nombrePlaces;
-
-        return $this;
+        return $this->nombre_places;
     }
 
-    public function getMontantTotal(): ?float
+    public function setNombre_places($value)
     {
-        return $this->montantTotal;
+        $this->nombre_places = $value;
     }
 
-    public function setMontantTotal(float $montantTotal): static
+    public function getMontant_total()
     {
-        $this->montantTotal = $montantTotal;
-
-        return $this;
+        return $this->montant_total;
     }
 
-    public function getStatut(): ?string
+    public function setMontant_total($value)
+    {
+        $this->montant_total = $value;
+    }
+
+    public function getStatut()
     {
         return $this->statut;
     }
 
-    public function setStatut(string $statut): static
+    public function setStatut($value)
     {
-        $this->statut = $statut;
-
-        return $this;
+        $this->statut = $value;
     }
 
-    public function getDateParticipation(): ?\DateTimeInterface
+    public function getDate_participation()
     {
-        return $this->dateParticipation;
+        return $this->date_participation;
     }
 
-    public function setDateParticipation(\DateTimeInterface $dateParticipation): static
+    public function setDate_participation($value)
     {
-        $this->dateParticipation = $dateParticipation;
-
-        return $this;
+        $this->date_participation = $value;
     }
 
+    // camelCase aliases for Symfony Form
+    public function getNombrePlaces() { return $this->nombre_places; }
+    public function setNombrePlaces($value) { $this->nombre_places = $value; return $this; }
 
+    public function getMontantTotal() { return $this->montant_total; }
+    public function setMontantTotal($value) { $this->montant_total = $value; return $this; }
+
+    public function getDateParticipation() { return $this->date_participation; }
+    public function setDateParticipation($value) { $this->date_participation = $value; return $this; }
+
+    public function getIdParticipation() { return $this->id_participation; }
+    public function setIdParticipation($value) { $this->id_participation = $value; return $this; }
+
+    public function getIdEvent() { return $this->id_event; }
+    public function setIdEvent($value) { $this->id_event = $value; return $this; }
 }

@@ -1,0 +1,171 @@
+{% extends 'admin/base_admin.html.twig' %}
+
+{% block title %}Modifier {{ event.getTitre() }} - Horozia{% endblock %}
+
+{% block admin_content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h1 class="fw-bold mb-1" style="color:#1f2d3d;">Modifier l'Événement</h1>
+        <p class="text-muted mb-0">{{ event.getTitre() }}</p>
+    </div>
+    <a href="{{ path('app_event_index') }}" class="btn btn-outline-secondary d-flex align-items-center gap-2">
+        <i class="bi bi-arrow-left"></i> Retour
+    </a>
+</div>
+
+<div class="card-horozia p-4" style="max-width:800px;">
+    {{ form_start(form, {attr: {novalidate: 'novalidate'}}) }}
+
+    <div class="row g-3">
+        <div class="col-md-8">
+            <label class="form-label fw-semibold">Titre <span class="text-danger">*</span></label>
+            {{ form_widget(form.titre, {attr: {
+                'class': 'form-control',
+                'minlength': '3',
+                'maxlength': '150',
+                'required': 'required'
+            }}) }}
+            <small class="text-muted">Minimum 3 caractères, maximum 150</small>
+            {{ form_errors(form.titre) }}
+        </div>
+        <div class="col-md-4">
+            <label class="form-label fw-semibold">Catégorie <span class="text-danger">*</span></label>
+            {{ form_widget(form.categorie, {attr: {'class': 'form-control', 'required': 'required'}}) }}
+            {{ form_errors(form.categorie) }}
+        </div>
+        <div class="col-12">
+            <label class="form-label fw-semibold">Description <span class="text-danger">*</span></label>
+            {{ form_widget(form.description, {attr: {
+                'class': 'form-control',
+                'rows': 4,
+                'minlength': '10',
+                'required': 'required'
+            }}) }}
+            <small class="text-muted">Minimum 10 caractères</small>
+            {{ form_errors(form.description) }}
+        </div>
+        <div class="col-md-6">
+            <label class="form-label fw-semibold">Lieu <span class="text-danger">*</span></label>
+            {{ form_widget(form.location, {attr: {'class': 'form-control', 'required': 'required'}}) }}
+            {{ form_errors(form.location) }}
+        </div>
+        <div class="col-md-6">
+            <label class="form-label fw-semibold">URL de l'image</label>
+            {{ form_widget(form.image_url, {attr: {'class': 'form-control', 'placeholder': 'https://example.com/image.jpg'}}) }}
+            {{ form_errors(form.image_url) }}
+        </div>
+        <div class="col-md-6">
+            <label class="form-label fw-semibold">Date de début <span class="text-danger">*</span></label>
+            {{ form_widget(form.date_debut, {attr: {
+                'class': 'form-control',
+                'required': 'required',
+                'id': 'date_debut'
+            }}) }}
+            <small class="text-muted" id="date_debut_error" style="color:#dc3545; display:none;"></small>
+            {{ form_errors(form.date_debut) }}
+        </div>
+        <div class="col-md-6">
+            <label class="form-label fw-semibold">Date de fin <span class="text-danger">*</span></label>
+            {{ form_widget(form.date_fin, {attr: {
+                'class': 'form-control',
+                'required': 'required',
+                'id': 'date_fin'
+            }}) }}
+            <small class="text-muted" id="date_fin_error" style="color:#dc3545; display:none;"></small>
+            {{ form_errors(form.date_fin) }}
+        </div>
+        <div class="col-md-4">
+            <label class="form-label fw-semibold">Prix (TND) <span class="text-danger">*</span></label>
+            {{ form_widget(form.prix, {attr: {
+                'class': 'form-control',
+                'type': 'number',
+                'step': '0.01',
+                'min': '0',
+                'required': 'required'
+            }}) }}
+            {{ form_errors(form.prix) }}
+        </div>
+        <div class="col-md-4">
+            <label class="form-label fw-semibold">Capacité max <span class="text-danger">*</span></label>
+            {{ form_widget(form.capacite_max, {attr: {
+                'class': 'form-control',
+                'type': 'number',
+                'min': '1',
+                'required': 'required'
+            }}) }}
+            {{ form_errors(form.capacite_max) }}
+        </div>
+        <div class="col-md-4">
+            <label class="form-label fw-semibold">Statut <span class="text-danger">*</span></label>
+            {{ form_widget(form.statut, {attr: {'class': 'form-control', 'required': 'required'}}) }}
+            {{ form_errors(form.statut) }}
+        </div>
+    </div>
+
+    <div class="d-flex gap-2 mt-4">
+        <button type="submit" id="submitBtn" class="btn btn-horozia-primary px-4">
+            <i class="bi bi-check-lg me-1"></i> Enregistrer les modifications
+        </button>
+        <a href="{{ path('app_event_index') }}" class="btn btn-outline-secondary px-4">Annuler</a>
+    </div>
+
+    {{ form_end(form) }}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const dateDebut = document.getElementById('date_debut');
+    const dateFin = document.getElementById('date_fin');
+    const dateDebutError = document.getElementById('date_debut_error');
+    const dateFinError = document.getElementById('date_fin_error');
+    const submitBtn = document.getElementById('submitBtn');
+    
+    function validateDates() {
+        let isValid = true;
+        
+        // Validate date_fin is after date_debut
+        if (dateDebut && dateDebut.value && dateFin && dateFin.value) {
+            const debut = new Date(dateDebut.value);
+            const fin = new Date(dateFin.value);
+            
+            if (fin <= debut) {
+                dateFinError.textContent = 'La date de fin doit être postérieure à la date de début.';
+                dateFinError.style.display = 'block';
+                dateFin.classList.add('is-invalid');
+                isValid = false;
+            } else {
+                dateFinError.style.display = 'none';
+                dateFin.classList.remove('is-invalid');
+                dateFin.classList.add('is-valid');
+            }
+        }
+        
+        if (submitBtn) {
+            submitBtn.disabled = !isValid;
+        }
+        
+        return isValid;
+    }
+    
+    if (dateDebut) {
+        dateDebut.addEventListener('change', validateDates);
+        dateDebut.addEventListener('input', validateDates);
+    }
+    if (dateFin) {
+        dateFin.addEventListener('change', validateDates);
+        dateFin.addEventListener('input', validateDates);
+    }
+    
+    validateDates();
+});
+</script>
+
+<style>
+.form-control.is-invalid {
+    border-color: #dc3545 !important;
+}
+.form-control.is-valid {
+    border-color: #198754 !important;
+}
+</style>
+{% endblock %}

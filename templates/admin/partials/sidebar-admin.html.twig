@@ -45,5 +45,23 @@
                 <span>Calendrier</span>
             </a>
         </li>
+        </li>
+                <li>
+            <a class="sidebar-link {{ app.request.attributes.get('_route') starts with 'app_participation' ? 'active' : '' }}"
+               href="{{ path('app_participation_index') }}">
+                <i class="bi bi-people-fill"></i>
+                <span>Gestion Participations</span>
+            </a>
+        </li>
+        <li>
+            <a class="sidebar-link py-2
+                {{ app.request.attributes.get('_route') == 'app_event_index' ? 'active' : '' }}"
+               href="{{ path('app_event_index') }}">
+                   <i class="bi bi-list-ul"></i>
+                    <span>Gestion Événements</span>
+            </a>
+        </li>
+
+        
     </ul>
 </div>
