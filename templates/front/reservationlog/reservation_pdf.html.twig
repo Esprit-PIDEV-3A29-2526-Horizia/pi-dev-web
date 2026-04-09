@@ -2,29 +2,142 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Réservation {{ reservation.idreslog }}</title>
+    <title>Réservation Horozia</title>
     <style>
-        body { font-family: DejaVu Sans, sans-serif; }
-        .header { text-align: center; margin-bottom: 30px; }
-        .details { width: 100%; border-collapse: collapse; }
-        .details td { padding: 8px; border-bottom: 1px solid #ddd; }
-        .label { font-weight: bold; width: 40%; }
+        body {
+            font-family: 'DejaVu Sans', sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .header {
+            background: #23779C;
+            padding: 20px;
+            text-align: center;
+            color: white;
+        }
+        .header .agency-name {
+            font-size: 28px;
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+        .header .agency-sub {
+            font-size: 12px;
+            margin-top: 5px;
+            opacity: 0.9;
+        }
+        .header h1 {
+            margin: 15px 0 0;
+            font-size: 20px;
+            letter-spacing: 1px;
+        }
+        .content {
+            padding: 20px;
+        }
+        .section {
+            margin-bottom: 20px;
+        }
+        .section-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #23779C;
+            border-bottom: 2px solid #23779C;
+            padding-bottom: 5px;
+            margin-bottom: 15px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        table td {
+            padding: 6px;
+            vertical-align: top;
+            border-bottom: 1px solid #eee;
+        }
+        table td.label {
+            width: 30%;
+            font-weight: bold;
+            color: #555;
+            background-color: #f9f9f9;
+        }
+        table td.value {
+            width: 70%;
+        }
+        .badge {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: bold;
+            color: white;
+        }
+        .badge-confirmed { background: #28a745; }
+        .badge-pending { background: #ffc107; color: #333; }
+        .badge-cancelled { background: #dc3545; }
+        .footer {
+            background: #f5f5f5;
+            padding: 12px;
+            text-align: center;
+            font-size: 11px;
+            color: #777;
+            border-top: 1px solid #e0e0e0;
+        }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>Horozia - Confirmation de réservation</h1>
-        <p>Réservation #{{ reservation.idreslog }}</p>
+    <div class="container">
+        <div class="header">
+            <div class="agency-name">HORIZIA</div>
+            <div class="agency-sub">TRAVEL AGENCY</div>
+            <h1>CONFIRMATION DE RÉSERVATION</h1>
+        </div>
+        <div class="content">
+            <div class="section">
+                <div class="section-title">INFORMATIONS LOGEMENT</div>
+                <table>
+                    <tr><td class="label">Nom</td><td class="value">{{ reservation.logement.nom }}</td></tr>
+                    <tr><td class="label">Adresse</td><td class="value">{{ reservation.logement.adresse }}</td></tr>
+                    <tr><td class="label">Type</td><td class="value">{{ reservation.logement.type }}</td></tr>
+                </table>
+            </div>
+            <div class="section">
+                <div class="section-title">DÉTAILS DU SÉJOUR</div>
+                <table>
+                    <tr><td class="label">Arrivée</td><td class="value">{{ reservation.dateDebut|date('d/m/Y') }}</td></tr>
+                    <tr><td class="label">Départ</td><td class="value">{{ reservation.dateFin|date('d/m/Y') }}</td></tr>
+                    <tr><td class="label">Nombre de nuits</td><td class="value">{{ reservation.dateDebut.diff(reservation.dateFin).days }} nuit(s)</td></tr>
+                    <tr><td class="label">Adultes</td><td class="value">{{ reservation.adultes }}</td></tr>
+                    <tr><td class="label">Enfants</td><td class="value">{{ reservation.enfants }}</td></tr>
+                    <tr><td class="label">Chambres</td><td class="value">{{ reservation.nombreChambres }}</td></tr>
+                    <tr><td class="label">Type de chambres</td><td class="value">{{ chambreType }}</td></tr>
+                    <tr><td class="label">Pension</td><td class="value">{{ reservation.modeReservation ? reservation.modeReservation|replace({'_': ' '})|capitalize : '-' }}</td></tr>
+                </table>
+            </div>
+            <div class="section">
+                <div class="section-title">PAIEMENT</div>
+                <table>
+                    <tr><td class="label">Montant total</td><td class="value">{{ reservation.montant|number_format(2, ',', ' ') }} DT</td></tr>
+                    <tr><td class="label">Modalité</td><td class="value">{{ reservation.modalites }}</td></tr>
+                    <tr><td class="label">Statut</td><td class="value">
+                        <span class="badge 
+                            {% if reservation.status == 'confirmée' %}badge-confirmed
+                            {% elseif reservation.status == 'en_attente' %}badge-pending
+                            {% else %}badge-cancelled{% endif %}">
+                            {{ reservation.status|upper }}
+                        </span>
+                    </td></tr>
+                </table>
+            </div>
+        </div>
+        <div class="footer">
+            Merci d'avoir choisi Horozia. Bon séjour !
+        </div>
     </div>
-    
-    <table class="details">
-        <tr><td class="label">Logement</td><td>{{ reservation.logement.nom }}</td></tr>
-        <tr><td class="label">Adresse</td><td>{{ reservation.logement.adresse }}</td></tr>
-        <tr><td class="label">Date d'arrivée</td><td>{{ reservation.dateDebut|date('d/m/Y') }}</td></tr>
-        <tr><td class="label">Date de départ</td><td>{{ reservation.dateFin|date('d/m/Y') }}</td></tr>
-        <tr><td class="label">Montant total</td><td>{{ reservation.montant|number_format(2, ',', ' ') }} DT</td></tr>
-        <tr><td class="label">Modalité</td><td>{{ reservation.modalites }}</td></tr>
-        <tr><td class="label">Statut</td><td>{{ reservation.status }}</td></tr>
-    </table>
 </body>
 </html>

@@ -17,6 +17,8 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
+use function Symfony\Component\Clock\now;
+
 class MesReservationslogController extends AbstractController
 {
     // Page principale (affiche le template, les données sont chargées en AJAX)
@@ -102,8 +104,7 @@ class MesReservationslogController extends AbstractController
         
         return $this->json(['success' => true]);
     }
-
-   #[Route('/reservation/qrcode/{id}', name: 'app_front_reservation_qrcode', methods: ['GET'])]
+#[Route('/reservation/qrcode/{id}', name: 'app_front_reservation_qrcode', methods: ['GET'])]
 public function qrcode(int $id, EntityManagerInterface $em, QrCodeService $qrCodeService): Response
 {
     $reservation = $em->getRepository(Reservationlog::class)->find($id);
@@ -111,9 +112,8 @@ public function qrcode(int $id, EntityManagerInterface $em, QrCodeService $qrCod
         throw $this->createNotFoundException();
     }
 
-    // Construction du contenu du QR code avec les nouvelles informations
-    $content = "Réservation\n";
-    $content .= "Logement: " . $reservation->getLogement()->getNom() . "\n";
+    // Contenu du QR code (scannable) – l'ID n'est pas affiché dans le HTML
+    $content = "Logement: " . $reservation->getLogement()->getNom() . "\n";
     $content .= "Arrivée: " . $reservation->getDateDebut()->format('d/m/Y') . "\n";
     $content .= "Départ: " . $reservation->getDateFin()->format('d/m/Y') . "\n";
     $content .= "Adultes: " . $reservation->getAdultes() . "\n";
@@ -129,8 +129,7 @@ public function qrcode(int $id, EntityManagerInterface $em, QrCodeService $qrCod
     $html = '
     <div class="text-center">
         <img src="' . $qrCodeDataUri . '" class="img-fluid mb-3" style="max-width: 250px;">
-        <h5>Réservation </h5>
-        <p><strong>' . htmlspecialchars($reservation->getLogement()->getNom()) . '</strong></p>
+        <h5>' . htmlspecialchars($reservation->getLogement()->getNom()) . '</h5>
         <p>' . $reservation->getDateDebut()->format('d/m/Y') . ' → ' . $reservation->getDateFin()->format('d/m/Y') . '</p>
         <p>👥 ' . $reservation->getAdultes() . ' adulte(s) + ' . $reservation->getEnfants() . ' enfant(s)</p>
         <p>🛏️ ' . $reservation->getNombreChambres() . ' chambre(s)</p>
@@ -138,38 +137,27 @@ public function qrcode(int $id, EntityManagerInterface $em, QrCodeService $qrCod
         <p>💰 ' . number_format($reservation->getMontant(), 2, ',', ' ') . ' DT</p>
         <p>💳 ' . htmlspecialchars($reservation->getModalites()) . '</p>
         <p>📌 ' . htmlspecialchars($reservation->getStatus()) . '</p>
-        <button id="sendEmailBtn" class="btn btn-primary mt-2">📧 Envoyer par email (PDF)</button>
-        <div id="emailMessage" class="mt-3"></div>
-    </div>
-    <script>
-        document.getElementById("sendEmailBtn").addEventListener("click", function() {
-            const btn = this;
-            const msgDiv = document.getElementById("emailMessage");
-            btn.disabled = true;
-            btn.innerHTML = "⏳ Envoi...";
-            fetch("' . $this->generateUrl('app_front_reservation_send_email', ['id' => $reservation->getIdreslog()]) . '", {
-                method: "POST",
-                headers: { "X-Requested-With": "XMLHttpRequest" }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    msgDiv.innerHTML = "<div class=\"alert alert-success\">Email envoyé !</div>";
-                } else {
-                    msgDiv.innerHTML = "<div class=\"alert alert-danger\">Erreur : " + (data.error || "Envoi échoué") + "</div>";
-                }
-            })
-            .catch(() => {
-                msgDiv.innerHTML = "<div class=\"alert alert-danger\">Erreur réseau.</div>";
-            })
-            .finally(() => {
-                btn.disabled = false;
-                btn.innerHTML = "Telecharger ton reservation(pdf)";
-            });
-        });
-    </script>';
+        <a href="' . $this->generateUrl('app_front_reservation_download_pdf', ['id' => $reservation->getIdreslog()]) . '" class="btn btn-primary mt-2" target="_blank">
+            <i class="fa fa-file-pdf"></i> Télécharger la réservation (PDF)
+        </a>
+    </div>';
 
     return new Response($html);
+}
+#[Route('/reservation/download-pdf/{id}', name: 'app_front_reservation_download_pdf', methods: ['GET'])]
+public function downloadPdf(int $id, EntityManagerInterface $em, PdfService $pdfService): Response
+{
+    $reservation = $em->getRepository(Reservationlog::class)->find($id);
+    if (!$reservation || $reservation->getUser()->getId() !== 14) {
+        throw $this->createNotFoundException();
+    }
+    
+    $pdfContent = $pdfService->generateReservationPdf($reservation);
+    
+    return new Response($pdfContent, 200, [
+        'Content-Type' => 'application/pdf',
+        'Content-Disposition' => 'attachment; filename="reservation.pdf"',
+    ]);
 }
     #[Route('/reservation/send-email/{id}', name: 'app_front_reservation_send_email', methods: ['POST'])]
     public function sendEmail(int $id, EntityManagerInterface $em, PdfService $pdfService, EmailService $emailService): JsonResponse
