@@ -151,6 +151,14 @@
         .custom-select option[value=""] {
             color: #888;
         }
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        .loading-spinner.active {
+            display: block;
+        }
         @media (max-width: 768px) {
             .card-details { flex-direction: column; gap: 8px; }
             .card-actions { flex-wrap: wrap; }
@@ -195,93 +203,33 @@
                 <h1 class="mb-4">Mes réservations</h1>
                 <p class="mb-4">Retrouvez ici toutes vos réservations, leur statut et les détails de vos séjours.</p>
 
-                <form method="get" action="{{ path('app_front_reservation_index') }}" class="search-wrapper">
+                <div class="search-wrapper">
                     <div class="search-field">
-                        <input type="text" name="search" class="custom-input" placeholder="Rechercher par nom de logement..." value="{{ app.request.query.get('search') }}">
+                        <input type="text" id="searchInput" class="custom-input" placeholder="Rechercher par nom de logement...">
                     </div>
                     <div class="status-field">
-                        <select name="status" class="custom-select">
-                            <option value="" {% if app.request.query.get('status') == '' %}selected{% endif %}>Tous les statuts</option>
-                            <option value="confirmée" {% if app.request.query.get('status') == 'confirmée' %}selected{% endif %}>Confirmée</option>
-                            <option value="en_attente" {% if app.request.query.get('status') == 'en_attente' %}selected{% endif %}>En attente</option>
-                            <option value="terminée" {% if app.request.query.get('status') == 'terminée' %}selected{% endif %}>Terminée</option>
-                            <option value="annulée" {% if app.request.query.get('status') == 'annulée' %}selected{% endif %}>Annulée</option>
+                        <select id="statusSelect" class="custom-select">
+                            <option value="" selected>Tous les statuts</option>
+                            <option value="confirmée">Confirmée</option>
+                            <option value="en_attente">En attente</option>
+                            <option value="terminée">Terminée</option>
+                            <option value="annulée">Annulée</option>
                         </select>
                     </div>
-                    <button type="submit" class="btn btn-primary">Filtrer</button>
-                </form>
+                </div>
             </div>
         </div>
     </div>
 </section>
 
 <div class="container mt-4 mb-5">
+    <div class="loading-spinner" id="loadingSpinner">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden"></span>
+        </div>
+    </div>
     <div id="reservationsContainer" class="row g-4">
-        {% for reservation in reservations %}
-            <div class="col-md-6 col-lg-4" data-id="{{ reservation.idreslog }}">
-                <div class="reservation-card">
-                    <div class="reservation-card-content">
-                        <div class="card-header">
-                            <h5>{{ reservation.logement.nom }}</h5>
-                            <span class="badge-status 
-                                {% if reservation.status == 'confirmée' %}confirmed
-                                {% elseif reservation.status == 'en_attente' %}pending
-                                {% else %}cancelled{% endif %}">
-                                {{ reservation.status }}
-                            </span>
-                        </div>
-                        <div class="card-details">
-                            <div class="detail-item">
-                                <small><i class="fa fa-calendar"></i> Arrivée</small>
-                                <p>{{ reservation.dateDebut|date('d/m/Y') }}</p>
-                            </div>
-                            <div class="detail-item">
-                                <small><i class="fa fa-calendar"></i> Départ</small>
-                                <p>{{ reservation.dateFin|date('d/m/Y') }}</p>
-                            </div>
-                            <div class="detail-item">
-                                <small><i class="fa fa-money"></i> Montant</small>
-                                <p>{{ reservation.montant|number_format(2, ',', ' ') }} DT</p>
-                            </div>
-                            <div class="detail-item">
-                                <small><i class="fa fa-credit-card"></i> Modalité</small>
-                                <p>{{ reservation.modalites }}</p>
-                            </div>
-                            <div class="detail-item">
-                                <small><i class="fa fa-users"></i> Occupants</small>
-                                <p>{{ reservation.adultes }} adulte(s) + {{ reservation.enfants }} enfant(s)</p>
-                            </div>
-                            <div class="detail-item">
-                                <small><i class="fa fa-bed"></i> Chambres</small>
-                                <p>{{ chambreTypeService.getChambreType(reservation.adultes, reservation.enfants, reservation.nombreChambres) }}</p>
-                            </div>
-                            <div class="detail-item">
-                                <small><i class="fa fa-cutlery"></i> Pension</small>
-                                <p>{{ reservation.modeReservation ? reservation.modeReservation|replace({'_': ' '}) : '-' }}</p>
-                            </div>
-                        </div>
-                        <div class="card-actions">
-                            <a href="#" class="btn-action btn-edit" data-id="{{ reservation.idreslog }}"><i class="fa fa-pencil"></i> Modifier</a>
-                            <a href="#" class="btn-action btn-delete" data-id="{{ reservation.idreslog }}"><i class="fa fa-trash"></i> Supprimer</a>
-                            {% if reservation.status == 'confirmée' %}
-                                <a href="#" class="btn-action btn-qr" data-id="{{ reservation.idreslog }}"><i class="fa fa-qrcode"></i> QR Code</a>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        {% else %}
-            <div class="col-12">
-                <div class="text-center py-5 bg-light rounded-4">
-                    <i class="bi bi-calendar-x display-1 text-muted mb-4 d-block"></i>
-                    <h3 class="text-muted mb-3">Aucune réservation</h3>
-                    <p class="text-muted mb-4">Commencez par réserver un logement.</p>
-                    <a href="{{ path('app_front_logement_index') }}" class="btn btn-horozia-primary btn-lg px-5 rounded-pill">
-                        <i class="bi bi-house-door me-2"></i> Découvrir les logements
-                    </a>
-                </div>
-            </div>
-        {% endfor %}
+        <!-- Les cartes seront chargées ici par AJAX -->
     </div>
 </div>
 
@@ -295,7 +243,7 @@
             </div>
             <div class="modal-body text-center" id="qrModalBody">
                 <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Chargement...</span>
+                    <span class="visually-hidden"></span>
                 </div>
             </div>
         </div>
@@ -307,8 +255,39 @@
     {{ parent() }}
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-        // Gestion des événements pour les boutons (suppression, modification, QR)
+        const searchInput = document.getElementById('searchInput');
+        const statusSelect = document.getElementById('statusSelect');
         const container = document.getElementById('reservationsContainer');
+        const spinner = document.getElementById('loadingSpinner');
+        let debounceTimer;
+
+        function fetchReservations() {
+            const search = searchInput.value;
+            const status = statusSelect.value;
+            const url = `{{ path('app_front_reservation_ajax') }}?search=${encodeURIComponent(search)}&status=${encodeURIComponent(status)}`;
+
+            spinner.classList.add('active');
+            fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.html) container.innerHTML = data.html;
+                    spinner.classList.remove('active');
+                    attachDeleteEvents();
+                    attachQrEvents();
+                    attachEditEvents();
+                })
+                .catch(error => {
+                    console.error('Erreur:', error);
+                    spinner.classList.remove('active');
+                    container.innerHTML = '<div class="col-12 text-center text-danger">Une erreur est survenue.</div>';
+                });
+        }
+
+        searchInput.addEventListener('input', function() {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(fetchReservations, 300);
+        });
+        statusSelect.addEventListener('change', fetchReservations);
 
         function deleteReservation(id, element) {
             Swal.fire({
@@ -390,7 +369,7 @@
                     const modal = new bootstrap.Modal(document.getElementById('qrModal'));
                     const modalBody = document.getElementById('qrModalBody');
                     
-                    modalBody.innerHTML = '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Chargement...</span></div>';
+                    modalBody.innerHTML = '<div class="spinner-border text-primary" role="status"><span class="visually-hidden"></span></div>';
                     modal.show();
                     
                     fetch(`/reservation/edit-modal/${id}`, {
@@ -415,7 +394,7 @@
                                 .then(data => {
                                     if (data.success) {
                                         modal.hide();
-                                        location.reload(); // Recharge la page pour afficher les modifications
+                                        fetchReservations();
                                         Swal.fire({
                                             title: 'Succès',
                                             text: data.message,
@@ -449,7 +428,7 @@
                     const modal = new bootstrap.Modal(document.getElementById('qrModal'));
                     const modalBody = document.getElementById('qrModalBody');
                     
-                    modalBody.innerHTML = '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Chargement...</span></div>';
+                    modalBody.innerHTML = '<div class="spinner-border text-primary" role="status"><span class="visually-hidden"></span></div>';
                     modal.show();
                     
                     fetch(`/reservation/qrcode/${id}`, {
@@ -468,16 +447,13 @@
             });
         }
 
-        // Fermeture manuelle de la modale QR
         document.getElementById('closeQrModalBtn').addEventListener('click', function() {
             const modalElement = document.getElementById('qrModal');
             const modal = bootstrap.Modal.getInstance(modalElement);
             if (modal) modal.hide();
         });
 
-        // Initialisation des événements
-        attachDeleteEvents();
-        attachEditEvents();
-        attachQrEvents();
+        // Chargement initial
+        fetchReservations();
     </script>
 {% endblock %}

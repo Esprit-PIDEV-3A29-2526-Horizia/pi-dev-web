@@ -1,4 +1,5 @@
 <?php
+// src/Service/ChambreTypeService.php
 
 namespace App\Service;
 
