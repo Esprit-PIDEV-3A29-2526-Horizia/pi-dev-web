@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Entity\Logement;
 use App\Entity\Reservationlog;
 use App\Entity\User;
 use App\Repository\LogementRepository;
@@ -16,7 +17,7 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 class ReservationlogController extends AbstractController
 {
-    #[Route('/logement/{id}/reserver-modal', name: 'app_front_reservation_modal', methods: ['GET'])]
+   #[Route('/logement/{id}/reserver-modal', name: 'app_front_reservation_modal', methods: ['GET'])]
     public function reservationModal(int $id, LogementRepository $logementRepository): Response
     {
         $logement = $logementRepository->find($id);
@@ -107,78 +108,127 @@ class ReservationlogController extends AbstractController
         return $this->redirectToRoute('app_front_reservation_index');
     }
 #[Route('/reservation/create-ajax', name: 'app_front_reservation_create_ajax', methods: ['POST'])]
-public function createReservationAjax(Request $request, EntityManagerInterface $em, LogementRepository $logementRepository): JsonResponse
-{
-    $data = json_decode($request->getContent(), true);
-    
-    $logementId = $data['logement_id'] ?? null;
-    $dateArriveeStr = $data['date_arrivee'] ?? null;
-    $dateDepartStr = $data['date_depart'] ?? null;
-    $modalite = $data['modalite'] ?? null;
-    $paiementImmediat = $data['paiement_immediat'] ?? false;
+    public function createReservationAjax(Request $request, EntityManagerInterface $em, LogementRepository $logementRepository): JsonResponse
+    {
+        try {
+            $data = json_decode($request->getContent(), true);
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                return $this->json(['success' => false, 'message' => 'JSON invalide.'], 400);
+            }
 
-    if (!$logementId || !$dateArriveeStr || !$dateDepartStr || !$modalite) {
-        return $this->json(['success' => false, 'message' => 'Données manquantes.'], 400);
-    }
+            $logementId = $data['logement_id'] ?? null;
+            $dateArriveeStr = $data['date_arrivee'] ?? null;
+            $dateDepartStr = $data['date_depart'] ?? null;
+            $modalite = $data['modalite'] ?? null;
+            $paiementImmediat = $data['paiement_immediat'] ?? false;
+            $adultes = (int)($data['adultes'] ?? 1);
+            $enfants = (int)($data['enfants'] ?? 0);
+            $nombreChambres = (int)($data['nombre_chambres'] ?? 1);
+            $modeReservation = $data['mode_reservation'] ?? null;
 
-    $logement = $logementRepository->find($logementId);
-    if (!$logement || !$logement->isDisponibilite()) {
-        return $this->json(['success' => false, 'message' => 'Logement non disponible.'], 400);
-    }
+            // Validation des champs
+            if (!$logementId || !$dateArriveeStr || !$dateDepartStr || !$modalite) {
+                return $this->json(['success' => false, 'message' => 'Données manquantes.'], 400);
+            }
+            if ($adultes < 1) {
+                return $this->json(['success' => false, 'message' => 'Au moins 1 adulte est requis.'], 400);
+            }
+            if ($enfants < 0) {
+                return $this->json(['success' => false, 'message' => 'Nombre d\'enfants invalide.'], 400);
+            }
+            if ($nombreChambres < 1) {
+                return $this->json(['success' => false, 'message' => 'Au moins 1 chambre est requise.'], 400);
+            }
+            if ($modeReservation && !in_array($modeReservation, ['all_inclusive', 'demi_pension', 'petit_dejeuner', 'soft'])) {
+                return $this->json(['success' => false, 'message' => 'Formule de pension invalide.'], 400);
+            }
 
-    $user = $this->getUser();
-    if (!$user) {
-        $user = $em->getRepository(User::class)->find(1);
-        if (!$user) $user = $em->getRepository(User::class)->findOneBy([]);
-    }
-    if (!$user) {
-        return $this->json(['success' => false, 'message' => 'Aucun utilisateur trouvé.'], 400);
-    }
+            $logement = $logementRepository->find($logementId);
+            if (!$logement || !$logement->isDisponibilite()) {
+                return $this->json(['success' => false, 'message' => 'Logement non disponible.'], 400);
+            }
 
-    $dateArrivee = \DateTime::createFromFormat('Y-m-d', $dateArriveeStr);
-    $dateDepart = \DateTime::createFromFormat('Y-m-d', $dateDepartStr);
-    $today = new \DateTime();
-    $today->setTime(0, 0, 0);
+            $user = $this->getUser();
+            if (!$user) {
+                $user = $em->getRepository(User::class)->find(1);
+                if (!$user) $user = $em->getRepository(User::class)->findOneBy([]);
+            }
+            if (!$user) {
+                return $this->json(['success' => false, 'message' => 'Aucun utilisateur trouvé.'], 400);
+            }
 
-    if (!$dateArrivee || !$dateDepart || $dateArrivee < $today || $dateDepart <= $dateArrivee) {
-        return $this->json(['success' => false, 'message' => 'Dates invalides.'], 400);
-    }
+            $dateArrivee = \DateTime::createFromFormat('Y-m-d', $dateArriveeStr);
+            $dateDepart = \DateTime::createFromFormat('Y-m-d', $dateDepartStr);
+            $today = new \DateTime();
+            $today->setTime(0, 0, 0);
 
-    $nuits = $dateArrivee->diff($dateDepart)->days;
-    $montant = $nuits * $logement->getTarifNuit();
+            if (!$dateArrivee || !$dateDepart || $dateArrivee < $today || $dateDepart <= $dateArrivee) {
+                return $this->json(['success' => false, 'message' => 'Dates invalides.'], 400);
+            }
 
-    // Messages et statut selon le cas
-    if ($modalite === 'Sur place') {
-        $status = 'en_attente';
-        $message = 'Réservation enregistrée avec succès (paiement sur place).';
-    } else { // En ligne
-        if ($paiementImmediat === true) {
-            $status = 'confirmée';
-            $message = 'Réservation confirmée ! Redirection vers le paiement...';
-        } else {
-            $status = 'en_attente';
-            $message = 'Réservation en attente. Vous pouvez la finaliser dans les 24h.';
+            // Vérification de la capacité totale sur la période
+            if (!$this->isCapacityAvailable($logement, $dateArrivee, $dateDepart, $adultes, $enfants, $em)) {
+                return $this->json(['success' => false, 'message' => 'Désolé, le logement a atteint sa capacité maximale sur cette période.'], 400);
+            }
+
+            $nuits = $dateArrivee->diff($dateDepart)->days;
+            $montant = $nuits * $logement->getTarifNuit();
+
+            if ($modalite === 'Sur place') {
+                $status = 'en_attente';
+                $message = 'Réservation enregistrée avec succès (paiement sur place).';
+            } else {
+                if ($paiementImmediat === true) {
+                    $status = 'confirmée';
+                    $message = 'Réservation confirmée ! Redirection vers le paiement...';
+                } else {
+                    $status = 'en_attente';
+                    $message = 'Réservation en attente. Vous pouvez la finaliser dans les 24h.';
+                }
+            }
+
+            $reservation = new Reservationlog();
+            $reservation->setLogement($logement);
+            $reservation->setUser($user);
+            $reservation->setDateDebut($dateArrivee);
+            $reservation->setDateFin($dateDepart);
+            $reservation->setMontant($montant);
+            $reservation->setModalites($modalite);
+            $reservation->setStatus($status);
+            $reservation->setAdultes($adultes);
+            $reservation->setEnfants($enfants);
+            $reservation->setNombreChambres($nombreChambres);
+            $reservation->setModeReservation($modeReservation);
+
+            $em->persist($reservation);
+            $em->flush();
+
+            return $this->json([
+                'success' => true,
+                'message' => $message,
+                'status' => $status,
+                'reservation_id' => $reservation->getIdreslog()
+            ]);
+        } catch (\Exception $e) {
+            // En développement, vous pouvez renvoyer le message d'erreur pour déboguer
+            return $this->json(['success' => false, 'message' => 'Erreur interne : ' . $e->getMessage()], 500);
         }
     }
 
-    $reservation = new Reservationlog();
-    $reservation->setLogement($logement);
-    $reservation->setUser($user);
-    $reservation->setDateDebut($dateArrivee);
-    $reservation->setDateFin($dateDepart);
-    $reservation->setMontant($montant);
-    $reservation->setModalites($modalite);
-    $reservation->setStatus($status);
-    // $reservation->setDateReservation(new \DateTime()); // si le champ existe
+    private function isCapacityAvailable(Logement $logement, \DateTime $dateArrivee, \DateTime $dateDepart, int $adultes, int $enfants, EntityManagerInterface $em): bool
+{
+    $qb = $em->createQueryBuilder();
+    $qb->select('SUM(r.adultes + r.enfants) as total_personnes')
+       ->from(Reservationlog::class, 'r')
+       ->where('r.logement = :logement')
+       ->andWhere('r.date_debut < :depart AND r.date_fin > :arrivee')
+       ->setParameter('logement', $logement)
+       ->setParameter('arrivee', $dateArrivee)
+       ->setParameter('depart', $dateDepart);
 
-    $em->persist($reservation);
-    $em->flush();
-
-    return $this->json([
-        'success' => true,
-        'message' => $message,
-        'status' => $status,
-        'reservation_id' => $reservation->getIdreslog()
-    ]);
+    $result = $qb->getQuery()->getSingleScalarResult();
+    $personnesExistantes = $result ? (int)$result : 0;
+    $nouvellesPersonnes = $adultes + $enfants;
+    return ($personnesExistantes + $nouvellesPersonnes) <= $logement->getCapacite();
 }
 }
