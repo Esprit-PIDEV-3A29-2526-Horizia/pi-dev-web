@@ -164,7 +164,7 @@ public function qrcode(int $id, EntityManagerInterface $em, QrCodeService $qrCod
             })
             .finally(() => {
                 btn.disabled = false;
-                btn.innerHTML = "📧 Envoyer par email (PDF)";
+                btn.innerHTML = "Telecharger ton reservation(pdf)";
             });
         });
     </script>';
