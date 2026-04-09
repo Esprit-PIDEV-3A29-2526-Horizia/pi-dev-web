@@ -17,14 +17,13 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 class ReservationlogController extends AbstractController
 {
-   #[Route('/logement/{id}/reserver-modal', name: 'app_front_reservation_modal', methods: ['GET'])]
+  #[Route('/logement/{id}/reserver-modal', name: 'app_front_reservation_modal', methods: ['GET'])]
     public function reservationModal(int $id, LogementRepository $logementRepository): Response
     {
         $logement = $logementRepository->find($id);
         if (!$logement) throw $this->createNotFoundException();
         return $this->render('front/reservationlog/_form_modal.html.twig', ['logement' => $logement]);
     }
-
     #[Route('/logement/{id}/reserver', name: 'app_front_reservation_new')]
     public function new(Request $request, int $id, LogementRepository $logementRepository, EntityManagerInterface $em, StripeService $stripeService): Response
     {
@@ -150,7 +149,7 @@ class ReservationlogController extends AbstractController
 
             $user = $this->getUser();
             if (!$user) {
-                $user = $em->getRepository(User::class)->find(1);
+                $user = $em->getRepository(User::class)->find(14);
                 if (!$user) $user = $em->getRepository(User::class)->findOneBy([]);
             }
             if (!$user) {
@@ -168,7 +167,7 @@ class ReservationlogController extends AbstractController
 
             // Vérification de la capacité totale sur la période
             if (!$this->isCapacityAvailable($logement, $dateArrivee, $dateDepart, $adultes, $enfants, $em)) {
-                return $this->json(['success' => false, 'message' => 'Désolé, le logement a atteint sa capacité maximale sur cette période.'], 400);
+                return $this->json(['success' => false, 'message' => '❌ Désolé, le logement a atteint sa capacité maximale sur cette période. Veuillez choisir d\'autres dates.'], 400);
             }
 
             $nuits = $dateArrivee->diff($dateDepart)->days;
@@ -210,25 +209,25 @@ class ReservationlogController extends AbstractController
                 'reservation_id' => $reservation->getIdreslog()
             ]);
         } catch (\Exception $e) {
-            // En développement, vous pouvez renvoyer le message d'erreur pour déboguer
             return $this->json(['success' => false, 'message' => 'Erreur interne : ' . $e->getMessage()], 500);
         }
     }
 
     private function isCapacityAvailable(Logement $logement, \DateTime $dateArrivee, \DateTime $dateDepart, int $adultes, int $enfants, EntityManagerInterface $em): bool
-{
-    $qb = $em->createQueryBuilder();
-    $qb->select('SUM(r.adultes + r.enfants) as total_personnes')
-       ->from(Reservationlog::class, 'r')
-       ->where('r.logement = :logement')
-       ->andWhere('r.date_debut < :depart AND r.date_fin > :arrivee')
-       ->setParameter('logement', $logement)
-       ->setParameter('arrivee', $dateArrivee)
-       ->setParameter('depart', $dateDepart);
+    {
+        $qb = $em->createQueryBuilder();
+        $qb->select('SUM(r.adultes + r.enfants) as total_personnes')
+           ->from(Reservationlog::class, 'r')
+           ->where('r.logement = :logement')
+           ->andWhere('r.date_debut < :depart AND r.date_fin > :arrivee')
+           ->setParameter('logement', $logement)
+           ->setParameter('arrivee', $dateArrivee)
+           ->setParameter('depart', $dateDepart);
 
-    $result = $qb->getQuery()->getSingleScalarResult();
-    $personnesExistantes = $result ? (int)$result : 0;
-    $nouvellesPersonnes = $adultes + $enfants;
-    return ($personnesExistantes + $nouvellesPersonnes) <= $logement->getCapacite();
-}
+        $result = $qb->getQuery()->getSingleScalarResult();
+        $personnesExistantes = $result ? (int)$result : 0;
+        $nouvellesPersonnes = $adultes + $enfants;
+        return ($personnesExistantes + $nouvellesPersonnes) <= $logement->getCapacite();
+    }
+   
 }

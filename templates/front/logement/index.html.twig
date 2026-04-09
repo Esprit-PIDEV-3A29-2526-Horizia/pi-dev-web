@@ -525,24 +525,19 @@
 
             let isSubmitting = false;
 
-            // Fonction pour afficher un message dans la modale (sous le formulaire)
             function showModalMessage(message, type = 'success') {
-                // Supprimer l'ancien message s'il existe
                 const oldMsg = document.getElementById('dynamicModalMessage');
                 if (oldMsg) oldMsg.remove();
-                // Créer le nouveau message
                 const msgDiv = document.createElement('div');
                 msgDiv.id = 'dynamicModalMessage';
                 msgDiv.className = `modal-message ${type}`;
                 msgDiv.innerText = message;
-                // Insérer après le bouton ou avant le formulaire
                 const submitBtn = reservationForm.querySelector('button[type="submit"]');
                 if (submitBtn) {
                     submitBtn.parentNode.insertBefore(msgDiv, submitBtn.nextSibling);
                 } else {
                     reservationForm.appendChild(msgDiv);
                 }
-                // Scroll pour voir le message
                 msgDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
             }
 
@@ -552,146 +547,137 @@
             }
 
             async function submitReservation(event) {
-    event.preventDefault();
-    if (isSubmitting) return;
-    isSubmitting = true;
-    clearModalMessage();
+                event.preventDefault();
+                if (isSubmitting) return;
+                isSubmitting = true;
+                clearModalMessage();
 
-    // Réinitialisation
-    dateArrivee.classList.remove('is-invalid');
-    dateDepart.classList.remove('is-invalid');
-    const modaliteError = document.getElementById('modaliteError');
-    if (modaliteError) modaliteError.style.display = 'none';
-    if (formErrorsDiv) {
-        formErrorsDiv.classList.add('d-none');
-        formErrorsDiv.innerHTML = '';
-    }
+                dateArrivee.classList.remove('is-invalid');
+                dateDepart.classList.remove('is-invalid');
+                const modaliteError = document.getElementById('modaliteError');
+                if (modaliteError) modaliteError.style.display = 'none';
+                if (formErrorsDiv) {
+                    formErrorsDiv.classList.add('d-none');
+                    formErrorsDiv.innerHTML = '';
+                }
 
-    let errorMessages = [];
+                let errorMessages = [];
 
-    // Validation date arrivée
-    if (!dateArrivee.value) {
-        errorMessages.push('La date d\'arrivée est obligatoire.');
-        dateArrivee.classList.add('is-invalid');
-    } else {
-        const arrivee = new Date(dateArrivee.value);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        if (arrivee < today) {
-            errorMessages.push('La date d\'arrivée ne peut pas être dans le passé.');
-            dateArrivee.classList.add('is-invalid');
-        }
-    }
+                if (!dateArrivee.value) {
+                    errorMessages.push('La date d\'arrivée est obligatoire.');
+                    dateArrivee.classList.add('is-invalid');
+                } else {
+                    const arrivee = new Date(dateArrivee.value);
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    if (arrivee < today) {
+                        errorMessages.push('La date d\'arrivée ne peut pas être dans le passé.');
+                        dateArrivee.classList.add('is-invalid');
+                    }
+                }
 
-    // Validation date départ
-    if (!dateDepart.value) {
-        errorMessages.push('La date de départ est obligatoire.');
-        dateDepart.classList.add('is-invalid');
-    } else if (dateArrivee.value) {
-        const arrivee = new Date(dateArrivee.value);
-        const depart = new Date(dateDepart.value);
-        if (depart <= arrivee) {
-            errorMessages.push('La date de départ doit être postérieure à la date d\'arrivée.');
-            dateDepart.classList.add('is-invalid');
-        }
-    }
+                if (!dateDepart.value) {
+                    errorMessages.push('La date de départ est obligatoire.');
+                    dateDepart.classList.add('is-invalid');
+                } else if (dateArrivee.value) {
+                    const arrivee = new Date(dateArrivee.value);
+                    const depart = new Date(dateDepart.value);
+                    if (depart <= arrivee) {
+                        errorMessages.push('La date de départ doit être postérieure à la date d\'arrivée.');
+                        dateDepart.classList.add('is-invalid');
+                    }
+                }
 
-    // Validation modalité
-    let selectedModalite = null;
-    modaliteRadios.forEach(radio => {
-        if (radio.checked) selectedModalite = radio.value;
-    });
-    if (!selectedModalite) {
-        errorMessages.push('Veuillez choisir une modalité de paiement.');
-        if (modaliteError) modaliteError.style.display = 'block';
-    }
+                let selectedModalite = null;
+                modaliteRadios.forEach(radio => {
+                    if (radio.checked) selectedModalite = radio.value;
+                });
+                if (!selectedModalite) {
+                    errorMessages.push('Veuillez choisir une modalité de paiement.');
+                    if (modaliteError) modaliteError.style.display = 'block';
+                }
 
-    // Validation des nouveaux champs
-    const adultes = parseInt(document.getElementById('adultes')?.value || 1);
-    const enfants = parseInt(document.getElementById('enfants')?.value || 0);
-    const nombreChambres = parseInt(document.getElementById('nombre_chambres')?.value || 1);
-    if (adultes < 1) errorMessages.push('Au moins 1 adulte.');
-    if (enfants < 0) errorMessages.push('Nombre d\'enfants invalide.');
-    if (nombreChambres < 1) errorMessages.push('Au moins 1 chambre.');
+                const adultes = parseInt(document.getElementById('adultes')?.value || 1);
+                const enfants = parseInt(document.getElementById('enfants')?.value || 0);
+                const nombreChambres = parseInt(document.getElementById('nombre_chambres')?.value || 1);
+                if (adultes < 1) errorMessages.push('Au moins 1 adulte.');
+                if (enfants < 0) errorMessages.push('Nombre d\'enfants invalide.');
+                if (nombreChambres < 1) errorMessages.push('Au moins 1 chambre.');
 
-    if (errorMessages.length > 0) {
-        if (formErrorsDiv) {
-            formErrorsDiv.innerHTML = errorMessages.join('<br>');
-            formErrorsDiv.classList.remove('d-none');
-        }
-        isSubmitting = false;
-        return;
-    }
+                if (errorMessages.length > 0) {
+                    if (formErrorsDiv) {
+                        formErrorsDiv.innerHTML = errorMessages.join('<br>');
+                        formErrorsDiv.classList.remove('d-none');
+                    }
+                    isSubmitting = false;
+                    return;
+                }
 
-    const logementId = reservationForm.querySelector('input[name="logement_id"]').value;
-    let paiementImmediat = false;
+                const logementId = reservationForm.querySelector('input[name="logement_id"]').value;
+                let paiementImmediat = false;
 
-    if (selectedModalite === 'En ligne') {
-        const result = await Swal.fire({
-            title: 'Paiement en ligne',
-            text: 'Choisissez une option :',
-            icon: 'question',
-            showDenyButton: true,
-            showCancelButton: false,
-            confirmButtonText: 'Payer maintenant',
-            denyButtonText: 'Payer plus tard',
-            confirmButtonColor: '#23779C',
-            denyButtonColor: '#6c757d'
-        });
-        if (result.isConfirmed) {
-            paiementImmediat = true;
-        } else if (result.isDenied) {
-            paiementImmediat = false;
-        } else {
-            isSubmitting = false;
-            return;
-        }
-    }
+                if (selectedModalite === 'En ligne') {
+                    const result = await Swal.fire({
+                        title: 'Paiement en ligne',
+                        text: 'Choisissez une option :',
+                        icon: 'question',
+                        showDenyButton: true,
+                        showCancelButton: false,
+                        confirmButtonText: 'Payer maintenant',
+                        denyButtonText: 'Payer plus tard',
+                        confirmButtonColor: '#23779C',
+                        denyButtonColor: '#6c757d'
+                    });
+                    if (result.isConfirmed) {
+                        paiementImmediat = true;
+                    } else if (result.isDenied) {
+                        paiementImmediat = false;
+                    } else {
+                        isSubmitting = false;
+                        return;
+                    }
+                }
 
-    const data = {
-        logement_id: logementId,
-        date_arrivee: dateArrivee.value,
-        date_depart: dateDepart.value,
-        modalite: selectedModalite,
-        paiement_immediat: paiementImmediat,
-        adultes: adultes,
-        enfants: enfants,
-        nombre_chambres: nombreChambres,
-        mode_reservation: document.getElementById('mode_reservation')?.value || null
-    };
+                const data = {
+                    logement_id: logementId,
+                    date_arrivee: dateArrivee.value,
+                    date_depart: dateDepart.value,
+                    modalite: selectedModalite,
+                    paiement_immediat: paiementImmediat,
+                    adultes: adultes,
+                    enfants: enfants,
+                    nombre_chambres: nombreChambres,
+                    mode_reservation: document.getElementById('mode_reservation')?.value || null
+                };
 
-    try {
-        const response = await fetch('/reservation/create-ajax', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
-            body: JSON.stringify(data)
-        });
+                try {
+                    const response = await fetch('/reservation/create-ajax', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                        body: JSON.stringify(data)
+                    });
 
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('HTTP error:', response.status, errorText);
-            showModalMessage(`Erreur serveur (${response.status})`, 'error');
-            isSubmitting = false;
-            return;
-        }
+                    // Lire la réponse JSON (même en cas d'erreur HTTP)
+                    const result = await response.json();
 
-        const result = await response.json();
-        if (result.success) {
-            showModalMessage(result.message, 'success');
-            setTimeout(() => {
-                closeModal();
-                window.location.href = "{{ path('app_front_reservation_index') }}";
-            }, 2000);
-        } else {
-            showModalMessage(result.message, 'error');
-            isSubmitting = false;
-        }
-    } catch (err) {
-        console.error(err);
-        showModalMessage('Une erreur technique est survenue. Veuillez réessayer.', 'error');
-        isSubmitting = false;
-    }
-}
+                    if (response.ok && result.success) {
+                        showModalMessage(result.message, 'success');
+                        setTimeout(() => {
+                            closeModal();
+                            window.location.href = "{{ path('app_front_reservation_index') }}";
+                        }, 2000);
+                    } else {
+                        // Afficher le message d'erreur retourné par le serveur
+                        const errorMsg = result.message || 'Une erreur est survenue.';
+                        showModalMessage(errorMsg, 'error');
+                        isSubmitting = false;
+                    }
+                } catch (err) {
+                    console.error(err);
+                    showModalMessage('Une erreur technique est survenue. Veuillez réessayer.', 'error');
+                    isSubmitting = false;
+                }
+            }
 
             if (reservationForm) {
                 reservationForm.removeEventListener('submit', reservationForm.submitHandler);
