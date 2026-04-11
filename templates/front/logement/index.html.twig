@@ -616,6 +616,7 @@
                 const logementId = reservationForm.querySelector('input[name="logement_id"]').value;
                 let paiementImmediat = false;
 
+                // Choix pour le paiement en ligne (avant la soumission)
                 if (selectedModalite === 'En ligne') {
                     const result = await Swal.fire({
                         title: 'Paiement en ligne',
@@ -657,17 +658,25 @@
                         body: JSON.stringify(data)
                     });
 
-                    // Lire la réponse JSON (même en cas d'erreur HTTP)
                     const result = await response.json();
 
                     if (response.ok && result.success) {
-                        showModalMessage(result.message, 'success');
-                        setTimeout(() => {
-                            closeModal();
-                            window.location.href = "{{ path('app_front_reservation_index') }}";
-                        }, 2000);
+                        // Fermer le modal
+                        closeModal();
+                        // Afficher la SweetAlert de succès
+                        await Swal.fire({
+                            title: 'Réservation confirmée',
+                            text: result.message + ' Un email de confirmation vous a été envoyé.',
+                            icon: 'success',
+                            confirmButtonColor: '#23779C',
+                            confirmButtonText: 'OK',
+                            timer: 4000,
+                            timerProgressBar: true,
+                            allowOutsideClick: false
+                        });
+                        // Rediriger vers la liste des réservations
+                        window.location.href = "{{ path('app_front_reservation_index') }}";
                     } else {
-                        // Afficher le message d'erreur retourné par le serveur
                         const errorMsg = result.message || 'Une erreur est survenue.';
                         showModalMessage(errorMsg, 'error');
                         isSubmitting = false;

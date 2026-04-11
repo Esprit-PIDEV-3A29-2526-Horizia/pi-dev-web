@@ -66,6 +66,19 @@ class Reservationlog
     // Supprimé : #[Assert\NotNull]
     #[Assert\Choice(choices: ['all_inclusive', 'demi_pension', 'petit_dejeuner', 'soft'], message: "Type de pension invalide.")]
     private ?string $modeReservation = null;
+#[ORM\Column(name: 'created_at', type: 'datetime', nullable: false)]
+private ?\DateTimeInterface $createdAt = null;
+
+public function getCreatedAt(): ?\DateTimeInterface
+{
+    return $this->createdAt;
+}
+
+public function setCreatedAt(\DateTimeInterface $createdAt): self
+{
+    $this->createdAt = $createdAt;
+    return $this;
+}
 
     // Getters & Setters (existants + nouveaux)
     public function getIdreslog(): ?int { return $this->idreslog; }

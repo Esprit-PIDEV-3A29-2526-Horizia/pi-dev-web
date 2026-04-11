@@ -14,6 +14,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use App\Service\EmailService;
 
 class ReservationlogController extends AbstractController
 {
@@ -96,7 +97,7 @@ class ReservationlogController extends AbstractController
     }
 
     #[Route('/reservation/cancel/{id}', name: 'app_front_reservation_cancel')]
-    public function paymentCancel(int $id, EntityManagerInterface $em): Response
+    public function paymentCancel(int $id, EntityManagerInterface $em,EmailService $emailService): Response
     {
         $reservation = $em->getRepository(Reservationlog::class)->find($id);
         if ($reservation && $reservation->getStatus() === 'en_attente') {
@@ -104,10 +105,11 @@ class ReservationlogController extends AbstractController
             $em->flush();
             $this->addFlash('error', 'Paiement annulé. Réservation annulée.');
         }
+        $emailService->sendCancellationEmail($reservation->getUser()->getEmail(), $reservation, 'Paiement annulé par l\'utilisateur');
         return $this->redirectToRoute('app_front_reservation_index');
     }
 #[Route('/reservation/create-ajax', name: 'app_front_reservation_create_ajax', methods: ['POST'])]
-    public function createReservationAjax(Request $request, EntityManagerInterface $em, LogementRepository $logementRepository): JsonResponse
+    public function createReservationAjax(Request $request, EntityManagerInterface $em, LogementRepository $logementRepository, EmailService $emailService): JsonResponse
     {
         try {
             $data = json_decode($request->getContent(), true);
@@ -198,9 +200,11 @@ class ReservationlogController extends AbstractController
             $reservation->setEnfants($enfants);
             $reservation->setNombreChambres($nombreChambres);
             $reservation->setModeReservation($modeReservation);
+            $reservation->setCreatedAt(new \DateTime());
 
             $em->persist($reservation);
             $em->flush();
+            $emailService->sendReservationEmail($user->getEmail(), $reservation, $message);
 
             return $this->json([
                 'success' => true,
@@ -229,5 +233,16 @@ class ReservationlogController extends AbstractController
         $nouvellesPersonnes = $adultes + $enfants;
         return ($personnesExistantes + $nouvellesPersonnes) <= $logement->getCapacite();
     }
+    #[Route('/test-email', name: 'test_email')]
+public function testEmail(EmailService $emailService, EntityManagerInterface $em): Response
+{
+    $user = $em->getRepository(User::class)->find(14); // un user existant
+    $reservation = $em->getRepository(Reservationlog::class)->findOneBy([]); // une réservation
+    if ($reservation && $user) {
+        $emailService->sendReservationEmail($user->getEmail(), $reservation, 'Test message');
+        return new Response('Email envoyé (vérifiez les logs)');
+    }
+    return new Response('Données manquantes');
+}
    
 }

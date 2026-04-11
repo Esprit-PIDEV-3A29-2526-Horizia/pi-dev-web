@@ -88,7 +88,7 @@ class MesReservationslogController extends AbstractController
     }
 
     #[Route('/reservation/delete/{id}', name: 'app_front_reservation_delete', methods: ['POST'])]
-    public function delete(int $id, EntityManagerInterface $em): JsonResponse
+    public function delete(int $id, EntityManagerInterface $em,EmailService $emailService): JsonResponse
     {
         $reservation = $em->getRepository(Reservationlog::class)->find($id);
         if (!$reservation) {
@@ -101,7 +101,7 @@ class MesReservationslogController extends AbstractController
         
         $em->remove($reservation);
         $em->flush();
-        
+        $emailService->sendCancellationEmail($reservation->getUser()->getEmail(), $reservation, 'Suppression par l\'utilisateur');
         return $this->json(['success' => true]);
     }
 #[Route('/reservation/qrcode/{id}', name: 'app_front_reservation_qrcode', methods: ['GET'])]
