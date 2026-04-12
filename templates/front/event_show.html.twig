@@ -10,6 +10,47 @@
         background: #000 !important;
         position: relative !important;
     }
+    .artist-card {
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        overflow: hidden;
+        margin-top: 40px;
+    }
+    .artist-header {
+        background: linear-gradient(135deg, #23779C, #3D94CA);
+        color: white;
+        padding: 20px 25px;
+    }
+    .artist-header h3 {
+        margin: 0;
+        font-weight: 600;
+    }
+    .artist-body {
+        padding: 25px;
+    }
+    .artist-stats {
+        background: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+    .artist-stats span {
+        font-weight: 700;
+        color: #23779C;
+    }
+    .artist-bio {
+        line-height: 1.8;
+        color: #555;
+    }
+    .artist-tags .badge {
+        background: #e9ecef;
+        color: #23779C;
+        padding: 5px 12px;
+        margin-right: 8px;
+        border-radius: 20px;
+        font-weight: 500;
+    }
 </style>
 {% endblock %}
 
@@ -90,6 +131,54 @@
                 </a>
             </div>
         </div>
+
+        {# ── ARTIST INFO SECTION (only shows for concerts) ── #}
+        {% if artistInfo is defined and artistInfo %}
+        <div class="row">
+            <div class="col-12">
+                <div class="artist-card">
+                    <div class="artist-header">
+                        <h3><i class="fa fa-music mr-2"></i> About {{ artistInfo.name }}</h3>
+                    </div>
+                    <div class="artist-body">
+                        <div class="row">
+                            {% if artistInfo.image %}
+                            <div class="col-md-3 text-center">
+                                <img src="{{ artistInfo.image }}" alt="{{ artistInfo.name }}" class="img-fluid rounded" style="max-width:100%;">
+                            </div>
+                            <div class="col-md-9">
+                            {% else %}
+                            <div class="col-md-12">
+                            {% endif %}
+                                <div class="artist-stats">
+                                    <i class="fa fa-headphones mr-2"></i> 
+                                    <strong>Listeners:</strong> <span>{{ artistInfo.listeners|number_format }}</span> &nbsp;&nbsp;|&nbsp;&nbsp;
+                                    <i class="fa fa-play-circle mr-2"></i> 
+                                    <strong>Play count:</strong> <span>{{ artistInfo.playcount|number_format }}</span>
+                                </div>
+                                <div class="artist-bio">
+                                    <strong><i class="fa fa-info-circle mr-2"></i> Biography:</strong>
+                                    <p style="margin-top: 10px;">{{ artistInfo.bio|raw }}</p>
+                                </div>
+                                {% if artistInfo.tags %}
+                                <div class="artist-tags mt-3">
+                                    <strong><i class="fa fa-tags mr-2"></i> Tags:</strong>
+                                    <div style="margin-top: 10px;">
+                                    {% for tag in artistInfo.tags %}
+                                        <span class="badge">{{ tag.name }}</span>
+                                    {% endfor %}
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        {# ── END ARTIST INFO SECTION ── #}
+
     </div>
 </section>
 {% endblock %}

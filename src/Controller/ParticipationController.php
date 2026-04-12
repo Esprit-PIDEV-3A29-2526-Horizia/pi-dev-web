@@ -9,6 +9,8 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\Mime\Email;
 use Symfony\Component\Routing\Attribute\Route;
 
 class ParticipationController extends AbstractController
@@ -28,7 +30,7 @@ class ParticipationController extends AbstractController
     }
 
     #[Route('/front/event/{id}/register', name: 'app_participation_new', methods: ['GET', 'POST'])]
-    public function register(int $id, Request $request, EntityManagerInterface $em): Response
+    public function register(int $id, Request $request, EntityManagerInterface $em, MailerInterface $mailer): Response
     {
         $event = $em->getRepository(Events::class)->find($id);
         if (!$event) {
@@ -43,6 +45,8 @@ class ParticipationController extends AbstractController
             $nombrePlaces = $participation->getNombre_places();
             $montant      = $nombrePlaces * floatval($event->getPrix());
 
+            $userEmail = $form->get('email')->getData();
+
             $participation->setId_event($event);
             $participation->setMontant_total((string) $montant);
             $participation->setStatut('confirmée');
@@ -52,6 +56,19 @@ class ParticipationController extends AbstractController
 
             $em->persist($participation);
             $em->flush();
+
+            //email
+            $email = (new Email())
+                ->from('noreply@horozia.com')
+                ->to($userEmail)  // ← Use email from form
+                ->subject('Confirmation de participation - ' . $event->getTitre())
+                ->html($this->renderView('emails/participation_confirmation.html.twig', [
+                    'participation' => $participation,
+                    'event' => $event,
+                    'userEmail' => $userEmail,
+                ]));
+
+            $mailer->send($email);
 
             $this->addFlash('success', 'Votre inscription a été enregistrée avec succès !');
             return $this->redirectToRoute('app_front_mes_participations');

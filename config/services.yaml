@@ -22,3 +22,7 @@ services:
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
+
+    App\Service\LastFmService:
+        arguments:
+            $apiKey: '%env(7b76f9a04db44e87ae1efcb2fc67273f)%'

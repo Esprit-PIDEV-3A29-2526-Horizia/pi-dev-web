@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\Events;
 use App\Form\EventType;
+use App\Service\LastFmService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -183,13 +184,23 @@ class EventController extends AbstractController
     }
 
     #[Route('/event/{id}', name: 'app_front_event_show', methods: ['GET'])]
-    public function publicShow(int $id, EntityManagerInterface $entityManager): Response
+    public function publicShow(int $id, EntityManagerInterface $entityManager, LastFmService $lastFmService): Response
     {
         $event = $entityManager->getRepository(Events::class)->find($id);
 
         if (!$event) {
             throw $this->createNotFoundException('Event not found.');
         }
+
+        $artistInfo = null;
+        if (strtolower($event->getCategorie()) === 'concert') {
+            try{
+                $artistInfo = $lastFmService->getArtistInfo($event->getTitre());
+            } catch (\Exception $e) {
+                $artistInfo = null; 
+            }
+        }
+
 
         return $this->render('front/event_show.html.twig', [
             'event' => $event,

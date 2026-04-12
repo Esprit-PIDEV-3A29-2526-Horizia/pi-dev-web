@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Confirmation de participation</title>
+</head>
+<body>
+    <h1>Merci pour votre participation !</h1>
+    <p>Bonjour,</p>
+    <p>Vous avez réservé <strong>{{ participation.nombrePlaces }} place(s)</strong> pour :</p>
+    
+    <h2>{{ event.titre }}</h2>
+    <p><strong>Date :</strong> {{ event.date_debut|date('d/m/Y H:i') }}</p>
+    <p><strong>Lieu :</strong> {{ event.location }}</p>
+    <p><strong>Montant total :</strong> {{ participation.montant_total }} TND</p>
+    
+    <hr>
+    <p>À très bientôt !</p>
+    <p>L'équipe Horozia</p>
+</body>
+</html>
