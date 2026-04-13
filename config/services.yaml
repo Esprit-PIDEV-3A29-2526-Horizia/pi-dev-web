@@ -24,4 +24,7 @@ services:
     # service Stripe
     App\Service\StripeService:
         arguments:
-            $stripeSecretKey: '%stripe_secret_key%'
+            $stripeSecretKey: '%env(STRIPE_SECRET_KEY)%'
+    App\Service\GroqService:
+        arguments:
+            $apiKey: '%env(GROQ_API_KEY)%'

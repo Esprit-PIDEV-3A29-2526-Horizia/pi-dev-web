@@ -109,7 +109,9 @@ class ReservationlogController extends AbstractController
         return $this->redirectToRoute('app_front_reservation_index');
     }
 #[Route('/reservation/create-ajax', name: 'app_front_reservation_create_ajax', methods: ['POST'])]
-    public function createReservationAjax(Request $request, EntityManagerInterface $em, LogementRepository $logementRepository, EmailService $emailService): JsonResponse
+    public function createReservationAjax(Request $request, EntityManagerInterface $em, LogementRepository $logementRepository,
+    EmailService $emailService,    StripeService $stripeService
+): JsonResponse
     {
         try {
             $data = json_decode($request->getContent(), true);
@@ -171,24 +173,24 @@ class ReservationlogController extends AbstractController
             if (!$this->isCapacityAvailable($logement, $dateArrivee, $dateDepart, $adultes, $enfants, $em)) {
                 return $this->json(['success' => false, 'message' => '❌ Désolé, le logement a atteint sa capacité maximale sur cette période. Veuillez choisir d\'autres dates.'], 400);
             }
+$nuits = $dateArrivee->diff($dateDepart)->days;
+        $montant = $nuits * $logement->getTarifNuit();
 
-            $nuits = $dateArrivee->diff($dateDepart)->days;
-            $montant = $nuits * $logement->getTarifNuit();
-
-            if ($modalite === 'Sur place') {
-                $status = 'en_attente';
-                $message = 'Réservation enregistrée avec succès (paiement sur place).';
+        $stripeUrl = null;
+        if ($modalite === 'Sur place') {
+            $status = 'en_attente';
+            $message = 'Réservation enregistrée avec succès (paiement sur place).';
+        } else {
+            if ($paiementImmediat === true) {
+                $status = 'confirmée';
+                $message = 'Réservation confirmée ! Redirection vers le paiement...';
             } else {
-                if ($paiementImmediat === true) {
-                    $status = 'confirmée';
-                    $message = 'Réservation confirmée ! Redirection vers le paiement...';
-                } else {
-                    $status = 'en_attente';
-                    $message = 'Réservation en attente. Vous pouvez la finaliser dans les 24h.';
-                }
+                $status = 'en_attente';
+                $message = 'Réservation en attente. Vous pouvez la finaliser dans les 24h.';
             }
+        }
 
-            $reservation = new Reservationlog();
+        $reservation = new Reservationlog();
             $reservation->setLogement($logement);
             $reservation->setUser($user);
             $reservation->setDateDebut($dateArrivee);
@@ -204,17 +206,25 @@ class ReservationlogController extends AbstractController
 
             $em->persist($reservation);
             $em->flush();
-            $emailService->sendReservationEmail($user->getEmail(), $reservation, $message);
-
-            return $this->json([
-                'success' => true,
-                'message' => $message,
-                'status' => $status,
-                'reservation_id' => $reservation->getIdreslog()
-            ]);
-        } catch (\Exception $e) {
-            return $this->json(['success' => false, 'message' => 'Erreur interne : ' . $e->getMessage()], 500);
+          if ($modalite === 'En ligne' && $paiementImmediat === true) {
+            $successUrl = $this->generateUrl('app_front_reservation_success', ['id' => $reservation->getIdreslog()], UrlGeneratorInterface::ABSOLUTE_URL);
+            $cancelUrl = $this->generateUrl('app_front_reservation_cancel', ['id' => $reservation->getIdreslog()], UrlGeneratorInterface::ABSOLUTE_URL);
+            $session = $stripeService->createCheckoutSession($montant, 'eur', $successUrl, $cancelUrl);
+            $stripeUrl = $session->url;
         }
+
+        $emailService->sendReservationEmail($user->getEmail(), $reservation, $message);
+
+        return $this->json([
+            'success' => true,
+            'message' => $message,
+            'status' => $status,
+            'reservation_id' => $reservation->getIdreslog(),
+            'stripe_url' => $stripeUrl,
+        ]);
+    } catch (\Exception $e) {
+        return $this->json(['success' => false, 'message' => 'Erreur interne : ' . $e->getMessage()], 500);
+    }
     }
 
     private function isCapacityAvailable(Logement $logement, \DateTime $dateArrivee, \DateTime $dateDepart, int $adultes, int $enfants, EntityManagerInterface $em): bool
