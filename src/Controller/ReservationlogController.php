@@ -31,7 +31,7 @@ class ReservationlogController extends AbstractController
         $logement = $logementRepository->find($id);
         if (!$logement) throw $this->createNotFoundException();
 
-        $user = $em->getRepository(User::class)->find(1);
+        $user = $em->getRepository(User::class)->find(14);
         if (!$user) {
             $this->addFlash('error', 'Utilisateur de test non trouvé.');
             return $this->redirectToRoute('app_front_logement_index');
@@ -142,7 +142,7 @@ class ReservationlogController extends AbstractController
             if ($nombreChambres < 1) {
                 return $this->json(['success' => false, 'message' => 'Au moins 1 chambre est requise.'], 400);
             }
-            if ($modeReservation && !in_array($modeReservation, ['all_inclusive', 'demi_pension', 'petit_dejeuner', 'soft'])) {
+            if ($modeReservation && !in_array($modeReservation, ['all_inclusive', 'demi_pension', 'logement petit_dejeuner', 'all_inclusive soft(sans alchool)'])) {
                 return $this->json(['success' => false, 'message' => 'Formule de pension invalide.'], 400);
             }
 
@@ -174,7 +174,10 @@ class ReservationlogController extends AbstractController
                 return $this->json(['success' => false, 'message' => '❌ Désolé, le logement a atteint sa capacité maximale sur cette période. Veuillez choisir d\'autres dates.'], 400);
             }
 $nuits = $dateArrivee->diff($dateDepart)->days;
-        $montant = $nuits * $logement->getTarifNuit();
+$nombrePersonnes = $adultes + $enfants;
+$prixBaseParNuitParPersonne = $logement->getTarifNuit(); // tarif par personne par nuit
+$coefficient = $this->getPensionCoefficient($modeReservation);
+$montant = $nuits * $nombrePersonnes * $prixBaseParNuitParPersonne * $coefficient;
 
         $stripeUrl = null;
         if ($modalite === 'Sur place') {
@@ -255,4 +258,13 @@ public function testEmail(EmailService $emailService, EntityManagerInterface $em
     return new Response('Données manquantes');
 }
    
+private function getPensionCoefficient(?string $modeReservation): float
+{
+    return match ($modeReservation) {
+        'demi_pension' => 1.20,
+        'all_inclusive' => 1.45,
+        'soft' => 1.37,
+        default => 1.00, // petit déjeuner ou aucun
+    };
+}
 }

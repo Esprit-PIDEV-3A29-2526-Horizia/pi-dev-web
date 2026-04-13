@@ -69,27 +69,29 @@
             <option value="">Choisir</option>
             <option value="all_inclusive">All Inclusive</option>
             <option value="demi_pension">Demi‑pension</option>
-            <option value="petit_dejeuner">Petit déjeuner</option>
-            <option value="soft">Soft (sans repas)</option>
+            <option value="petit_dejeuner">Logement Petit déjeuner</option>
+            <option value="soft">All Inclusive Soft (sans Alchool)</option>
         </select>
     </div>
-
-    <div class="card bg-light border-0 mt-4 p-3 rounded-4">
-        <h6 class="fw-bold mb-3">Détails du paiement</h6>
-        <div class="d-flex justify-content-between mb-2">
-            <span class="text-muted">Nombre de nuits :</span>
-            <span><span id="nuits_modal">0</span> nuit(s)</span>
-        </div>
-        <div class="d-flex justify-content-between mb-2">
-            <span class="text-muted">Prix par nuit :</span>
-            <span>{{ logement.tarifNuit|number_format(0, ',', ' ') }} DT</span>
-        </div>
-        <hr class="my-2">
-        <div class="d-flex justify-content-between fw-bold">
-            <span>Total :</span>
-            <span id="total_modal">0 DT</span>
-        </div>
+<div class="card bg-light border-0 mt-4 p-3 rounded-4">
+    <h6 class="fw-bold mb-3">Détails du paiement</h6>
+    <div class="d-flex justify-content-between mb-2">
+        <span class="text-muted">Nombre de nuits :</span>
+        <span><span id="nuits_modal">0</span> nuit(s)</span>
     </div>
+    <div class="d-flex justify-content-between mb-2">
+        <span class="text-muted" id="pensionLabel">Prix par personne / nuit :</span>
+        <span><span id="prix_pension_nuit">0</span> DT</span>
+    </div>
+    <div class="d-flex justify-content-between mb-2">
+        <span class="text-muted">Nombre de personnes :</span>
+        <span><span id="personnes_modal">0</span></span>
+    </div>
+    <div class="d-flex justify-content-between mb-2">
+        <span class="text-muted">Total :</span>
+        <span id="total_modal">0 DT</span>
+    </div>
+</div>
 
     <button type="submit" class="btn btn-primary w-100 mt-4 py-2 rounded-pill fw-semibold">Confirmer la réservation</button>
 </form>

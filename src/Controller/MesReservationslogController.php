@@ -223,7 +223,7 @@ public function downloadPdf(int $id, EntityManagerInterface $em, PdfService $pdf
         if ($adultes < 1) $errors[] = 'Au moins 1 adulte.';
         if ($enfants < 0) $errors[] = 'Nombre d\'enfants invalide.';
         if ($nombreChambres < 1) $errors[] = 'Au moins 1 chambre.';
-        if ($modeReservation && !in_array($modeReservation, ['all_inclusive', 'demi_pension', 'petit_dejeuner', 'soft'])) {
+        if ($modeReservation && !in_array($modeReservation, ['all_inclusive', 'demi_pension', 'logement petit_dejeuner', 'all_inclusive soft(sans alchool)'])) {
             $errors[] = 'Formule de pension invalide.';
         }
 
