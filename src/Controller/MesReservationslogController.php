@@ -29,7 +29,7 @@ class MesReservationslogController extends AbstractController
     }
 
     // Route AJAX pour récupérer les cartes filtrées
-    #[Route('/mes-reservations/ajax', name: 'app_front_reservation_ajax', methods: ['GET'])]
+   #[Route('/mes-reservations/ajax', name: 'app_front_reservation_ajax', methods: ['GET'])]
     public function ajax(Request $request, ReservationlogSearchService $searchService, EntityManagerInterface $em, ChambreTypeService $chambreTypeService): JsonResponse
     {
         $user = $em->getRepository(User::class)->find(14);
@@ -45,40 +45,55 @@ class MesReservationslogController extends AbstractController
 
         $html = '';
         foreach ($result['reservations'] as $reservation) {
-            $chambreTypeDesc = $chambreTypeService->getChambreType(
-                $reservation->getAdultes(),
-                $reservation->getEnfants(),
-                $reservation->getNombreChambres()
-            );
-            $pension = $reservation->getModeReservation();
-            $pensionLabel = $pension ? str_replace('_', ' ', $pension) : '-';
+    $chambreTypeDesc = $chambreTypeService->getChambreType(
+        $reservation->getAdultes(),
+        $reservation->getEnfants(),
+        $reservation->getNombreChambres()
+    );
+    $pension = $reservation->getModeReservation();
+    $pensionLabel = $pension ? str_replace('_', ' ', $pension) : '-';
+    
+    // Affichage des chambres
+    $chambresDisplay = $chambreTypeDesc;
+    if ($reservation->getRepartitionChambres()) {
+        $formatted = $chambreTypeService->formatRepartition($reservation->getRepartitionChambres());
+        if ($formatted) $chambresDisplay = $formatted;
+    }
 
-            $html .= '<div class="col-md-6 col-lg-4" data-id="' . $reservation->getIdreslog() . '">
-                <div class="reservation-card">
-                    <div class="reservation-card-content">
-                        <div class="card-header">
-                            <h5>' . htmlspecialchars($reservation->getLogement()->getNom()) . '</h5>
-                            <span class="badge-status ' . ($reservation->getStatus() == 'confirmée' ? 'confirmed' : ($reservation->getStatus() == 'en_attente' ? 'pending' : 'cancelled')) . '">
-                                ' . htmlspecialchars($reservation->getStatus()) . '
-                            </span>
-                        </div>
-                        <div class="card-details">
-                            <div class="detail-item"><small><i class="fa fa-calendar"></i> Arrivée</small><p>' . $reservation->getDateDebut()->format('d/m/Y') . '</p></div>
-                            <div class="detail-item"><small><i class="fa fa-calendar"></i> Départ</small><p>' . $reservation->getDateFin()->format('d/m/Y') . '</p></div>
-                            <div class="detail-item"><small><i class="fa fa-money"></i> Montant</small><p>' . number_format($reservation->getMontant(), 2, ',', ' ') . ' DT</p></div>
-                            <div class="detail-item"><small><i class="fa fa-credit-card"></i> Modalité</small><p>' . htmlspecialchars($reservation->getModalites()) . '</p></div>
-                            <div class="detail-item"><small><i class="fa fa-users"></i> Occupants</small><p>' . $reservation->getAdultes() . ' adulte(s) + ' . $reservation->getEnfants() . ' enfant(s)</p></div>
-                            <div class="detail-item"><small><i class="fa fa-bed"></i> Chambres</small><p>' . htmlspecialchars($chambreTypeDesc) . '</p></div>
-                            <div class="detail-item"><small><i class="fa fa-cutlery"></i> Pension</small><p>' . htmlspecialchars($pensionLabel) . '</p></div>
-                        </div>
-                        <div class="card-actions">
-                            <a href="#" class="btn-action btn-edit" data-id="' . $reservation->getIdreslog() . '"><i class="fa fa-pencil"></i> Modifier</a>
-                            <a href="#" class="btn-action btn-delete" data-id="' . $reservation->getIdreslog() . '"><i class="fa fa-trash"></i> Supprimer</a>';
-            if ($reservation->getStatus() == 'confirmée') {
-                $html .= '<a href="#" class="btn-action btn-qr" data-id="' . $reservation->getIdreslog() . '"><i class="fa fa-qrcode"></i> QR Code</a>';
-            }
-            $html .= '</div></div></div></div>';
-        }
+    $html .= '<div class="col-md-6 col-lg-4" data-id="' . $reservation->getIdreslog() . '">
+        <div class="reservation-card">
+            <div class="reservation-card-content">
+                <div class="card-header">
+                    <h5>' . htmlspecialchars($reservation->getLogement()->getNom()) . '</h5>
+                    <span class="badge-status ' . ($reservation->getStatus() == 'confirmée' ? 'confirmed' : ($reservation->getStatus() == 'en_attente' ? 'pending' : 'cancelled')) . '">
+                        ' . htmlspecialchars($reservation->getStatus()) . '
+                    </span>
+                </div>
+                <div class="card-details">
+                    <div class="detail-item"><small><i class="fa fa-calendar"></i> Arrivée</small><p>' . $reservation->getDateDebut()->format('d/m/Y') . '</p></div>
+                    <div class="detail-item"><small><i class="fa fa-calendar"></i> Départ</small><p>' . $reservation->getDateFin()->format('d/m/Y') . '</p></div>
+                    <div class="detail-item"><small><i class="fa fa-money"></i> Montant</small><p>' . number_format($reservation->getMontant(), 2, ',', ' ') . ' DT</p></div>
+                    <div class="detail-item"><small><i class="fa fa-credit-card"></i> Modalité</small><p>' . htmlspecialchars($reservation->getModalites()) . '</p></div>
+                    <div class="detail-item"><small><i class="fa fa-users"></i> Occupants</small><p>' . $reservation->getAdultes() . ' adulte(s) + ' . $reservation->getEnfants() . ' enfant(s)</p></div>
+                    <div class="detail-item"><small><i class="fa fa-bed"></i> Chambres</small><p>' . htmlspecialchars($chambresDisplay) . '</p></div>
+                    <div class="detail-item"><small><i class="fa fa-cutlery"></i> Pension</small><p>' . htmlspecialchars($pensionLabel) . '</p></div>
+                </div>
+                <div class="card-actions">';
+    
+    // Boutons (Modifier, Supprimer, QR, Finaliser)
+    if ($reservation->getStatus() !== 'terminée') {
+        $html .= '<a href="#" class="btn-action btn-edit" data-id="' . $reservation->getIdreslog() . '"><i class="fa fa-pencil"></i> Modifier</a>';
+        $html .= '<a href="#" class="btn-action btn-delete" data-id="' . $reservation->getIdreslog() . '"><i class="fa fa-trash"></i> Supprimer</a>';
+    }
+    if ($reservation->getStatus() == 'confirmée') {
+        $html .= '<a href="#" class="btn-action btn-qr" data-id="' . $reservation->getIdreslog() . '"><i class="fa fa-qrcode"></i> QR Code</a>';
+    }
+    if ($reservation->getStatus() == 'en_attente' && $reservation->getModalites() == 'En ligne') {
+        $html .= '<a href="' . $this->generateUrl('app_front_reservation_pay', ['id' => $reservation->getIdreslog()]) . '" class="btn-action btn-pay" style="background: #23779C; color:white;"><i class="fa fa-credit-card"></i> Finaliser paiement</a>';
+    }
+    
+    $html .= '</div></div></div></div>';
+}
 
         if (empty($result['reservations'])) {
             $html = '<div class="col-12"><div class="text-center py-5 bg-light rounded-4"><i class="bi bi-calendar-x display-1 text-muted mb-4 d-block"></i><h3 class="text-muted mb-3">Aucune réservation</h3><p class="text-muted mb-4">Commencez par réserver un logement.</p><a href="' . $this->generateUrl('app_front_logement_index') . '" class="btn btn-horozia-primary btn-lg px-5 rounded-pill"><i class="bi bi-house-door me-2"></i> Découvrir les logements</a></div></div>';
@@ -86,6 +101,8 @@ class MesReservationslogController extends AbstractController
 
         return $this->json(['html' => $html]);
     }
+
+    
 
     #[Route('/reservation/delete/{id}', name: 'app_front_reservation_delete', methods: ['POST'])]
     public function delete(int $id, EntityManagerInterface $em,EmailService $emailService): JsonResponse

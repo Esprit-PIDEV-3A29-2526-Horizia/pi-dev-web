@@ -128,6 +128,7 @@ class ReservationlogController extends AbstractController
             $enfants = (int)($data['enfants'] ?? 0);
             $nombreChambres = (int)($data['nombre_chambres'] ?? 1);
             $modeReservation = $data['mode_reservation'] ?? null;
+$repartitionChambres = $data['repartition_chambres'] ?? null;
 
             // Validation des champs
             if (!$logementId || !$dateArriveeStr || !$dateDepartStr || !$modalite) {
@@ -142,9 +143,10 @@ class ReservationlogController extends AbstractController
             if ($nombreChambres < 1) {
                 return $this->json(['success' => false, 'message' => 'Au moins 1 chambre est requise.'], 400);
             }
-            if ($modeReservation && !in_array($modeReservation, ['all_inclusive', 'demi_pension', 'logement petit_dejeuner', 'all_inclusive soft(sans alchool)'])) {
-                return $this->json(['success' => false, 'message' => 'Formule de pension invalide.'], 400);
-            }
+            if (empty($modeReservation) || !in_array($modeReservation, ['all_inclusive', 'demi_pension', 'petit_dejeuner', 'soft'])) {
+    return $this->json(['success' => false, 'message' => 'Veuillez choisir une formule de pension valide.'], 400);
+}
+
 
             $logement = $logementRepository->find($logementId);
             if (!$logement || !$logement->isDisponibilite()) {
@@ -206,9 +208,11 @@ $montant = $nuits * $nombrePersonnes * $prixBaseParNuitParPersonne * $coefficien
             $reservation->setNombreChambres($nombreChambres);
             $reservation->setModeReservation($modeReservation);
             $reservation->setCreatedAt(new \DateTime());
+$reservation->setRepartitionChambres($repartitionChambres);
 
             $em->persist($reservation);
             $em->flush();
+            
           if ($modalite === 'En ligne' && $paiementImmediat === true) {
             $successUrl = $this->generateUrl('app_front_reservation_success', ['id' => $reservation->getIdreslog()], UrlGeneratorInterface::ABSOLUTE_URL);
             $cancelUrl = $this->generateUrl('app_front_reservation_cancel', ['id' => $reservation->getIdreslog()], UrlGeneratorInterface::ABSOLUTE_URL);
@@ -229,7 +233,22 @@ $montant = $nuits * $nombrePersonnes * $prixBaseParNuitParPersonne * $coefficien
         return $this->json(['success' => false, 'message' => 'Erreur interne : ' . $e->getMessage()], 500);
     }
     }
-
+#[Route('/reservation/pay/{id}', name: 'app_front_reservation_pay', methods: ['GET'])]
+public function payReservation(int $id, EntityManagerInterface $em, StripeService $stripeService): Response
+{
+    $reservation = $em->getRepository(Reservationlog::class)->find($id);
+    if (!$reservation || $reservation->getUser()->getId() !== 14) {
+        throw $this->createNotFoundException();
+    }
+    if ($reservation->getStatus() !== 'en_attente' || $reservation->getModalites() !== 'En ligne') {
+        $this->addFlash('error', 'Cette réservation ne peut pas être payée.');
+        return $this->redirectToRoute('app_front_reservation_index');
+    }
+    $successUrl = $this->generateUrl('app_front_reservation_success', ['id' => $reservation->getIdreslog()], UrlGeneratorInterface::ABSOLUTE_URL);
+    $cancelUrl = $this->generateUrl('app_front_reservation_cancel', ['id' => $reservation->getIdreslog()], UrlGeneratorInterface::ABSOLUTE_URL);
+    $session = $stripeService->createCheckoutSession($reservation->getMontant(), 'eur', $successUrl, $cancelUrl);
+    return $this->redirect($session->url);
+}
     private function isCapacityAvailable(Logement $logement, \DateTime $dateArrivee, \DateTime $dateDepart, int $adultes, int $enfants, EntityManagerInterface $em): bool
     {
         $qb = $em->createQueryBuilder();
@@ -264,7 +283,8 @@ private function getPensionCoefficient(?string $modeReservation): float
         'demi_pension' => 1.20,
         'all_inclusive' => 1.45,
         'soft' => 1.37,
-        default => 1.00, // petit déjeuner ou aucun
+        'petit_dejeuner' => 1.00,
+        default => 1.00,
     };
 }
 }

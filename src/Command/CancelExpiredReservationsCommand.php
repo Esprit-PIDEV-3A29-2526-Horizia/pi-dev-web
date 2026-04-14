@@ -2,7 +2,6 @@
 namespace App\Command;
 
 use App\Entity\Reservationlog;
-use App\Service\EmailService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -12,25 +11,24 @@ class CancelExpiredReservationsCommand extends Command
 {
     protected static $defaultName = 'app:cancel-expired-reservations';
     private EntityManagerInterface $em;
-    private EmailService $emailService;
 
-    public function __construct(EntityManagerInterface $em, EmailService $emailService)
+    public function __construct(EntityManagerInterface $em)
     {
         parent::__construct();
         $this->em = $em;
-        $this->emailService = $emailService;
     }
 
     protected function configure(): void
     {
-        $this->setDescription('Annule les réservations en attente de paiement en ligne depuis plus de 24h');
+        $this->setDescription('Annule les réservations en ligne en attente de paiement depuis plus de 24h');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $limit = (new \DateTime())->modify('-24 hours');
-        $expired = $this->em->getRepository(Reservationlog::class)
-            ->createQueryBuilder('r')
+        $qb = $this->em->createQueryBuilder();
+        $expired = $qb->select('r')
+            ->from(Reservationlog::class, 'r')
             ->where('r.status = :status')
             ->andWhere('r.modalites = :modalite')
             ->andWhere('r.createdAt < :limit')
@@ -41,16 +39,11 @@ class CancelExpiredReservationsCommand extends Command
             ->getResult();
 
         foreach ($expired as $reservation) {
-            $reservation->setStatus('annulée');
-            $this->emailService->sendCancellationEmail(
-                $reservation->getUser()->getEmail(),
-                $reservation,
-                'Paiement non finalisé dans les 24h'
-            );
-            $output->writeln('Réservation #' . $reservation->getIdreslog() . ' annulée (délai dépassé)');
+            $reservation->setStatus('expirée');
+            $output->writeln(' expirée (délai dépassé)');
         }
         $this->em->flush();
-        $output->writeln('Annulation terminée. ' . count($expired) . ' réservation(s) annulée(s).');
+        $output->writeln('Terminé. ' . count($expired) . ' réservation(s) expirée(s).');
         return Command::SUCCESS;
     }
 }

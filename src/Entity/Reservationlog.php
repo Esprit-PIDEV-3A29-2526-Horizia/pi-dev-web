@@ -79,7 +79,11 @@ public function setCreatedAt(\DateTimeInterface $createdAt): self
     $this->createdAt = $createdAt;
     return $this;
 }
+#[ORM\Column(type: 'string', length: 255, nullable: true)]
+private ?string $repartitionChambres = null;
 
+public function getRepartitionChambres(): ?string { return $this->repartitionChambres; }
+public function setRepartitionChambres(?string $repartitionChambres): self { $this->repartitionChambres = $repartitionChambres; return $this; }
     // Getters & Setters (existants + nouveaux)
     public function getIdreslog(): ?int { return $this->idreslog; }
     public function setIdreslog(int $idreslog): self { $this->idreslog = $idreslog; return $this; }

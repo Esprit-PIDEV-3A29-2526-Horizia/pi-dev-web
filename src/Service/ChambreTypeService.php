@@ -47,4 +47,26 @@ class ChambreTypeService
         }
         return $result;
     }
+    // src/Service/ChambreTypeService.php
+public function formatRepartition(?string $repartition): string
+{
+    if (!$repartition) return '';
+    
+    $parts = explode(',', $repartition);
+    $types = [];
+    foreach ($parts as $p) {
+        $p = (int)trim($p);
+        if ($p == 1) $types[] = 'simple';
+        elseif ($p == 2) $types[] = 'double';
+        elseif ($p == 3) $types[] = 'triple';
+        else $types[] = 'quadruple';
+    }
+    
+    $compteur = array_count_values($types);
+    $description = [];
+    foreach ($compteur as $type => $count) {
+        $description[] = $count . ' chambre' . ($count > 1 ? 's' : '') . ' ' . $type;
+    }
+    return implode(' + ', $description);
+}
 }
