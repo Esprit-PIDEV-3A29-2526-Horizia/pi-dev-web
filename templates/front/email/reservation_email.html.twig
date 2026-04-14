@@ -18,6 +18,8 @@
         .badge-confirmed { background: #28a745; color: white; }
         .badge-pending { background: #ffc107; color: #333; }
         .badge-cancelled { background: #dc3545; color: white; }
+        .qr-code { text-align: center; margin-top: 20px; }
+        .qr-code img { width: 100px; height: 100px; }
     </style>
 </head>
 <body>
@@ -48,6 +50,10 @@
                     </span>
                 </td></tr>
             </table>
+            <div class="qr-code">
+                <img src="{{ qrCodeBase64 }}" alt="QR Code">
+                <p style="font-size: 12px;">Scannez ce code pour accéder à votre réservation</p>
+            </div>
             <p style="margin-top: 24px;">Merci de votre confiance.<br>L'équipe Horozia</p>
         </div>
         <div class="footer">

@@ -1,5 +1,7 @@
 <?php
+// src/Service/EmailService.php
 namespace App\Service;
+
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
 use Psr\Log\LoggerInterface;
@@ -11,24 +13,39 @@ class EmailService
     private LoggerInterface $logger;
     private Environment $twig;
     private PdfService $pdfService;
+    private QrCodeService $qrCodeService;
 
-    public function __construct(MailerInterface $mailer, LoggerInterface $logger, Environment $twig, PdfService $pdfService)
+    public function __construct(MailerInterface $mailer, LoggerInterface $logger, Environment $twig, PdfService $pdfService, QrCodeService $qrCodeService)
     {
         $this->mailer = $mailer;
         $this->logger = $logger;
         $this->twig = $twig;
         $this->pdfService = $pdfService;
+        $this->qrCodeService = $qrCodeService;
     }
 
-    /**
-     * Envoi d'email de confirmation (avec PDF joint)
-     */
     public function sendReservationEmail(string $to, $reservation, string $customMessage): bool
     {
         try {
+            // Contenu du QR code
+            $qrContent = "Réservation #" . $reservation->getIdreslog() . "\n";
+            $qrContent .= "Logement: " . $reservation->getLogement()->getNom() . "\n";
+            $qrContent .= "Arrivée: " . $reservation->getDateDebut()->format('d/m/Y') . "\n";
+            $qrContent .= "Départ: " . $reservation->getDateFin()->format('d/m/Y') . "\n";
+            $qrContent .= "Adultes: " . $reservation->getAdultes() . "\n";
+            $qrContent .= "Enfants: " . $reservation->getEnfants() . "\n";
+            $qrContent .= "Chambres: " . $reservation->getNombreChambres() . "\n";
+            $qrContent .= "Pension: " . ($reservation->getModeReservation() ? str_replace('_', ' ', $reservation->getModeReservation()) : '-') . "\n";
+            $qrContent .= "Montant: " . number_format($reservation->getMontant(), 2, ',', ' ') . " DT\n";
+            $qrContent .= "Modalité: " . $reservation->getModalites() . "\n";
+            $qrContent .= "Statut: " . $reservation->getStatus();
+
+            $qrCodeBase64 = $this->qrCodeService->generateQrCodeBase64($qrContent);
+
             $html = $this->twig->render('front/email/reservation_email.html.twig', [
                 'reservation' => $reservation,
                 'customMessage' => $customMessage,
+                'qrCodeBase64' => $qrCodeBase64,
             ]);
 
             $pdfContent = $this->pdfService->generateReservationPdf($reservation);
@@ -49,9 +66,6 @@ class EmailService
         }
     }
 
-    /**
-     * Envoi d'email simple (sans PDF) pour annulation
-     */
     public function sendCancellationEmail(string $to, $reservation, string $reason): bool
     {
         try {

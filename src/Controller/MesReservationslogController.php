@@ -141,7 +141,7 @@ public function qrcode(int $id, EntityManagerInterface $em, QrCodeService $qrCod
     $content .= "Modalité: " . $reservation->getModalites() . "\n";
     $content .= "Statut: " . $reservation->getStatus();
 
-    $qrCodeDataUri = $qrCodeService->generateQrCodeDataUri($content);
+    $qrCodeDataUri = $qrCodeService->generateQrCodeBase64($content);
 
     $html = '
     <div class="text-center">
@@ -214,53 +214,92 @@ public function downloadPdf(int $id, EntityManagerInterface $em, PdfService $pdf
         return new Response($html);
     }
 
-    #[Route('/reservation/edit/{id}', name: 'app_front_reservation_edit', methods: ['POST'])]
-    public function edit(int $id, Request $request, EntityManagerInterface $em): JsonResponse
-    {
-        $reservation = $em->getRepository(Reservationlog::class)->find($id);
-        if (!$reservation || $reservation->getUser()->getId() !== 14) {
-            return $this->json(['success' => false, 'error' => 'Réservation non trouvée'], 404);
-        }
-        $logement = $reservation->getLogement();
-
-        $dateArrivee = \DateTime::createFromFormat('Y-m-d', $request->request->get('date_arrivee'));
-        $dateDepart  = \DateTime::createFromFormat('Y-m-d', $request->request->get('date_depart'));
-        $modalite    = $request->request->get('modalite');
-        $adultes     = (int)$request->request->get('adultes', 1);
-        $enfants     = (int)$request->request->get('enfants', 0);
-        $nombreChambres = (int)$request->request->get('nombre_chambres', 1);
-        $modeReservation = $request->request->get('mode_reservation');
-
-        $errors = [];
-        if (!$dateArrivee || !$dateDepart) {
-            $errors[] = 'Dates invalides.';
-        } elseif ($dateArrivee < new \DateTime() || $dateDepart <= $dateArrivee) {
-            $errors[] = 'Les dates doivent être valides (départ après arrivée, et non passées).';
-        }
-        if ($adultes < 1) $errors[] = 'Au moins 1 adulte.';
-        if ($enfants < 0) $errors[] = 'Nombre d\'enfants invalide.';
-        if ($nombreChambres < 1) $errors[] = 'Au moins 1 chambre.';
-        if ($modeReservation && !in_array($modeReservation, ['all_inclusive', 'demi_pension', 'logement petit_dejeuner', 'all_inclusive soft(sans alchool)'])) {
-            $errors[] = 'Formule de pension invalide.';
-        }
-
-        if (!empty($errors)) {
-            return $this->json(['success' => false, 'error' => implode(' ', $errors)]);
-        }
-
-        $nuits = $dateArrivee->diff($dateDepart)->days;
-        $montant = $nuits * $logement->getTarifNuit();
-
-        $reservation->setDateDebut($dateArrivee);
-        $reservation->setDateFin($dateDepart);
-        $reservation->setMontant($montant);
-        $reservation->setModalites($modalite);
-        $reservation->setAdultes($adultes);
-        $reservation->setEnfants($enfants);
-        $reservation->setNombreChambres($nombreChambres);
-        $reservation->setModeReservation($modeReservation);
-        $em->flush();
-
-        return $this->json(['success' => true, 'message' => 'Réservation modifiée avec succès']);
+   #[Route('/reservation/edit/{id}', name: 'app_front_reservation_edit', methods: ['POST'])]
+public function edit(int $id, Request $request, EntityManagerInterface $em): JsonResponse
+{
+    $reservation = $em->getRepository(Reservationlog::class)->find($id);
+    if (!$reservation || $reservation->getUser()->getId() !== 14) {
+        return $this->json(['success' => false, 'error' => 'Réservation non trouvée'], 404);
     }
+    $logement = $reservation->getLogement();
+
+    $dateArrivee = \DateTime::createFromFormat('Y-m-d', $request->request->get('date_arrivee'));
+    $dateDepart  = \DateTime::createFromFormat('Y-m-d', $request->request->get('date_depart'));
+    $modalite    = $request->request->get('modalite');
+    $adultes     = (int)$request->request->get('adultes', 1);
+    $enfants     = (int)$request->request->get('enfants', 0);
+    $nombreChambres = (int)$request->request->get('nombre_chambres', 1);
+    $modeReservation = $request->request->get('mode_reservation');
+    $repartitionChambres = $request->request->get('repartition_chambres');
+
+    $errors = [];
+    if (!$dateArrivee || !$dateDepart) {
+        $errors[] = 'Dates invalides.';
+    } elseif ($dateArrivee < new \DateTime() || $dateDepart <= $dateArrivee) {
+        $errors[] = 'Les dates doivent être valides (départ après arrivée, et non passées).';
+    }
+    if ($adultes < 1) $errors[] = 'Au moins 1 adulte.';
+    if ($enfants < 0) $errors[] = 'Nombre d\'enfants invalide.';
+    if ($nombreChambres < 1) $errors[] = 'Au moins 1 chambre.';
+    if (empty($modeReservation) || !in_array($modeReservation, ['all_inclusive', 'demi_pension', 'petit_dejeuner', 'soft'])) {
+        $errors[] = 'Formule de pension invalide.';
+    }
+
+    if (!empty($errors)) {
+        return $this->json(['success' => false, 'error' => implode(' ', $errors)]);
+    }
+
+    // Calcul du montant avec pension et nombre de personnes
+    $nuits = $dateArrivee->diff($dateDepart)->days;
+    $nombrePersonnes = $adultes + $enfants;
+    $prixBaseParNuitParPersonne = $logement->getTarifNuit();
+    $coefficient = $this->getPensionCoefficient($modeReservation);
+    $montant = $nuits * $nombrePersonnes * $prixBaseParNuitParPersonne * $coefficient;
+
+    $reservation->setDateDebut($dateArrivee);
+    $reservation->setDateFin($dateDepart);
+    $reservation->setMontant($montant);
+    $reservation->setModalites($modalite);
+    $reservation->setAdultes($adultes);
+    $reservation->setEnfants($enfants);
+    $reservation->setNombreChambres($nombreChambres);
+    $reservation->setModeReservation($modeReservation);
+    if ($repartitionChambres !== null) {
+        $reservation->setRepartitionChambres($repartitionChambres);
+    }
+    $em->flush();
+
+    return $this->json(['success' => true, 'message' => 'Réservation modifiée avec succès']);
+}
+
+// Ajoutez cette méthode privée si elle n’existe pas
+private function getPensionCoefficient(?string $modeReservation): float
+{
+    return match ($modeReservation) {
+        'demi_pension' => 1.20,
+        'all_inclusive' => 1.45,
+        'soft' => 1.37,
+        'petit_dejeuner' => 1.00,
+        default => 1.00,
+    };
+}
+public function formatRepartition(?string $repartition): string
+{
+    if (!$repartition) return '';
+    $parts = explode(',', $repartition);
+    $types = [];
+    foreach ($parts as $p) {
+        $p = (int)trim($p);
+        if ($p == 1) $types[] = 'simple';
+        elseif ($p == 2) $types[] = 'double';
+        elseif ($p == 3) $types[] = 'triple';
+        else $types[] = 'quadruple';
+    }
+    $compteur = array_count_values($types);
+    $description = [];
+    foreach ($compteur as $type => $count) {
+        $description[] = $count . ' chambre' . ($count > 1 ? 's' : '') . ' ' . $type;
+    }
+    return implode(' + ', $description);
+}
 }

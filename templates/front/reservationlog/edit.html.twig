@@ -60,17 +60,24 @@
                 <input type="number" id="nombre_chambres_edit" name="nombre_chambres" class="form-control" value="{{ reservation.nombreChambres }}" min="1">
             </div>
         </div>
+        <div class="col-md-12 mt-2" id="repartitionContainer" style="display: none;">
+            <label for="repartition_chambres_edit" class="form-label small">Répartition des chambres</label>
+            <select id="repartition_chambres_edit" name="repartition_chambres" class="form-select">
+                <option value="">Choisir une répartition</option>
+            </select>
+        </div>
     </div>
 
     <div class="mt-3">
         <label for="mode_reservation_edit" class="form-label fw-semibold small">Formule de pension</label>
         <select id="mode_reservation_edit" name="mode_reservation" class="form-select">
-            <option value="">Choisir</option>
+            <option value="" disabled selected>Choisir une formule</option>
             <option value="all_inclusive" {{ reservation.modeReservation == 'all_inclusive' ? 'selected' : '' }}>All Inclusive</option>
+            <option value="soft" {{ reservation.modeReservation == 'soft' ? 'selected' : '' }}>All Inclusive Soft (sans alcool)</option>
             <option value="demi_pension" {{ reservation.modeReservation == 'demi_pension' ? 'selected' : '' }}>Demi‑pension</option>
-            <option value="logement petit_dejeuner" {{ reservation.modeReservation == 'logement petit_dejeuner' ? 'selected' : '' }}>logement petit_dejeuner</option>
-            <option value="all_inclusive soft(sans alchool)" {{ reservation.modeReservation == 'all_inclusive soft(sans alchool)' ? 'selected' : '' }}>all_inclusive soft(sans alchool)</option>
+            <option value="petit_dejeuner" {{ reservation.modeReservation == 'petit_dejeuner' ? 'selected' : '' }}>Logement Petit déjeuner</option>
         </select>
+        <div id="pensionError" class="invalid-feedback" style="display: none;">Veuillez choisir une formule de pension.</div>
     </div>
 
     <div class="card bg-light border-0 mt-4 p-3 rounded-4">
@@ -80,10 +87,13 @@
             <span><span id="nuits_edit">0</span> nuit(s)</span>
         </div>
         <div class="d-flex justify-content-between mb-2">
-            <span class="text-muted">Prix par nuit :</span>
-            <span>{{ logement.tarifNuit|number_format(0, ',', ' ') }} DT</span>
+            <span class="text-muted" id="pensionLabelEdit">Prix par personne / nuit :</span>
+            <span><span id="prix_pension_nuit_edit">0</span> DT</span>
         </div>
-        <hr class="my-2">
+        <div class="d-flex justify-content-between mb-2">
+            <span class="text-muted">Nombre de personnes :</span>
+            <span><span id="personnes_edit">0</span></span>
+        </div>
         <div class="d-flex justify-content-between fw-bold">
             <span>Total :</span>
             <span id="total_edit">0 DT</span>
@@ -94,7 +104,7 @@
 </form>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    (function() {
         const dateArrivee = document.getElementById('date_arrivee_edit');
         const dateDepart = document.getElementById('date_depart_edit');
         const totalSpan = document.getElementById('total_edit');
@@ -103,23 +113,109 @@
         const form = document.getElementById('editReservationForm');
         const formErrorsDiv = document.getElementById('formErrors');
         const modaliteRadios = document.querySelectorAll('input[name="modalite"]');
+        const adultesInput = document.getElementById('adultes_edit');
+        const enfantsInput = document.getElementById('enfants_edit');
+        const modeReservationSelect = document.getElementById('mode_reservation_edit');
+        const chambresInput = document.getElementById('nombre_chambres_edit');
+        const personnesSpan = document.getElementById('personnes_edit');
+        const prixPensionSpan = document.getElementById('prix_pension_nuit_edit');
+        const pensionLabelSpan = document.getElementById('pensionLabelEdit');
 
+        // ========== RÉPARTITION DES CHAMBRES ==========
+        function updateRepartitionOptions() {
+            const adultes = parseInt(adultesInput?.value || 1);
+            const enfants = parseInt(enfantsInput?.value || 0);
+            const totalPersonnes = adultes + enfants;
+            const chambresDemandees = parseInt(chambresInput?.value || 1);
+            const maxParChambre = 4;
+            const chambresNecessaires = Math.ceil(totalPersonnes / maxParChambre);
+            const chambresEffectives = Math.max(chambresDemandees, chambresNecessaires);
+            const repartitionContainer = document.getElementById('repartitionContainer');
+            const repartitionSelect = document.getElementById('repartition_chambres_edit');
+
+            if (!repartitionContainer) return;
+            const oldValue = repartitionSelect ? repartitionSelect.value : '';
+
+            if (chambresEffectives > 1 && chambresDemandees === 1 && totalPersonnes > 0) {
+                const combos = [];
+                function findCombos(remaining, chambers, current) {
+                    if (chambers === 0) {
+                        if (remaining === 0) combos.push([...current]);
+                        return;
+                    }
+                    for (let i = 1; i <= Math.min(remaining, maxParChambre); i++) {
+                        current.push(i);
+                        findCombos(remaining - i, chambers - 1, current);
+                        current.pop();
+                    }
+                }
+                findCombos(totalPersonnes, chambresEffectives, []);
+                const uniqueCombos = [];
+                combos.forEach(combo => {
+                    const sorted = [...combo].sort((a,b)=>a-b);
+                    const key = sorted.join(',');
+                    if (!uniqueCombos.some(c => c.join(',') === key)) uniqueCombos.push(sorted);
+                });
+                repartitionSelect.innerHTML = '<option value="">Choisir une répartition</option>';
+                uniqueCombos.forEach(combo => {
+                    const labels = combo.map(p => p + ' personne' + (p > 1 ? 's' : ''));
+                    const text = labels.join(' + ');
+                    repartitionSelect.innerHTML += `<option value="${combo.join(',')}">${text}</option>`;
+                });
+                if (oldValue && Array.from(repartitionSelect.options).some(opt => opt.value === oldValue)) {
+                    repartitionSelect.value = oldValue;
+                }
+                repartitionContainer.style.display = 'block';
+            } else {
+                repartitionContainer.style.display = 'none';
+                if (repartitionSelect) repartitionSelect.value = '';
+            }
+        }
+
+        // ========== CALCUL DU TOTAL (avec pension) ==========
         function calculerTotal() {
+            const adultes = parseInt(adultesInput?.value || 1);
+            const enfants = parseInt(enfantsInput?.value || 0);
+            const nombrePersonnes = adultes + enfants;
+            const modeReservation = modeReservationSelect?.value || null;
+
+            let coefficient = 1.00;
+            let pensionLabel = "Prix par personne / nuit";
+            if (modeReservation === 'demi_pension') {
+                coefficient = 1.20;
+                pensionLabel = "Prix par personne / nuit (Demi-pension)";
+            } else if (modeReservation === 'all_inclusive') {
+                coefficient = 1.45;
+                pensionLabel = "Prix par personne / nuit (All Inclusive)";
+            } else if (modeReservation === 'soft') {
+                coefficient = 1.37;
+                pensionLabel = "Prix par personne / nuit (Soft)";
+            } else if (modeReservation === 'petit_dejeuner') {
+                coefficient = 1.00;
+                pensionLabel = "Prix par personne / nuit (Petit déjeuner)";
+            }
+
+            const prixPensionNuit = prixParNuit * coefficient;
+            if (prixPensionSpan) prixPensionSpan.innerText = prixPensionNuit.toFixed(2);
+            if (pensionLabelSpan) pensionLabelSpan.innerText = pensionLabel;
+            if (personnesSpan) personnesSpan.innerText = nombrePersonnes;
+
             if (dateArrivee.value && dateDepart.value) {
                 const arrivee = new Date(dateArrivee.value);
                 const depart = new Date(dateDepart.value);
                 if (depart > arrivee) {
                     const nuits = (depart - arrivee) / (1000 * 60 * 60 * 24);
-                    const total = nuits * prixParNuit;
-                    nuitsSpan.innerText = nuits;
-                    totalSpan.innerText = total.toFixed(2) + ' DT';
+                    const total = nuits * nombrePersonnes * prixPensionNuit;
+                    if (nuitsSpan) nuitsSpan.innerText = nuits;
+                    if (totalSpan) totalSpan.innerText = total.toFixed(2) + ' DT';
                     return;
                 }
             }
-            nuitsSpan.innerText = '0';
-            totalSpan.innerText = '0 DT';
+            if (nuitsSpan) nuitsSpan.innerText = '0';
+            if (totalSpan) totalSpan.innerText = '0 DT';
         }
 
+        // ========== VALIDATION ==========
         function validateForm(event) {
             let isValid = true;
             let errorMessages = [];
@@ -168,9 +264,21 @@
                 isValid = false;
             }
 
-            const adultes = parseInt(document.getElementById('adultes_edit')?.value || 0);
-            const enfants = parseInt(document.getElementById('enfants_edit')?.value || 0);
-            const chambres = parseInt(document.getElementById('nombre_chambres_edit')?.value || 0);
+            const modeReservation = modeReservationSelect?.value || null;
+            const pensionErrorDiv = document.getElementById('pensionError');
+            if (!modeReservation) {
+                errorMessages.push('Veuillez choisir une formule de pension.');
+                if (pensionErrorDiv) pensionErrorDiv.style.display = 'block';
+                modeReservationSelect?.classList.add('is-invalid');
+                isValid = false;
+            } else {
+                if (pensionErrorDiv) pensionErrorDiv.style.display = 'none';
+                modeReservationSelect?.classList.remove('is-invalid');
+            }
+
+            const adultes = parseInt(adultesInput?.value || 0);
+            const enfants = parseInt(enfantsInput?.value || 0);
+            const chambres = parseInt(chambresInput?.value || 0);
             if (adultes < 1) errorMessages.push('Au moins 1 adulte.');
             if (enfants < 0) errorMessages.push('Nombre d\'enfants invalide.');
             if (chambres < 1) errorMessages.push('Au moins 1 chambre.');
@@ -184,9 +292,16 @@
             if (!isValid) event.preventDefault();
         }
 
-        dateArrivee.addEventListener('change', calculerTotal);
-        dateDepart.addEventListener('change', calculerTotal);
+        // ========== ÉCOUTEURS ==========
+        dateArrivee.addEventListener('change', () => { calculerTotal(); updateRepartitionOptions(); });
+        dateDepart.addEventListener('change', () => { calculerTotal(); updateRepartitionOptions(); });
+        if (adultesInput) adultesInput.addEventListener('input', () => { calculerTotal(); updateRepartitionOptions(); });
+        if (enfantsInput) enfantsInput.addEventListener('input', () => { calculerTotal(); updateRepartitionOptions(); });
+        if (modeReservationSelect) modeReservationSelect.addEventListener('change', () => { calculerTotal(); updateRepartitionOptions(); });
+        if (chambresInput) chambresInput.addEventListener('input', () => { calculerTotal(); updateRepartitionOptions(); });
+
+        calculerTotal();
+        updateRepartitionOptions();
         form.addEventListener('submit', validateForm);
-        calculerTotal(); // initialisation
-    });
+    })();
 </script>
