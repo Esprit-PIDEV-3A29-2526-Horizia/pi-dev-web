@@ -579,10 +579,11 @@
                 } else if (modeReservation === 'all_inclusive') {
                     coefficient = 1.45;
                     pensionLabel = "Prix par personne / nuit (All Inclusive)";
-                } else if (modeReservation === 'soft') {
-                    coefficient = 1.37;
-                    pensionLabel = "Prix par personne / nuit (Soft)";
-                } else if (modeReservation === 'petit_dejeuner') {
+                }else if (modeReservation === 'all_inclusive_soft(sans_alcool)') {
+    coefficient = 1.37;
+    pensionLabel = "Prix par personne / nuit (All Inclusive Soft(sans alcool))";
+
+                } else if (modeReservation === 'logement_petit_dejeuner') {
                     coefficient = 1.00;
                     pensionLabel = "Prix par personne / nuit (Petit déjeuner)";
                 }

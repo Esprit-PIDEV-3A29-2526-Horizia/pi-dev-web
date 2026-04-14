@@ -177,7 +177,7 @@ public function downloadPdf(int $id, EntityManagerInterface $em, PdfService $pdf
     ]);
 }
     #[Route('/reservation/send-email/{id}', name: 'app_front_reservation_send_email', methods: ['POST'])]
-    public function sendEmail(int $id, EntityManagerInterface $em, PdfService $pdfService, EmailService $emailService): JsonResponse
+    public function sendEmail(int $id, EntityManagerInterface $em, EmailService $emailService): JsonResponse
     {
         $reservation = $em->getRepository(Reservationlog::class)->find($id);
         if (!$reservation || $reservation->getUser()->getId() !== 14) {
@@ -185,8 +185,9 @@ public function downloadPdf(int $id, EntityManagerInterface $em, PdfService $pdf
         }
         
         try {
-            $pdfContent = $pdfService->generateReservationPdf($reservation);
-            $success = $emailService->sendReservationEmail($reservation->getUser()->getEmail(), $reservation, $pdfContent);
+            // Message personnalisé (peut être dynamique)
+            $customMessage = "✅ Votre réservation a bien été enregistrée.";
+            $success = $emailService->sendReservationEmail($reservation->getUser()->getEmail(), $reservation, $customMessage);
             
             if ($success) {
                 return $this->json(['success' => true, 'message' => '✅ Email envoyé avec succès !']);

@@ -143,10 +143,9 @@ $repartitionChambres = $data['repartition_chambres'] ?? null;
             if ($nombreChambres < 1) {
                 return $this->json(['success' => false, 'message' => 'Au moins 1 chambre est requise.'], 400);
             }
-            if (empty($modeReservation) || !in_array($modeReservation, ['all_inclusive', 'demi_pension', 'petit_dejeuner', 'soft'])) {
+           if (empty($modeReservation) || !in_array($modeReservation, ['all_inclusive', 'all_inclusive_soft(sans_alcool)', 'demi_pension', 'logement_petit_dejeuner'])) {
     return $this->json(['success' => false, 'message' => 'Veuillez choisir une formule de pension valide.'], 400);
 }
-
 
             $logement = $logementRepository->find($logementId);
             if (!$logement || !$logement->isDisponibilite()) {
@@ -282,8 +281,8 @@ private function getPensionCoefficient(?string $modeReservation): float
     return match ($modeReservation) {
         'demi_pension' => 1.20,
         'all_inclusive' => 1.45,
-        'soft' => 1.37,
-        'petit_dejeuner' => 1.00,
+        'all_inclusive_soft(sans_alcool)' => 1.37,   // anciennement 'soft'
+        'logement_petit_dejeuner' => 1.00,
         default => 1.00,
     };
 }
