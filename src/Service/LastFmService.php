@@ -7,113 +7,111 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 class LastFmService
 {
     private HttpClientInterface $httpClient;
-    private string $apiKey;
+    private string $apiKey = '480b3708acd6cf54465837aa89bc8310';
 
-    public function __construct(HttpClientInterface $httpClient, string $apiKey)
+    public function __construct(HttpClientInterface $httpClient)
     {
         $this->httpClient = $httpClient;
-        $this->apiKey = $apiKey;
     }
 
-    /**
-     * Get artist information (bio, image, listeners, playcount)
-     */
     public function getArtistInfo(string $artistName): ?array
     {
-        $response = $this->httpClient->request('GET', 'http://ws.audioscrobbler.com/2.0/', [
-            'query' => [
-                'method' => 'artist.getinfo',
-                'artist' => $artistName,
-                'api_key' => $this->apiKey,
-                'format' => 'json',
-            ],
-        ]);
+        try {
+            $response = $this->httpClient->request('GET', 'http://ws.audioscrobbler.com/2.0/', [
+                'query' => [
+                    'method' => 'artist.getinfo',
+                    'artist' => $artistName,
+                    'api_key' => $this->apiKey,
+                    'format' => 'json',
+                    'lang' => 'fr', // French language
+                ],
+            ]);
 
-        $data = $response->toArray();
-        
-        if (isset($data['artist'])) {
-            return [
-                'name' => $data['artist']['name'],
-                'bio' => $data['artist']['bio']['summary'] ?? 'No bio available',
-                'image' => $data['artist']['image'][3]['#text'] ?? null, // Large image
-                'listeners' => $data['artist']['stats']['listeners'] ?? '0',
-                'playcount' => $data['artist']['stats']['playcount'] ?? '0',
-                'tags' => $data['artist']['tags']['tag'] ?? [],
-                'similar' => $data['artist']['similar']['artist'] ?? [],
-            ];
+            $data = $response->toArray();
+            
+            if (isset($data['artist'])) {
+                // Get top tracks
+                $topTracks = $this->getTopTracks($artistName);
+                
+                return [
+                    'name' => $data['artist']['name'],
+                    'bio' => $data['artist']['bio']['summary'] ?? 'Aucune biographie disponible',
+                    'image' => $data['artist']['image'][3]['#text'] ?? null, // Large image
+                    'image_small' => $data['artist']['image'][1]['#text'] ?? null, // Medium image
+                    'listeners' => number_format($data['artist']['stats']['listeners'] ?? 0),
+                    'playcount' => number_format($data['artist']['stats']['playcount'] ?? 0),
+                    'tags' => $data['artist']['tags']['tag'] ?? [],
+                    'top_tracks' => $topTracks,
+                ];
+            }
+            return null;
+        } catch (\Exception $e) {
+            return null;
         }
-
-        return null;
     }
 
-    /**
-     * Get artist's top tracks
-     */
     public function getTopTracks(string $artistName, int $limit = 5): array
     {
-        $response = $this->httpClient->request('GET', 'http://ws.audioscrobbler.com/2.0/', [
-            'query' => [
-                'method' => 'artist.gettoptracks',
-                'artist' => $artistName,
-                'api_key' => $this->apiKey,
-                'format' => 'json',
-                'limit' => $limit,
-            ],
-        ]);
+        try {
+            $response = $this->httpClient->request('GET', 'http://ws.audioscrobbler.com/2.0/', [
+                'query' => [
+                    'method' => 'artist.gettoptracks',
+                    'artist' => $artistName,
+                    'api_key' => $this->apiKey,
+                    'format' => 'json',
+                    'limit' => $limit,
+                    'lang' => 'fr',
+                ],
+            ]);
 
-        $data = $response->toArray();
-        
-        if (isset($data['toptracks']['track'])) {
-            return $data['toptracks']['track'];
+            $data = $response->toArray();
+            
+            $tracks = [];
+            if (isset($data['toptracks']['track'])) {
+                foreach ($data['toptracks']['track'] as $track) {
+                    $tracks[] = [
+                        'name' => $track['name'],
+                        'playcount' => number_format($track['playcount'] ?? 0),
+                        'listeners' => number_format($track['listeners'] ?? 0),
+                        'url' => $track['url'] ?? null,
+                        'image' => $track['image'][2]['#text'] ?? null,
+                    ];
+                }
+            }
+            return $tracks;
+        } catch (\Exception $e) {
+            return [];
         }
-
-        return [];
     }
 
-    /**
-     * Get similar artists
-     */
     public function getSimilarArtists(string $artistName, int $limit = 5): array
     {
-        $response = $this->httpClient->request('GET', 'http://ws.audioscrobbler.com/2.0/', [
-            'query' => [
-                'method' => 'artist.getsimilar',
-                'artist' => $artistName,
-                'api_key' => $this->apiKey,
-                'format' => 'json',
-                'limit' => $limit,
-            ],
-        ]);
+        try {
+            $response = $this->httpClient->request('GET', 'http://ws.audioscrobbler.com/2.0/', [
+                'query' => [
+                    'method' => 'artist.getsimilar',
+                    'artist' => $artistName,
+                    'api_key' => $this->apiKey,
+                    'format' => 'json',
+                    'limit' => $limit,
+                ],
+            ]);
 
-        $data = $response->toArray();
-        
-        if (isset($data['similarartists']['artist'])) {
-            return $data['similarartists']['artist'];
+            $data = $response->toArray();
+            
+            $artists = [];
+            if (isset($data['similarartists']['artist'])) {
+                foreach ($data['similarartists']['artist'] as $artist) {
+                    $artists[] = [
+                        'name' => $artist['name'],
+                        'url' => $artist['url'] ?? null,
+                        'image' => $artist['image'][2]['#text'] ?? null,
+                    ];
+                }
+            }
+            return $artists;
+        } catch (\Exception $e) {
+            return [];
         }
-
-        return [];
-    }
-
-    /**
-     * Search for an artist
-     */
-    public function searchArtist(string $artistName): array
-    {
-        $response = $this->httpClient->request('GET', 'http://ws.audioscrobbler.com/2.0/', [
-            'query' => [
-                'method' => 'artist.search',
-                'artist' => $artistName,
-                'api_key' => $this->apiKey,
-                'format' => 'json',
-            ],
-        ]);
-
-        $data = $response->toArray();
-        
-        if (isset($data['results']['artistmatches']['artist'])) {
-            return $data['results']['artistmatches']['artist'];
-        }
-
-        return [];
     }
 }

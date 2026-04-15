@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\Events;
 use App\Entity\Participation;
 use App\Form\ParticipationType;
+use App\Service\LastFmService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -20,13 +21,30 @@ class ParticipationController extends AbstractController
     // ══════════════════════════════════════════
 
     #[Route('/front/event/{id}', name: 'app_front_event_show', methods: ['GET'])]
-    public function eventShow(int $id, EntityManagerInterface $em): Response
+    public function eventShow(int $id, EntityManagerInterface $em, LastFmService $lastFmService): Response
     {
         $event = $em->getRepository(Events::class)->find($id);
         if (!$event) {
             throw $this->createNotFoundException('Événement introuvable.');
         }
-        return $this->render('front/event_show.html.twig', ['event' => $event]);
+
+        $artistInfo = null;
+        if (stripos($event->getCategorie(), 'concert') !== false) {
+            try {
+                // Clean the artist name by removing common concert words
+                $artistName = str_ireplace([' Concert', ' Live', ' Show', ' Performance', ' concert', ' live', ' show', ' performance'], '', $event->getTitre());
+                $artistName = trim($artistName);
+                
+                $artistInfo = $lastFmService->getArtistInfo($artistName);
+            } catch (\Exception $e) {
+                $artistInfo = null;
+            }
+        }
+
+        return $this->render('front/event_show.html.twig', [
+            'event' => $event,
+            'artistInfo' => $artistInfo,
+        ]);
     }
 
     #[Route('/front/event/{id}/register', name: 'app_participation_new', methods: ['GET', 'POST'])]
@@ -60,7 +78,7 @@ class ParticipationController extends AbstractController
             //email
             $email = (new Email())
                 ->from('noreply@horozia.com')
-                ->to($userEmail)  // ← Use email from form
+                ->to($userEmail)
                 ->subject('Confirmation de participation - ' . $event->getTitre())
                 ->html($this->renderView('emails/participation_confirmation.html.twig', [
                     'participation' => $participation,

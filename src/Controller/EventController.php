@@ -183,7 +183,7 @@ class EventController extends AbstractController
         ]);
     }
 
-    #[Route('/event/{id}', name: 'app_front_event_show', methods: ['GET'])]
+    /*#[Route('/front/event/{id}', name: 'app_front_event_show', methods: ['GET'])]
     public function publicShow(int $id, EntityManagerInterface $entityManager, LastFmService $lastFmService): Response
     {
         $event = $entityManager->getRepository(Events::class)->find($id);
@@ -192,18 +192,41 @@ class EventController extends AbstractController
             throw $this->createNotFoundException('Event not found.');
         }
 
-        $artistInfo = null;
-        if (strtolower($event->getCategorie()) === 'concert') {
-            try{
+        // DEBUG: Check the category
+        $category = $event->getCategorie();
+        dump('Category: ' . $category);
+        
+        if (stripos($event->getCategorie(), 'concert') !== false) {
+            try {
                 $artistInfo = $lastFmService->getArtistInfo($event->getTitre());
+                // ADD THIS DEBUG
+                if ($artistInfo === null) {
+                    $this->addFlash('error', 'API returned null for artist: ' . $event->getTitre());
+                } else {
+                    $this->addFlash('success', 'API worked! Artist: ' . $artistInfo['name']);
+                }
             } catch (\Exception $e) {
-                $artistInfo = null; 
+                $this->addFlash('error', 'API Exception: ' . $e->getMessage());
             }
+        } else {
+            $this->addFlash('info', 'Category is not concert: ' . $event->getCategorie());
         }
-
+        
+        // DEBUG: Check what we're passing to the template
+        dump('Passing to template - event: ' . $event->getTitre());
+        dump('Passing to template - artistInfo: ', $artistInfo);
+        // Add this right before return
+        if ($artistInfo === null) {
+            $this->addFlash('warning', 'Artist info not found. Category: "' . $event->getCategorie() . '", Title: "' . $event->getTitre() . '"');
+        }
 
         return $this->render('front/event_show.html.twig', [
             'event' => $event,
+            'artistInfo' => $artistInfo,
         ]);
-    }
+    }*/
+
+
+
+    
 }
