@@ -1,4 +1,6 @@
 <?php
+// src/Command/CompleteReservationsCommand.php
+
 namespace App\Command;
 
 use App\Entity\Reservationlog;
@@ -29,7 +31,7 @@ class CompleteReservationsCommand extends Command
         $qb = $this->em->createQueryBuilder();
         $reservations = $qb->select('r')
             ->from(Reservationlog::class, 'r')
-            ->where('r.dateFin < :now')
+            ->where('r.date_fin < :now')  // ← corrigé : date_fin au lieu de dateFin
             ->andWhere('r.status IN (:statuses)')
             ->setParameter('now', $now)
             ->setParameter('statuses', ['confirmée', 'en_attente'])

@@ -2,9 +2,10 @@
 // src/Service/EmailService.php
 namespace App\Service;
 
+use App\Entity\Reservationlog;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
-use Psr\Log\LoggerInterface;
 use Twig\Environment;
 
 class EmailService
@@ -85,6 +86,34 @@ class EmailService
             return true;
         } catch (\Exception $e) {
             $this->logger->error('Erreur email annulation: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    public function sendPaymentReminderEmail(Reservationlog $reservation, int $remainingSeconds): bool
+    {
+        try {
+            $hours = floor($remainingSeconds / 3600);
+            $minutes = floor(($remainingSeconds % 3600) / 60);
+            $seconds = $remainingSeconds % 60;
+            $timeLeft = sprintf("%02d:%02d:%02d", $hours, $minutes, $seconds);
+
+            $html = $this->twig->render('front/email/payment_reminder.html.twig', [
+                'reservation' => $reservation,
+                'timeLeft' => $timeLeft,
+            ]);
+
+            $email = (new Email())
+                ->from('khadijaderbel123@gmail.com')
+                ->to($reservation->getUser()->getEmail())
+                ->subject('⏰ Paiement en ligne : votre réservation expire dans moins d\'1 heure !')
+                ->html($html);
+
+            $this->mailer->send($email);
+            $this->logger->info('Email rappel paiement envoyé à ' . $reservation->getUser()->getEmail());
+            return true;
+        } catch (\Exception $e) {
+            $this->logger->error('Erreur email rappel: ' . $e->getMessage());
             return false;
         }
     }

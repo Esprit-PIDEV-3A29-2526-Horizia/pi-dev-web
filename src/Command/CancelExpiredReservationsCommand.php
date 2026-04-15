@@ -1,4 +1,6 @@
 <?php
+// src/Command/CancelExpiredReservationsCommand.php
+
 namespace App\Command;
 
 use App\Entity\Reservationlog;
@@ -40,7 +42,7 @@ class CancelExpiredReservationsCommand extends Command
 
         foreach ($expired as $reservation) {
             $reservation->setStatus('expirée');
-            $output->writeln(' expirée (délai dépassé)');
+            $output->writeln("Réservation #{$reservation->getIdreslog()} expirée (délai dépassé)");
         }
         $this->em->flush();
         $output->writeln('Terminé. ' . count($expired) . ' réservation(s) expirée(s).');
