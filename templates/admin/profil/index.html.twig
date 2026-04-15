@@ -1,93 +1,136 @@
-{% extends 'admin/base.html.twig' %}
+{% extends 'admin/base_admin.html.twig' %}
 
-{% block title %}Profils{% endblock %}
+{% block title %}Gestion des Profils - Horozia{% endblock %}
 
-{% block body %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2 class="h3 mb-0">
-        <i class="bi bi-tags-fill me-2 text-primary"></i>
-        Gestion des profils
-    </h2>
-    <a href="{{ path('app_profil_new') }}" class="btn btn-primary rounded-pill shadow-sm">
-        <i class="bi bi-plus-lg me-1"></i> Nouveau profil
+{% block admin_content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h1 class="fw-bold mb-1" style="color:#1f2d3d;">Gestion des Profils</h1>
+        <p class="text-muted mb-0">{{ profils|length }} profil(s) trouvé(s)</p>
+    </div>
+    <a href="{{ path('app_profil_new') }}" class="btn btn-horozia-primary d-flex align-items-center gap-2">
+        <i class="bi bi-plus-lg"></i> Nouveau Profil
     </a>
 </div>
 
-<div class="card shadow-sm border-0">
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th class="ps-3">ID</th>
-                        <th>Type</th>
-                        <th>Statut</th>
-                        <th class="text-end pe-3">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for profil in profils %}
-                    <tr>
-                        <td class="ps-3 fw-semibold">{{ profil.id }}</td>
-                        <td>
-                            {% if profil.type == 'ADMIN' %}
-                                <span class="badge bg-danger bg-opacity-10 text-danger px-3 py-2 rounded-pill">
-                                    <i class="bi bi-shield-lock-fill me-1"></i> {{ profil.type }}
-                                </span>
-                            {% elseif profil.type == 'AGENT' %}
-                                <span class="badge bg-warning bg-opacity-10 text-warning px-3 py-2 rounded-pill">
-                                    <i class="bi bi-person-badge-fill me-1"></i> {{ profil.type }}
-                                </span>
-                            {% else %}
-                                <span class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill">
-                                    <i class="bi bi-person-fill-check me-1"></i> {{ profil.type }}
-                                </span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            {% if profil.statut == 'ACTIF' %}
-                                <span class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill">
-                                    <i class="bi bi-check-circle-fill me-1"></i> ACTIF
-                                </span>
-                            {% else %}
-                                <span class="badge bg-danger bg-opacity-10 text-danger px-3 py-2 rounded-pill">
-                                    <i class="bi bi-x-circle-fill me-1"></i> INACTIF
-                                </span>
-                            {% endif %}
-                        </td>
-                        <td class="text-end pe-3">
-                            <div class="btn-group gap-2">
-                                <a href="{{ path('app_profil_edit', {id: profil.id}) }}" class="btn btn-sm btn-outline-warning rounded-pill px-3">
-                                    <i class="bi bi-pencil me-1"></i> Modifier
-                                </a>
-                            </div>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+{# ── Search & Sort bar ── #}
+<div class="card-horozia p-3 mb-4">
+    <form method="GET" action="{{ path('app_profil_index') }}" class="row g-2 align-items-end">
+        <div class="col-md-5">
+            <label class="form-label fw-semibold small text-muted">Recherche</label>
+            <div class="input-group">
+                <span class="input-group-text bg-white border-end-0">
+                    <i class="bi bi-search text-muted"></i>
+                </span>
+                <input type="text" name="search" class="form-control border-start-0"
+                       placeholder="Type ou statut..." value="{{ search ?? '' }}">
+            </div>
         </div>
-    </div>
+        <div class="col-md-4">
+            <label class="form-label fw-semibold small text-muted">Trier par</label>
+            <select name="sort" class="form-select">
+                <option value="">-- Par défaut --</option>
+                <option value="type_asc"  {{ sort == 'type_asc'  ? 'selected' : '' }}>Type (A-Z)</option>
+                <option value="type_desc" {{ sort == 'type_desc' ? 'selected' : '' }}>Type (Z-A)</option>
+                <option value="statut_asc"  {{ sort == 'statut_asc'  ? 'selected' : '' }}>Statut (A-Z)</option>
+            </select>
+        </div>
+        <div class="col-md-3 d-flex gap-2">
+            <button type="submit" class="btn btn-horozia-primary w-100">
+                <i class="bi bi-funnel-fill me-1"></i> Filtrer
+            </button>
+            <a href="{{ path('app_profil_index') }}" class="btn btn-outline-secondary w-100">
+                <i class="bi bi-x-lg"></i>
+            </a>
+        </div>
+    </form>
 </div>
 
-<style>
-    .table-hover tbody tr:hover {
-        background-color: #f8fafc;
-    }
-    
-    .badge.bg-danger {
-        background-color: #fee2e2 !important;
-        color: #dc2626 !important;
-    }
-    
-    .badge.bg-warning {
-        background-color: #fef3c7 !important;
-        color: #d97706 !important;
-    }
-    
-    .badge.bg-success {
-        background-color: #dcfce7 !important;
-        color: #10b981 !important;
-    }
-</style>
+{# ── Cards ── #}
+{% if profils is empty %}
+    <div class="text-center py-5 text-muted">
+        <i class="bi bi-person-x fs-1 d-block mb-3"></i>
+        <p class="fw-semibold">Aucun profil trouvé.</p>
+        <a href="{{ path('app_profil_new') }}" class="btn btn-horozia-primary mt-2">
+            <i class="bi bi-plus-lg me-1"></i> Ajouter un profil
+        </a>
+    </div>
+{% else %}
+<div class="row g-4">
+    {% for profil in profils %}
+    <div class="col-md-6 col-xl-4">
+        <div class="card-horozia h-100 overflow-hidden" style="border-radius:18px;">
+
+            {# ── En-tête avec icône et type ── #}
+            <div style="position:relative; padding:24px 24px 16px 24px; background: linear-gradient(135deg, #f8fafc 0%, #eef2f7 100%);">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div style="width:60px; height:60px; background:white; border-radius:30px; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 12px rgba(0,0,0,0.08);">
+                        {% if profil.type == 'ADMIN' %}
+                            <i class="bi bi-shield-lock-fill fs-1" style="color:#dc2626;"></i>
+                        {% elseif profil.type == 'AGENT' %}
+                            <i class="bi bi-person-badge-fill fs-1" style="color:#d97706;"></i>
+                        {% else %}
+                            <i class="bi bi-person-fill-check fs-1" style="color:#10b981;"></i>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <h4 class="fw-bold mb-0" style="color:#1f2d3d;">{{ profil.type }}</h4>
+                        <span class="text-muted small">ID: {{ profil.id }}</span>
+                    </div>
+                </div>
+
+                {# Statut badge #}
+                <div style="position:absolute; top:20px; right:20px;">
+                    {% if profil.statut == 'ACTIF' %}
+                        <span class="badge rounded-pill px-3 py-2" style="background:#dcfce7; color:#10b981;">
+                            <i class="bi bi-check-circle-fill me-1"></i> ACTIF
+                        </span>
+                    {% else %}
+                        <span class="badge rounded-pill px-3 py-2" style="background:#fee2e2; color:#dc2626;">
+                            <i class="bi bi-x-circle-fill me-1"></i> INACTIF
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+
+            {# ── Corps ── #}
+            <div class="p-4 d-flex flex-column" style="flex:1;">
+                <div class="d-flex flex-column gap-3 mb-4">
+                    <div class="d-flex align-items-center gap-2 small text-muted">
+                        <i class="bi bi-tag text-horozia-primary"></i>
+                        <span><strong>Type:</strong> {{ profil.type }}</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2 small text-muted">
+                        <i class="bi bi-toggle-on text-horozia-primary"></i>
+                        <span><strong>Statut:</strong> {{ profil.statut }}</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2 small text-muted">
+                        <i class="bi bi-people text-horozia-primary"></i>
+                        <span><strong>Utilisateurs associés:</strong> {{ profil.users|length }}</span>
+                    </div>
+                </div>
+
+                {# ── Actions ── #}
+                <div class="d-flex gap-2 mt-auto">
+                    <a href="{{ path('app_profil_edit', {id: profil.id}) }}"
+                       class="btn btn-sm btn-horozia-warning flex-fill">
+                        <i class="bi bi-pencil me-1"></i> Modifier
+                    </a>
+                    <form method="POST"
+                          action="{{ path('app_profil_delete', {id: profil.id}) }}"
+                          onsubmit="return confirm('Supprimer ce profil ? Cette action est irréversible.');">
+                        <input type="hidden" name="_token"
+                               value="{{ csrf_token('delete' ~ profil.id) }}">
+                        <button type="submit" class="btn btn-sm btn-horozia-danger">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
 {% endblock %}

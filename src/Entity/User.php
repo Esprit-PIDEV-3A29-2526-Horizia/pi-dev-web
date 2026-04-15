@@ -34,15 +34,15 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[Assert\Length(min: 6, minMessage: 'Le mot de passe doit contenir au moins 6 caractères.')]
     private ?string $password = null;
 
+    private $resetToken;
+    private $resetTokenExpiresAt;
+
     #[ORM\Column(length: 20, nullable: true)]
     private ?string $telephone = null;
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $addresse = null;
-
-    #[ORM\Column(type: 'text', nullable: true)]
-    private ?string $faceDescriptor = null;
-
+    
     #[ORM\ManyToOne(targetEntity: Profil::class, inversedBy: 'users')]
     #[ORM\JoinColumn(name: 'profil_id', referencedColumnName: 'id', nullable: true)]
     private ?Profil $profil = null;
@@ -89,26 +89,16 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         return $this->email ?? '';
     }
-
- public function getRoles(): array
-{
-    $roles = ['ROLE_USER'];
-
-    if ($this->profil) {
-        $type = strtoupper($this->profil->getType());
-
-        if ($type === 'ADMIN') {
+    
+    public function getRoles(): array
+    {
+        $roles = ['ROLE_USER'];
+        if ($this->getEmail() === 'admin@admin.com') {
             $roles[] = 'ROLE_ADMIN';
-        } elseif ($type === 'AGENT') {
-            $roles[] = 'ROLE_AGENT';
-        } elseif ($type === 'CLIENT') {
-            $roles[] = 'ROLE_CLIENT';
         }
+        return array_unique($roles);
     }
-
-    return array_unique($roles);
-}
-
+    
     public function eraseCredentials(): void
     {
     }
@@ -146,17 +136,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    public function getFaceDescriptor(): ?string
-    {
-        return $this->faceDescriptor;
-    }
-
-    public function setFaceDescriptor(?string $faceDescriptor): self
-    {
-        $this->faceDescriptor = $faceDescriptor;
-        return $this;
-    }
-
     public function getProfil(): ?Profil
     {
         return $this->profil;
@@ -167,4 +146,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->profil = $profil;
         return $this;
     }
+
+    public function getResetToken(): ?string { return $this->resetToken; }
+    public function setResetToken(?string $resetToken): self { $this->resetToken = $resetToken; return $this; }
+    public function getResetTokenExpiresAt(): ?\DateTimeInterface { return $this->resetTokenExpiresAt; }
+    public function setResetTokenExpiresAt(?\DateTimeInterface $resetTokenExpiresAt): self { $this->resetTokenExpiresAt = $resetTokenExpiresAt; return $this; }
 }

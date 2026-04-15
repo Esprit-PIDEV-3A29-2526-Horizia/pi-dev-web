@@ -1,74 +1,61 @@
 {% extends 'admin/base_admin.html.twig' %}
 
-{% block title %}Ajouter un utilisateur{% endblock %}
+{% block title %}Nouvel Utilisateur - Horozia{% endblock %}
 
 {% block admin_content %}
-    <div class="container-fluid">
-        <h1 class="mb-4">Ajouter un utilisateur</h1>
-
-        <div class="card card-horozia">
-            <div class="card-body">
-                {{ form_start(form, {'attr': {'novalidate': 'novalidate'}}) }}
-
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        {{ form_label(form.nom) }}
-                        {{ form_widget(form.nom, {'attr': {'class': 'form-control'}}) }}
-                        {{ form_errors(form.nom) }}
-                    </div>
-
-                    <div class="col-md-6 mb-3">
-                        {{ form_label(form.prenom) }}
-                        {{ form_widget(form.prenom, {'attr': {'class': 'form-control'}}) }}
-                        {{ form_errors(form.prenom) }}
-                    </div>
-                </div>
-
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        {{ form_label(form.email) }}
-                        {{ form_widget(form.email, {'attr': {'class': 'form-control'}}) }}
-                        {{ form_errors(form.email) }}
-                    </div>
-
-                    <div class="col-md-6 mb-3">
-                        {{ form_label(form.password) }}
-                        {{ form_widget(form.password, {'attr': {'class': 'form-control'}}) }}
-                        {{ form_errors(form.password) }}
-                    </div>
-                </div>
-
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        {{ form_label(form.telephone) }}
-                        {{ form_widget(form.telephone, {'attr': {'class': 'form-control'}}) }}
-                        {{ form_errors(form.telephone) }}
-                    </div>
-
-                    <div class="col-md-6 mb-3">
-                        {{ form_label(form.addresse) }}
-                        {{ form_widget(form.addresse, {'attr': {'class': 'form-control'}}) }}
-                        {{ form_errors(form.addresse) }}
-                    </div>
-                </div>
-
-                <div class="mb-3">
-                    {{ form_label(form.faceDescriptor) }}
-                    {{ form_widget(form.faceDescriptor, {'attr': {'class': 'form-control'}}) }}
-                    {{ form_errors(form.faceDescriptor) }}
-                </div>
-
-                <div class="mb-3">
-                    {{ form_label(form.profil) }}
-                    {{ form_widget(form.profil, {'attr': {'class': 'form-select'}}) }}
-                    {{ form_errors(form.profil) }}
-                </div>
-
-                <button class="btn btn-horozia-secondary">Enregistrer</button>
-                <a href="{{ path('app_user_index') }}" class="btn btn-horozia-neutral">Retour</a>
-
-                {{ form_end(form) }}
-            </div>
-        </div>
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h1 class="fw-bold mb-1" style="color:#1f2d3d;">Nouvel Utilisateur</h1>
+        <p class="text-muted mb-0">Créez un nouvel utilisateur</p>
     </div>
+    <a href="{{ path('app_user_index') }}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Retour
+    </a>
+</div>
+
+<div class="card-horozia">
+    <div class="card-body p-4">
+        {{ form_start(form, {'attr': {'class': 'needs-validation'}}) }}
+            <div class="row g-4">
+                <div class="col-md-6">
+                    {{ form_label(form.nom) }}
+                    {{ form_widget(form.nom, {'attr': {'class': 'form-control rounded-pill'}}) }}
+                </div>
+                <div class="col-md-6">
+                    {{ form_label(form.prenom) }}
+                    {{ form_widget(form.prenom, {'attr': {'class': 'form-control rounded-pill'}}) }}
+                </div>
+                <div class="col-md-6">
+                    {{ form_label(form.email) }}
+                    {{ form_widget(form.email, {'attr': {'class': 'form-control rounded-pill'}}) }}
+                </div>
+                <div class="col-md-6">
+                    {{ form_label(form.password) }}
+                    {{ form_widget(form.password, {'attr': {'class': 'form-control rounded-pill'}}) }}
+                </div>
+                <div class="col-md-6">
+                    {{ form_label(form.telephone) }}
+                    {{ form_widget(form.telephone, {'attr': {'class': 'form-control rounded-pill'}}) }}
+                </div>
+                <div class="col-md-6">
+                    {{ form_label(form.addresse) }}
+                    {{ form_widget(form.addresse, {'attr': {'class': 'form-control rounded-pill'}}) }}
+                </div>
+                <div class="col-md-12">
+                    {{ form_label(form.profil) }}
+                    {{ form_widget(form.profil, {'attr': {'class': 'form-select rounded-pill'}}) }}
+                </div>
+            </div>
+            
+            <div class="mt-4 d-flex gap-2">
+                <button type="submit" class="btn btn-horozia-primary">
+                    <i class="bi bi-save me-1"></i> Enregistrer
+                </button>
+                <a href="{{ path('app_user_index') }}" class="btn btn-outline-secondary">
+                    Annuler
+                </a>
+            </div>
+        {{ form_end(form) }}
+    </div>
+</div>
 {% endblock %}

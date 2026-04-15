@@ -1,0 +1,236 @@
+{% extends 'front/base_front.html.twig' %}
+
+{% block title %}Vérification du code - Horozia{% endblock %}
+
+{% block body %}
+<style>
+    .login-section-custom {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), 
+                    url('{{ asset('assets/images/bg_5.jpg') }}');
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
+        padding: 2rem;
+        margin: 0;
+    }
+    .login-card-custom {
+        background: rgba(255, 255, 255, 0.12);
+        backdrop-filter: blur(15px);
+        border-radius: 2rem;
+        box-shadow: 0 30px 60px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.2);
+        overflow: hidden;
+        width: 100%;
+        max-width: 460px;
+        transition: transform 0.3s ease;
+    }
+    .login-card-custom:hover {
+        transform: translateY(-8px);
+    }
+    .card-body-custom {
+        padding: 2.8rem 2.5rem;
+    }
+    .login-header-custom {
+        text-align: center;
+        margin-bottom: 2.2rem;
+    }
+    .logo-circle {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, rgba(255, 107, 53, 0.9), rgba(255, 140, 66, 0.9));
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.2rem auto;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+    }
+    .logo-circle i {
+        font-size: 2.5rem;
+        color: white;
+    }
+    .login-header-custom h3 {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #ffffff;
+        margin-bottom: 0.5rem;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    .login-header-custom p {
+        color: rgba(255, 255, 255, 0.85);
+        font-size: 0.9rem;
+    }
+    .input-group-custom {
+        margin-bottom: 1.5rem;
+    }
+    .input-group-custom label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: #ffffff;
+        font-size: 0.85rem;
+    }
+    .input-group-custom label i {
+        margin-right: 8px;
+        color: #ff8c42;
+    }
+    .input-field-custom {
+        width: 100%;
+        padding: 1rem;
+        font-size: 0.95rem;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 1rem;
+        background: rgba(255, 255, 255, 0.15);
+        transition: all 0.2s;
+        outline: none;
+        color: #ffffff;
+        text-align: center;
+        letter-spacing: 4px;
+        font-size: 1.2rem;
+    }
+    .input-field-custom::placeholder {
+        color: rgba(255, 255, 255, 0.6);
+        letter-spacing: normal;
+        font-size: 0.95rem;
+    }
+    .input-field-custom:focus {
+        border-color: #ff8c42;
+        background: rgba(255, 255, 255, 0.25);
+        box-shadow: 0 0 0 4px rgba(255, 140, 66, 0.2);
+    }
+    .login-btn-custom {
+        width: 100%;
+        background: linear-gradient(135deg, #ff6b35, #ff8c42);
+        border: none;
+        padding: 1rem;
+        border-radius: 1rem;
+        font-weight: 700;
+        font-size: 1rem;
+        color: white;
+        cursor: pointer;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        margin-bottom: 1rem;
+        text-transform: uppercase;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+    .login-btn-custom:hover {
+        background: linear-gradient(135deg, #e55a2b, #ff7a2f);
+        transform: translateY(-2px);
+    }
+    .signup-link-custom {
+        text-align: center;
+        font-size: 0.9rem;
+        color: rgba(255, 255, 255, 0.85);
+        margin-top: 1rem;
+        padding-top: 0.5rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    .signup-link-custom a {
+        color: #ff8c42;
+        font-weight: 700;
+        text-decoration: none;
+    }
+    .signup-link-custom a:hover {
+        text-decoration: underline;
+    }
+    .alert-custom {
+        border-radius: 1rem;
+        padding: 1rem 1.2rem;
+        margin-bottom: 1.5rem;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+    .alert-custom-success {
+        background: rgba(209, 250, 229, 0.95);
+        color: #065f46;
+        border-left: 4px solid #10b981;
+    }
+    .alert-custom-danger {
+        background: rgba(254, 226, 226, 0.95);
+        color: #991b1b;
+        border-left: 4px solid #ef4444;
+    }
+    .info-text {
+        color: rgba(255, 255, 255, 0.75);
+        font-size: 0.8rem;
+        text-align: center;
+        margin-bottom: 1rem;
+    }
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    .login-card-custom {
+        animation: fadeInUp 0.6s ease-out;
+    }
+</style>
+
+<section class="login-section-custom">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-6 col-lg-5">
+                <div class="login-card-custom">
+                    <div class="card-body-custom">
+                        <div class="login-header-custom">
+                            <div class="logo-circle">
+                                <i class="fas fa-shield-alt"></i>
+                            </div>
+                            <h3>Vérification en deux étapes</h3>
+                            <p>Entrez le code reçu par email</p>
+                        </div>
+
+                        {% for message in app.flashes('error') %}
+                            <div class="alert-custom alert-custom-danger">
+                                <i class="fas fa-exclamation-circle"></i> {{ message }}
+                            </div>
+                        {% endfor %}
+
+                        <div class="info-text">
+                            <i class="fas fa-envelope"></i> Un code à 6 chiffres a été envoyé à <strong>{{ email }}</strong>
+                        </div>
+
+                        <form method="post">
+                            <div class="input-group-custom">
+                                <label for="code"><i class="fas fa-lock"></i> Code de vérification</label>
+                                <input type="text"
+                                       id="code"
+                                       name="code"
+                                       class="input-field-custom"
+                                       placeholder="123456"
+                                       maxlength="6"
+                                       pattern="[0-9]{6}"
+                                       inputmode="numeric"
+                                       required
+                                       autofocus>
+                            </div>
+                            <button type="submit" class="login-btn-custom">
+                                Vérifier <i class="fas fa-check-circle"></i>
+                            </button>
+                        </form>
+
+                        <div class="signup-link-custom">
+                            <a href="{{ path('app_forgot_password') }}">Renvoyer le code</a> &nbsp;|&nbsp;
+                            <a href="{{ path('app_login') }}">Retour à la connexion</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

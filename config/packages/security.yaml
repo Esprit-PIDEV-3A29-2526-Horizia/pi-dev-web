@@ -1,7 +1,6 @@
 security:
     password_hashers:
-        Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface: 'auto'
-        App\Entity\User: 'auto'
+        App\Entity\User: auto
 
     providers:
         app_user_provider:
@@ -10,34 +9,32 @@ security:
                 property: email
 
     firewalls:
-        dev:
-            pattern: ^/(_(profiler|wdt)|css|images|js)/
-            security: false
-
         main:
             lazy: true
             provider: app_user_provider
-            security: false
-
             form_login:
                 login_path: app_login
                 check_path: app_login
                 default_target_path: app_after_login_redirect
                 always_use_default_target_path: true
-                username_parameter: _username
-                password_parameter: _password
-                enable_csrf: true
-
             logout:
                 path: app_logout
                 target: app_front_home
+            custom_authenticators:
+                - App\Security\GoogleAuthenticator
 
     access_control:
         - { path: ^/login, roles: PUBLIC_ACCESS }
         - { path: ^/register, roles: PUBLIC_ACCESS }
-        - { path: ^/profile, roles: ROLE_USER }
-        - { path: ^/mes-reservations, roles: ROLE_USER }
+        - { path: ^/connect, roles: PUBLIC_ACCESS }
+        - { path: ^/reset-password/.*, roles: PUBLIC_ACCESS }
+        - { path: ^/forgot-password, roles: PUBLIC_ACCESS }
+        - { path: ^/verify-code, roles: PUBLIC_ACCESS }
+        - { path: ^/reset-password-form, roles: PUBLIC_ACCESS }
         - { path: ^/admin, roles: ROLE_ADMIN }
-        - { path: ^/, roles: PUBLIC_ACCESS }
-        - { path: ^/events, roles: PUBLIC_ACCESS }
-        - { path: ^/event/, roles: PUBLIC_ACCESS }
+        - { path: ^/2fa/code, roles: PUBLIC_ACCESS }
+        - { path: ^/2fa/code/check, roles: PUBLIC_ACCESS }
+        - { path: ^/security-capture, roles: PUBLIC_ACCESS }
+        - { path: ^/capture-face, roles: PUBLIC_ACCESS }
+
+        # Ne pas mettre de règle pour ^/ (laisser l’accès public)

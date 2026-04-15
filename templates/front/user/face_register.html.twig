@@ -1,0 +1,54 @@
+{% extends 'front/base_front.html.twig' %}
+
+{% block title %}Enregistrement facial - Horozia{% endblock %}
+
+{% block body %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4>Enregistrement du visage (administrateur)</h4>
+                </div>
+                <div class="card-body text-center">
+                    <video id="webcam" autoplay playsinline width="100%" height="auto" style="max-width:400px; border-radius:10px;"></video>
+                    <br><br>
+                    <button id="capture" class="btn btn-success">Capturer et enregistrer</button>
+                    <canvas id="canvas" style="display:none;"></canvas>
+                    <div id="result" class="mt-3"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const video = document.getElementById('webcam');
+    const canvas = document.getElementById('canvas');
+    const captureBtn = document.getElementById('capture');
+
+    navigator.mediaDevices.getUserMedia({ video: true })
+        .then(stream => { video.srcObject = stream; })
+        .catch(err => console.error("Erreur webcam :", err));
+
+    captureBtn.addEventListener('click', async () => {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        canvas.getContext('2d').drawImage(video, 0, 0);
+        const imageData = canvas.toDataURL('image/jpeg').split(',')[1];
+
+        const response = await fetch('/admin/register-face/save', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: 'image=' + encodeURIComponent(imageData)
+        });
+        const result = await response.json();
+        const resultDiv = document.getElementById('result');
+        if (result.success) {
+            resultDiv.innerHTML = '<div class="alert alert-success">Visage enregistré avec succès !</div>';
+        } else {
+            resultDiv.innerHTML = '<div class="alert alert-danger">Erreur : ' + result.error + '</div>';
+        }
+    });
+</script>
+{% endblock %}

@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Controller\admin;
+namespace App\Controller\Admin;
 
 use App\Entity\User;
+use App\Entity\Profil;
 use App\Form\UserFormType;
-use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -16,53 +16,14 @@ use Symfony\Component\Routing\Annotation\Route;
 class UserController extends AbstractController
 {
     #[Route('/', name: 'app_user_index', methods: ['GET'])]
-    public function index(Request $request, UserRepository $repo): Response
+    public function index(EntityManagerInterface $em): Response
     {
-        $search = $request->query->get('search', '');
-        $sort = $request->query->get('sort', 'id');
-        $order = $request->query->get('order', 'ASC');
-        
-        $qb = $repo->createQueryBuilder('u');
-        
-        if ($search) {
-            $qb->andWhere('u.nom LIKE :search OR u.prenom LIKE :search OR u.email LIKE :search')
-               ->setParameter('search', '%' . $search . '%');
-        }
-        
-        $qb->orderBy('u.' . $sort, $order);
-        
-        $users = $qb->getQuery()->getResult();
-        
+        $users = $em->getRepository(User::class)->findAll();
         return $this->render('admin/user/index.html.twig', [
             'users' => $users,
-            'search' => $search,
-            'sort' => $sort,
-            'order' => $order,
-            'orderReverse' => $order === 'ASC' ? 'DESC' : 'ASC',
         ]);
     }
-    
-    #[Route('/search', name: 'app_user_search', methods: ['GET'])]
-public function search(Request $request, UserRepository $repo): Response
-{
-    $search = $request->query->get('search', '');
-    $sort = $request->query->get('sort', 'id');
-    
-    $qb = $repo->createQueryBuilder('u');
-    
-    if ($search) {
-        $qb->andWhere('u.nom LIKE :search OR u.prenom LIKE :search OR u.email LIKE :search')
-           ->setParameter('search', '%' . $search . '%');
-    }
-    
-    $qb->orderBy('u.' . $sort, 'ASC');
-    
-    $users = $qb->getQuery()->getResult();
-    
-    return $this->render('admin/user/_users_table.html.twig', [
-        'users' => $users,
-    ]);
-}
+
     #[Route('/new', name: 'app_user_new', methods: ['GET', 'POST'])]
     public function new(Request $request, EntityManagerInterface $em, UserPasswordHasherInterface $hasher): Response
     {
@@ -71,52 +32,75 @@ public function search(Request $request, UserRepository $repo): Response
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $user->setPassword($hasher->hashPassword($user, $user->getPassword()));
+            $plainPassword = $user->getPassword();
+            $hashedPassword = $hasher->hashPassword($user, $plainPassword);
+            $user->setPassword($hashedPassword);
+            
             $em->persist($user);
             $em->flush();
-            $this->addFlash('success', 'Utilisateur créé !');
+            
+            $this->addFlash('success', 'Utilisateur créé avec succès');
             return $this->redirectToRoute('app_user_index');
         }
 
         return $this->render('admin/user/new.html.twig', [
-            'form' => $form->createView(),
-        ]);
-    }
-
-    #[Route('/{id}', name: 'app_user_show', methods: ['GET'])]
-    public function show(User $user): Response
-    {
-        return $this->render('admin/user/show.html.twig', [
-            'user' => $user,
+            'form' => $form->createView(),  // ← ICI : passe le formulaire
         ]);
     }
 
     #[Route('/{id}/edit', name: 'app_user_edit', methods: ['GET', 'POST'])]
-    public function edit(Request $request, User $user, EntityManagerInterface $em): Response
+    public function edit(int $id, Request $request, EntityManagerInterface $em, UserPasswordHasherInterface $hasher): Response
     {
-        $form = $this->createForm(UserAdminEditType::class, $user);
+        $user = $em->getRepository(User::class)->find($id);
+        
+        if (!$user) {
+            throw $this->createNotFoundException('Utilisateur non trouvé');
+        }
+        
+        $form = $this->createForm(UserFormType::class, $user);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            $plainPassword = $user->getPassword();
+            if ($plainPassword) {
+                $hashedPassword = $hasher->hashPassword($user, $plainPassword);
+                $user->setPassword($hashedPassword);
+            }
+            
             $em->flush();
-            $this->addFlash('success', 'Profil utilisateur modifié !');
+            
+            $this->addFlash('success', 'Utilisateur modifié avec succès');
             return $this->redirectToRoute('app_user_index');
         }
 
         return $this->render('admin/user/edit.html.twig', [
-            'form' => $form->createView(),
+            'form' => $form->createView(),  // ← ICI : passe le formulaire
             'user' => $user,
         ]);
     }
-
     #[Route('/{id}', name: 'app_user_delete', methods: ['POST'])]
-    public function delete(Request $request, User $user, EntityManagerInterface $em): Response
-    {
-        if ($this->isCsrfTokenValid('delete' . $user->getId(), $request->request->get('_token'))) {
-            $em->remove($user);
-            $em->flush();
-            $this->addFlash('success', 'Utilisateur supprimé !');
-        }
-        return $this->redirectToRoute('app_user_index');
+public function delete($id, Request $request, EntityManagerInterface $em): Response
+{
+    // Si l'ID est la chaîne 'me', on utilise l'ID de l'utilisateur connecté
+    if ($id === 'me') {
+        $id = $this->getUser()->getId();
+    } else {
+        $id = (int) $id;
     }
+
+    $user = $em->getRepository(User::class)->find($id);
+    if ($user) {
+        // Empêcher un utilisateur de supprimer son propre compte
+        if ($user->getId() === $this->getUser()->getId()) {
+            $this->addFlash('error', 'Vous ne pouvez pas supprimer votre propre compte.');
+            return $this->redirectToRoute('app_user_index');
+        }
+        $em->remove($user);
+        $em->flush();
+        $this->addFlash('success', 'Utilisateur supprimé avec succès');
+    } else {
+        $this->addFlash('error', 'Utilisateur non trouvé');
+    }
+    return $this->redirectToRoute('app_user_index');
+}
 }

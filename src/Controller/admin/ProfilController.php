@@ -1,72 +1,106 @@
 <?php
 
-namespace App\Controller\admin;
+namespace App\Controller\Admin;
 
 use App\Entity\Profil;
-use App\Form\ProfilFormType;
-use App\Repository\ProfilRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
-#[Route('/admin/profil', name: 'app_profil_')]
+#[Route('/admin/profil')]
 class ProfilController extends AbstractController
 {
-    #[Route('/', name: 'index', methods: ['GET'])]
-    public function index(ProfilRepository $repo): Response
+    #[Route('/', name: 'app_profil_index')]
+    public function index(Request $request, EntityManagerInterface $em): Response
     {
+        // Récupérer les paramètres de recherche et tri
+        $search = $request->query->get('search', '');
+        $sort = $request->query->get('sort', '');
+        
+        // Créer la requête
+        $qb = $em->getRepository(Profil::class)->createQueryBuilder('p');
+        
+        // Recherche
+        if ($search) {
+            $qb->andWhere('p.type LIKE :search OR p.statut LIKE :search')
+               ->setParameter('search', '%' . $search . '%');
+        }
+        
+        // Tri
+        if ($sort == 'type_asc') {
+            $qb->orderBy('p.type', 'ASC');
+        } elseif ($sort == 'type_desc') {
+            $qb->orderBy('p.type', 'DESC');
+        } elseif ($sort == 'statut_asc') {
+            $qb->orderBy('p.statut', 'ASC');
+        } else {
+            $qb->orderBy('p.id', 'DESC');
+        }
+        
+        $profils = $qb->getQuery()->getResult();
+        
         return $this->render('admin/profil/index.html.twig', [
-            'profils' => $repo->findAll(),
+            'profils' => $profils,
+            'search' => $search,
+            'sort' => $sort,
         ]);
     }
 
-    #[Route('/new', name: 'new', methods: ['GET', 'POST'])]
+    #[Route('/new', name: 'app_profil_new', methods: ['GET', 'POST'])]
     public function new(Request $request, EntityManagerInterface $em): Response
     {
-        $profil = new Profil();
-        $form = $this->createForm(ProfilFormType::class, $profil);
-        $form->handleRequest($request);
-
-        if ($form->isSubmitted() && $form->isValid()) {
+        if ($request->isMethod('POST')) {
+            $profil = new Profil();
+            $profil->setType($request->request->get('type'));
+            $profil->setStatut($request->request->get('statut'));
+            
             $em->persist($profil);
             $em->flush();
-            $this->addFlash('success', 'Profil créé avec succès !');
+            
+            $this->addFlash('success', 'Profil créé avec succès');
             return $this->redirectToRoute('app_profil_index');
         }
-
-        return $this->render('admin/profil/new.html.twig', [
-            'form' => $form->createView(),
-        ]);
+        
+        return $this->render('admin/profil/new.html.twig');
     }
 
-    #[Route('/{id}/edit', name: 'edit', methods: ['GET', 'POST'])]
-    public function edit(Profil $profil, Request $request, EntityManagerInterface $em): Response
+    #[Route('/{id}/edit', name: 'app_profil_edit', methods: ['GET', 'POST'])]
+    public function edit(int $id, Request $request, EntityManagerInterface $em): Response
     {
-        $form = $this->createForm(ProfilFormType::class, $profil);
-        $form->handleRequest($request);
-
-        if ($form->isSubmitted() && $form->isValid()) {
+        $profil = $em->getRepository(Profil::class)->find($id);
+        
+        if (!$profil) {
+            throw $this->createNotFoundException('Profil non trouvé');
+        }
+        
+        if ($request->isMethod('POST')) {
+            $profil->setType($request->request->get('type'));
+            $profil->setStatut($request->request->get('statut'));
+            
             $em->flush();
-            $this->addFlash('success', 'Profil modifié avec succès !');
+            
+            $this->addFlash('success', 'Profil modifié avec succès');
             return $this->redirectToRoute('app_profil_index');
         }
-
+        
         return $this->render('admin/profil/edit.html.twig', [
-            'form' => $form->createView(),
             'profil' => $profil,
         ]);
     }
 
-    #[Route('/{id}', name: 'delete', methods: ['POST'])]
-    public function delete(Profil $profil, Request $request, EntityManagerInterface $em): Response
+    #[Route('/{id}', name: 'app_profil_delete', methods: ['POST'])]
+    public function delete(int $id, EntityManagerInterface $em): Response
     {
-        if ($this->isCsrfTokenValid('delete' . $profil->getId(), $request->request->get('_token'))) {
+        $profil = $em->getRepository(Profil::class)->find($id);
+        
+        if ($profil) {
             $em->remove($profil);
             $em->flush();
-            $this->addFlash('success', 'Profil supprimé avec succès !');
+            $this->addFlash('success', 'Profil supprimé avec succès');
         }
+        
         return $this->redirectToRoute('app_profil_index');
     }
 }

@@ -3,105 +3,540 @@
 {% block title %}Inscription - Horozia{% endblock %}
 
 {% block body %}
-<div class="container mt-4">
-    {% for message in app.flashes('error') %}
-        <div class="alert alert-danger">{{ message }}</div>
-    {% endfor %}
-    {% for message in app.flashes('success') %}
-        <div class="alert alert-success">{{ message }}</div>
-    {% endfor %}
+
+<style>
+    /* Vos styles existants... */
+    .ftco_navbar {
+        display: none !important;
+    }
+    
+    .register-section-custom {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), 
+                    url('{{ asset('assets/images/bg_5.jpg') }}');
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
+        padding: 2rem;
+        margin: 0;
+    }
+    
+    .register-card-custom {
+        background: rgba(255, 255, 255, 0.12);
+        backdrop-filter: blur(15px);
+        border-radius: 2rem;
+        box-shadow: 0 30px 60px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.2);
+        overflow: hidden;
+        width: 100%;
+        max-width: 480px;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .register-card-custom:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 40px 70px rgba(0, 0, 0, 0.4);
+    }
+    
+    .card-body-custom {
+        padding: 2.8rem 2.5rem;
+    }
+    
+    .register-header-custom {
+        text-align: center;
+        margin-bottom: 2.2rem;
+    }
+    
+    .logo-circle {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, rgba(255, 107, 53, 0.9), rgba(255, 140, 66, 0.9));
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 1.2rem auto;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    .logo-circle i {
+        font-size: 2.5rem;
+        color: white;
+        text-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    }
+    
+    .register-header-custom h3 {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #ffffff;
+        margin-bottom: 0.5rem;
+        letter-spacing: -0.5px;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    
+    .register-header-custom p {
+        color: rgba(255, 255, 255, 0.85);
+        font-size: 0.9rem;
+        margin-bottom: 0;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
+    
+    .input-group-custom {
+        margin-bottom: 1.5rem;
+        position: relative;
+    }
+    
+    .input-group-custom label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: #ffffff;
+        font-size: 0.85rem;
+        letter-spacing: 0.3px;
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    }
+    
+    .input-group-custom label i {
+        margin-right: 8px;
+        color: #ff8c42;
+        font-size: 0.9rem;
+    }
+    
+    .input-field-custom {
+        width: 100%;
+        padding: 1rem 1rem;
+        font-size: 0.95rem;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        border-radius: 1rem;
+        background: rgba(255, 255, 255, 0.15);
+        transition: all 0.2s;
+        outline: none;
+        color: #ffffff;
+        font-weight: 500;
+    }
+    
+    .input-field-custom::placeholder {
+        color: rgba(255, 255, 255, 0.6);
+        font-weight: 400;
+    }
+    
+    .input-field-custom:focus {
+        border-color: #ff8c42;
+        background: rgba(255, 255, 255, 0.25);
+        box-shadow: 0 0 0 4px rgba(255, 140, 66, 0.2);
+    }
+    
+    .input-field-custom.is-invalid {
+        border-color: #ef4444;
+        background: rgba(239, 68, 68, 0.15);
+    }
+    
+    .invalid-feedback-custom {
+        color: #ef4444;
+        font-size: 0.75rem;
+        margin-top: 0.5rem;
+        display: block;
+    }
+    
+    .row-double {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 0;
+    }
+    
+    .row-double .input-group-custom {
+        flex: 1;
+    }
+    
+    .terms-custom {
+        margin-bottom: 2rem;
+    }
+    
+    .checkbox-label-custom {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        cursor: pointer;
+        color: rgba(255, 255, 255, 0.9);
+        font-weight: 500;
+        transition: color 0.2s;
+        font-size: 0.85rem;
+    }
+    
+    .checkbox-label-custom:hover {
+        color: #ff8c42;
+    }
+    
+    .checkbox-label-custom input {
+        width: 18px;
+        height: 18px;
+        accent-color: #ff8c42;
+        cursor: pointer;
+    }
+    
+    .checkbox-label-custom a {
+        color: #ff8c42;
+        text-decoration: none;
+        font-weight: 600;
+    }
+    
+    .checkbox-label-custom a:hover {
+        text-decoration: underline;
+    }
+    
+    .register-btn-custom {
+        width: 100%;
+        background: linear-gradient(135deg, #ff6b35, #ff8c42);
+        border: none;
+        padding: 1rem;
+        border-radius: 1rem;
+        font-weight: 700;
+        font-size: 1rem;
+        color: white;
+        cursor: pointer;
+        transition: all 0.3s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        margin-bottom: 1.5rem;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    }
+    
+    .register-btn-custom:hover {
+        background: linear-gradient(135deg, #e55a2b, #ff7a2f);
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(255, 107, 53, 0.4);
+    }
+    
+    .register-btn-custom:active {
+        transform: translateY(0);
+    }
+    
+    .separator-custom {
+        display: flex;
+        align-items: center;
+        text-align: center;
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 0.75rem;
+        margin: 1.5rem 0;
+    }
+    
+    .separator-custom::before,
+    .separator-custom::after {
+        content: '';
+        flex: 1;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    .separator-custom span {
+        margin: 0 12px;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .social-register-custom {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .social-btn-custom {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        padding: 0.8rem;
+        border-radius: 1rem;
+        font-weight: 600;
+        font-size: 0.9rem;
+        text-decoration: none;
+        transition: all 0.2s;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        background: rgba(255, 255, 255, 0.1);
+        color: #ffffff;
+        cursor: pointer;
+    }
+    
+    .social-btn-custom i {
+        font-size: 1.2rem;
+    }
+    
+    .social-btn-custom:hover {
+        background: rgba(255, 255, 255, 0.25);
+        transform: translateY(-2px);
+        border-color: #ff8c42;
+        color: #ff8c42;
+    }
+    
+    .login-link-custom {
+        text-align: center;
+        font-size: 0.9rem;
+        color: rgba(255, 255, 255, 0.85);
+        margin-top: 1rem;
+        padding-top: 0.5rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    
+    .login-link-custom a {
+        color: #ff8c42;
+        font-weight: 700;
+        text-decoration: none;
+        transition: all 0.2s;
+    }
+    
+    .login-link-custom a:hover {
+        color: #ffaa66;
+        text-decoration: underline;
+    }
+    
+    .alert-custom {
+        border-radius: 1rem;
+        border: none;
+        padding: 1rem 1.2rem;
+        margin-bottom: 1.5rem;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+    
+    .alert-custom-danger {
+        background: rgba(254, 226, 226, 0.95);
+        color: #991b1b;
+        border-left: 4px solid #ef4444;
+    }
+    
+    .alert-custom-success {
+        background: rgba(220, 252, 231, 0.95);
+        color: #166534;
+        border-left: 4px solid #22c55e;
+    }
+    
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .register-card-custom {
+        animation: fadeInUp 0.6s ease-out;
+    }
+    
+    @media (max-width: 576px) {
+        .card-body-custom {
+            padding: 2rem 1.5rem;
+        }
+        
+        .register-header-custom h3 {
+            font-size: 1.6rem;
+        }
+        
+        .logo-circle {
+            width: 65px;
+            height: 65px;
+        }
+        
+        .logo-circle i {
+            font-size: 2rem;
+        }
+        
+        .row-double {
+            flex-direction: column;
+            gap: 0;
+        }
+        
+        .social-btn-custom span {
+            display: none;
+        }
+        
+        .social-btn-custom i {
+            font-size: 1.3rem;
+        }
+        
+        .social-btn-custom {
+            justify-content: center;
+            padding: 0.8rem;
+        }
+        
+        .register-btn-custom {
+            font-size: 0.9rem;
+        }
+    }
+</style>
+
+<section class="register-section-custom">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-6 col-lg-5">
+                <div class="register-card-custom">
+                    <div class="card-body-custom">
+                        <div class="register-header-custom">
+                            <div class="logo-circle">
+                                <i class="fas fa-user-plus"></i>
+                            </div>
+                            <h3>Rejoignez-nous</h3>
+                            <p>Créez votre compte et partez à l'aventure</p>
+                        </div>
+
+                        {# Affichage des erreurs du formulaire Symfony #}
+                        {% if form_errors is defined and form_errors %}
+                            <div class="alert-custom alert-custom-danger">
+                                <i class="fas fa-exclamation-circle"></i> 
+                                {{ form_errors|striptags }}
+                            </div>
+                        {% endif %}
+
+                        {# Affichage des erreurs via variable error #}
+                        {% if error is defined and error %}
+                            <div class="alert-custom alert-custom-danger">
+                                <i class="fas fa-exclamation-circle"></i> {{ error }}
+                            </div>
+                        {% endif %}
+
+                        {# Flash messages Symfony #}
+                        {% for message in app.flashes('success') %}
+                            <div class="alert-custom alert-custom-success">
+                                <i class="fas fa-check-circle"></i> {{ message }}
+                            </div>
+                        {% endfor %}
+
+                        {% for message in app.flashes('error') %}
+                            <div class="alert-custom alert-custom-danger">
+                                <i class="fas fa-exclamation-circle"></i> {{ message }}
+                            </div>
+                        {% endfor %}
+
+                        <form method="post" action="{{ path('app_register') }}">
+                            <div class="row-double">
+                                <div class="input-group-custom">
+                                    <label for="firstname"><i class="fas fa-user"></i> Prénom</label>
+                                    <input type="text"
+                                           id="firstname"
+                                           name="firstname"
+                                           class="input-field-custom"
+                                           placeholder="Votre prénom"
+                                           value="{{ app.request.get('firstname') }}"
+                                           required>
+                                </div>
+
+                                <div class="input-group-custom">
+                                    <label for="lastname"><i class="fas fa-user"></i> Nom</label>
+                                    <input type="text"
+                                           id="lastname"
+                                           name="lastname"
+                                           class="input-field-custom"
+                                           placeholder="Votre nom"
+                                           value="{{ app.request.get('lastname') }}"
+                                           required>
+                                </div>
+                            </div>
+
+                            <div class="input-group-custom">
+                                <label for="email"><i class="fas fa-envelope"></i> Adresse email</label>
+                                <input type="email"
+                                       id="email"
+                                       name="email"
+                                       class="input-field-custom"
+                                       placeholder="exemple@email.com"
+                                       value="{{ app.request.get('email') }}"
+                                       required>
+                            </div>
+
+                            <div class="input-group-custom">
+                                <label for="password"><i class="fas fa-lock"></i> Mot de passe</label>
+                                <input type="password"
+                                       id="password"
+                                       name="password"
+                                       class="input-field-custom"
+                                       placeholder="Créez un mot de passe sécurisé (min. 8 caractères)"
+                                       required>
+                            </div>
+
+                            <div class="input-group-custom">
+    <label for="telephone"><i class="fas fa-phone"></i> Téléphone</label>
+    <input type="tel"
+           id="telephone"
+           name="telephone"
+           class="input-field-custom"
+           placeholder="Votre numéro de téléphone"
+           value="{{ app.request.get('telephone') }}">
 </div>
 
-<nav class="navbar navbar-expand-lg navbar-dark ftco_navbar ftco-navbar-light" id="ftco-navbar">
-    <div class="container">
-        <a class="navbar-brand navbar-logo" href="{{ path('app_front_home') }}">
-            <img src="{{ asset('images/logo.png') }}" alt="Horozia Logo">
-        </a>
+<div class="input-group-custom">
+    <label for="addresse"><i class="fas fa-map-marker-alt"></i> Adresse</label>
+    <input type="text"
+           id="addresse"
+           name="addresse"
+           class="input-field-custom"
+           placeholder="Votre adresse"
+           value="{{ app.request.get('addresse') }}">
+</div>
 
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#ftco-nav"
-                aria-controls="ftco-nav" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="fa fa-bars"></span> Menu
-        </button>
 
-        <div class="collapse navbar-collapse" id="ftco-nav">
-            <ul class="navbar-nav ml-auto">
-                <li class="nav-item {% if app.request.attributes.get('_route') == 'app_front_home' %}active{% endif %}">
-                    <a href="{{ path('app_front_home') }}" class="nav-link">Accueil</a>
-                </li>
+                            <div class="input-group-custom">
+                                <label for="confirm_password"><i class="fas fa-check-circle"></i> Confirmer le mot de passe</label>
+                                <input type="password"
+                                       id="confirm_password"
+                                       name="confirm_password"
+                                       class="input-field-custom"
+                                       placeholder="Confirmez votre mot de passe"
+                                       required>
+                            </div>
 
-                <li class="nav-item {% if app.request.attributes.get('_route') == 'app_front_voyages' %}active{% endif %}">
-                    <a href="{{ path('app_front_voyages') }}" class="nav-link">Voyages</a>
-                </li>
-                
-                <li class="nav-item">
-                    <a href="#services" class="nav-link">Services</a>
-                </li>
+                            <input type="hidden" name="_csrf_token" value="{{ csrf_token('register') }}">
 
-                <li class="nav-item">
-                    <a href="#contact" class="nav-link">Contact</a>
-                </li>
+                            <div class="terms-custom">
+                                <label class="checkbox-label-custom">
+                                    <input type="checkbox" name="agree_terms" required> J'accepte les 
+                                    <a href="#">conditions générales</a> et la 
+                                    <a href="#">politique de confidentialité</a>
+                                </label>
+                            </div>
 
-                {% if app.user %}
-                    <li class="nav-item">
-                        <a href="{{ path('app_logout') }}" class="nav-link">Déconnexion</a>
-                    </li>
-                {% else %}
-                    <li class="nav-item {% if app.request.attributes.get('_route') == 'app_login' %}active{% endif %}">
-                        <a href="{{ path('app_login') }}" class="nav-link">Connexion</a>
-                    </li>
-                {% endif %}
-            </ul>
-        </div>
-    </div>
-</nav>
-
-<div class="container py-5">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card auth-card">
-                <div class="card-header">
-                    <i class="bi bi-person-plus me-2"></i> Inscription
-                </div>
-                <div class="card-body p-4">
-                    <form method="post">
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Nom <span class="text-danger">*</span></label>
-                                <input type="text" name="nom" class="form-control" required>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Prénom <span class="text-danger">*</span></label>
-                                <input type="text" name="prenom" class="form-control" required>
-                            </div>
-                            <div class="col-md-12 mb-3">
-                                <label class="form-label">Email <span class="text-danger">*</span></label>
-                                <input type="email" name="email" class="form-control" required>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Mot de passe <span class="text-danger">*</span></label>
-                                <input type="password" name="password" class="form-control" required>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Téléphone</label>
-                                <input type="tel" name="telephone" class="form-control">
-                            </div>
-                            <div class="col-md-12 mb-3">
-                                <label class="form-label">Adresse</label>
-                                <textarea name="addresse" class="form-control" rows="2"></textarea>
-                            </div>
-                        </div>
-                        <div class="d-grid gap-2 mt-3">
-                            <button type="submit" class="btn btn-horozia-primary">
-                                <i class="bi bi-check-lg me-2"></i> S'inscrire
+                            <button class="register-btn-custom" type="submit">
+                                S'inscrire <i class="fas fa-arrow-right"></i>
                             </button>
-                            <a href="{{ path('app_login') }}" class="btn btn-horozia-neutral">
-                                <i class="bi bi-box-arrow-in-right me-2"></i> Déjà inscrit ? Se connecter
+                        </form>
+
+                        <div class="separator-custom">
+                            <span>Ou</span>
+                        </div>
+
+                        <div class="social-register-custom">
+                            <a href="#" class="social-btn-custom">
+                                <i class="fab fa-google"></i> <span>Google</span>
+                            </a>
+                            <a href="#" class="social-btn-custom">
+                                <i class="fab fa-facebook-f"></i> <span>Facebook</span>
                             </a>
                         </div>
-                    </form>
+
+                        <div class="login-link-custom">
+                            Déjà un compte ? <a href="{{ path('app_login') }}">Se connecter</a>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
+</section>
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+{% endblock %}
+
 {% endblock %}

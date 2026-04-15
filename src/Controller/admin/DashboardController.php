@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Controller\admin;
+namespace App\Controller\Admin;
 
 use App\Entity\Categorie;
 use App\Entity\Reservation;
@@ -28,6 +28,12 @@ class DashboardController extends AbstractController
 
         $voyages = $entityManager->getRepository(Voyage::class)->findAll();
         $nbVoyagesPlacesFaibles = 0;
+
+        $user = $this->getUser();
+        if (!$user || !in_array('ROLE_ADMIN', $user->getRoles())) {
+            $this->addFlash('error', 'Accès interdit.');
+            return $this->redirectToRoute('app_logout');
+        }
 
         foreach ($voyages as $voyage) {
             if (method_exists($voyage, 'getPlacesRestantes') && $voyage->getPlacesRestantes() !== null && $voyage->getPlacesRestantes() <= 10) {

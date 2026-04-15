@@ -47,8 +47,8 @@ class Voyage
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $imageUrl = null;
 
-    #[ORM\ManyToOne(targetEntity: Categorie::class)]
-    #[ORM\JoinColumn(name: "id_categorie", referencedColumnName: "id", nullable: true)]
+#[ORM\ManyToOne(targetEntity: Categorie::class, inversedBy: 'voyages')]
+#[ORM\JoinColumn(name: "id_categorie", referencedColumnName: "id", nullable: true)]
     #[Assert\NotNull(message: "La catégorie est obligatoire.")]
     private ?Categorie $categorie = null;
 

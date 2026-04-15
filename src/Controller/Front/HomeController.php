@@ -1,8 +1,9 @@
 <?php
 
 namespace App\Controller\Front;
-
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use App\Entity\Reservation;
+use App\Entity\Events;
 use App\Entity\Voyage;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
@@ -80,6 +81,14 @@ class HomeController extends AbstractController
                 'budget_max' => $budgetMax,
             ],
         ]);
+    }
+
+    // src/Controller/Front/HomeController.php
+
+    #[Route('/home', name: 'app_home')]
+    public function home(): Response
+    {
+        return $this->redirectToRoute('app_front_home');
     }
 
     #[Route('/voyage/{id}', name: 'app_front_voyage_detail', requirements: ['id' => '\d+'])]
@@ -419,4 +428,97 @@ class HomeController extends AbstractController
             ],
         ]);
     }
+    // Ajoutez ces use en haut du fichier
+
+// Ajoutez cette méthode pour la page profil
+#[Route('/profile', name: 'app_front_profile')]
+public function profile(): Response
+{
+    $user = $this->getUser();
+    
+    if (!$user) {
+        return $this->redirectToRoute('app_login');
+    }
+    
+    return $this->render('front/user/profile.html.twig', [
+        'user' => $user,
+    ]);
+}
+
+// Ajoutez cette méthode pour modifier le profil
+#[Route('/profile/edit', name: 'app_profile_edit')]
+public function editProfile(Request $request, EntityManagerInterface $entityManager): Response
+{
+    $user = $this->getUser();
+    
+    if (!$user) {
+        return $this->redirectToRoute('app_login');
+    }
+    
+    if ($request->isMethod('POST')) {
+        $nom = $request->request->get('nom');
+        $prenom = $request->request->get('prenom');
+        $telephone = $request->request->get('telephone');
+        $addresse = $request->request->get('addresse');
+        
+        if ($nom) $user->setNom($nom);
+        if ($prenom) $user->setPrenom($prenom);
+        if ($telephone) $user->setTelephone($telephone);
+        if ($addresse) $user->setAddresse($addresse);
+        
+        $entityManager->flush();
+        
+        $this->addFlash('success', 'Profil modifié avec succès');
+        return $this->redirectToRoute('app_front_profile');
+    }
+    
+    return $this->render('front/user/edit_profile.html.twig', [
+        'user' => $user,
+    ]);
+}
+
+// Ajoutez cette méthode pour changer le mot de passe
+#[Route('/change-password', name: 'app_front_change_password', methods: ['GET', 'POST'])]
+public function changePassword(Request $request, UserPasswordHasherInterface $passwordHasher, EntityManagerInterface $entityManager): Response
+{
+    $user = $this->getUser();
+    
+    if (!$user) {
+        return $this->redirectToRoute('app_login');
+    }
+    
+    if ($request->isMethod('POST')) {
+        $oldPassword = $request->request->get('old_password');
+        $newPassword = $request->request->get('new_password');
+        $confirmPassword = $request->request->get('confirm_password');
+        
+        // Vérifier l'ancien mot de passe
+        if (!$passwordHasher->isPasswordValid($user, $oldPassword)) {
+            $this->addFlash('error', 'Ancien mot de passe incorrect');
+            return $this->redirectToRoute('app_front_change_password');
+        }
+        
+        // Vérifier que les nouveaux mots de passe correspondent
+        if ($newPassword !== $confirmPassword) {
+            $this->addFlash('error', 'Les nouveaux mots de passe ne correspondent pas');
+            return $this->redirectToRoute('app_front_change_password');
+        }
+        
+        // Vérifier la longueur du nouveau mot de passe
+        if (strlen($newPassword) < 6) {
+            $this->addFlash('error', 'Le mot de passe doit contenir au moins 6 caractères');
+            return $this->redirectToRoute('app_front_change_password');
+        }
+        
+        // Changer le mot de passe
+        $hashedPassword = $passwordHasher->hashPassword($user, $newPassword);
+        $user->setPassword($hashedPassword);
+        $entityManager->flush();
+        
+        $this->addFlash('success', 'Votre mot de passe a été modifié avec succès');
+        return $this->redirectToRoute('app_front_profile');
+    }
+    
+    return $this->render('front/profile/change_password.html.twig');
+}
 }

@@ -1,43 +1,51 @@
-{% extends 'admin/base.html.twig' %}
+{% extends 'admin/base_admin.html.twig' %}
 
-{% block title %}Modifier le profil{% endblock %}
+{% block title %}Modifier le profil - Horozia{% endblock %}
 
-{% block body %}
-<div class="mb-4">
-    <a href="{{ path('app_profil_index') }}" class="btn btn-outline-secondary btn-sm rounded-pill">
+{% block admin_content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h1 class="fw-bold mb-1" style="color:#1f2d3d;">Modifier le Profil</h1>
+        <p class="text-muted mb-0">Modifiez les informations du profil #{{ profil.id }}</p>
+    </div>
+    <a href="{{ path('app_profil_index') }}" class="btn btn-outline-secondary">
         <i class="bi bi-arrow-left me-1"></i> Retour à la liste
     </a>
 </div>
 
-<div class="card shadow-sm border-0">
-    <div class="card-header bg-white border-bottom-0 pt-4">
-        <h2 class="h4 mb-0">
-            <i class="bi bi-pencil-square me-2 text-warning"></i>
-            Modifier le profil
-        </h2>
-        <p class="text-muted small mt-1">ID: #{{ profil.id }}</p>
-    </div>
-    <div class="card-body">
-        {{ form_start(form, {'attr': {'class': 'needs-validation'}}) }}
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    {{ form_label(form.type) }}
-                    {{ form_widget(form.type, {'attr': {'class': 'form-select rounded-pill'}}) }}
+<div class="card-horozia">
+    <div class="card-body p-4">
+        <form method="POST">
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Type de profil *</label>
+                    <select name="type" class="form-select" required>
+                        <option value="ADMIN" {{ profil.type == 'ADMIN' ? 'selected' : '' }}>ADMIN</option>
+                        <option value="AGENT" {{ profil.type == 'AGENT' ? 'selected' : '' }}>AGENT</option>
+                        <option value="CLIENT" {{ profil.type == 'CLIENT' ? 'selected' : '' }}>CLIENT</option>
+                    </select>
                 </div>
-                <div class="col-md-6 mb-3">
-                    {{ form_label(form.statut) }}
-                    {{ form_widget(form.statut, {'attr': {'class': 'form-select rounded-pill'}}) }}
+                
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Statut *</label>
+                    <select name="statut" class="form-select" required>
+                        <option value="ACTIF" {{ profil.statut == 'ACTIF' ? 'selected' : '' }}>ACTIF</option>
+                        <option value="INACTIF" {{ profil.statut == 'INACTIF' ? 'selected' : '' }}>INACTIF</option>
+                        <option value="EN_ATTENTE" {{ profil.statut == 'EN_ATTENTE' ? 'selected' : '' }}>EN ATTENTE</option>
+                        <option value="BLOQUE" {{ profil.statut == 'BLOQUE' ? 'selected' : '' }}>BLOQUÉ</option>
+                    </select>
                 </div>
             </div>
-            <div class="d-flex gap-3 mt-3 pt-3 border-top">
-                <button class="btn btn-warning rounded-pill px-4">
-                    <i class="bi bi-save me-2"></i> Mettre à jour
+            
+            <div class="mt-4 d-flex gap-2">
+                <button type="submit" class="btn btn-horozia-primary">
+                    <i class="bi bi-save me-1"></i> Mettre à jour
                 </button>
-                <a href="{{ path('app_profil_index') }}" class="btn btn-outline-secondary rounded-pill px-4">
-                    <i class="bi bi-x-lg me-2"></i> Annuler
+                <a href="{{ path('app_profil_index') }}" class="btn btn-outline-secondary">
+                    Annuler
                 </a>
             </div>
-        {{ form_end(form) }}
+        </form>
     </div>
 </div>
 {% endblock %}
