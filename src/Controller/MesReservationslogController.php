@@ -223,7 +223,11 @@ public function edit(int $id, Request $request, EntityManagerInterface $em): Jso
         return $this->json(['success' => false, 'error' => 'Réservation non trouvée'], 404);
     }
     $logement = $reservation->getLogement();
-
+$typeLogement = strtolower($logement->getType());
+$isHotel = ($typeLogement === 'hôtel' || $typeLogement === 'hotel');
+if (!$isHotel) {
+    $nombreChambres = 1;
+}
     $dateArrivee = \DateTime::createFromFormat('Y-m-d', $request->request->get('date_arrivee'));
     $dateDepart  = \DateTime::createFromFormat('Y-m-d', $request->request->get('date_depart'));
     $modalite    = $request->request->get('modalite');
@@ -242,9 +246,9 @@ public function edit(int $id, Request $request, EntityManagerInterface $em): Jso
     if ($adultes < 1) $errors[] = 'Au moins 1 adulte.';
     if ($enfants < 0) $errors[] = 'Nombre d\'enfants invalide.';
     if ($nombreChambres < 1) $errors[] = 'Au moins 1 chambre.';
-    if (empty($modeReservation) || !in_array($modeReservation, ['all_inclusive', 'demi_pension', 'petit_dejeuner', 'soft'])) {
-        $errors[] = 'Formule de pension invalide.';
-    }
+    if (empty($modeReservation) || !in_array($modeReservation, ['all_inclusive', 'all_inclusive_soft(sans_alcool)', 'demi_pension', 'logement_petit_dejeuner'])) {
+    $errors[] = 'Formule de pension invalide.';
+}
 
     if (!empty($errors)) {
         return $this->json(['success' => false, 'error' => implode(' ', $errors)]);
@@ -279,8 +283,8 @@ private function getPensionCoefficient(?string $modeReservation): float
     return match ($modeReservation) {
         'demi_pension' => 1.20,
         'all_inclusive' => 1.45,
-        'soft' => 1.37,
-        'petit_dejeuner' => 1.00,
+        'all_inclusive_soft(sans_alcool)' => 1.37,
+        'logement_petit_dejeuner' => 1.00,
         default => 1.00,
     };
 }

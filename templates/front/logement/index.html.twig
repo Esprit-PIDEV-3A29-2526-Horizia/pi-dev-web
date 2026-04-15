@@ -493,133 +493,161 @@
         });
 
         // ========== FORMULAIRE DE RÉSERVATION ==========
-        function initReservationForm() {
-            const dateArrivee = document.getElementById('date_arrivee_modal');
-            const dateDepart = document.getElementById('date_depart_modal');
-            const totalSpan = document.getElementById('total_modal');
-            const nuitsSpan = document.getElementById('nuits_modal');
-            const reservationForm = document.getElementById('reservationFormModal');
-            const formErrorsDiv = document.getElementById('formErrors');
-            const modaliteRadios = document.querySelectorAll('input[name="modalite"]');
-            const adultesInput = document.getElementById('adultes');
-            const enfantsInput = document.getElementById('enfants');
-            const modeReservationSelect = document.getElementById('mode_reservation');
-            const chambresInput = document.getElementById('nombre_chambres');
+  function initReservationForm() {
+    const dateArrivee = document.getElementById('date_arrivee_modal');
+    const dateDepart = document.getElementById('date_depart_modal');
+    const totalSpan = document.getElementById('total_modal');
+    const nuitsSpan = document.getElementById('nuits_modal');
+    const reservationForm = document.getElementById('reservationFormModal');
+    const formErrorsDiv = document.getElementById('formErrors');
+    const modaliteRadios = document.querySelectorAll('input[name="modalite"]');
+    const adultesInput = document.getElementById('adultes');
+    const enfantsInput = document.getElementById('enfants');
+    const modeReservationSelect = document.getElementById('mode_reservation');
+    const chambresInput = document.getElementById('nombre_chambres');
+    const prixParNuit = parseFloat(document.getElementById('prix_par_nuit_data').value);
+    const personnesSpan = document.getElementById('personnes_modal');
+    const prixPensionSpan = document.getElementById('prix_pension_nuit');
+    const pensionLabelSpan = document.getElementById('pensionLabel');
 
-            if (!dateArrivee || !dateDepart) return;
+    // ---------- Type de logement (hôtel ou non) ----------
+    const logementTypeElem = document.getElementById('logement_type');
+    const isHotel = logementTypeElem && (logementTypeElem.value === 'hôtel' || logementTypeElem.value === 'hotel');
 
-            const prixInput = document.getElementById('prix_par_nuit_data');
-            const prixParNuit = prixInput ? parseFloat(prixInput.value) : 0;
+    const chambresCol = document.getElementById('chambresCol');
+    const repartitionContainer = document.getElementById('repartitionContainer');
+    const repartitionSelect = document.getElementById('repartition_chambres');
 
-            const personnesSpan = document.getElementById('personnes_modal');
+    // Affichage du champ "Nombre de chambres" selon le type
+    if (chambresCol) {
+        chambresCol.style.display = isHotel ? 'block' : 'none';
+    }
+    if (!isHotel && chambresInput) {
+        chambresInput.value = 1;
+        if (repartitionContainer) repartitionContainer.style.display = 'none';
+        if (repartitionSelect) repartitionSelect.value = '';
+    }
 
-            // ========== GESTION DE LA RÉPARTITION DES CHAMBRES ==========
-            function updateRepartitionOptions() {
-                const adultes = parseInt(adultesInput?.value || 1);
-                const enfants = parseInt(enfantsInput?.value || 0);
-                const totalPersonnes = adultes + enfants;
-                const chambresDemandees = parseInt(chambresInput?.value || 1);
-                const maxParChambre = 4;
-                const chambresNecessaires = Math.ceil(totalPersonnes / maxParChambre);
-                const chambresEffectives = Math.max(chambresDemandees, chambresNecessaires);
-                const repartitionContainer = document.getElementById('repartitionContainer');
-                const repartitionSelect = document.getElementById('repartition_chambres');
+    // ---------- Mise à jour des options de répartition (uniquement pour hôtels) ----------
+    function updateRepartitionOptions() {
+        if (!isHotel) {
+            if (repartitionContainer) repartitionContainer.style.display = 'none';
+            if (repartitionSelect) repartitionSelect.value = '';
+            return;
+        }
 
-                if (!repartitionContainer) return;
-                const oldValue = repartitionSelect.value;
+        const adultes = parseInt(adultesInput?.value || 1);
+        const enfants = parseInt(enfantsInput?.value || 0);
+        const totalPersonnes = adultes + enfants;
+        const chambresDemandees = parseInt(chambresInput?.value || 1);
+        const maxParChambre = 4;
+        const chambresNecessaires = Math.ceil(totalPersonnes / maxParChambre);
+        const chambresEffectives = Math.max(chambresDemandees, chambresNecessaires);
 
-                if (chambresEffectives > 1 && chambresDemandees === 1 && totalPersonnes > 0) {
-                    const combos = [];
-                    function findCombos(remaining, chambers, current) {
-                        if (chambers === 0) {
-                            if (remaining === 0) combos.push([...current]);
-                            return;
-                        }
-                        for (let i = 1; i <= Math.min(remaining, maxParChambre); i++) {
-                            current.push(i);
-                            findCombos(remaining - i, chambers - 1, current);
-                            current.pop();
-                        }
-                    }
-                    findCombos(totalPersonnes, chambresEffectives, []);
-                    const uniqueCombos = [];
-                    combos.forEach(combo => {
-                        const sorted = [...combo].sort((a,b)=>a-b);
-                        const key = sorted.join(',');
-                        if (!uniqueCombos.some(c => c.join(',') === key)) uniqueCombos.push(sorted);
-                    });
-                    repartitionSelect.innerHTML = '<option value="">Choisir une répartition</option>';
-                    uniqueCombos.forEach(combo => {
-                        const labels = combo.map(p => p + ' personne' + (p > 1 ? 's' : ''));
-                        const text = labels.join(' + ');
-                        repartitionSelect.innerHTML += `<option value="${combo.join(',')}">${text}</option>`;
-                    });
-                    if (oldValue && Array.from(repartitionSelect.options).some(opt => opt.value === oldValue)) {
-                        repartitionSelect.value = oldValue;
-                    }
-                    repartitionContainer.style.display = 'block';
-                } else {
-                    repartitionContainer.style.display = 'none';
-                    repartitionSelect.value = '';
+        if (!repartitionContainer) return;
+        const oldValue = repartitionSelect ? repartitionSelect.value : '';
+
+        if (chambresEffectives > 1 && chambresDemandees === 1 && totalPersonnes > 0) {
+            // Génération des combinaisons possibles
+            const combos = [];
+            function findCombos(remaining, chambers, current) {
+                if (chambers === 0) {
+                    if (remaining === 0) combos.push([...current]);
+                    return;
+                }
+                for (let i = 1; i <= Math.min(remaining, maxParChambre); i++) {
+                    current.push(i);
+                    findCombos(remaining - i, chambers - 1, current);
+                    current.pop();
                 }
             }
+            findCombos(totalPersonnes, chambresEffectives, []);
 
-            // ========== CALCUL DU TOTAL ==========
-            function calculerTotal() {
-                const adultes = parseInt(adultesInput?.value || 1);
-                const enfants = parseInt(enfantsInput?.value || 0);
-                const nombrePersonnes = adultes + enfants;
-                const modeReservation = modeReservationSelect?.value || null;
+            const uniqueCombos = [];
+            combos.forEach(combo => {
+                const sorted = [...combo].sort((a,b)=>a-b);
+                const key = sorted.join(',');
+                if (!uniqueCombos.some(c => c.join(',') === key)) uniqueCombos.push(sorted);
+            });
 
-                let coefficient = 1.00;
-                let pensionLabel = "Prix par personne / nuit";
-                if (modeReservation === 'demi_pension') {
-                    coefficient = 1.20;
-                    pensionLabel = "Prix par personne / nuit (Demi-pension)";
-                } else if (modeReservation === 'all_inclusive') {
-                    coefficient = 1.45;
-                    pensionLabel = "Prix par personne / nuit (All Inclusive)";
-                }else if (modeReservation === 'all_inclusive_soft(sans_alcool)') {
-    coefficient = 1.37;
-    pensionLabel = "Prix par personne / nuit (All Inclusive Soft(sans alcool))";
-
-                } else if (modeReservation === 'logement_petit_dejeuner') {
-                    coefficient = 1.00;
-                    pensionLabel = "Prix par personne / nuit (Petit déjeuner)";
-                }
-
-                const prixPensionNuit = prixParNuit * coefficient;
-                const prixPensionSpan = document.getElementById('prix_pension_nuit');
-                const pensionLabelSpan = document.getElementById('pensionLabel');
-                if (prixPensionSpan) prixPensionSpan.innerText = prixPensionNuit.toFixed(2);
-                if (pensionLabelSpan) pensionLabelSpan.innerText = pensionLabel;
-                if (personnesSpan) personnesSpan.innerText = nombrePersonnes;
-
-                if (dateArrivee.value && dateDepart.value) {
-                    const arrivee = new Date(dateArrivee.value);
-                    const depart = new Date(dateDepart.value);
-                    if (depart > arrivee) {
-                        const nuits = (depart - arrivee) / (1000 * 60 * 60 * 24);
-                        const total = nuits * nombrePersonnes * prixPensionNuit;
-                        if (nuitsSpan) nuitsSpan.innerText = nuits;
-                        if (totalSpan) totalSpan.innerText = total.toFixed(2) + ' DT';
-                        return;
-                    }
-                }
-                if (nuitsSpan) nuitsSpan.innerText = '0';
-                if (totalSpan) totalSpan.innerText = '0 DT';
+            repartitionSelect.innerHTML = '<option value="">Choisir une répartition</option>';
+            uniqueCombos.forEach(combo => {
+                const labels = combo.map(p => p + ' personne' + (p > 1 ? 's' : ''));
+                const text = labels.join(' + ');
+                repartitionSelect.innerHTML += `<option value="${combo.join(',')}">${text}</option>`;
+            });
+            if (oldValue && Array.from(repartitionSelect.options).some(opt => opt.value === oldValue)) {
+                repartitionSelect.value = oldValue;
             }
+            repartitionContainer.style.display = 'block';
+        } else {
+            repartitionContainer.style.display = 'none';
+            if (repartitionSelect) repartitionSelect.value = '';
+        }
+    }
 
-            // Écouteurs
-            dateArrivee.addEventListener('change', () => { calculerTotal(); updateRepartitionOptions(); });
-            dateDepart.addEventListener('change', () => { calculerTotal(); updateRepartitionOptions(); });
-            if (adultesInput) adultesInput.addEventListener('input', () => { calculerTotal(); updateRepartitionOptions(); });
-            if (enfantsInput) enfantsInput.addEventListener('input', () => { calculerTotal(); updateRepartitionOptions(); });
-            if (modeReservationSelect) modeReservationSelect.addEventListener('change', () => { calculerTotal(); updateRepartitionOptions(); });
-            if (chambresInput) chambresInput.addEventListener('input', () => { calculerTotal(); updateRepartitionOptions(); });
+    // ---------- Calcul du total avec coefficient de pension ----------
+    function calculerTotal() {
+        const adultes = parseInt(adultesInput?.value || 1);
+        const enfants = parseInt(enfantsInput?.value || 0);
+        const nombrePersonnes = adultes + enfants;
+        const modeReservation = modeReservationSelect?.value || null;
 
-            calculerTotal();
-            updateRepartitionOptions();
+        let coefficient = 1.00;
+        let pensionLabel = "Prix par personne / nuit";
+        switch (modeReservation) {
+            case 'demi_pension':
+                coefficient = 1.20;
+                pensionLabel = "Prix par personne / nuit (Demi-pension)";
+                break;
+            case 'all_inclusive':
+                coefficient = 1.45;
+                pensionLabel = "Prix par personne / nuit (All Inclusive)";
+                break;
+            case 'all_inclusive_soft(sans_alcool)':
+                coefficient = 1.37;
+                pensionLabel = "Prix par personne / nuit (All Inclusive Soft)";
+                break;
+            case 'logement_petit_dejeuner':
+                coefficient = 1.00;
+                pensionLabel = "Prix par personne / nuit (Petit déjeuner)";
+                break;
+        }
+
+        const prixPensionNuit = prixParNuit * coefficient;
+        if (prixPensionSpan) prixPensionSpan.innerText = prixPensionNuit.toFixed(2);
+        if (pensionLabelSpan) pensionLabelSpan.innerText = pensionLabel;
+        if (personnesSpan) personnesSpan.innerText = nombrePersonnes;
+
+        if (dateArrivee.value && dateDepart.value) {
+            const arrivee = new Date(dateArrivee.value);
+            const depart = new Date(dateDepart.value);
+            if (depart > arrivee) {
+                const nuits = (depart - arrivee) / (1000 * 60 * 60 * 24);
+                const total = nuits * nombrePersonnes * prixPensionNuit;
+                if (nuitsSpan) nuitsSpan.innerText = nuits;
+                if (totalSpan) totalSpan.innerText = total.toFixed(2) + ' DT';
+                return;
+            }
+        }
+        if (nuitsSpan) nuitsSpan.innerText = '0';
+        if (totalSpan) totalSpan.innerText = '0 DT';
+    }
+
+    // ---------- Écouteurs d'événements ----------
+    dateArrivee.addEventListener('change', () => { calculerTotal(); updateRepartitionOptions(); });
+    dateDepart.addEventListener('change', () => { calculerTotal(); updateRepartitionOptions(); });
+    if (adultesInput) adultesInput.addEventListener('input', () => { calculerTotal(); updateRepartitionOptions(); });
+    if (enfantsInput) enfantsInput.addEventListener('input', () => { calculerTotal(); updateRepartitionOptions(); });
+    if (modeReservationSelect) modeReservationSelect.addEventListener('change', () => { calculerTotal(); updateRepartitionOptions(); });
+    if (chambresInput && isHotel) chambresInput.addEventListener('input', () => { calculerTotal(); updateRepartitionOptions(); });
+
+    // Initialisation
+    calculerTotal();
+    updateRepartitionOptions();
+
+    // ---------- Soumission du formulaire (reste identique à votre code existant) ----------
+   
 
             let isSubmitting = false;
 

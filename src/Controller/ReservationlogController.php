@@ -151,7 +151,12 @@ $repartitionChambres = $data['repartition_chambres'] ?? null;
             if (!$logement || !$logement->isDisponibilite()) {
                 return $this->json(['success' => false, 'message' => 'Logement non disponible.'], 400);
             }
-
+// Dans la méthode createReservationAjax, après avoir récupéré $logement
+$typeLogement = strtolower($logement->getType());
+$isHotel = ($typeLogement === 'hôtel' || $typeLogement === 'hotel');
+if (!$isHotel) {
+    $nombreChambres = 1; // force la valeur à 1
+}
             $user = $this->getUser();
             if (!$user) {
                 $user = $em->getRepository(User::class)->find(14);
