@@ -42,9 +42,11 @@ class MesReservationslogController extends AbstractController
         $sort = $request->query->get('sort', 'date_desc');
 
         $result = $searchService->getFilteredReservationsByUser($user, $search, $status, $sort, 1, 50);
-
+ $filteredReservations = array_filter($result['reservations'], function($reservation) {
+        return $reservation->getStatus() !== 'annulée';
+    });
         $html = '';
-        foreach ($result['reservations'] as $reservation) {
+        foreach ($filteredReservations as $reservation) {
     $chambreTypeDesc = $chambreTypeService->getChambreType(
         $reservation->getAdultes(),
         $reservation->getEnfants(),
@@ -144,7 +146,7 @@ public function requestCancel(int $id, EntityManagerInterface $em): JsonResponse
     }
     
     // Seules les réservations confirmées peuvent être annulées
-    if ($reservation->getStatus() !== 'confirmée') {
+    if (!in_array($reservation->getStatus(), ['confirmée', 'en_attente'])) {
         return $this->json(['success' => false, 'error' => 'Seules les réservations confirmées peuvent être annulées.'], 400);
     }
     
