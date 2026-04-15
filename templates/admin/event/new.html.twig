@@ -49,6 +49,24 @@
             {{ form_widget(form.location, {attr: {'class': 'form-control', 'required': 'required'}}) }}
             {{ form_errors(form.location) }}
         </div>
+        {# Location picker with map #}
+        <div class="col-12 mb-3">
+            <label class="form-label fw-semibold">Sélectionner l'emplacement sur la carte</label>
+            <div id="location-picker-map" style="height: 400px; width: 100%; border-radius: 8px; border: 1px solid #ddd;"></div>
+            <small class="text-muted">Cliquez sur la carte pour sélectionner l'emplacement exact</small>
+            
+            {# Hidden fields for coordinates #}
+            {{ form_widget(form.latitude) }}
+            {{ form_widget(form.longitude) }}
+            
+            <div class="mt-2" id="selected-location-info" style="display: none;">
+                <div class="alert alert-info">
+                    <i class="bi bi-geo-alt-fill"></i>
+                    <strong>Emplacement sélectionné:</strong>
+                    <span id="selected-lat"></span>, <span id="selected-lng"></span>
+                </div>
+            </div>
+        </div>
         <div class="col-md-6">
             <label class="form-label fw-semibold">URL de l'image</label>
             {{ form_widget(form.image_url, {attr: {'class': 'form-control', 'placeholder': 'https://example.com/image.jpg'}}) }}
@@ -233,4 +251,99 @@ function validateFormOnSubmit() {
     border-color: #198754 !important;
 }
 </style>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Get existing coordinates if editing
+    let currentLat = document.getElementById('event_latitude').value;
+    let currentLng = document.getElementById('event_longitude').value;
+    
+    let defaultLat = currentLat ? parseFloat(currentLat) : 36.8065;
+    let defaultLng = currentLng ? parseFloat(currentLng) : 10.1815;
+    
+    // Initialize map
+    const map = L.map('location-picker-map').setView([defaultLat, defaultLng], 13);
+    
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+    
+    let marker;
+    
+    // Add marker if coordinates exist
+    if (currentLat && currentLng) {
+        marker = L.marker([currentLat, currentLng]).addTo(map);
+        document.getElementById('selected-location-info').style.display = 'block';
+        document.getElementById('selected-lat').innerText = currentLat;
+        document.getElementById('selected-lng').innerText = currentLng;
+    }
+    
+    // Handle map click
+    map.on('click', function(e) {
+        const lat = e.latlng.lat;
+        const lng = e.latlng.lng;
+        
+        // Remove existing marker
+        if (marker) {
+            map.removeLayer(marker);
+        }
+        
+        // Add new marker
+        marker = L.marker([lat, lng]).addTo(map);
+        
+        // Update hidden fields
+        document.getElementById('event_latitude').value = lat;
+        document.getElementById('event_longitude').value = lng;
+        
+        // Update location name field (reverse geocoding)
+        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data && data.display_name) {
+                    document.getElementById('event_location').value = data.display_name;
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        
+        // Show selected location info
+        document.getElementById('selected-location-info').style.display = 'block';
+        document.getElementById('selected-lat').innerText = lat.toFixed(6);
+        document.getElementById('selected-lng').innerText = lng.toFixed(6);
+    });
+    
+    // Also allow searching by address
+    const searchContainer = document.createElement('div');
+    searchContainer.innerHTML = `
+        <div class="input-group mb-2" style="position: absolute; top: 10px; right: 10px; z-index: 1000; width: 250px;">
+            <input type="text" id="address-search" class="form-control" placeholder="Rechercher une adresse...">
+            <button class="btn btn-primary" type="button" id="search-btn">🔍</button>
+        </div>
+    `;
+    map.getContainer().appendChild(searchContainer);
+    
+    document.getElementById('search-btn').addEventListener('click', function() {
+        const address = document.getElementById('address-search').value;
+        if (address) {
+            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data && data.length > 0) {
+                        const lat = data[0].lat;
+                        const lng = data[0].lon;
+                        map.setView([lat, lng], 15);
+                        
+                        if (marker) map.removeLayer(marker);
+                        marker = L.marker([lat, lng]).addTo(map);
+                        
+                        document.getElementById('event_latitude').value = lat;
+                        document.getElementById('event_longitude').value = lng;
+                        document.getElementById('event_location').value = data[0].display_name;
+                    }
+                });
+        }
+    });
+});
+</script>
 {% endblock %}

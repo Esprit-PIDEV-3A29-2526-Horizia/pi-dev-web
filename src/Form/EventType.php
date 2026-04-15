@@ -9,6 +9,7 @@ use Symfony\Component\Form\Extension\Core\Type\NumberType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
+use Symfony\Component\Form\Extension\Core\Type\HiddenType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraints\NotBlank;
@@ -67,10 +68,18 @@ class EventType extends AbstractType
             ])
             ->add('location', TextType::class, [
                 'label' => 'Lieu',
-                'attr'  => ['class' => 'form-control', 'placeholder' => 'Adresse ou lieu'],
+                'attr'  => ['class' => 'form-control', 'placeholder' => 'Adresse ou lieu', 'id' => 'event_location'],
                 'constraints' => [
                     new NotBlank(['message' => 'Le lieu est obligatoire.'])
                 ]
+            ])
+            ->add('latitude', HiddenType::class, [
+                'mapped' => true,
+                'attr' => ['id' => 'event_latitude']
+            ])
+            ->add('longitude', HiddenType::class, [
+                'mapped' => true,
+                'attr' => ['id' => 'event_longitude']
             ])
             ->add('date_debut', DateTimeType::class, [
                 'label'  => 'Date de début',

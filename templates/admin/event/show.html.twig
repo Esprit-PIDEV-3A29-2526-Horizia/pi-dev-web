@@ -158,6 +158,63 @@
         font-weight: 600;
         font-size: 0.875rem;
     }
+
+    /* Map Card Styles */
+    .map-card {
+        background: var(--color-white);
+        border-radius: 20px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        overflow: hidden;
+        border: 1px solid var(--color-border);
+        margin-top: 2rem;
+    }
+    
+    .map-header {
+        padding: 1.25rem 1.5rem;
+        background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+        color: white;
+    }
+    
+    .map-header h4 {
+        margin: 0;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .map-container {
+        padding: 20px;
+    }
+    
+    #admin-event-map {
+        height: 350px;
+        width: 100%;
+        border-radius: 12px;
+        z-index: 1;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .map-address {
+        background: #f8fafc;
+        padding: 12px 20px;
+        border-radius: 8px;
+        margin-top: 15px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        border: 1px solid #e2e8f0;
+    }
+    
+    .map-address i {
+        color: var(--color-primary);
+        font-size: 1.2rem;
+    }
+    
+    .map-address span {
+        color: #334155;
+        font-size: 0.95rem;
+    }
 </style>
 {% endblock %}
 
@@ -259,6 +316,55 @@
         </div>
     </div>
 </div>
+
+{# ── MAP SECTION (Admin View) ── #}
+{% if event.latitude and event.longitude %}
+<div class="map-card">
+    <div class="map-header">
+        <h4><i class="bi bi-map me-2"></i> Localisation sur la carte</h4>
+    </div>
+    <div class="map-container">
+        <div id="admin-event-map"></div>
+        <div class="map-address">
+            <i class="bi bi-geo-alt-fill"></i>
+            <span>{{ event.getLocation() }}</span>
+        </div>
+    </div>
+</div>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const map = L.map('admin-event-map').setView([{{ event.latitude }}, {{ event.longitude }}], 15);
+        
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+            maxZoom: 19
+        }).addTo(map);
+        
+        const marker = L.marker([{{ event.latitude }}, {{ event.longitude }}]).addTo(map);
+        marker.bindPopup('<strong>{{ event.getTitre() }}</strong><br>{{ event.getLocation() }}').openPopup();
+        
+        // Fix map display after container is fully visible
+        setTimeout(function() {
+            map.invalidateSize();
+        }, 100);
+    });
+</script>
+{% else %}
+<div class="map-card">
+    <div class="map-header">
+        <h4><i class="bi bi-map me-2"></i> Localisation sur la carte</h4>
+    </div>
+    <div class="map-container text-center py-5">
+        <i class="bi bi-geo-alt-slash fs-1 text-muted"></i>
+        <p class="text-muted mt-2 mb-0">Aucune coordonnée disponible pour cet événement.</p>
+        <p class="text-muted small">Modifiez l'événement pour ajouter sa position sur la carte.</p>
+    </div>
+</div>
+{% endif %}
 
 {# ── Delete button ── #}
 <div class="mt-4">
