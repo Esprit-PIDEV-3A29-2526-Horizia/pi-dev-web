@@ -360,64 +360,291 @@
             });
         }
 
-        function attachEditEvents() {
-            document.querySelectorAll('.btn-edit').forEach(btn => {
-                btn.removeEventListener('click', window.editHandler);
-                const handler = function(e) {
-                    e.preventDefault();
-                    const id = this.getAttribute('data-id');
-                    const modal = new bootstrap.Modal(document.getElementById('qrModal'));
-                    const modalBody = document.getElementById('qrModalBody');
-                    
-                    modalBody.innerHTML = '<div class="spinner-border text-primary" role="status"><span class="visually-hidden"></span></div>';
-                    modal.show();
-                    
-                    fetch(`/reservation/edit-modal/${id}`, {
-                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
-                    })
-                    .then(response => response.text())
-                    .then(html => {
-                        modalBody.innerHTML = html;
-                        document.querySelector('#qrModal .modal-title').innerText = 'Modifier la réservation';
-                        
-                        const editForm = document.getElementById('editReservationForm');
-                        if (editForm) {
-                            editForm.addEventListener('submit', function(e) {
-                                e.preventDefault();
-                                const formData = new FormData(editForm);
-                                fetch(editForm.action, {
-                                    method: 'POST',
-                                    body: formData,
-                                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
-                                })
-                                .then(response => response.json())
-                                .then(data => {
-                                    if (data.success) {
-                                        modal.hide();
-                                        fetchReservations();
-                                        Swal.fire({
-                                            title: 'Succès',
-                                            text: data.message,
-                                            icon: 'success',
-                                            timer: 1500,
-                                            showConfirmButton: false
-                                        });
-                                    } else {
-                                        document.getElementById('formErrors').innerHTML = '<div class="alert alert-danger">' + (data.error || 'Erreur') + '</div>';
-                                        document.getElementById('formErrors').classList.remove('d-none');
-                                    }
-                                });
-                            });
-                        }
-                    })
-                    .catch(error => {
-                        modalBody.innerHTML = '<div class="alert alert-danger">Erreur lors du chargement du formulaire.</div>';
-                    });
-                };
-                btn.addEventListener('click', handler);
-                btn.editHandler = handler;
+      function attachEditEvents() {
+    document.querySelectorAll('.btn-edit').forEach(btn => {
+        btn.removeEventListener('click', window.editHandler);
+        const handler = function(e) {
+            e.preventDefault();
+            const id = this.getAttribute('data-id');
+            const modal = new bootstrap.Modal(document.getElementById('qrModal'));
+            const modalBody = document.getElementById('qrModalBody');
+            
+            modalBody.innerHTML = '<div class="spinner-border text-primary" role="status"><span class="visually-hidden"></span></div>';
+            modal.show();
+            
+            fetch(`/reservation/edit-modal/${id}`, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(response => response.text())
+            .then(html => {
+                modalBody.innerHTML = html;
+                document.querySelector('#qrModal .modal-title').innerText = 'Modifier la réservation';
+                // Initialiser le formulaire d'édition après injection
+                initEditForm(id);
+            })
+            .catch(error => {
+                modalBody.innerHTML = '<div class="alert alert-danger">Erreur lors du chargement du formulaire.</div>';
             });
+        };
+        btn.addEventListener('click', handler);
+        btn.editHandler = handler;
+    });
+}
+
+// Fonction d'initialisation du formulaire d'édition
+function initEditForm(reservationId) {
+    const form = document.getElementById('editReservationForm');
+    if (!form) return;
+
+    const dateArrivee = document.getElementById('date_arrivee_edit');
+    const dateDepart = document.getElementById('date_depart_edit');
+    const totalSpan = document.getElementById('total_edit');
+    const nuitsSpan = document.getElementById('nuits_edit');
+    const prixParNuit = parseFloat(document.getElementById('prix_par_nuit_data_edit').value);
+    const formErrorsDiv = document.getElementById('formErrors');
+    const modaliteRadios = document.querySelectorAll('input[name="modalite"]');
+    const adultesInput = document.getElementById('adultes_edit');
+    const enfantsInput = document.getElementById('enfants_edit');
+    const modeReservationSelect = document.getElementById('mode_reservation_edit');
+    const chambresInput = document.getElementById('nombre_chambres_edit');
+    const personnesSpan = document.getElementById('personnes_edit');
+    const prixPensionSpan = document.getElementById('prix_pension_nuit_edit');
+    const pensionLabelSpan = document.getElementById('pensionLabelEdit');
+    const logementType = document.getElementById('logement_type_edit')?.value || '';
+    const isHotel = (logementType === 'hôtel' || logementType === 'hotel');
+
+    const chambresCol = document.getElementById('chambresColEdit');
+    const repartitionContainer = document.getElementById('repartitionContainerEdit');
+    const repartitionSelect = document.getElementById('repartition_chambres_edit');
+
+    // Affichage du champ "Nombre de chambres"
+    if (chambresCol) chambresCol.style.display = isHotel ? 'block' : 'none';
+    if (!isHotel && chambresInput) {
+        chambresInput.value = 1;
+        if (repartitionContainer) repartitionContainer.style.display = 'none';
+        if (repartitionSelect) repartitionSelect.value = '';
+    }
+
+    // Mise à jour des options de répartition
+    function updateRepartitionOptions() {
+        if (!isHotel) {
+            if (repartitionContainer) repartitionContainer.style.display = 'none';
+            if (repartitionSelect) repartitionSelect.value = '';
+            return;
         }
+        const adultes = parseInt(adultesInput?.value || 1);
+        const enfants = parseInt(enfantsInput?.value || 0);
+        const totalPersonnes = adultes + enfants;
+        const chambresDemandees = parseInt(chambresInput?.value || 1);
+        const maxParChambre = 4;
+        const chambresNecessaires = Math.ceil(totalPersonnes / maxParChambre);
+        const chambresEffectives = Math.max(chambresDemandees, chambresNecessaires);
+        if (!repartitionContainer) return;
+        const oldValue = repartitionSelect ? repartitionSelect.value : '';
+
+        if (chambresEffectives > 1 && chambresDemandees === 1 && totalPersonnes > 0) {
+            const combos = [];
+            function findCombos(remaining, chambers, current) {
+                if (chambers === 0) {
+                    if (remaining === 0) combos.push([...current]);
+                    return;
+                }
+                for (let i = 1; i <= Math.min(remaining, maxParChambre); i++) {
+                    current.push(i);
+                    findCombos(remaining - i, chambers - 1, current);
+                    current.pop();
+                }
+            }
+            findCombos(totalPersonnes, chambresEffectives, []);
+            const uniqueCombos = [];
+            combos.forEach(combo => {
+                const sorted = [...combo].sort((a,b)=>a-b);
+                const key = sorted.join(',');
+                if (!uniqueCombos.some(c => c.join(',') === key)) uniqueCombos.push(sorted);
+            });
+            repartitionSelect.innerHTML = '<option value="">Choisir une répartition</option>';
+            uniqueCombos.forEach(combo => {
+                const labels = combo.map(p => p + ' personne' + (p > 1 ? 's' : ''));
+                const text = labels.join(' + ');
+                repartitionSelect.innerHTML += `<option value="${combo.join(',')}">${text}</option>`;
+            });
+            if (oldValue && Array.from(repartitionSelect.options).some(opt => opt.value === oldValue)) {
+                repartitionSelect.value = oldValue;
+            }
+            repartitionContainer.style.display = 'block';
+        } else {
+            repartitionContainer.style.display = 'none';
+            if (repartitionSelect) repartitionSelect.value = '';
+        }
+    }
+
+    // Calcul du total
+    function calculerTotal() {
+        const adultes = parseInt(adultesInput?.value || 1);
+        const enfants = parseInt(enfantsInput?.value || 0);
+        const nombrePersonnes = adultes + enfants;
+        const modeReservation = modeReservationSelect?.value || null;
+        let coefficient = 1.00;
+        let pensionLabel = "Prix par personne / nuit";
+        switch (modeReservation) {
+            case 'demi_pension':
+                coefficient = 1.20;
+                pensionLabel = "Prix par personne / nuit (Demi-pension)";
+                break;
+            case 'all_inclusive':
+                coefficient = 1.45;
+                pensionLabel = "Prix par personne / nuit (All Inclusive)";
+                break;
+            case 'all_inclusive_soft(sans_alcool)':
+                coefficient = 1.37;
+                pensionLabel = "Prix par personne / nuit (All Inclusive Soft)";
+                break;
+            case 'logement_petit_dejeuner':
+                coefficient = 1.00;
+                pensionLabel = "Prix par personne / nuit (Petit déjeuner)";
+                break;
+        }
+        const prixPensionNuit = prixParNuit * coefficient;
+        if (prixPensionSpan) prixPensionSpan.innerText = prixPensionNuit.toFixed(2);
+        if (pensionLabelSpan) pensionLabelSpan.innerText = pensionLabel;
+        if (personnesSpan) personnesSpan.innerText = nombrePersonnes;
+        if (dateArrivee.value && dateDepart.value) {
+            const arrivee = new Date(dateArrivee.value);
+            const depart = new Date(dateDepart.value);
+            if (depart > arrivee) {
+                const nuits = (depart - arrivee) / (1000 * 60 * 60 * 24);
+                const total = nuits * nombrePersonnes * prixPensionNuit;
+                if (nuitsSpan) nuitsSpan.innerText = nuits;
+                if (totalSpan) totalSpan.innerText = total.toFixed(2) + ' DT';
+                return;
+            }
+        }
+        if (nuitsSpan) nuitsSpan.innerText = '0';
+        if (totalSpan) totalSpan.innerText = '0 DT';
+    }
+
+    // Validation et soumission AJAX
+    function validateForm() {
+        let errorMessages = [];
+        dateArrivee.classList.remove('is-invalid');
+        dateDepart.classList.remove('is-invalid');
+        const modaliteError = document.getElementById('modaliteError');
+        if (modaliteError) modaliteError.style.display = 'none';
+        const pensionErrorDiv = document.getElementById('pensionError');
+        if (pensionErrorDiv) pensionErrorDiv.style.display = 'none';
+        modeReservationSelect?.classList.remove('is-invalid');
+        formErrorsDiv.classList.add('d-none');
+        formErrorsDiv.innerHTML = '';
+
+        if (!dateArrivee.value) {
+            errorMessages.push('Date d\'arrivée obligatoire.');
+            dateArrivee.classList.add('is-invalid');
+        } else {
+            const arrivee = new Date(dateArrivee.value);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            if (arrivee < today) {
+                errorMessages.push('Date d\'arrivée ne peut pas être dans le passé.');
+                dateArrivee.classList.add('is-invalid');
+            }
+        }
+
+        if (!dateDepart.value) {
+            errorMessages.push('Date de départ obligatoire.');
+            dateDepart.classList.add('is-invalid');
+        } else if (dateArrivee.value) {
+            const arrivee = new Date(dateArrivee.value);
+            const depart = new Date(dateDepart.value);
+            if (depart <= arrivee) {
+                errorMessages.push('La date de départ doit être postérieure à la date d\'arrivée.');
+                dateDepart.classList.add('is-invalid');
+            }
+        }
+
+        let modaliteChecked = false;
+        modaliteRadios.forEach(radio => { if (radio.checked) modaliteChecked = true; });
+        if (!modaliteChecked) {
+            errorMessages.push('Veuillez choisir une modalité de paiement.');
+            if (modaliteError) modaliteError.style.display = 'block';
+        }
+
+        const modeReservation = modeReservationSelect?.value || null;
+        if (!modeReservation) {
+            errorMessages.push('Veuillez choisir une formule de pension.');
+            if (pensionErrorDiv) pensionErrorDiv.style.display = 'block';
+            modeReservationSelect?.classList.add('is-invalid');
+        }
+
+        const adultes = parseInt(adultesInput?.value || 0);
+        const enfants = parseInt(enfantsInput?.value || 0);
+        const chambres = parseInt(chambresInput?.value || 0);
+        if (adultes < 1) errorMessages.push('Au moins 1 adulte.');
+        if (enfants < 0) errorMessages.push('Nombre d\'enfants invalide.');
+        if (chambres < 1) errorMessages.push('Au moins 1 chambre.');
+
+        if (errorMessages.length > 0) {
+            formErrorsDiv.innerHTML = errorMessages.join('<br>');
+            formErrorsDiv.classList.remove('d-none');
+            return false;
+        }
+        return true;
+    }
+
+    async function submitForm(event) {
+        event.preventDefault();
+        if (!validateForm()) return;
+
+        const formData = new FormData(form);
+        const url = `/reservation/edit/${reservationId}`;
+
+        try {
+            const response = await fetch(url, {
+                method: 'POST',
+                body: formData,
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            });
+            const data = await response.json();
+            if (data.success) {
+                const modalElement = document.getElementById('qrModal');
+                const modal = bootstrap.Modal.getInstance(modalElement);
+                if (modal) modal.hide();
+                // Recharger la liste des réservations
+                fetchReservations();
+                Swal.fire({
+                    title: 'Succès',
+                    text: data.message,
+                    icon: 'success',
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+            } else {
+                formErrorsDiv.innerHTML = '<div class="alert alert-danger">' + (data.error || 'Erreur lors de la modification') + '</div>';
+                formErrorsDiv.classList.remove('d-none');
+            }
+        } catch (err) {
+            console.error(err);
+            formErrorsDiv.innerHTML = '<div class="alert alert-danger">Une erreur technique est survenue.</div>';
+            formErrorsDiv.classList.remove('d-none');
+        }
+    }
+
+    // Attacher les événements
+    dateArrivee.addEventListener('change', () => { calculerTotal(); updateRepartitionOptions(); });
+    dateDepart.addEventListener('change', () => { calculerTotal(); updateRepartitionOptions(); });
+    if (adultesInput) adultesInput.addEventListener('input', () => { calculerTotal(); updateRepartitionOptions(); });
+    if (enfantsInput) enfantsInput.addEventListener('input', () => { calculerTotal(); updateRepartitionOptions(); });
+    if (modeReservationSelect) modeReservationSelect.addEventListener('change', () => { calculerTotal(); updateRepartitionOptions(); });
+    if (chambresInput && isHotel) chambresInput.addEventListener('input', () => { calculerTotal(); updateRepartitionOptions(); });
+
+    // Initialisation des valeurs
+    calculerTotal();
+    updateRepartitionOptions();
+
+    // Remplacer l'ancien écouteur submit s'il existe
+    form.removeEventListener('submit', form.submitHandler);
+    form.submitHandler = submitForm;
+    form.addEventListener('submit', form.submitHandler);
+}
 
         function attachQrEvents() {
             document.querySelectorAll('.btn-qr').forEach(btn => {

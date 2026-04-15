@@ -198,24 +198,21 @@ public function downloadPdf(int $id, EntityManagerInterface $em, PdfService $pdf
             return $this->json(['success' => false, 'error' => $e->getMessage()]);
         }
     }
-
-    #[Route('/reservation/edit-modal/{id}', name: 'app_front_reservation_edit_modal', methods: ['GET'])]
-    public function editModal(int $id, EntityManagerInterface $em): Response
-    {
-        $reservation = $em->getRepository(Reservationlog::class)->find($id);
-        if (!$reservation || $reservation->getUser()->getId() !== 14) {
-            throw $this->createNotFoundException();
-        }
-        $logement = $reservation->getLogement();
-
-        $html = $this->renderView('front/reservationlog/edit.html.twig', [
-            'reservation' => $reservation,
-            'logement' => $logement,
-        ]);
-        return new Response($html);
+#[Route('/reservation/edit-modal/{id}', name: 'app_front_reservation_edit_modal', methods: ['GET'])]
+public function editModal(int $id, EntityManagerInterface $em): Response
+{
+    $reservation = $em->getRepository(Reservationlog::class)->find($id);
+    if (!$reservation || $reservation->getUser()->getId() !== 14) {
+        throw $this->createNotFoundException();
     }
+    $logement = $reservation->getLogement();
 
-   #[Route('/reservation/edit/{id}', name: 'app_front_reservation_edit', methods: ['POST'])]
+    return $this->render('front/reservationlog/edit.html.twig', [
+        'reservation' => $reservation,
+        'logement' => $logement,
+    ]);
+}
+    #[Route('/reservation/edit/{id}', name: 'app_front_reservation_edit', methods: ['POST'])]
 public function edit(int $id, Request $request, EntityManagerInterface $em): JsonResponse
 {
     $reservation = $em->getRepository(Reservationlog::class)->find($id);
@@ -223,11 +220,7 @@ public function edit(int $id, Request $request, EntityManagerInterface $em): Jso
         return $this->json(['success' => false, 'error' => 'Réservation non trouvée'], 404);
     }
     $logement = $reservation->getLogement();
-$typeLogement = strtolower($logement->getType());
-$isHotel = ($typeLogement === 'hôtel' || $typeLogement === 'hotel');
-if (!$isHotel) {
-    $nombreChambres = 1;
-}
+
     $dateArrivee = \DateTime::createFromFormat('Y-m-d', $request->request->get('date_arrivee'));
     $dateDepart  = \DateTime::createFromFormat('Y-m-d', $request->request->get('date_depart'));
     $modalite    = $request->request->get('modalite');
@@ -236,6 +229,15 @@ if (!$isHotel) {
     $nombreChambres = (int)$request->request->get('nombre_chambres', 1);
     $modeReservation = $request->request->get('mode_reservation');
     $repartitionChambres = $request->request->get('repartition_chambres');
+
+    // Forcer 1 chambre pour les non-hôtels
+    $typeLogement = strtolower($logement->getType());
+    $isHotel = ($typeLogement === 'hôtel' || $typeLogement === 'hotel');
+    if (!$isHotel) {
+        $nombreChambres = 1;
+    }
+
+    // ... reste de la validation et calcul ...
 
     $errors = [];
     if (!$dateArrivee || !$dateDepart) {
