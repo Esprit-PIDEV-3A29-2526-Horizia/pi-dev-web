@@ -117,4 +117,45 @@ class EmailService
             return false;
         }
     }
+// Dans src/Service/EmailService.php
+
+public function sendCancellationApprovedEmail(string $to, $reservation): bool
+{
+    $html = $this->twig->render('front/email/cancellation_approved.html.twig', [
+        'reservation' => $reservation,
+    ]);
+    $email = (new Email())
+        ->from('khadijaderbel123@gmail.com')
+        ->to($to)
+        ->subject('Horozia - Annulation de réservation confirmée')
+        ->html($html);
+    try {
+        $this->mailer->send($email);
+        $this->logger->info('Email approbation annulation envoyé à ' . $to);
+        return true;
+    } catch (\Exception $e) {
+        $this->logger->error('Erreur email approbation annulation: ' . $e->getMessage());
+        return false;
+    }
+}
+
+public function sendCancellationRejectedEmail(string $to, $reservation): bool
+{
+    $html = $this->twig->render('front/email/cancellation_rejected.html.twig', [
+        'reservation' => $reservation,
+    ]);
+    $email = (new Email())
+        ->from('khadijaderbel123@gmail.com')
+        ->to($to)
+        ->subject('Horozia - Demande d\'annulation non approuvée')
+        ->html($html);
+    try {
+        $this->mailer->send($email);
+        $this->logger->info('Email rejet annulation envoyé à ' . $to);
+        return true;
+    } catch (\Exception $e) {
+        $this->logger->error('Erreur email rejet annulation: ' . $e->getMessage());
+        return false;
+    }
+}
 }

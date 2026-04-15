@@ -83,8 +83,7 @@ class MesReservationslogController extends AbstractController
     // Boutons (Modifier, Supprimer, QR, Finaliser)
     if ($reservation->getStatus() !== 'terminée') {
         $html .= '<a href="#" class="btn-action btn-edit" data-id="' . $reservation->getIdreslog() . '"><i class="fa fa-pencil"></i> Modifier</a>';
-        $html .= '<a href="#" class="btn-action btn-delete" data-id="' . $reservation->getIdreslog() . '"><i class="fa fa-trash"></i> Supprimer</a>';
-    }
+  $html .= '<a href="#" class="btn-action btn-delete" data-id="' . $reservation->getIdreslog() . '" data-created-at="' . $reservation->getCreatedAt()->getTimestamp() . '"><i class="fa fa-trash"></i> Supprimer</a>';    }
     if ($reservation->getStatus() == 'confirmée') {
         $html .= '<a href="#" class="btn-action btn-qr" data-id="' . $reservation->getIdreslog() . '"><i class="fa fa-qrcode"></i> QR Code</a>';
     }
@@ -103,24 +102,59 @@ class MesReservationslogController extends AbstractController
     }
 
     
-
-    #[Route('/reservation/delete/{id}', name: 'app_front_reservation_delete', methods: ['POST'])]
-    public function delete(int $id, EntityManagerInterface $em,EmailService $emailService): JsonResponse
+  #[Route('/reservation/delete/{id}', name: 'app_front_reservation_delete', methods: ['POST'])]
+    public function delete(int $id, EntityManagerInterface $em, EmailService $emailService): JsonResponse
     {
         $reservation = $em->getRepository(Reservationlog::class)->find($id);
         if (!$reservation) {
             return $this->json(['success' => false, 'error' => 'Réservation non trouvée'], 404);
         }
-        
+
         if ($reservation->getUser()->getId() !== 14) {
-            return $this->json(['success' => false, 'error' => 'Vous n\'êtes pas autorisé à supprimer cette réservation'], 403);
+            return $this->json(['success' => false, 'error' => 'Non autorisé'], 403);
         }
-        
+
+        $now = new \DateTime();
+        $createdAt = $reservation->getCreatedAt();
+        $ageEnHeures = ($now->getTimestamp() - $createdAt->getTimestamp()) / 3600;
+
+        if ($ageEnHeures >= 1) {
+            return $this->json(['success' => false, 'error' => 'Cette réservation a plus d\'1 heure, utilisez la demande d\'annulation.'], 400);
+        }
+
         $em->remove($reservation);
         $em->flush();
-        $emailService->sendCancellationEmail($reservation->getUser()->getEmail(), $reservation, 'Suppression par l\'utilisateur');
-        return $this->json(['success' => true]);
+        $emailService->sendCancellationEmail($reservation->getUser()->getEmail(), $reservation, 'Suppression par l\'utilisateur (moins d\'1h)');
+        return $this->json(['success' => true, 'message' => 'Réservation supprimée.']);
     }
+
+    // Demande d'annulation (plus d'1h)
+    // Demande d'annulation (plus d'1h)
+#[Route('/reservation/request-cancel/{id}', name: 'app_front_reservation_request_cancel', methods: ['POST'])]
+public function requestCancel(int $id, EntityManagerInterface $em): JsonResponse
+{
+    $reservation = $em->getRepository(Reservationlog::class)->find($id);
+    
+    // L'utilisateur "normal" est l'ID 14 (celui qui fait les réservations)
+    $userId = 14;
+    
+    // Vérifier que la réservation existe et appartient à l'utilisateur ID 14
+    if (!$reservation || $reservation->getUser()->getId() !== $userId) {
+        return $this->json(['success' => false, 'error' => 'Réservation non trouvée'], 404);
+    }
+    
+    // Seules les réservations confirmées peuvent être annulées
+    if ($reservation->getStatus() !== 'confirmée') {
+        return $this->json(['success' => false, 'error' => 'Seules les réservations confirmées peuvent être annulées.'], 400);
+    }
+    
+    // Passer en demande d'annulation
+    $reservation->setStatus('demande_annulation');
+    $em->flush();
+    
+    return $this->json(['success' => true, 'message' => 'Demande d\'annulation envoyée à l\'administrateur.']);
+}
+
 #[Route('/reservation/qrcode/{id}', name: 'app_front_reservation_qrcode', methods: ['GET'])]
 public function qrcode(int $id, EntityManagerInterface $em, QrCodeService $qrCodeService): Response
 {

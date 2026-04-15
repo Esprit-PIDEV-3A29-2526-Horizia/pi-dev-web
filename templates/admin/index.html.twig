@@ -11,11 +11,11 @@
     <div class="col-md-4 mb-4">
         <div class="card bg-primary text-white">
             <div class="card-body">
-                <h5 class="card-title">Logements</h5>
-                <p class="card-text display-4">{{ totalLogements|default(0) }}</p>
+                <h5 class="card-title">Demandes d'annulation</h5>
+                <p class="card-text display-4">{{ pendingCancelRequests|default(0) }}</p>
+                <a href="{{ path('admin_cancel_requests') }}" class="btn btn-light mt-2">Voir les demandes</a>
             </div>
         </div>
     </div>
-    <!-- autres statistiques -->
 </div>
 {% endblock %}

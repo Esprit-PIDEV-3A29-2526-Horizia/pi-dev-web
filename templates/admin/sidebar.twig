@@ -35,9 +35,13 @@
             </a>
         </li>
         <li>
-            <a class="sidebar-link" href="#">
+            <a class="sidebar-link {{ app.request.attributes.get('_route') == 'admin_cancel_requests' ? 'active' : '' }}" href="{{ path('admin_cancel_requests') }}">
                 <i class="bi bi-calendar-check-fill"></i>
-                <span>Gestion Réservations</span>
+                <span>Demandes annulation</span>
+                {% set pendingCount = pendingCancelRequests|default(0) %}
+                {% if pendingCount > 0 %}
+                    <span class="badge bg-danger rounded-pill ms-2">{{ pendingCount }}</span>
+                {% endif %}
             </a>
         </li>
     </ul>

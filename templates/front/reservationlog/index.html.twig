@@ -348,17 +348,78 @@
         }
 
         function attachDeleteEvents() {
-            document.querySelectorAll('.btn-delete').forEach(btn => {
-                btn.removeEventListener('click', window.deleteHandler);
-                const handler = function(e) {
-                    e.preventDefault();
-                    const id = this.getAttribute('data-id');
-                    if (id) deleteReservation(id, this);
-                };
-                btn.addEventListener('click', handler);
-                btn.deleteHandler = handler;
-            });
-        }
+    document.querySelectorAll('.btn-delete').forEach(btn => {
+        btn.removeEventListener('click', window.deleteHandler);
+        const handler = function(e) {
+            e.preventDefault();
+            const id = this.dataset.id;
+            const createdAt = parseInt(this.dataset.createdAt);
+            const now = Math.floor(Date.now() / 1000);
+            const ageHours = (now - createdAt) / 3600;
+
+            if (ageHours < 1) {
+                // Suppression directe
+                Swal.fire({
+                    title: 'Confirmation',
+                    text: 'Voulez-vous vraiment supprimer cette réservation ?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#dc3545',
+                    confirmButtonText: 'Oui, supprimer',
+                    cancelButtonText: 'Annuler'
+                }).then(result => {
+                    if (result.isConfirmed) {
+                        fetch(`/reservation/delete/${id}`, {
+                            method: 'POST',
+                            headers: { 'X-Requested-With': 'XMLHttpRequest', 'Content-Type': 'application/json' }
+                        })
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data.success) {
+                                const card = btn.closest('.col-md-6');
+                                if (card) card.remove();
+                                if (container.children.length === 0) {
+                                    container.innerHTML = '<div class="col-12"><div class="text-center py-5 bg-light rounded-4">...</div></div>';
+                                }
+                                Swal.fire('Supprimée !', data.message, 'success');
+                            } else {
+                                Swal.fire('Erreur', data.error, 'error');
+                            }
+                        });
+                    }
+                });
+            } else {
+                // Demande d'annulation (plus d'1h)
+                Swal.fire({
+                    title: 'Demande d\'annulation',
+                    text: 'Cette réservation a plus d\'1 heure. Voulez-vous demander son annulation à l\'administrateur ?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: 'Oui, demander',
+                    cancelButtonText: 'Non'
+                }).then(result => {
+                    if (result.isConfirmed) {
+                        fetch(`/reservation/request-cancel/${id}`, {
+                            method: 'POST',
+                            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                        })
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data.success) {
+                                Swal.fire('Demande envoyée', data.message, 'success');
+                                fetchReservations();
+                            } else {
+                                Swal.fire('Erreur', data.error, 'error');
+                            }
+                        });
+                    }
+                });
+            }
+        };
+        btn.addEventListener('click', handler);
+        btn.deleteHandler = handler;
+    });
+}
 
       function attachEditEvents() {
     document.querySelectorAll('.btn-edit').forEach(btn => {
