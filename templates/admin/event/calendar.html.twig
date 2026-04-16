@@ -1,9 +1,6 @@
-{% extends 'base_back.html.twig' %}
-
-{% block title %}Calendrier Admin - Gestion des Événements{% endblock %}
+{# This is now an embeddable admin calendar component - no base template #}
 
 {% block stylesheets %}
-{{ parent() }}
 <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet' />
 <style>
     .calendar-container {
@@ -139,7 +136,6 @@
 </style>
 {% endblock %}
 
-{% block body %}
 <div class="container-fluid">
     <div class="d-flex align-items-center justify-content-between mb-4">
         <div>
@@ -173,10 +169,8 @@
 
 <!-- Tooltip -->
 <div id="eventTooltip" class="event-tooltip"></div>
-{% endblock %}
 
 {% block javascripts %}
-{{ parent() }}
 <script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -238,8 +232,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         },
         eventClick: function(info) {
-            // For admin: redirect to edit page
-            if (confirm(`Voulez-vous modifier l'événement "${info.event.title}" ?`)) {
+            if (confirm(`Modifier l'événement "${info.event.title}" ?`)) {
                 window.location.href = `/admin/event/edit/${info.event.id}`;
             }
         },

@@ -167,11 +167,11 @@
 </div>
 {# ── Calendar View Container (hidden by default) ── #}
 <div id="calendarView" style="display: none;">
-    <div id="adminCalendar"></div>
+    {% include 'admin/event/calendar.html.twig' %}
 </div>
+
 {% block javascripts %}
 {{ parent() }}
-<script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const listView = document.getElementById('listView');
@@ -199,36 +199,9 @@ document.addEventListener('DOMContentLoaded', function() {
         listBtn.classList.remove('active');
         listBtn.classList.add('btn-outline-primary');
         listBtn.classList.remove('btn-primary');
-        
-        if (!window.calendarInitialized) {
-            var calendarEl = document.getElementById('adminCalendar');
-            var calendar = new FullCalendar.Calendar(calendarEl, {
-                initialView: 'dayGridMonth',
-                locale: 'fr',
-                firstDay: 1,
-                headerToolbar: {
-                    left: 'prev,next today',
-                    center: 'title',
-                    right: 'dayGridMonth,timeGridWeek'
-                },
-                buttonText: {
-                    today: 'Aujourd\'hui',
-                    month: 'Mois',
-                    week: 'Semaine'
-                },
-                events: '/api/events/calendar-data',
-                eventClick: function(info) {
-                    if (confirm(`Modifier l'événement "${info.event.title}" ?`)) {
-                        window.location.href = `/admin/event/edit/${info.event.id}`;
-                    }
-                },
-                height: 'auto'
-            });
-            calendar.render();
-            window.calendarInitialized = true;
-        }
     });
 });
 </script>
 {% endblock %}
+
 {% endblock %}
