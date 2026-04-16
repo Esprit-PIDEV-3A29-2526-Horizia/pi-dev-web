@@ -8,16 +8,21 @@ use App\Service\EmailService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
 class AdminController extends AbstractController
 {
-    // Démarrer la session si ce n'est pas déjà fait
-    public function __construct()
+    private RequestStack $requestStack;
+
+    public function __construct(RequestStack $requestStack)
     {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
+        $this->requestStack = $requestStack;
+        // Démarrer la session Symfony si nécessaire
+        $session = $requestStack->getSession();
+        if (!$session->isStarted()) {
+            $session->start();
         }
     }
 
@@ -76,6 +81,19 @@ class AdminController extends AbstractController
         $emailService->sendCancellationApprovedEmail($reservation->getUser()->getEmail(), $reservation);
         $this->addFlash('success', '✅ Annulation approuvée pour la réservation #' . $reservation->getIdreslog());
 
+        // Sauvegarder la session immédiatement
+        $this->requestStack->getSession()->save();
+
+        // Notification pour l'utilisateur (ID 14)
+        $userSession = $this->requestStack->getSession();
+        $notifications = $userSession->get('user_notifications_14', []);
+        $notifications[] = [
+            'message' => '✅ Votre demande d\'annulation pour la réservation #' . $reservation->getIdreslog() . ' a été acceptée.',
+            'type' => 'success'
+        ];
+        $userSession->set('user_notifications_14', $notifications);
+        $userSession->save();
+
         return $this->json(['success' => true, 'message' => 'Annulation confirmée.']);
     }
 
@@ -92,6 +110,17 @@ class AdminController extends AbstractController
 
         $emailService->sendCancellationRejectedEmail($reservation->getUser()->getEmail(), $reservation);
         $this->addFlash('warning', '⚠️ Demande d\'annulation rejetée pour la réservation #' . $reservation->getIdreslog());
+
+        $this->requestStack->getSession()->save();
+
+        $userSession = $this->requestStack->getSession();
+        $notifications = $userSession->get('user_notifications_14', []);
+        $notifications[] = [
+            'message' => '❌ Votre demande d\'annulation pour la réservation #' . $reservation->getIdreslog() . ' a été rejetée.',
+            'type' => 'error'
+        ];
+        $userSession->set('user_notifications_14', $notifications);
+        $userSession->save();
 
         return $this->json(['success' => true, 'message' => 'Demande rejetée.']);
     }
