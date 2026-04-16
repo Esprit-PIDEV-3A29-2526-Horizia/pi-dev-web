@@ -67,10 +67,32 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-6">
-            <label class="form-label fw-semibold">URL de l'image</label>
-            {{ form_widget(form.image_url, {attr: {'class': 'form-control', 'placeholder': 'https://example.com/image.jpg'}}) }}
-            {{ form_errors(form.image_url) }}
+                <!-- Image upload section -->
+        <div class="col-12">
+            <label class="form-label fw-semibold">Image</label>
+            <div class="card p-3">
+                <div class="row">
+                    <div class="col-md-6">
+                        <label class="form-label">Choisir un fichier</label>
+                        {{ form_widget(form.image_file, {attr: {'class': 'form-control', 'onchange': 'previewImage(this)'}}) }}
+                        <small class="text-muted">Formats acceptés: JPG, PNG, GIF, WEBP (Max 5 Mo)</small>
+                        {{ form_errors(form.image_file) }}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">OU URL de l'image</label>
+                        {{ form_widget(form.image_url, {attr: {'class': 'form-control', 'placeholder': 'https://example.com/image.jpg', 'onchange': 'previewUrl(this)'}}) }}
+                        {{ form_errors(form.image_url) }}
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <div id="image-preview-container" style="display: none;">
+                        <label class="form-label">Aperçu:</label>
+                        <div class="text-center">
+                            <img id="image-preview" src="" alt="Aperçu" style="max-width: 100%; max-height: 200px; border-radius: 8px;">
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
         <div class="col-md-6">
             <label class="form-label fw-semibold">Date de début <span class="text-danger">*</span></label>
@@ -205,6 +227,40 @@ document.addEventListener('DOMContentLoaded', function() {
     
     validateDates();
 });
+
+function previewImage(input) {
+    const previewContainer = document.getElementById('image-preview-container');
+    const preview = document.getElementById('image-preview');
+    const urlField = document.getElementById('event_image_url');
+    
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            preview.src = e.target.result;
+            previewContainer.style.display = 'block';
+        }
+        reader.readAsDataURL(input.files[0]);
+        urlField.value = '';
+    } else {
+        previewContainer.style.display = 'none';
+        preview.src = '';
+    }
+}
+
+function previewUrl(input) {
+    const previewContainer = document.getElementById('image-preview-container');
+    const preview = document.getElementById('image-preview');
+    const fileField = document.getElementById('event_image_file');
+    
+    if (input.value && input.value.trim() !== '') {
+        preview.src = input.value;
+        previewContainer.style.display = 'block';
+        fileField.value = '';
+    } else {
+        previewContainer.style.display = 'none';
+        preview.src = '';
+    }
+}
 
 function validateFormOnSubmit() {
     const dateDebut = document.getElementById('date_debut');

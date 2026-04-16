@@ -10,12 +10,14 @@ use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\Extension\Core\Type\ChoiceType;
 use Symfony\Component\Form\Extension\Core\Type\HiddenType;
+use Symfony\Component\Form\Extension\Core\Type\FileType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraints\NotBlank;
 use Symfony\Component\Validator\Constraints\Length;
 use Symfony\Component\Validator\Constraints\Positive;
 use Symfony\Component\Validator\Constraints\Type;
+use Symfony\Component\Validator\Constraints\File;
 
 class EventType extends AbstractType
 {
@@ -115,10 +117,34 @@ class EventType extends AbstractType
                     new Positive(['message' => 'La capacité maximale doit être un nombre positif.'])
                 ]
             ])
-            ->add('image_url', TextType::class, [
-                'label'    => "URL de l'image",
+                        // Image file upload field
+            ->add('image_file', FileType::class, [
+                'label' => 'Image (fichier)',
+                'mapped' => false,
                 'required' => false,
-                'attr'     => ['class' => 'form-control', 'placeholder' => 'https://example.com/image.jpg']
+                'attr' => [
+                    'class' => 'form-control',
+                    'accept' => 'image/jpeg,image/png,image/gif,image/webp',
+                    'id' => 'event_image_file'
+                ],
+                /*'constraints' => [
+                    new File([
+                        'maxSize' => '5M',
+                        'mimeTypes' => [
+                            'image/jpeg',
+                            'image/png',
+                            'image/gif',
+                            'image/webp',
+                        ],
+                        'mimeTypesMessage' => 'Veuillez uploader une image valide (JPEG, PNG, GIF, WEBP)',
+                        'maxSizeMessage' => 'L\'image ne doit pas dépasser 5 Mo',
+                    ])
+                ]*/
+            ])
+            ->add('image_url', TextType::class, [
+                'label'    => "OU URL de l'image",
+                'required' => false,
+                'attr'     => ['class' => 'form-control', 'placeholder' => 'https://example.com/image.jpg', 'id' => 'event_image_url']
             ])
             ->add('statut', ChoiceType::class, [
                 'label' => 'Statut',

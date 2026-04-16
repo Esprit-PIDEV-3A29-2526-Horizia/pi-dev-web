@@ -4,12 +4,13 @@ namespace App\Controller;
 
 use App\Entity\Events;
 use App\Form\EventType;
-use App\Service\LastFmService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\String\Slugger\SluggerInterface;
+use Symfony\Component\HttpFoundation\File\Exception\FileException;
 
 #[Route('/admin/event')]
 class EventController extends AbstractController
@@ -70,13 +71,45 @@ class EventController extends AbstractController
     }
 
     #[Route('/new', name: 'app_event_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $entityManager): Response
+    public function new(Request $request, EntityManagerInterface $entityManager, SluggerInterface $slugger): Response
     {
         $event = new Events();
         $form  = $this->createForm(EventType::class, $event);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            // Handle file upload
+            $imageFile = $form->get('image_file')->getData();
+            
+            if ($imageFile) {
+                // Get extension safely from original filename
+                $originalExtension = $imageFile->getClientOriginalExtension();
+                
+                // Validate extension manually
+                $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+                if (!in_array(strtolower($originalExtension), $allowedExtensions)) {
+                    $this->addFlash('error', 'Extension de fichier non autorisée. Utilisez JPG, PNG, GIF ou WEBP.');
+                    return $this->redirectToRoute('app_event_new');
+                }
+                
+                $originalFilename = pathinfo($imageFile->getClientOriginalName(), PATHINFO_FILENAME);
+                $safeFilename = $slugger->slug($originalFilename);
+                $newFilename = $safeFilename . '-' . uniqid() . '.' . $originalExtension;
+                
+                try {
+                    $imageFile->move(
+                        $this->getParameter('kernel.project_dir') . '/public/uploads/events',
+                        $newFilename
+                    );
+                    $event->setImage_url('/uploads/events/' . $newFilename);
+                } catch (FileException $e) {
+                    $this->addFlash('error', 'Erreur lors de l\'upload de l\'image: ' . $e->getMessage());
+                    return $this->redirectToRoute('app_event_new');
+                }
+            } elseif ($form->get('image_url')->getData()) {
+                $event->setImage_url($form->get('image_url')->getData());
+            }
+            
             $event->setPlaces_restantes($event->getCapacite_max());
             $event->setCreated_at(new \DateTime());
             $event->setId_createur(1);
@@ -88,7 +121,6 @@ class EventController extends AbstractController
             return $this->redirectToRoute('app_event_index');
         }
 
-        // If form has errors, they will be displayed automatically in the template
         if ($form->isSubmitted() && !$form->isValid()) {
             $this->addFlash('error', 'Veuillez corriger les erreurs dans le formulaire.');
         }
@@ -99,7 +131,7 @@ class EventController extends AbstractController
     }
 
     #[Route('/edit/{id}', name: 'app_event_edit', methods: ['GET', 'POST'], requirements: ['id' => '\d+'])]
-    public function edit(int $id, Request $request, EntityManagerInterface $entityManager): Response
+    public function edit(int $id, Request $request, EntityManagerInterface $entityManager, SluggerInterface $slugger): Response
     {
         $event = $entityManager->getRepository(Events::class)->find($id);
 
@@ -111,6 +143,45 @@ class EventController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            $imageFile = $form->get('image_file')->getData();
+            
+            if ($imageFile) {
+                $oldImage = $event->getImage_url();
+                if ($oldImage && strpos($oldImage, '/uploads/events/') === 0) {
+                    $oldImagePath = $this->getParameter('kernel.project_dir') . '/public' . $oldImage;
+                    if (file_exists($oldImagePath)) {
+                        unlink($oldImagePath);
+                    }
+                }
+                
+                // Get extension safely from original filename
+                $originalExtension = $imageFile->getClientOriginalExtension();
+                
+                // Validate extension manually
+                $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+                if (!in_array(strtolower($originalExtension), $allowedExtensions)) {
+                    $this->addFlash('error', 'Extension de fichier non autorisée. Utilisez JPG, PNG, GIF ou WEBP.');
+                    return $this->redirectToRoute('app_event_edit', ['id' => $id]);
+                }
+                
+                $originalFilename = pathinfo($imageFile->getClientOriginalName(), PATHINFO_FILENAME);
+                $safeFilename = $slugger->slug($originalFilename);
+                $newFilename = $safeFilename . '-' . uniqid() . '.' . $originalExtension;
+                
+                try {
+                    $imageFile->move(
+                        $this->getParameter('kernel.project_dir') . '/public/uploads/events',
+                        $newFilename
+                    );
+                    $event->setImage_url('/uploads/events/' . $newFilename);
+                } catch (FileException $e) {
+                    $this->addFlash('error', 'Erreur lors de l\'upload de l\'image: ' . $e->getMessage());
+                    return $this->redirectToRoute('app_event_edit', ['id' => $id]);
+                }
+            } elseif ($form->get('image_url')->getData()) {
+                $event->setImage_url($form->get('image_url')->getData());
+            }
+            
             $entityManager->flush();
             $this->addFlash('success', 'Événement modifié avec succès.');
             return $this->redirectToRoute('app_event_index');
@@ -132,6 +203,14 @@ class EventController extends AbstractController
         }
 
         if ($this->isCsrfTokenValid('delete' . $event->getId_event(), $request->request->get('_token'))) {
+            $imageUrl = $event->getImage_url();
+            if ($imageUrl && strpos($imageUrl, '/uploads/events/') === 0) {
+                $imagePath = $this->getParameter('kernel.project_dir') . '/public' . $imageUrl;
+                if (file_exists($imagePath)) {
+                    unlink($imagePath);
+                }
+            }
+            
             $entityManager->remove($event);
             $entityManager->flush();
             $this->addFlash('success', 'Événement supprimé avec succès.');
