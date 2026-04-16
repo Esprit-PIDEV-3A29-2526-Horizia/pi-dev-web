@@ -1,0 +1,101 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}Détail de l'utilisateur - {{ user.email }}{% endblock %}
+
+{% block admin_content %}
+<div class="container-fluid px-4 py-5">
+    <div class="row g-5">
+        <!-- Colonne principale : infos utilisateur -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-lg rounded-4 overflow-hidden mb-4">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center mb-4">
+                        <div class="bg-primary bg-opacity-10 rounded-circle p-3 me-3">
+                            <i class="bi bi-person-circle fs-1 text-primary"></i>
+                        </div>
+                        <div>
+                            <h1 class="display-5 fw-bold mb-1">{{ user.prenom }} {{ user.nom }}</h1>
+                            <p class="text-muted">ID : {{ user.id }} · Membre depuis : <span class="fw-semibold">Non renseigné</span></p>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="row mt-4">
+                        <div class="col-md-6">
+                            <h5><i class="bi bi-envelope me-2"></i>Email</h5>
+                            <p>{{ user.email }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h5><i class="bi bi-phone me-2"></i>Téléphone</h5>
+                            <p>{{ user.telephone ?: 'Non renseigné' }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h5><i class="bi bi-geo-alt me-2"></i>Adresse</h5>
+                            <p>{{ user.addresse ?: 'Non renseignée' }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h5><i class="bi bi-people me-2"></i>Réservations</h5>
+                            <p>{{ reservations|length }} réservation(s)</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Liste des réservations de l'utilisateur -->
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-header bg-transparent border-0 pt-4 px-4">
+                    <h3 class="card-title fw-bold"><i class="bi bi-calendar-check me-2"></i>Ses réservations</h3>
+                </div>
+                <div class="card-body p-4">
+                    {% if reservations %}
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Logement</th>
+                                        <th>Dates</th>
+                                        <th>Montant</th>
+                                        <th>Statut</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for r in reservations %}
+                                        <tr>
+                                            <td><strong>{{ r.logement.nom }}</strong><br><small class="text-muted">{{ r.logement.type }}</small></td>
+                                            <td>{{ r.dateDebut|date('d/m/Y') }} → {{ r.dateFin|date('d/m/Y') }}</td>
+                                            <td>{{ r.montant|number_format(2, ',', ' ') }} DT</td>
+                                            <td><span class="badge bg-{{ r.status == 'confirmée' ? 'success' : (r.status == 'en_attente' ? 'warning' : 'danger') }}">{{ r.status }}</span></td>
+                                            <td>
+                                                {# Lien temporaire – à remplacer par une vraie route admin_reservation_show #}
+                                                <a href="#" class="btn btn-sm btn-outline-primary rounded-pill" onclick="alert('Page détail réservation à créer')">
+                                                    <i class="bi bi-eye"></i> Voir
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info text-center py-4">Aucune réservation trouvée.</div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Colonne latérale : actions -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-lg rounded-4 mb-4">
+                <div class="card-body text-center p-4">
+                    <a href="#" class="btn btn-primary btn-lg rounded-pill w-100 mb-2" onclick="alert('Modification utilisateur à venir')">
+                        <i class="bi bi-pencil-square me-2"></i>Modifier
+                    </a>
+                    <a href="#" class="btn btn-outline-secondary btn-lg rounded-pill w-100" onclick="alert('Liste des utilisateurs à venir')">
+                        <i class="bi bi-arrow-left me-2"></i>Retour à la liste
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
