@@ -149,12 +149,12 @@
 {% endblock %}
 
 {% block javascripts %}
-    <!-- Pas d'appel à parent() car le layout parent peut ne pas avoir de block javascripts -->
+    {{ parent() }}
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             if (!SpeechRecognition) {
-                console.warn('⚠️ API Web Speech non supportée');
+                console.warn('API Web Speech non supportée');
                 document.querySelectorAll('.mic-btn').forEach(btn => {
                     btn.disabled = true;
                     btn.title = 'Reconnaissance vocale non supportée';
@@ -162,54 +162,51 @@
                 return;
             }
 
-            const recognitionConfig = {
-                lang: 'fr-FR',
-                continuous: true,
-                interimResults: true,
-                maxAlternatives: 1
-            };
-
             let activeRecognition = null;
+            let activeButton = null;
 
-            const micButtons = document.querySelectorAll('.mic-btn');
-            micButtons.forEach(btn => {
-                btn.addEventListener('click', function(event) {
-                    event.preventDefault();
-                    const targetId = this.getAttribute('data-target');
-                    const field = document.getElementById(targetId);
-                    if (!field) return;
+            function stopRecognition() {
+                if (activeRecognition) {
+                    activeRecognition.stop();
+                }
+            }
 
-                    if (activeRecognition) {
-                        activeRecognition.stop();
-                        activeRecognition = null;
-                        document.querySelectorAll('.mic-btn').forEach(b => {
-                            b.disabled = false;
-                            b.innerHTML = '<i class="bi bi-mic"></i>';
-                        });
-                        return;
-                    }
+            function startRecognition(field, button) {
+                // Arrêter toute reconnaissance en cours
+                if (activeRecognition) {
+                    activeRecognition.stop();
+                    // On attend la fin de l'arrêt avant de démarrer une nouvelle
+                    setTimeout(() => {
+                        if (!activeRecognition) {
+                            _startRecognition(field, button);
+                        }
+                    }, 300);
+                    return;
+                }
+                _startRecognition(field, button);
+            }
 
-                    startDictation(field, this);
-                });
-            });
-
-            function startDictation(field, button) {
+            function _startRecognition(field, button) {
                 const recognition = new SpeechRecognition();
-                Object.assign(recognition, recognitionConfig);
+                recognition.lang = 'fr-FR';
+                recognition.continuous = true;
+                recognition.interimResults = true;
+                recognition.maxAlternatives = 1;
+
                 activeRecognition = recognition;
+                activeButton = button;
 
-                document.querySelectorAll('.mic-btn').forEach(btn => {
-                    btn.disabled = true;
-                });
-                button.innerHTML = '<i class="bi bi-mic-fill text-danger"></i><span class="spinner-border spinner-border-sm ms-1" style="width: 0.8rem; height: 0.8rem;"></span>';
-                button.title = 'Reconnaissance en cours... (cliquer pour arrêter)';
-
+                // Indicateur visuel : badge sous le champ
                 let interimSpan = document.createElement('span');
                 interimSpan.className = 'badge bg-secondary mt-1 d-inline-block text-truncate';
                 interimSpan.style.maxWidth = '100%';
                 interimSpan.style.fontSize = '0.75rem';
                 interimSpan.innerText = '🎤 Écoute...';
                 field.parentNode.insertBefore(interimSpan, field.nextSibling);
+
+                // Modifier le bouton (icône rouge)
+                button.innerHTML = '<i class="bi bi-mic-fill text-danger"></i>';
+                button.title = 'Arrêter la reconnaissance';
 
                 let finalText = '';
 
@@ -219,7 +216,6 @@
                         const transcript = event.results[i][0].transcript;
                         if (event.results[i].isFinal) {
                             finalText += transcript + ' ';
-                            interimTranscript = '';
                         } else {
                             interimTranscript += transcript;
                         }
@@ -232,45 +228,62 @@
                 };
 
                 recognition.onend = () => {
-                    if (finalText.trim().length > 0) {
-                        let result = finalText.trim();
-                        result = result.charAt(0).toUpperCase() + result.slice(1);
+                    // Nettoyer le badge
+                    if (interimSpan) interimSpan.remove();
+                    // Mettre à jour le champ avec le texte final
+                    const trimmed = finalText.trim();
+                    if (trimmed.length > 0) {
+                        let result = trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
                         field.value = result;
                         field.dispatchEvent(new Event('change'));
                     }
-                    if (interimSpan) interimSpan.remove();
+                    // Restaurer le bouton
+                    button.innerHTML = '<i class="bi bi-mic"></i>';
+                    button.title = 'Reconnaissance vocale';
                     activeRecognition = null;
-                    document.querySelectorAll('.mic-btn').forEach(btn => {
-                        btn.disabled = false;
-                        btn.innerHTML = '<i class="bi bi-mic"></i>';
-                        btn.title = 'Reconnaissance vocale';
-                    });
+                    activeButton = null;
                 };
 
                 recognition.onerror = (event) => {
                     let errorMsg = '';
                     switch (event.error) {
-                        case 'no-speech': errorMsg = 'Aucune parole détectée. Vérifiez votre micro.'; break;
+                        case 'no-speech': errorMsg = 'Aucune parole détectée.'; break;
                         case 'audio-capture': errorMsg = 'Microphone inaccessible.'; break;
-                        case 'not-allowed': errorMsg = 'Permission microphone refusée.'; break;
-                        default: errorMsg = 'Erreur technique. Réessayez.';
+                        case 'not-allowed': errorMsg = 'Permission refusée.'; break;
+                        default: errorMsg = 'Erreur technique.';
                     }
                     const errorDiv = document.createElement('div');
                     errorDiv.className = 'text-danger small mt-1';
                     errorDiv.innerText = '❌ ' + errorMsg;
                     field.parentNode.insertBefore(errorDiv, field.nextSibling);
-                    setTimeout(() => errorDiv.remove(), 1500);
+                    setTimeout(() => errorDiv.remove(), 2000);
                     if (interimSpan) interimSpan.remove();
+                    button.innerHTML = '<i class="bi bi-mic"></i>';
+                    button.title = 'Reconnaissance vocale';
                     activeRecognition = null;
-                    document.querySelectorAll('.mic-btn').forEach(btn => {
-                        btn.disabled = false;
-                        btn.innerHTML = '<i class="bi bi-mic"></i>';
-                        btn.title = 'Reconnaissance vocale';
-                    });
+                    activeButton = null;
                 };
 
                 recognition.start();
             }
+
+            // Attacher les événements aux boutons micro
+            document.querySelectorAll('.mic-btn').forEach(btn => {
+                btn.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    const targetId = this.getAttribute('data-target');
+                    const field = document.getElementById(targetId);
+                    if (!field) return;
+
+                    // Si le même bouton est actif, on arrête
+                    if (activeRecognition && activeButton === this) {
+                        stopRecognition();
+                        return;
+                    }
+                    // Sinon, on démarre une nouvelle reconnaissance (arrête l'ancienne)
+                    startRecognition(field, this);
+                });
+            });
         });
     </script>
 {% endblock %}
