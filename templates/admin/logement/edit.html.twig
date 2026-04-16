@@ -72,7 +72,20 @@
                         <div class="col-md-6">
                             <div class="mb-3">
                                 {{ form_label(form.tarif_nuit, 'Tarif par nuit (DT)', {'label_attr': {'class': 'form-label fw-semibold text-horozia-primary'}}) }}
-                                {{ form_widget(form.tarif_nuit, {'attr': {'class': 'form-control', 'type': 'number', 'step': '0.01', 'min': '0'}}) }}
+                                <div class="input-group">
+                                    {{ form_widget(form.tarif_nuit, {
+                                        'attr': {
+                                            'class': 'form-control',
+                                            'type': 'number',
+                                            'step': '0.01',
+                                            'min': '0',
+                                            'id': 'logement_tarif_nuit'
+                                        }
+                                    }) }}
+                                    <button type="button" class="btn btn-outline-secondary mic-btn" data-target="logement_tarif_nuit" title="Reconnaissance vocale">
+                                        <i class="bi bi-mic"></i>
+                                    </button>
+                                </div>
                                 {{ form_errors(form.tarif_nuit) }}
                             </div>
                         </div>
@@ -95,7 +108,9 @@
                         <div class="col-12">
                             <div class="mb-3">
                                 {{ form_label(form.image, 'Image du logement (URL)', {'label_attr': {'class': 'form-label fw-semibold text-horozia-primary'}}) }}
-                                {{ form_widget(form.image, {'attr': {'class': 'form-control', 'id': 'logement_image', 'placeholder': 'https://exemple.com/image.jpg'}}) }}
+                                <div class="input-group">
+                                    {{ form_widget(form.image, {'attr': {'class': 'form-control', 'id': 'logement_image', 'placeholder': 'https://exemple.com/image.jpg'}}) }}
+                                </div>
                                 <div id="image-preview" class="mt-3 {{ logement.image ? '' : 'd-none' }}">
                                     <img id="preview-img" src="{{ logement.image }}" class="img-fluid rounded border" style="max-height: 150px; object-fit: contain;">
                                     <p class="text-muted small mt-2"><i class="bi bi-info-circle"></i> Aperçu de l'image actuelle</p>
@@ -121,7 +136,6 @@
                             <a href="{{ path('admin_logement_index') }}" class="btn btn-outline-secondary px-4 py-2 rounded-pill">
                                 <i class="bi bi-arrow-left me-2"></i>Annuler
                             </a>
-                           
                         </div>
                         <button type="submit" class="btn btn-horozia-primary px-5 py-2 rounded-pill">
                             <i class="bi bi-check-circle me-2"></i>
@@ -141,12 +155,149 @@
     {{ parent() }}
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Initialisation des boutons de reconnaissance vocale
-            const micButtons = document.querySelectorAll('.mic-btn');
-            micButtons.forEach(btn => {
-                btn.addEventListener('click', function() {
+            // Filtrage du champ tarif : uniquement chiffres et un point
+            const tarifInput = document.getElementById('logement_tarif_nuit');
+            if (tarifInput) {
+                tarifInput.addEventListener('input', function(e) {
+                    let value = this.value;
+                    let filtered = value.replace(/[^\d.]/g, '');
+                    let parts = filtered.split('.');
+                    if (parts.length > 2) {
+                        filtered = parts[0] + '.' + parts.slice(1).join('');
+                    }
+                    if (filtered !== value) {
+                        this.value = filtered;
+                    }
+                });
+            }
+
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) {
+                console.warn('⚠️ API Web Speech non supportée');
+                document.querySelectorAll('.mic-btn').forEach(btn => {
+                    btn.disabled = true;
+                    btn.title = 'Reconnaissance vocale non supportée';
+                });
+                return;
+            }
+
+            let activeRecognition = null;
+            let activeButton = null;
+
+            function stopRecognition() {
+                if (activeRecognition) {
+                    activeRecognition.stop();
+                }
+            }
+
+            function startRecognition(field, button) {
+                if (activeRecognition) {
+                    activeRecognition.stop();
+                    setTimeout(() => {
+                        if (!activeRecognition) {
+                            _startRecognition(field, button);
+                        }
+                    }, 300);
+                    return;
+                }
+                _startRecognition(field, button);
+            }
+
+            function _startRecognition(field, button) {
+                const recognition = new SpeechRecognition();
+                recognition.lang = 'fr-FR';
+                recognition.continuous = true;
+                recognition.interimResults = true;
+                recognition.maxAlternatives = 1;
+
+                activeRecognition = recognition;
+                activeButton = button;
+
+                let interimSpan = document.createElement('span');
+                interimSpan.className = 'badge bg-secondary mt-1 d-inline-block text-truncate';
+                interimSpan.style.maxWidth = '100%';
+                interimSpan.style.fontSize = '0.75rem';
+                interimSpan.innerText = '🎤 Écoute...';
+                field.parentNode.insertBefore(interimSpan, field.nextSibling);
+
+                button.innerHTML = '<i class="bi bi-mic-fill text-danger"></i>';
+                button.title = 'Arrêter la reconnaissance';
+
+                let finalText = '';
+
+                recognition.onresult = (event) => {
+                    let interimTranscript = '';
+                    for (let i = event.resultIndex; i < event.results.length; i++) {
+                        const transcript = event.results[i][0].transcript;
+                        if (event.results[i].isFinal) {
+                            finalText += transcript + ' ';
+                        } else {
+                            interimTranscript += transcript;
+                        }
+                    }
+                    if (interimTranscript) {
+                        interimSpan.innerText = '📝 ' + interimTranscript;
+                    } else if (finalText) {
+                        interimSpan.innerText = '✅ ' + finalText.trim();
+                    }
+                };
+
+                recognition.onend = () => {
+                    if (interimSpan) interimSpan.remove();
+                    let trimmed = finalText.trim();
+                    if (trimmed.length > 0) {
+                        let result = trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+                        field.value = result;
+                        // Nettoyage spécifique pour le champ tarif
+                        if (field.id === 'logement_tarif_nuit') {
+                            let filtered = field.value.replace(/[^\d.]/g, '');
+                            let parts = filtered.split('.');
+                            if (parts.length > 2) filtered = parts[0] + '.' + parts.slice(1).join('');
+                            field.value = filtered;
+                        }
+                        field.dispatchEvent(new Event('change'));
+                    }
+                    button.innerHTML = '<i class="bi bi-mic"></i>';
+                    button.title = 'Reconnaissance vocale';
+                    activeRecognition = null;
+                    activeButton = null;
+                };
+
+                recognition.onerror = (event) => {
+                    let errorMsg = '';
+                    switch (event.error) {
+                        case 'no-speech': errorMsg = 'Aucune parole détectée.'; break;
+                        case 'audio-capture': errorMsg = 'Microphone inaccessible.'; break;
+                        case 'not-allowed': errorMsg = 'Permission refusée.'; break;
+                        default: errorMsg = 'Erreur technique.';
+                    }
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'text-danger small mt-1';
+                    errorDiv.innerText = '❌ ' + errorMsg;
+                    field.parentNode.insertBefore(errorDiv, field.nextSibling);
+                    setTimeout(() => errorDiv.remove(), 2000);
+                    if (interimSpan) interimSpan.remove();
+                    button.innerHTML = '<i class="bi bi-mic"></i>';
+                    button.title = 'Reconnaissance vocale';
+                    activeRecognition = null;
+                    activeButton = null;
+                };
+
+                recognition.start();
+            }
+
+            document.querySelectorAll('.mic-btn').forEach(btn => {
+                btn.addEventListener('click', function(event) {
+                    event.preventDefault();
                     const targetId = this.getAttribute('data-target');
-                    startDictation(targetId, this);
+                    const field = document.getElementById(targetId);
+                    if (!field) return;
+
+                    if (activeRecognition && activeButton === this) {
+                        stopRecognition();
+                        return;
+                    }
+                    startRecognition(field, this);
                 });
             });
 
@@ -167,42 +318,5 @@
                 });
             }
         });
-
-        function startDictation(fieldId, button) {
-            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-                alert("Votre navigateur ne supporte pas la reconnaissance vocale. Utilisez Chrome, Edge ou Safari.");
-                return;
-            }
-
-            button.disabled = true;
-            const originalIcon = button.innerHTML;
-            button.innerHTML = '<i class="bi bi-mic-mute-fill spinner-border spinner-border-sm me-0"></i>';
-
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            const recognition = new SpeechRecognition();
-            recognition.lang = 'fr-FR';
-            recognition.interimResults = false;
-            recognition.maxAlternatives = 1;
-
-            recognition.onresult = (event) => {
-                const text = event.results[0][0].transcript;
-                const field = document.getElementById(fieldId);
-                if (field) field.value = text;
-            };
-
-            recognition.onend = () => {
-                button.disabled = false;
-                button.innerHTML = originalIcon;
-            };
-
-            recognition.onerror = (event) => {
-                console.error('❌ Erreur reconnaissance:', event.error);
-                button.disabled = false;
-                button.innerHTML = originalIcon;
-                alert('Erreur de reconnaissance vocale. Assurez-vous que le microphone est autorisé.');
-            };
-
-            recognition.start();
-        }
     </script>
 {% endblock %}
