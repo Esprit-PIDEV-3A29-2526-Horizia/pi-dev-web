@@ -17,8 +17,6 @@ use Symfony\Component\Validator\Constraints\NotBlank;
 use Symfony\Component\Validator\Constraints\Length;
 use Symfony\Component\Validator\Constraints\Positive;
 use Symfony\Component\Validator\Constraints\Type;
-use Symfony\Component\Validator\Constraints\File;
-
 class EventType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options): void

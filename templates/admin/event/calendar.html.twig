@@ -1,0 +1,253 @@
+{% extends 'base_back.html.twig' %}
+
+{% block title %}Calendrier Admin - Gestion des Événements{% endblock %}
+
+{% block stylesheets %}
+{{ parent() }}
+<link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet' />
+<style>
+    .calendar-container {
+        background: white;
+        border-radius: 20px;
+        padding: 20px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+        margin-top: 20px;
+    }
+    
+    .fc-event-title {
+        font-weight: 600;
+        font-size: 13px;
+    }
+    
+    .fc-event {
+        cursor: pointer;
+        transition: transform 0.2s;
+        border: none !important;
+    }
+    
+    .fc-event:hover {
+        transform: scale(1.02);
+        filter: brightness(0.95);
+    }
+    
+    .fc-day-today {
+        background: #fef3c7 !important;
+    }
+    
+    .fc-toolbar-title {
+        font-size: 1.5rem !important;
+        font-weight: 700 !important;
+        color: #1f2d3d;
+    }
+    
+    .fc-button-primary {
+        background-color: #8b5cf6 !important;
+        border-color: #8b5cf6 !important;
+    }
+    
+    .fc-button-primary:hover {
+        background-color: #7c3aed !important;
+        border-color: #7c3aed !important;
+    }
+    
+    .admin-actions {
+        margin-bottom: 20px;
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+    }
+    
+    .event-tooltip {
+        position: fixed;
+        background: white;
+        border-radius: 12px;
+        padding: 15px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+        z-index: 10000;
+        max-width: 300px;
+        display: none;
+        border-left: 4px solid;
+        pointer-events: none;
+    }
+    
+    .event-tooltip h4 {
+        margin: 0 0 8px 0;
+        font-size: 16px;
+        font-weight: 700;
+        color: #1f2d3d;
+    }
+    
+    .event-tooltip p {
+        margin: 5px 0;
+        font-size: 13px;
+        color: #6b7280;
+    }
+    
+    .event-tooltip .badge {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 600;
+        margin-top: 8px;
+    }
+    
+    .status-avenir { background: #10b981; color: white; }
+    .status-en-cours { background: #f59e0b; color: white; }
+    .status-termine { background: #6b7280; color: white; }
+    
+    .legend {
+        display: flex;
+        gap: 20px;
+        background: #f9fafb;
+        padding: 10px 20px;
+        border-radius: 12px;
+        margin-bottom: 20px;
+    }
+    
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+    }
+    
+    .legend-color {
+        width: 16px;
+        height: 16px;
+        border-radius: 4px;
+    }
+    
+    .legend-color.avenir { background: #10b981; }
+    .legend-color.en-cours { background: #f59e0b; }
+    .legend-color.termine { background: #6b7280; }
+    
+    .btn-admin {
+        background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 12px;
+        font-weight: 600;
+        transition: transform 0.2s;
+    }
+    
+    .btn-admin:hover {
+        transform: translateY(-2px);
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h1 class="fw-bold mb-1" style="color:#1f2d3d;">📅 Calendrier Administrateur</h1>
+            <p class="text-muted mb-0">Gérez vos événements par date</p>
+        </div>
+        <a href="{{ path('app_event_new') }}" class="btn-admin">
+            <i class="bi bi-plus-lg me-1"></i> Nouvel Événement
+        </a>
+    </div>
+    
+    <div class="legend">
+        <div class="legend-item">
+            <div class="legend-color avenir"></div>
+            <span>À venir</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color en-cours"></div>
+            <span>En cours</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color termine"></div>
+            <span>Terminé</span>
+        </div>
+    </div>
+    
+    <div class="calendar-container">
+        <div id="admin-calendar"></div>
+    </div>
+</div>
+
+<!-- Tooltip -->
+<div id="eventTooltip" class="event-tooltip"></div>
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var calendarEl = document.getElementById('admin-calendar');
+    var tooltip = document.getElementById('eventTooltip');
+    
+    var calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        locale: 'fr',
+        firstDay: 1,
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,listMonth'
+        },
+        buttonText: {
+            today: 'Aujourd\'hui',
+            month: 'Mois',
+            week: 'Semaine',
+            list: 'Liste'
+        },
+        events: '/api/events/calendar-data',
+        eventDidMount: function(info) {
+            info.el.addEventListener('mouseenter', function(e) {
+                const event = info.event;
+                const status = event.extendedProps.status;
+                let statusClass = '';
+                let statusText = '';
+                
+                if (status === 'à venir') {
+                    statusClass = 'status-avenir';
+                    statusText = 'À venir';
+                } else if (status === 'en cours') {
+                    statusClass = 'status-en-cours';
+                    statusText = 'En cours';
+                } else {
+                    statusClass = 'status-termine';
+                    statusText = 'Terminé';
+                }
+                
+                tooltip.innerHTML = `
+                    <h4>${event.title}</h4>
+                    <p><strong>📅 Date:</strong> ${new Date(event.start).toLocaleDateString('fr-FR')}</p>
+                    <p><strong>📍 Lieu:</strong> ${event.extendedProps.location || 'Non spécifié'}</p>
+                    <p><strong>🎭 Catégorie:</strong> ${event.extendedProps.category || 'Non spécifiée'}</p>
+                    <p><strong>💰 Prix:</strong> ${event.extendedProps.prix} TND</p>
+                    <p><strong>🎟 Places restantes:</strong> ${event.extendedProps.places_restantes}</p>
+                    <div class="badge ${statusClass}">${statusText}</div>
+                `;
+                
+                tooltip.style.display = 'block';
+                tooltip.style.left = (e.clientX + 15) + 'px';
+                tooltip.style.top = (e.clientY + 15) + 'px';
+                tooltip.style.borderLeftColor = event.backgroundColor;
+            });
+            
+            info.el.addEventListener('mouseleave', function() {
+                tooltip.style.display = 'none';
+            });
+        },
+        eventClick: function(info) {
+            // For admin: redirect to edit page
+            if (confirm(`Voulez-vous modifier l'événement "${info.event.title}" ?`)) {
+                window.location.href = `/admin/event/edit/${info.event.id}`;
+            }
+        },
+        height: 'auto',
+        contentHeight: 600
+    });
+    
+    calendar.render();
+});
+</script>
+{% endblock %}
