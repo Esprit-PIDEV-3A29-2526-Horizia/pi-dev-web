@@ -1,7 +1,37 @@
 {% extends 'admin/layout.html.twig' %}
 
 {% block title %}Détail du logement - {{ logement.nom }}{% endblock %}
-
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+       .pagination-wrapper {
+    margin-top: 20px;
+}
+.pagination {
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+}
+.page-item .page-link {
+    display: inline-block;
+    padding: 8px 12px;
+    border-radius: 30px;
+    background-color: #f0f0f0;
+    color: #23779C;
+    text-decoration: none;
+    transition: 0.2s;
+}
+.page-item.active .page-link {
+    background-color: #23779C;
+    color: white;
+}
+.page-item.disabled .page-link {
+    background-color: #e9ecef;
+    color: #6c757d;
+    pointer-events: none;
+}
+    </style>
+{% endblock %}
 {% block admin_content %}
 <div class="container-fluid px-4 py-5">
     <div class="row g-5">
@@ -110,6 +140,37 @@
                                 </tbody>
                             </table>
                         </div>
+                        {% if totalPages > 1 %}
+                <div class="pagination-wrapper mt-4">
+                    <ul class="pagination justify-content-center">
+                        {# Lien Précédent #}
+                        {% if currentPage > 1 %}
+                            <li class="page-item">
+                                <a class="page-link rounded-pill me-2" href="{{ path('admin_logement_show', {'id': logement.id, 'page': currentPage-1}) }}">&laquo; Précédent</a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled"><span class="page-link rounded-pill me-2">&laquo; Précédent</span></li>
+                        {% endif %}
+
+                        {# Numéros de pages #}
+                        {% for p in 1..totalPages %}
+                            <li class="page-item {{ p == currentPage ? 'active' : '' }}">
+                                <a class="page-link rounded-pill mx-1" href="{{ path('admin_logement_show', {'id': logement.id, 'page': p}) }}">{{ p }}</a>
+                            </li>
+                        {% endfor %}
+
+                        {# Lien Suivant #}
+                        {% if currentPage < totalPages %}
+                            <li class="page-item">
+                                <a class="page-link rounded-pill ms-2" href="{{ path('admin_logement_show', {'id': logement.id, 'page': currentPage+1}) }}">Suivant &raquo;</a>
+                            </li>
+                        {% else %}
+                            <li class="page-item disabled"><span class="page-link rounded-pill ms-2">Suivant &raquo;</span></li>
+                        {% endif %}
+                    </ul>
+                </div>
+                {% endif %}
+            
                     {% else %}
                         <div class="alert alert-info text-center py-4">
                             <i class="bi bi-info-circle fs-1 d-block mb-2"></i>

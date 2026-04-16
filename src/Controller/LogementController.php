@@ -74,20 +74,36 @@ class LogementController extends AbstractController
     }
 // src/Controller/LogementController.php
 
+// src/Controller/LogementController.php
+
 #[Route('/{id}', name: 'show', methods: ['GET'])]
-public function show(Logement $logement, EntityManagerInterface $em): Response
+public function show(Logement $logement, EntityManagerInterface $em, Request $request): Response
 {
-    $reservations = $em->getRepository(Reservationlog::class)
+    $page = max(1, $request->query->getInt('page', 1));
+    $limit = 4; // 4 réservations par page
+
+    $qb = $em->getRepository(Reservationlog::class)
         ->createQueryBuilder('r')
         ->where('r.logement = :logement')
         ->setParameter('logement', $logement)
-        ->orderBy('r.date_debut', 'DESC')  // ← date_debut (underscore)
-        ->getQuery()
-        ->getResult();
+        ->orderBy('r.date_debut', 'DESC');
+
+    // Pagination
+    $total = count($qb->getQuery()->getResult());
+    $totalPages = ceil($total / $limit);
+    $offset = ($page - 1) * $limit;
+
+    $reservations = $qb->setFirstResult($offset)
+                       ->setMaxResults($limit)
+                       ->getQuery()
+                       ->getResult();
 
     return $this->render('admin/logement/show.html.twig', [
         'logement' => $logement,
         'reservations' => $reservations,
+        'currentPage' => $page,
+        'totalPages' => $totalPages,
+        'total' => $total,
     ]);
 }
     #[Route('/{id}/edit', name: 'edit', methods: ['GET', 'POST'])]
