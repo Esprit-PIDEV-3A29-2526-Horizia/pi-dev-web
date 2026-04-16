@@ -115,7 +115,14 @@
 {% endblock %}
 
 {% block body %}
-
+{% if app.request.get('payment_success') %}
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <strong>✅ Paiement réussi !</strong> Votre inscription est confirmée. Un email vous a été envoyé.
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+{% endif %}
 <section class="ftco-section" style="padding-top: 80px;">
     <div class="container">
         <div class="row">
