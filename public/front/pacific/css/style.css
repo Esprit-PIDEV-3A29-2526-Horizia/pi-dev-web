@@ -10291,4 +10291,202 @@ textarea.form-control {
 }
 .btn-danger {
   border-radius: 8px !important;
+<<<<<<< HEAD
+=======
+}
+/* BADGES STATUT RESERVATION */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 30px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  border: 1px solid transparent;
+}
+
+.status-badge i {
+  font-size: 13px;
+}
+
+.status-confirmed {
+  background: rgba(40, 167, 69, 0.12);
+  color: #28a745;
+  border-color: rgba(40, 167, 69, 0.25);
+}
+
+.status-cancelled {
+  background: rgba(220, 53, 69, 0.12);
+  color: #dc3545;
+  border-color: rgba(220, 53, 69, 0.25);
+}
+
+.status-pending {
+  background: rgba(241, 93, 48, 0.12);
+  color: #f15d30;
+  border-color: rgba(241, 93, 48, 0.25);
+}
+.btn-outline-primary {
+  border-radius: 8px !important;
+}
+.is-invalid {
+  border-color: #dc3545 !important;
+}
+
+.invalid-feedback {
+  color: #dc3545;
+  font-size: 14px;
+  margin-top: 6px;
+}
+.search-bg-block {
+  margin-top: -120px; /* plus remonté */
+  position: relative;
+  z-index: 20;
+}
+
+.search-wrap-1 {
+  border-radius: 10px;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+}
+
+.search-property-1 .form-group {
+  margin-bottom: 0;
+  background: #fff;
+}
+
+.search-property-1 .form-group label {
+  font-size: 14px;
+  font-weight: 700;
+  color: #f15d30;
+  text-transform: uppercase;
+}
+
+.search-property-1 .form-control {
+  border: none;
+  height: 60px;
+  font-size: 16px;
+  padding-left: 40px;
+}
+
+.search-property-1 .icon {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #ccc;
+}
+
+.search-property-1 .btn {
+  background: #f15d30;
+  border: none;
+  font-weight: bold;
+  font-size: 18px;
+  height: 100%;
+  min-height: 120px;
+}
+
+.reservation-card {
+    background: #ffffff;
+    border-radius: 20px;
+    border: 1px solid #e9edf3;
+    box-shadow: 0 10px 28px rgba(15, 23, 42, 0.06);
+    overflow: hidden;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+.reservation-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 18px 36px rgba(15, 23, 42, 0.10);
+}
+
+.reservation-card-header {
+    padding: 20px 20px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.reservation-id {
+    display: inline-block;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #3D94CA;
+    background: rgba(61, 148, 202, 0.12);
+    padding: 4px 10px;
+    border-radius: 999px;
+    margin-bottom: 10px;
+}
+
+.reservation-title {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: #1f2d3d;
+    line-height: 1.3;
+}
+
+.reservation-card-body {
+    padding: 18px 20px;
+    display: grid;
+    gap: 14px;
+    flex-grow: 1;
+}
+
+.reservation-info-line {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 12px 14px;
+    border-radius: 14px;
+    background: #f8fafc;
+    border: 1px solid #eef2f7;
+    color: #334155;
+}
+
+.reservation-info-line i {
+    color: #23779C;
+    font-size: 1.05rem;
+    margin-top: 3px;
+}
+
+.reservation-info-line strong {
+    display: block;
+    color: #1f2d3d;
+    font-size: 0.93rem;
+    margin-bottom: 2px;
+}
+
+.reservation-card-footer {
+    padding: 0 20px 20px;
+}
+
+.reservation-status {
+    font-size: 0.78rem;
+    font-weight: 800;
+    padding: 8px 12px;
+    border-radius: 999px;
+    white-space: nowrap;
+}
+
+.badge-confirmed {
+    background: rgba(129, 174, 141, 0.18);
+    color: #4e7c59;
+}
+
+.badge-pending {
+    background: rgba(232, 177, 86, 0.20);
+    color: #9a6a15;
+}
+
+.badge-cancelled {
+    background: rgba(220, 53, 69, 0.16);
+    color: #b42318;
+>>>>>>> 08a2a03ae0b5ded0808e61931c9838d5574df63e
 }
