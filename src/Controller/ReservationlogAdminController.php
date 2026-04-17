@@ -1,5 +1,6 @@
 <?php
 namespace App\Controller;
+
 use App\Entity\Reservationlog;
 use App\Form\ReservationlogType;
 use App\Repository\ReservationlogRepository;
@@ -19,7 +20,6 @@ class ReservationlogAdminController extends AbstractController
         ReservationlogSearchService $searchService,
         ReservationlogRepository $reservationlogRepository
     ): Response {
-        // Récupération des paramètres GET
         $search = $request->query->get('search', '');
         $status = $request->query->get('status', '');
         $sort   = $request->query->get('sort', '');
@@ -42,7 +42,7 @@ class ReservationlogAdminController extends AbstractController
             'search'            => $search,
             'status'            => $status,
             'sort'              => $sort,
-            'limit'             => $limit,
+            'limit'             => $limit, // ← AJOUT OBLIGATOIRE
         ]);
     }
 
