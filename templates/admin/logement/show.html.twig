@@ -1,41 +1,82 @@
 {% extends 'admin/layout.html.twig' %}
 
 {% block title %}Détail du logement - {{ logement.nom }}{% endblock %}
+
 {% block stylesheets %}
     {{ parent() }}
+    <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet' />
     <style>
-       .pagination-wrapper {
-    margin-top: 20px;
-}
-.pagination {
-    display: flex;
-    gap: 5px;
-    flex-wrap: wrap;
-}
-.page-item .page-link {
-    display: inline-block;
-    padding: 8px 12px;
-    border-radius: 30px;
-    background-color: #f0f0f0;
-    color: #23779C;
-    text-decoration: none;
-    transition: 0.2s;
-}
-.page-item.active .page-link {
-    background-color: #23779C;
-    color: white;
-}
-.page-item.disabled .page-link {
-    background-color: #e9ecef;
-    color: #6c757d;
-    pointer-events: none;
-}
+        .pagination-wrapper { margin-top: 20px; }
+        .pagination {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+        .page-item .page-link {
+            display: inline-block;
+            padding: 8px 12px;
+            border-radius: 30px;
+            background-color: #f0f0f0;
+            color: #23779C;
+            text-decoration: none;
+            transition: 0.2s;
+        }
+        .page-item.active .page-link {
+            background-color: #23779C;
+            color: white;
+        }
+        .page-item.disabled .page-link {
+            background-color: #e9ecef;
+            color: #6c757d;
+            pointer-events: none;
+        }
+        .toggle-view { margin-bottom: 20px; }
+        .toggle-view .btn {
+            border-radius: 30px;
+            padding: 6px 20px;
+        }
+        .view-section { display: none; }
+        .view-section.active { display: block; }
+        #calendar { min-height: 500px; }
+
+        /* Palette de couleurs personnalisée */
+        .badge-status-confirmed {
+            background-color: #81AE8D !important;
+            color: white;
+        }
+        .badge-status-pending {
+            background-color: #E8B156 !important;
+            color: #333;
+        }
+        .badge-status-cancelled {
+            background-color: #dc3545 !important;
+            color: white;
+        }
+        .badge-status-default {
+            background-color: #6c757d !important;
+            color: white;
+        }
+        .btn-horozia-primary {
+            background-color: #23779C;
+            border-color: #23779C;
+        }
+        .btn-horozia-primary:hover {
+            background-color: #1a5c7a;
+            border-color: #1a5c7a;
+        }
+        .text-horozia-primary {
+            color: #23779C !important;
+        }
+        .bg-horozia-primary {
+            background-color: #23779C !important;
+        }
     </style>
 {% endblock %}
+
 {% block admin_content %}
 <div class="container-fluid px-4 py-5">
     <div class="row g-5">
-        <!-- Colonne principale : image, informations, équipements et réservations -->
+        <!-- Colonne principale -->
         <div class="col-lg-8">
             <!-- Image hero -->
             <div class="card border-0 shadow-lg rounded-4 overflow-hidden mb-4">
@@ -82,110 +123,121 @@
             </div>
             {% endif %}
 
-            <!-- Liste des réservations du logement -->
-            <div class="card border-0 shadow-sm rounded-4">
-                <div class="card-header bg-transparent border-0 pt-4 px-4">
-                    <h3 class="card-title fw-bold">
-                        <i class="bi bi-calendar-week me-2"></i>Réservations pour ce logement
-                        <span class="badge bg-secondary ms-2">{{ reservations|length }}</span>
-                    </h3>
-                </div>
-                <div class="card-body p-4">
-                    {% if reservations %}
-                        <div class="table-responsive">
-                            <table class="table table-hover align-middle">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>Client</th>
-                                        <th>Dates</th>
-                                        <th>Montant</th>
-                                        <th>Statut</th>
-                                        <th>Occupants</th>
-                                        <th>Chambres</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for r in reservations %}
+            <!-- Boutons de basculement -->
+            <div class="toggle-view d-flex justify-content-end gap-2 mb-3">
+                <button id="btnTableView" class="btn btn-outline-primary rounded-pill active">📋 Tableau</button>
+                <button id="btnCalendarView" class="btn btn-outline-primary rounded-pill">📅 Calendrier</button>
+            </div>
+
+            <!-- Section Tableau -->
+            <div id="tableView" class="view-section active">
+                <div class="card border-0 shadow-sm rounded-4">
+                    <div class="card-header bg-transparent border-0 pt-4 px-4">
+                        <h3 class="card-title fw-bold">
+                            <i class="bi bi-calendar-week me-2"></i>Réservations pour ce logement
+                            <span class="badge bg-secondary ms-2">{{ total }}</span> {# ← utilisation de total #}
+                        </h3>
+                    </div>
+                    <div class="card-body p-4">
+                        {% if reservations %}
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle">
+                                    <thead class="table-light">
                                         <tr>
-                                            <td>
-                                                {# Affichage du nom de l'utilisateur (ou email si pas de nom) #}
-                                                {% set userName = r.user.nom ? r.user.nom : r.user.email %}
-                                                <a href="{{ path('admin_user_show', {'id': r.user.id}) }}" class="text-decoration-none fw-semibold">
-                                                    <i class="bi bi-person-circle me-1"></i>{{ userName }}
-                                                </a>
-                                             </td>
-                                             <td>{{ r.dateDebut|date('d/m/Y') }} → {{ r.dateFin|date('d/m/Y') }}</td>
-                                             <td>{{ r.montant|number_format(2, ',', ' ') }} DT</td>
-                                             <td>
-                                                <span class="badge 
-                                                    {{ r.status == 'confirmée' ? 'bg-success' : 
-                                                       (r.status == 'en_attente' ? 'bg-warning text-dark' : 
-                                                       (r.status == 'annulée' ? 'bg-danger' : 'bg-secondary')) }}">
-                                                    {{ r.status }}
-                                                </span>
-                                             </td>
-                                             <td>{{ r.adultes }} A + {{ r.enfants }} E</td>
-                                             <td>{{ r.nombreChambres }} ch.</td>
-                                             <td>
-                                                <button type="button" class="btn btn-sm btn-outline-info rounded-pill me-1 btn-qr" data-id="{{ r.idreslog }}" data-bs-toggle="modal" data-bs-target="#qrModal">
-                                                    <i class="bi bi-qr-code"></i> QR
-                                                </button>
-                                                <a href="{{ path('admin_logement_download_pdf', {'id': r.idreslog}) }}" class="btn btn-sm btn-outline-danger rounded-pill" target="_blank">
-                                                    <i class="bi bi-file-pdf"></i> PDF
-                                                </a>
-                                             </td>
+                                            <th>Client</th>
+                                            <th>Dates</th>
+                                            <th>Montant</th>
+                                            <th>Statut</th>
+                                            <th>Occupants</th>
+                                            <th>Chambres</th>
+                                            <th>Actions</th>
                                         </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                        {% if totalPages > 1 %}
-                <div class="pagination-wrapper mt-4">
-                    <ul class="pagination justify-content-center">
-                        {# Lien Précédent #}
-                        {% if currentPage > 1 %}
-                            <li class="page-item">
-                                <a class="page-link rounded-pill me-2" href="{{ path('admin_logement_show', {'id': logement.id, 'page': currentPage-1}) }}">&laquo; Précédent</a>
-                            </li>
-                        {% else %}
-                            <li class="page-item disabled"><span class="page-link rounded-pill me-2">&laquo; Précédent</span></li>
-                        {% endif %}
+                                    </thead>
+                                    <tbody>
+                                        {% for r in reservations %}
+                                            <tr>
+                                                <td>
+                                                    <a href="{{ path('admin_user_show', {'id': r.user.id}) }}" class="text-decoration-none fw-semibold text-horozia-primary">
+                                                        <i class="bi bi-person-circle me-1"></i>{{ r.user.nom ?: r.user.email }}
+                                                    </a>
+                                                 </td>
+                                                <td>{{ r.dateDebut|date('d/m/Y') }} → {{ r.dateFin|date('d/m/Y') }}</td>
+                                                <td>{{ r.montant|number_format(2, ',', ' ') }} DT</td>
+                                                <td>
+                                                    <span class="badge 
+                                                        {% if r.status == 'confirmée' %}badge-status-confirmed
+                                                        {% elseif r.status == 'en_attente' %}badge-status-pending
+                                                        {% elseif r.status == 'annulée' %}badge-status-cancelled
+                                                        {% else %}badge-status-default{% endif %}">
+                                                        {{ r.status }}
+                                                    </span>
+                                                </td>
+                                                <td>{{ r.adultes }} A + {{ r.enfants }} E</td>
+                                                <td>{{ r.nombreChambres }} ch.</td>
+                                                <td>
+                                                    <button type="button" class="btn btn-sm btn-outline-info rounded-pill me-1 btn-qr" data-id="{{ r.idreslog }}" data-bs-toggle="modal" data-bs-target="#qrModal">
+                                                        <i class="bi bi-qr-code"></i> QR
+                                                    </button>
+                                                    <a href="{{ path('admin_logement_download_pdf', {'id': r.idreslog}) }}" class="btn btn-sm btn-outline-danger rounded-pill" target="_blank">
+                                                        <i class="bi bi-file-pdf"></i> PDF
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% if totalPages > 1 %}
+                                <div class="pagination-wrapper mt-4">
+                                    <ul class="pagination justify-content-center">
+                                        {% if currentPage > 1 %}
+                                            <li class="page-item">
+                                                <a class="page-link rounded-pill me-2" href="{{ path('admin_logement_show', {'id': logement.id, 'page': currentPage-1}) }}">&laquo; Précédent</a>
+                                            </li>
+                                        {% else %}
+                                            <li class="page-item disabled"><span class="page-link rounded-pill me-2">&laquo; Précédent</span></li>
+                                        {% endif %}
 
-                        {# Numéros de pages #}
-                        {% for p in 1..totalPages %}
-                            <li class="page-item {{ p == currentPage ? 'active' : '' }}">
-                                <a class="page-link rounded-pill mx-1" href="{{ path('admin_logement_show', {'id': logement.id, 'page': p}) }}">{{ p }}</a>
-                            </li>
-                        {% endfor %}
+                                        {% for p in 1..totalPages %}
+                                            <li class="page-item {{ p == currentPage ? 'active' : '' }}">
+                                                <a class="page-link rounded-pill mx-1" href="{{ path('admin_logement_show', {'id': logement.id, 'page': p}) }}">{{ p }}</a>
+                                            </li>
+                                        {% endfor %}
 
-                        {# Lien Suivant #}
-                        {% if currentPage < totalPages %}
-                            <li class="page-item">
-                                <a class="page-link rounded-pill ms-2" href="{{ path('admin_logement_show', {'id': logement.id, 'page': currentPage+1}) }}">Suivant &raquo;</a>
-                            </li>
+                                        {% if currentPage < totalPages %}
+                                            <li class="page-item">
+                                                <a class="page-link rounded-pill ms-2" href="{{ path('admin_logement_show', {'id': logement.id, 'page': currentPage+1}) }}">Suivant &raquo;</a>
+                                            </li>
+                                        {% else %}
+                                            <li class="page-item disabled"><span class="page-link rounded-pill ms-2">Suivant &raquo;</span></li>
+                                        {% endif %}
+                                    </ul>
+                                </div>
+                            {% endif %}
                         {% else %}
-                            <li class="page-item disabled"><span class="page-link rounded-pill ms-2">Suivant &raquo;</span></li>
+                            <div class="alert alert-info text-center py-4">
+                                <i class="bi bi-info-circle fs-1 d-block mb-2"></i>
+                                Aucune réservation trouvée pour ce logement.
+                            </div>
                         {% endif %}
-                    </ul>
+                    </div>
                 </div>
-                {% endif %}
-            
-                    {% else %}
-                        <div class="alert alert-info text-center py-4">
-                            <i class="bi bi-info-circle fs-1 d-block mb-2"></i>
-                            Aucune réservation trouvée pour ce logement.
-                        </div>
-                    {% endif %}
+            </div>
+
+            <!-- Section Calendrier -->
+            <div id="calendarView" class="view-section">
+                <div class="card border-0 shadow-sm rounded-4">
+                    <div class="card-body p-4">
+                        <div id="calendar"></div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Colonne latérale : statistiques et actions -->
+        <!-- Colonne latérale -->
         <div class="col-lg-4">
-            <!-- Carte de prix -->
-            <div class="card border-0 shadow-lg rounded-4 mb-4 bg-gradient-primary text-white" style="background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));">
-                <div class="card-body text-center p-4">
+            <div class="card border-0 shadow-lg rounded-4 mb-4" style="background: linear-gradient(135deg, #23779C, #3D94CA);">
+                <div class="card-body text-center p-4 text-white">
                     <h3 class="display-4 fw-bold mb-2">{{ logement.tarifNuit|number_format(0, ',', ' ') }} DT</h3>
                     <p class="text-white-50 mb-0">par nuit</p>
                     <hr class="my-3 bg-white opacity-25">
@@ -193,7 +245,6 @@
                 </div>
             </div>
 
-            <!-- Carte capacité et statut -->
             <div class="row g-3 mb-4">
                 <div class="col-6">
                     <div class="card border-0 shadow-sm h-100 text-center">
@@ -221,9 +272,8 @@
                 </div>
             </div>
 
-            <!-- Actions -->
             <div class="d-grid gap-2">
-                <a href="{{ path('admin_logement_edit', {'id': logement.id}) }}" class="btn btn-horozia-primary btn-lg rounded-pill">
+                <a href="{{ path('admin_logement_edit', {'id': logement.id}) }}" class="btn btn-horozia-primary btn-lg rounded-pill text-white">
                     <i class="bi bi-pencil-square me-2"></i>Modifier ce logement
                 </a>
                 <a href="{{ path('admin_logement_index') }}" class="btn btn-outline-secondary btn-lg rounded-pill">
@@ -232,7 +282,6 @@
                 {{ include('admin/logement/_delete_form.html.twig', {'logement': logement}, with_context = false) }}
             </div>
 
-            <!-- Badge supplémentaire -->
             <div class="mt-4 text-center text-muted small">
                 <i class="bi bi-shield-check me-1"></i> Vérifié par Horozia
             </div>
@@ -240,7 +289,7 @@
     </div>
 </div>
 
-<!-- Modale pour afficher le QR code -->
+<!-- Modale QR Code -->
 <div class="modal fade" id="qrModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
@@ -257,22 +306,69 @@
     </div>
 </div>
 
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
 <script>
-    // Gestion des boutons QR code
-    document.querySelectorAll('.btn-qr').forEach(btn => {
-        btn.addEventListener('click', function(e) {
-            const id = this.dataset.id;
-            const modalBody = document.getElementById('qrModalBody');
-            modalBody.innerHTML = '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Chargement...</span></div>';
-            fetch(`/admin/logement/qrcode/${id}`, {
-                headers: { 'X-Requested-With': 'XMLHttpRequest' }
-            })
-            .then(response => response.text())
-            .then(html => {
-                modalBody.innerHTML = html;
-            })
-            .catch(() => {
-                modalBody.innerHTML = '<div class="alert alert-danger">Erreur lors du chargement du QR code.</div>';
+    document.addEventListener('DOMContentLoaded', function() {
+        const tableView = document.getElementById('tableView');
+        const calendarView = document.getElementById('calendarView');
+        const btnTable = document.getElementById('btnTableView');
+        const btnCalendar = document.getElementById('btnCalendarView');
+
+        btnTable.addEventListener('click', () => {
+            tableView.classList.add('active');
+            calendarView.classList.remove('active');
+            btnTable.classList.add('active');
+            btnCalendar.classList.remove('active');
+        });
+
+        btnCalendar.addEventListener('click', () => {
+            calendarView.classList.add('active');
+            tableView.classList.remove('active');
+            btnCalendar.classList.add('active');
+            btnTable.classList.remove('active');
+            if (!window.calendarInstance) {
+                initCalendar();
+            } else {
+                window.calendarInstance.render();
+            }
+        });
+
+        function initCalendar() {
+            const calendarEl = document.getElementById('calendar');
+            window.calendarInstance = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                locale: 'fr',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek'
+                },
+                events: {
+                    url: '{{ path('admin_logement_booked_dates', {'id': logement.id}) }}',
+                    method: 'GET',
+                    failure: function() {
+                        console.error('Erreur chargement des réservations');
+                    }
+                },
+                eventColor: '#dc3545',
+                eventDisplay: 'block',
+                height: 'auto'
+            });
+            window.calendarInstance.render();
+        }
+
+        // Gestion QR code
+        document.querySelectorAll('.btn-qr').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                const id = this.dataset.id;
+                const modalBody = document.getElementById('qrModalBody');
+                modalBody.innerHTML = '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Chargement...</span></div>';
+                fetch(`/admin/logement/qrcode/${id}`, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                })
+                .then(response => response.text())
+                .then(html => { modalBody.innerHTML = html; })
+                .catch(() => { modalBody.innerHTML = '<div class="alert alert-danger">Erreur lors du chargement du QR code.</div>'; });
             });
         });
     });

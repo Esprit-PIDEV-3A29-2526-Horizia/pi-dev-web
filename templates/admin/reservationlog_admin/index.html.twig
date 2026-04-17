@@ -2,6 +2,57 @@
 
 {% block title %}Gestion des réservations - Horozia{% endblock %}
 
+{% block stylesheets %}
+    {{ parent() }}
+    <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet' />
+    <style>
+        .toggle-view { margin-bottom: 20px; }
+        .toggle-view .btn { border-radius: 30px; padding: 6px 20px; }
+        .view-section { display: none; }
+        .view-section.active { display: block; }
+        #calendar { min-height: 500px; }
+        .pagination-wrapper { margin-top: 20px; }
+        .pagination {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+        .page-item .page-link {
+            display: inline-block;
+            padding: 8px 12px;
+            border-radius: 30px;
+            background-color: #f0f0f0;
+            color: #23779C;
+            text-decoration: none;
+            transition: 0.2s;
+        }
+        .page-item.active .page-link {
+            background-color: #23779C;
+            color: white;
+        }
+        .page-item.disabled .page-link {
+            background-color: #e9ecef;
+            color: #6c757d;
+            pointer-events: none;
+        }
+        /* Palette de couleurs pour les statuts */
+        .badge-status-confirmed { background-color: #81AE8D !important; color: white; }
+        .badge-status-pending { background-color: #E8B156 !important; color: #333; }
+        .badge-status-cancelled { background-color: #dc3545 !important; color: white; }
+        .badge-status-default { background-color: #6c757d !important; color: white; }
+        /* Liens personnalisés */
+        .link-horozia {
+            color: #23779C;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .link-horozia:hover {
+            color: #1a5c7a;
+            text-decoration: underline;
+        }
+    </style>
+{% endblock %}
+
 {% block admin_content %}
 <div class="container-fluid px-4">
     <div class="d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
@@ -45,108 +96,120 @@
         </div>
     </div>
 
-    <!-- Tableau enrichi -->
-    <div class="card border-0 shadow-sm rounded-4">
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
-                    <thead class="bg-light">
-                        <tr>
-                            <th class="py-3 ps-4">Logement</th>
-                            <th class="py-3">Client</th>
-                            <th class="py-3">Arrivée</th>
-                            <th class="py-3">Départ</th>
-                            <th class="py-3">Montant</th>
-                            <th class="py-3">Occupants</th>
-                            <th class="py-3">Chambres</th>
-                            <th class="py-3">Pension</th>
-                            <th class="py-3">Statut</th>
-                            <th class="py-3 pe-4">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for r in reservationlogs %}
+    <!-- Boutons de basculement -->
+    <div class="toggle-view d-flex justify-content-end gap-2 mb-3">
+        <button id="btnTableView" class="btn btn-outline-primary rounded-pill active">📋 Tableau</button>
+        <button id="btnCalendarView" class="btn btn-outline-primary rounded-pill">📅 Calendrier</button>
+    </div>
+
+    <!-- Section Tableau (existante) -->
+    <div id="tableView" class="view-section active">
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light">
                             <tr>
-                                <td class="ps-4">
-                                    <a href="{{ path('admin_logement_show', {'id': r.logement.id}) }}" class="text-decoration-none fw-semibold">
-                                        {{ r.logement.nom }}
-                                    </a>
-                                  </td>
-                                <td>
-                                    <a href="{{ path('admin_user_show', {'id': r.user.id}) }}" class="text-decoration-none">
-                                        {{ r.user.prenom }} {{ r.user.nom }}
-                                    </a>
-                                  </td>
-                                <td>{{ r.dateDebut ? r.dateDebut|date('d/m/Y') : '-' }}</td>
-                                <td>{{ r.dateFin ? r.dateFin|date('d/m/Y') : '-' }}</td>
-                                <td class="fw-bold">{{ r.montant|number_format(2, ',', ' ') }} DT</td>
-                                <td>{{ r.adultes }} A + {{ r.enfants }} E</td>
-                                <td>{{ r.nombreChambres }} ch.</td>
-                                <td>{{ r.modeReservation ? r.modeReservation|replace({'_': ' '})|capitalize : '-' }}</td>
-                                <td>
-                                    <span class="badge 
-                                        {% if r.status == 'confirmée' %}bg-success
-                                        {% elseif r.status == 'en_attente' %}bg-warning text-dark
-                                        {% elseif r.status == 'terminée' %}bg-secondary
-                                        {% elseif r.status == 'annulée' %}bg-danger
-                                        {% elseif r.status == 'expirée' %}bg-dark
-                                        {% else %}bg-info{% endif %} px-3 py-2 rounded-pill">
-                                        {{ r.status }}
-                                    </span>
-                                </td>
-                                <td class="pe-4">
-                                    <button type="button" class="btn btn-sm btn-outline-info rounded-pill me-1 btn-qr" data-id="{{ r.idreslog }}" data-bs-toggle="modal" data-bs-target="#qrModal">
-                                        <i class="bi bi-qr-code"></i> QR
-                                    </button>
-                                    <a href="{{ path('admin_logement_download_pdf', {'id': r.idreslog}) }}" class="btn btn-sm btn-outline-danger rounded-pill" target="_blank">
-                                        <i class="bi bi-file-pdf"></i> PDF
-                                    </a>
-                                </td>
+                                <th class="py-3 ps-4">Logement</th>
+                                <th class="py-3">Client</th>
+                                <th class="py-3">Arrivée</th>
+                                <th class="py-3">Départ</th>
+                                <th class="py-3">Montant</th>
+                                <th class="py-3">Occupants</th>
+                                <th class="py-3">Chambres</th>
+                                <th class="py-3">Pension</th>
+                                <th class="py-3">Statut</th>
+                                <th class="py-3 pe-4">Actions</th>
                             </tr>
-                        {% else %}
-                            <tr><td colspan="10" class="text-center text-muted py-5"><i class="bi bi-inbox fs-1 d-block mb-2"></i>Aucune réservation trouvée.</td></tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {% for r in reservationlogs %}
+                                <tr>
+                                    <td class="ps-4">
+                                        <a href="{{ path('admin_logement_show', {'id': r.logement.id}) }}" class="link-horozia">
+                                            {{ r.logement.nom }}
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <a href="{{ path('admin_user_show', {'id': r.user.id}) }}" class="link-horozia">
+                                            {{ r.user.prenom }} {{ r.user.nom }}
+                                        </a>
+                                    </td>
+                                    <td>{{ r.dateDebut ? r.dateDebut|date('d/m/Y') : '-' }}</td>
+                                    <td>{{ r.dateFin ? r.dateFin|date('d/m/Y') : '-' }}</td>
+                                    <td class="fw-bold">{{ r.montant|number_format(2, ',', ' ') }} DT</td>
+                                    <td>{{ r.adultes }} A + {{ r.enfants }} E</td>
+                                    <td>{{ r.nombreChambres }} ch.</td>
+                                    <td>{{ r.modeReservation ? r.modeReservation|replace({'_': ' '})|capitalize : '-' }}</td>
+                                    <td>
+                                        <span class="badge 
+                                            {% if r.status == 'confirmée' %}badge-status-confirmed
+                                            {% elseif r.status == 'en_attente' %}badge-status-pending
+                                            {% elseif r.status == 'annulée' %}badge-status-cancelled
+                                            {% else %}badge-status-default{% endif %} px-3 py-2 rounded-pill">
+                                            {{ r.status }}
+                                        </span>
+                                    </td>
+                                    <td class="pe-4">
+                                        <button type="button" class="btn btn-sm btn-outline-info rounded-pill me-1 btn-qr" data-id="{{ r.idreslog }}" data-bs-toggle="modal" data-bs-target="#qrModal">
+                                            <i class="bi bi-qr-code"></i> QR
+                                        </button>
+                                        <a href="{{ path('admin_logement_download_pdf', {'id': r.idreslog}) }}" class="btn btn-sm btn-outline-danger rounded-pill" target="_blank">
+                                            <i class="bi bi-file-pdf"></i> PDF
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% else %}
+                                <tr><td colspan="10" class="text-center text-muted py-5"><i class="bi bi-inbox fs-1 d-block mb-2"></i>Aucune réservation trouvée.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pagination -->
+        {% if total > limit %}
+            <nav class="mt-5">
+                <ul class="pagination justify-content-center">
+                    {% if currentPage > 1 %}
+                        <li class="page-item">
+                            <a class="page-link rounded-pill me-2" href="{{ path('admin_reservation_index', { 'page': currentPage-1, 'search': search, 'status': status, 'sort': sort }) }}">&laquo; Précédent</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled"><span class="page-link rounded-pill me-2">&laquo; Précédent</span></li>
+                    {% endif %}
+
+                    {% set totalPages = (total / limit)|round(0, 'ceil') %}
+                    {% for p in 1..totalPages %}
+                        <li class="page-item {{ p == currentPage ? 'active' : '' }}">
+                            <a class="page-link rounded-pill mx-1" href="{{ path('admin_reservation_index', { 'page': p, 'search': search, 'status': status, 'sort': sort }) }}">{{ p }}</a>
+                        </li>
+                    {% endfor %}
+
+                    {% if currentPage < totalPages %}
+                        <li class="page-item">
+                            <a class="page-link rounded-pill ms-2" href="{{ path('admin_reservation_index', { 'page': currentPage+1, 'search': search, 'status': status, 'sort': sort }) }}">Suivant &raquo;</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled"><span class="page-link rounded-pill ms-2">Suivant &raquo;</span></li>
+                    {% endif %}
+                </ul>
+            </nav>
+        {% endif %}
+    </div>
+
+    <!-- Section Calendrier -->
+    <div id="calendarView" class="view-section">
+        <div class="card border-0 shadow-sm rounded-4">
+            <div class="card-body p-4">
+                <div id="calendar"></div>
             </div>
         </div>
     </div>
-
-    <!-- Pagination avec style identique au front -->
-    {% if total > limit %}
-        <nav class="mt-5">
-            <ul class="pagination justify-content-center">
-                {% if currentPage > 1 %}
-                    <li class="page-item">
-                        <a class="page-link rounded-pill me-2" href="{{ path('admin_reservation_index', { 'page': currentPage-1, 'search': search, 'status': status, 'sort': sort }) }}" style="background-color: #f0f0f0; color: #23779C; border: 1px solid #ddd;">&laquo; Précédent</a>
-                    </li>
-                {% else %}
-                    <li class="page-item disabled"><span class="page-link rounded-pill me-2" style="background-color: #e9ecef; color: #6c757d;">&laquo; Précédent</span></li>
-                {% endif %}
-
-                {% set totalPages = (total / limit)|round(0, 'ceil') %}
-                {% for p in 1..totalPages %}
-                    <li class="page-item {{ p == currentPage ? 'active' : '' }}">
-                        <a class="page-link rounded-pill mx-1" href="{{ path('admin_reservation_index', { 'page': p, 'search': search, 'status': status, 'sort': sort }) }}" 
-                           style="{% if p == currentPage %}background-color: #23779C; color: white; border-color: #23779C;{% else %}background-color: #f0f0f0; color: #23779C; border: 1px solid #ddd;{% endif %}">
-                            {{ p }}
-                        </a>
-                    </li>
-                {% endfor %}
-
-                {% if currentPage < totalPages %}
-                    <li class="page-item">
-                        <a class="page-link rounded-pill ms-2" href="{{ path('admin_reservation_index', { 'page': currentPage+1, 'search': search, 'status': status, 'sort': sort }) }}" style="background-color: #f0f0f0; color: #23779C; border: 1px solid #ddd;">Suivant &raquo;</a>
-                    </li>
-                {% else %}
-                    <li class="page-item disabled"><span class="page-link rounded-pill ms-2" style="background-color: #e9ecef; color: #6c757d;">Suivant &raquo;</span></li>
-                {% endif %}
-            </ul>
-        </nav>
-    {% endif %}
 </div>
 
-<!-- Modale QR Code -->
+<!-- Modale QR Code (inchangée) -->
 <div class="modal fade" id="qrModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
@@ -163,6 +226,7 @@
     </div>
 </div>
 
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
 <script>
     const form = document.getElementById('filtersForm');
     const searchInput = document.getElementById('searchInput');
@@ -181,6 +245,54 @@
     if (statusSelect) statusSelect.addEventListener('change', submitForm);
     if (sortSelect) sortSelect.addEventListener('change', submitForm);
 
+    // Basculement Tableau / Calendrier
+    const tableView = document.getElementById('tableView');
+    const calendarView = document.getElementById('calendarView');
+    const btnTable = document.getElementById('btnTableView');
+    const btnCalendar = document.getElementById('btnCalendarView');
+
+    btnTable.addEventListener('click', () => {
+        tableView.classList.add('active');
+        calendarView.classList.remove('active');
+        btnTable.classList.add('active');
+        btnCalendar.classList.remove('active');
+    });
+    btnCalendar.addEventListener('click', () => {
+        calendarView.classList.add('active');
+        tableView.classList.remove('active');
+        btnCalendar.classList.add('active');
+        btnTable.classList.remove('active');
+        if (!window.calendarInstance) {
+            initCalendar();
+        } else {
+            window.calendarInstance.render();
+        }
+    });
+
+    function initCalendar() {
+        const calendarEl = document.getElementById('calendar');
+        window.calendarInstance = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            locale: 'fr',
+            headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek'
+            },
+            events: {
+                url: '{{ path('admin_reservation_booked_dates') }}',
+                method: 'GET',
+                failure: function() {
+                    console.error('Erreur chargement des réservations');
+                }
+            },
+            eventDisplay: 'block',
+            height: 'auto'
+        });
+        window.calendarInstance.render();
+    }
+
+    // Gestion QR code (inchangée)
     document.querySelectorAll('.btn-qr').forEach(btn => {
         btn.addEventListener('click', function(e) {
             const id = this.dataset.id;

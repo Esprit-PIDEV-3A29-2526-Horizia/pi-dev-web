@@ -10,6 +10,7 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\HttpFoundation\JsonResponse;
 
 #[Route('/admin/reservationlog', name: 'admin_reservation_')]
 class ReservationlogAdminController extends AbstractController
@@ -102,4 +103,35 @@ class ReservationlogAdminController extends AbstractController
         }
         return $this->redirectToRoute('admin_reservation_index');
     }
+#[Route('/booked-dates', name: 'booked_dates', methods: ['GET'])]
+public function getBookedDates(EntityManagerInterface $em): JsonResponse
+{
+    $reservations = $em->getRepository(Reservationlog::class)
+        ->createQueryBuilder('r')
+        ->where('r.status NOT IN (:excluded)')
+        ->setParameter('excluded', ['annulée', 'expirée'])
+        ->getQuery()
+        ->getResult();
+
+    $events = [];
+    foreach ($reservations as $res) {
+        $start = $res->getDateDebut()->format('Y-m-d');
+        $end = (clone $res->getDateFin())->modify('+1 day')->format('Y-m-d');
+        $title = $res->getLogement()->getNom();
+        $color = match($res->getStatus()) {
+            'confirmée' => '#81AE8D',
+            'en_attente' => '#E8B156',
+            'terminée' => '#6c757d',
+            default => '#dc3545',
+        };
+        $events[] = [
+            'title'  => $title,
+            'start'  => $start,
+            'end'    => $end,
+            'allDay' => true,
+            'color'  => $color,
+        ];
+    }
+    return $this->json($events);
+}
 }
