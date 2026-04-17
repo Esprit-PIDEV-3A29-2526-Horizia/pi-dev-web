@@ -3,6 +3,31 @@
 {% block title %}Paiement réussi{% endblock %}
 
 {% block body %}
+
+<nav class="navbar navbar-expand-lg navbar-dark ftco_navbar ftco-navbar-light" id="ftco-navbar">
+    <div class="container">
+        <a class="navbar-brand navbar-logo" href="{{ path('app_front_home', {'currency': 'TND'}) }}">
+            <img src="{{ asset('images/logo.png') }}" alt="Horozia Logo">
+        </a>
+
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#ftco-nav"
+                aria-controls="#ftco-nav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="fa fa-bars"></span> Menu
+        </button>
+
+        <div class="collapse navbar-collapse" id="ftco-nav">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item"><a href="{{ path('app_front_home', {'currency': 'TND'}) }}" class="nav-link">Accueil</a></li>
+                <li class="nav-item"><a href="{{ path('app_front_voyages', {'currency': 'TND'}) }}" class="nav-link">Voyages</a></li>
+                <li class="nav-item"><a href="{{ path('app_front_mes_reservations') }}" class="nav-link">Mes réservations</a></li>
+                <li class="nav-item"><a href="{{ path('app_front_mes_favoris') }}" class="nav-link">Mes favoris</a></li>
+                <li class="nav-item"><a href="#services" class="nav-link">Services</a></li>
+                <li class="nav-item"><a href="#contact" class="nav-link">Contact</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
 <section class="ftco-section">
     <div class="container">
         <div class="row justify-content-center">
@@ -21,7 +46,6 @@
                     </p>
 
                     <div style="background:#f8fafc;border:1px solid #e5e7eb;border-radius:14px;padding:22px;text-align:left;max-width:520px;margin:0 auto 25px auto;">
-                        <p><strong>Réservation :</strong> #{{ reservation.id }}</p>
                         <p><strong>Voyage :</strong> {{ reservation.voyage.titre }}</p>
                         <p><strong>Destination :</strong> {{ reservation.voyage.destination }}</p>
                         <p><strong>Nombre de personnes :</strong> {{ reservation.nbrPersonnes }}</p>
@@ -42,4 +66,5 @@
         </div>
     </div>
 </section>
+
 {% endblock %}
