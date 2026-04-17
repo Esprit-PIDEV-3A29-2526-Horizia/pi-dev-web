@@ -5,7 +5,7 @@
 {% block stylesheets %}
     {{ parent() }}
     <style>
-        /* ========== STYLES FLIP CARD (inchangés) ========== */
+        /* ========== STYLES FLIP CARD ========== */
         .flip-card {
             background-color: transparent;
             width: 100%;
@@ -249,6 +249,17 @@
             transform: translateY(-2px);
             box-shadow: 0 6px 20px rgba(35,119,156,0.4);
         }
+
+        /* Bouton retour */
+        #btnBackToLogements {
+            background: #6c757d;
+            border: none;
+            color: white;
+            margin-top: 20px;
+        }
+        #btnBackToLogements:hover {
+            background: #5a6268;
+        }
     </style>
 {% endblock %}
 
@@ -383,7 +394,7 @@
             {% endfor %}
         </div>
 
-        <!-- Conteneur des recommandations -->
+        <!-- Conteneur des recommandations (caché par défaut) -->
         <div id="recommendationsContainer" class="mt-5" style="display: none;">
             <div class="row justify-content-center pb-4">
                 <div class="col-md-8 heading-section text-center ftco-animate">
@@ -393,6 +404,11 @@
             </div>
             <div id="recommendationsStatus" class="text-center mb-3"></div>
             <div class="row g-4" id="recommendationsList"></div>
+            <div class="text-center mt-3">
+                <button id="btnBackToLogements" class="btn btn-secondary rounded-pill px-4">
+                    <i class="fa fa-arrow-left me-2"></i> Voir tous les logements
+                </button>
+            </div>
         </div>
     </div>
 </section>
@@ -530,14 +546,22 @@
             });
         });
 
-  // ========== RECOMMANDATIONS IA ==========
+        // ========== RECOMMANDATIONS IA ==========
 const recoBtn = document.getElementById('btnRecommendations');
 const recoContainer = document.getElementById('recommendationsContainer');
 const recoStatus = document.getElementById('recommendationsStatus');
 const recoList = document.getElementById('recommendationsList');
+const normalCardsContainer = document.querySelector('.cards-container');
+const normalHeading = document.querySelector('.heading-section');
+const backBtn = document.getElementById('btnBackToLogements');
 
 if (recoBtn) {
     recoBtn.addEventListener('click', function() {
+        // Masquer les logements normaux
+        if (normalCardsContainer) normalCardsContainer.style.display = 'none';
+        if (normalHeading) normalHeading.style.display = 'none';
+        
+        // Afficher le conteneur des recommandations
         recoContainer.style.display = 'block';
         recoStatus.innerHTML = '<div class="spinner-border text-primary me-2"></div> Analyse de votre historique par IA (peut prendre 5-10 secondes)...';
         recoList.innerHTML = '';
@@ -551,34 +575,23 @@ if (recoBtn) {
             .then(data => {
                 if (data.html) {
                     recoStatus.innerHTML = '<div class="alert alert-success">✨ IA a trouvé ces suggestions pour vous !</div>';
-                    // Injection du HTML
                     recoList.innerHTML = data.html;
                     
-                    // Forcer l'affichage de chaque carte
+                    // Forcer l'affichage des cartes injectées (sans toucher au conteneur)
                     const cards = document.querySelectorAll('#recommendationsList .col-md-4');
                     cards.forEach(card => {
                         card.style.display = 'block';
                         card.style.visibility = 'visible';
                         card.style.opacity = '1';
-                        // Retirer la classe d'animation qui pourrait masquer
                         card.classList.remove('ftco-animate');
-                        // Forcer le reflow
                         card.offsetHeight;
-                        // Réappliquer la classe après un court délai (optionnel)
-                        setTimeout(() => {
-                            card.classList.add('ftco-animate');
-                        }, 10);
+                        setTimeout(() => card.classList.add('ftco-animate'), 10);
                     });
                     
-                    // Réattacher les événements
                     attachRecommendationReserveEvents();
                     
-                    // Forcer le reflow global du conteneur
-                    recoList.style.display = 'flex';
-                    recoList.style.flexWrap = 'wrap';
-                    recoList.style.gap = '1.5rem';
-                    recoList.offsetHeight;
-                    
+                    // NE PAS modifier le style du conteneur (laisser Bootstrap gérer)
+                    // recoList.style.display = ... (supprimé)
                 } else if (data.error) {
                     recoStatus.innerHTML = `<div class="alert alert-danger">Erreur : ${data.error}</div>`;
                 } else {
@@ -600,7 +613,18 @@ function attachRecommendationReserveEvents() {
     });
 }
 
-        // ========== FORMULAIRE DE RÉSERVATION (existant, non modifié) ==========
+// Bouton pour revenir aux logements normaux
+if (backBtn) {
+    backBtn.addEventListener('click', function() {
+        if (normalCardsContainer) normalCardsContainer.style.display = 'flex';
+        if (normalHeading) normalHeading.style.display = 'block';
+        recoContainer.style.display = 'none';
+        recoList.innerHTML = '';
+        recoStatus.innerHTML = '';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+}
+        // ========== FORMULAIRE DE RÉSERVATION ==========
         function initReservationForm() {
             const dateArrivee = document.getElementById('date_arrivee_modal');
             const dateDepart = document.getElementById('date_depart_modal');
