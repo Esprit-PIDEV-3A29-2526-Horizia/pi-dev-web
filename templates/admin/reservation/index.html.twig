@@ -6,9 +6,6 @@
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1>Liste des réservations</h1>
-        <a href="{{ path('app_reservation_new') }}" class="btn btn-horozia-secondary">
-            <i class="bi bi-plus-circle"></i> Ajouter une réservation
-        </a>
     </div>
 
     <div class="card card-horozia mb-4">
@@ -50,13 +47,14 @@
         <div class="card-body">
             <table id="reservationTable" class="table table-bordered table-hover align-middle">
                 <thead class="table-horozia">
-                    <tr>
-                        <th>ID</th>
+                    <tr>                        
                         <th>Date réservation</th>
                         <th>Statut</th>
                         <th>Voyage</th>
                         <th>Client</th>
-                        <th>Nombre personnes</th>
+                        <th>Adultes</th>
+                        <th>Enfants</th>
+                        <th>Total</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -68,26 +66,66 @@
                     )|trim : '' %}
 
                     <tr>
-                        <td>{{ reservation.id }}</td>
                         <td>{{ reservation.dateReservation ? reservation.dateReservation|date('Y-m-d H:i') : '' }}</td>
-                        <td>{{ reservation.statut }}</td>
+
+                        <td>
+                            {% if reservation.statut == 'CONFIRMEE' %}
+                                <span class="badge bg-success">Confirmée</span>
+                            {% elseif reservation.statut == 'EN_ATTENTE' %}
+                                <span class="badge bg-warning text-dark">En attente</span>
+                            {% else %}
+                                <span class="badge bg-danger">Annulée</span>
+                            {% endif %}
+                        </td>
+
                         <td>{{ reservation.voyage ? reservation.voyage.titre : 'Voyage inconnu' }}</td>
                         <td>{{ clientName != '' ? clientName : 'Utilisateur inconnu' }}</td>
+                        <td>{{ reservation.nbAdultes }}</td>
+                        <td>{{ reservation.nbEnfants }}</td>
                         <td>{{ reservation.nbrPersonnes }}</td>
+
                         <td>
-                            <a href="{{ path('app_reservation_edit', {'id': reservation.id}) }}" class="btn btn-horozia-warning btn-sm">
-                                Modifier
-                            </a>
-                            <a href="{{ path('app_reservation_delete', {'id': reservation.id}) }}"
-                               class="btn btn-danger btn-sm btn-delete-reservation"
-                               data-reservation-id="{{ reservation.id }}">
-                                Supprimer
-                            </a>
+                            <div class="d-flex gap-1 flex-wrap">
+
+                                {# CONFIRMER #}
+                                {% if reservation.statut == 'EN_ATTENTE' %}
+                                    <form method="post"
+                                          action="{{ path('app_reservation_confirmer', {'id': reservation.id}) }}"
+                                          class="reservation-confirm-form"
+                                          data-reservation-id="{{ reservation.id }}">
+                                        <button type="submit" class="btn btn-success btn-sm">
+                                            ✔
+                                        </button>
+                                    </form>
+                                {% endif %}
+
+                                {# ANNULER #}
+                                {% if reservation.statut != 'ANNULEE' %}
+                                    <form method="post"
+                                          action="{{ path('app_reservation_annuler', {'id': reservation.id}) }}"
+                                          class="reservation-cancel-form"
+                                          data-reservation-id="{{ reservation.id }}">
+                                        <button type="submit" class="btn btn-warning btn-sm">
+                                            ✖
+                                        </button>
+                                    </form>
+                                {% endif %}
+
+                                {# REPORTER #}
+                                {% if reservation.statut == 'EN_ATTENTE' %}
+                                    <a href="{{ path('app_reservation_edit', {'id': reservation.id}) }}"
+                                       class="btn btn-info btn-sm"
+                                       title="Reporter">
+                                        ⏳
+                                    </a>
+                                {% endif %}
+
+                            </div>
                         </td>
                     </tr>
                 {% else %}
                     <tr>
-                        <td colspan="7" class="text-center">Aucune réservation trouvée.</td>
+                        <td colspan="9" class="text-center">Aucune réservation trouvée.</td>
                     </tr>
                 {% endfor %}
                 </tbody>
@@ -138,30 +176,56 @@
                 });
             }
 
-            const deleteButtons = document.querySelectorAll('.btn-delete-reservation');
+            const confirmForms = document.querySelectorAll('.reservation-confirm-form');
+            const cancelForms = document.querySelectorAll('.reservation-cancel-form');
 
-            deleteButtons.forEach(button => {
-                button.addEventListener('click', function (e) {
+            confirmForms.forEach(form => {
+                form.addEventListener('submit', function (e) {
                     e.preventDefault();
 
-                    const deleteUrl = this.getAttribute('href');
                     const reservationId = this.dataset.reservationId || '';
 
                     Swal.fire({
-                        title: 'Supprimer cette réservation ?',
-                        html: `Vous êtes sur le point de supprimer la réservation <strong>#${reservationId}</strong>.`,
-                        icon: 'warning',
+                        title: 'Confirmer cette réservation ?',
+                        html: `Vous êtes sur le point de confirmer la réservation <strong>#${reservationId}</strong>.`,
+                        icon: 'question',
                         showCancelButton: true,
-                        confirmButtonColor: '#dc3545',
+                        confirmButtonColor: '#198754',
                         cancelButtonColor: '#6c757d',
-                        confirmButtonText: 'Oui, supprimer',
+                        confirmButtonText: 'Oui, confirmer',
                         cancelButtonText: 'Annuler',
                         reverseButtons: true,
                         background: '#ffffff',
                         borderRadius: '18px'
                     }).then((result) => {
                         if (result.isConfirmed) {
-                            window.location.href = deleteUrl;
+                            form.submit();
+                        }
+                    });
+                });
+            });
+
+            cancelForms.forEach(form => {
+                form.addEventListener('submit', function (e) {
+                    e.preventDefault();
+
+                    const reservationId = this.dataset.reservationId || '';
+
+                    Swal.fire({
+                        title: 'Annuler cette réservation ?',
+                        html: `Vous êtes sur le point d’annuler la réservation <strong>#${reservationId}</strong>.`,
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#f0ad4e',
+                        cancelButtonColor: '#6c757d',
+                        confirmButtonText: 'Oui, annuler',
+                        cancelButtonText: 'Retour',
+                        reverseButtons: true,
+                        background: '#ffffff',
+                        borderRadius: '18px'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            form.submit();
                         }
                     });
                 });

@@ -1,0 +1,362 @@
+{% extends 'front/base_front.html.twig' %}
+
+{% block title %}Mes favoris{% endblock %}
+
+{% block body %}
+
+<nav class="navbar navbar-expand-lg navbar-dark ftco_navbar ftco-navbar-light" id="ftco-navbar">
+    <div class="container">
+        <a class="navbar-brand navbar-logo" href="{{ path('app_front_home', {currency: 'TND'}) }}">
+            <img src="{{ asset('images/logo.png') }}" alt="Horozia Logo">
+        </a>
+
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#ftco-nav"
+                aria-controls="ftco-nav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="fa fa-bars"></span> Menu
+        </button>
+
+        <div class="collapse navbar-collapse" id="ftco-nav">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item"><a href="{{ path('app_front_home', {currency: 'TND'}) }}" class="nav-link">Accueil</a></li>
+                <li class="nav-item"><a href="{{ path('app_front_voyages', {currency: 'TND'}) }}" class="nav-link">Voyages</a></li>
+                <li class="nav-item"><a href="{{ path('app_front_mes_reservations') }}" class="nav-link">Mes réservations</a></li>
+                <li class="nav-item active"><a href="{{ path('app_front_mes_favoris') }}" class="nav-link">Mes favoris</a></li>
+                <li class="nav-item"><a href="#services" class="nav-link">Services</a></li>
+                <li class="nav-item"><a href="#contact" class="nav-link">Contact</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<section class="hero-wrap hero-wrap-2" style="background-image: url('{{ asset('front/pacific/images/bg_5.jpg') }}');">
+    <div class="overlay"></div>
+    <div class="container">
+        <div class="row no-gutters slider-text align-items-end justify-content-center" style="height: 320px;">
+            <div class="col-md-9 pb-5 text-center">
+                <p class="breadcrumbs mb-2">
+                    <span class="mr-2">
+                        <a href="{{ path('app_front_home', {currency: 'TND'}) }}">Accueil <i class="fa fa-chevron-right"></i></a>
+                    </span>
+                    <span>Mes favoris <i class="fa fa-chevron-right"></i></span>
+                </p>
+                <h1 class="mb-0 bread">Mes favoris</h1>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="ftco-section favoris-page-section">
+    <div class="container">
+        <div class="row justify-content-center pb-4">
+            <div class="col-md-8 heading-section text-center ftco-animate">
+                <span class="subheading">Horozia</span>
+                <h2 class="mb-3">Vos voyages favoris</h2>
+                <p class="text-muted">Retrouvez ici les voyages que vous avez ajoutés à votre liste préférée.</p>
+            </div>
+        </div>
+
+        <div class="row justify-content-center">
+            {% if favoris is not empty %}
+                {% for favori in favoris %}
+                    {% set voyage = favori.voyage %}
+                    {% set imagePath = voyage.imageUrl ?: 'front/pacific/images/destination-1.jpg' %}
+
+                    <div class="col-md-6 col-lg-4 d-flex mb-4">
+                        <div class="favori-card w-100">
+                            <div class="favori-card-image-wrapper">
+                                <div class="favori-card-image"
+                                     style="background-image: url('{% if imagePath starts with 'http' %}{{ imagePath }}{% else %}{{ asset(imagePath) }}{% endif %}');">
+                                </div>
+
+                                <div class="favori-price-badge">
+                                    {{ voyage.prix|number_format(0, ',', ' ') }} DT
+                                </div>
+
+                                <button
+                                    type="button"
+                                    class="favori-remove-btn js-remove-favori"
+                                    data-voyage-id="{{ voyage.id }}"
+                                    title="Retirer des favoris">
+                                    <i class="fa fa-heart"></i>
+                                </button>
+                            </div>
+
+                            <div class="favori-card-content">
+                                <h3 class="favori-title">{{ voyage.titre }}</h3>
+
+                                <p class="favori-destination">
+                                    <span class="fa fa-map-marker"></span>
+                                    {{ voyage.destination }}
+                                </p>
+                                <div class="favori-actions">
+                                    <a href="{{ path('app_front_voyage_detail', {'id': voyage.id, 'currency': 'TND'}) }}"
+                                       class="btn btn-primary btn-favori-detail">
+                                        Voir détails
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="col-md-8">
+                    <div class="favori-empty-box text-center">
+                        <div class="favori-empty-icon">
+                            <i class="fa fa-heart-o"></i>
+                        </div>
+                        <h3 class="mb-3">Aucun voyage en favoris</h3>
+                        <p class="text-muted mb-4">
+                            Vous n’avez pas encore ajouté de voyages à vos favoris.
+                        </p>
+                        <a href="{{ path('app_front_voyages', {currency: 'TND'}) }}" class="btn btn-primary px-4 py-3">
+                            Découvrir les voyages
+                        </a>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</section>
+
+<style>
+.favoris-page-section {
+    background: #f8fbfd;
+    padding-top: 90px;
+    padding-bottom: 90px;
+    min-height: 520px;
+}
+
+.favori-card {
+    background: #ffffff;
+    border-radius: 22px;
+    overflow: hidden;
+    box-shadow: 0 14px 35px rgba(15, 23, 42, 0.08);
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+.favori-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px rgba(15, 23, 42, 0.14);
+}
+
+.favori-card-image-wrapper {
+    position: relative;
+}
+
+.favori-card-image {
+    height: 260px;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.favori-price-badge {
+    position: absolute;
+    left: 18px;
+    bottom: 18px;
+    background: rgba(34, 34, 34, 0.55);
+    color: #fff;
+    padding: 9px 15px;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.favori-remove-btn {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 46px;
+    height: 46px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.95);
+    color: #dc3545;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 18px rgba(0,0,0,0.16);
+    cursor: pointer;
+    transition: 0.2s ease;
+}
+
+.favori-remove-btn:hover {
+    transform: scale(1.08);
+    background: #dc3545;
+    color: #fff;
+}
+
+.favori-card-content {
+    padding: 24px;
+}
+
+.favori-title {
+    font-size: 1.6rem;
+    font-weight: 800;
+    margin-bottom: 12px;
+    color: #1f2937;
+}
+
+.favori-destination {
+    color: #6b7280;
+    margin-bottom: 16px;
+    font-size: 1rem;
+}
+
+.favori-destination .fa {
+    color: #ff6b35;
+    margin-right: 6px;
+}
+
+.favori-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 22px;
+}
+
+.favori-meta-item {
+    font-size: 0.95rem;
+    color: #4b5563;
+}
+
+.favori-meta-item .fa {
+    color: #ff6b35;
+    margin-right: 8px;
+}
+
+.favori-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.btn-favori-detail {
+    border-radius: 12px;
+    font-weight: 700;
+    padding: 10px 18px;
+}
+
+.favori-empty-box {
+    background: #ffffff;
+    border-radius: 24px;
+    padding: 50px 30px;
+    box-shadow: 0 14px 35px rgba(15, 23, 42, 0.08);
+}
+
+.favori-empty-icon {
+    width: 90px;
+    height: 90px;
+    margin: 0 auto 20px;
+    border-radius: 50%;
+    background: #fff1ec;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ff6b35;
+    font-size: 34px;
+}
+
+@media (max-width: 768px) {
+    .favori-card-image {
+        height: 220px;
+    }
+
+    .favori-title {
+        font-size: 1.35rem;
+    }
+}
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const removeButtons = document.querySelectorAll('.js-remove-favori');
+
+    removeButtons.forEach(button => {
+        button.addEventListener('click', async function () {
+            const voyageId = this.dataset.voyageId;
+            const card = this.closest('.col-md-6, .col-lg-4') || this.closest('.favori-card')?.parentElement;
+
+            const result = await Swal.fire({
+                title: 'Retirer ce voyage ?',
+                text: 'Ce voyage sera supprimé de vos favoris.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Oui, retirer',
+                cancelButtonText: 'Annuler',
+                reverseButtons: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#6c757d'
+            });
+
+            if (!result.isConfirmed) return;
+
+            try {
+                const response = await fetch(`/api/favoris/toggle/${voyageId}`, {
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+
+                const rawText = await response.text();
+
+                let data = {};
+                try {
+                    data = JSON.parse(rawText);
+                } catch (e) {
+                    await Swal.fire({
+                        title: 'Erreur',
+                        text: 'Le serveur a retourné une réponse invalide.',
+                        icon: 'error',
+                        confirmButtonColor: '#23779c'
+                    });
+                    return;
+                }
+
+                if (!response.ok || !data.success) {
+                    await Swal.fire({
+                        title: 'Erreur',
+                        text: data.message || 'Impossible de retirer ce voyage.',
+                        icon: 'error',
+                        confirmButtonColor: '#23779c'
+                    });
+                    return;
+                }
+
+                await Swal.fire({
+                    title: 'Supprimé',
+                    text: 'Le voyage a été retiré de vos favoris.',
+                    icon: 'success',
+                    timer: 1300,
+                    showConfirmButton: false
+                });
+
+                if (card) {
+                    card.style.transition = 'all 0.3s ease';
+                    card.style.opacity = '0';
+                    card.style.transform = 'scale(0.95)';
+                    setTimeout(() => window.location.reload(), 300);
+                } else {
+                    window.location.reload();
+                }
+
+            } catch (error) {
+                await Swal.fire({
+                    title: 'Erreur',
+                    text: 'Impossible de retirer ce voyage des favoris.',
+                    icon: 'error',
+                    confirmButtonColor: '#23779c'
+                });
+            }
+        });
+    });
+});
+</script>
+
+{% endblock %}

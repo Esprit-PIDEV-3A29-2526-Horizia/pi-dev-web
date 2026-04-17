@@ -5,6 +5,54 @@
 {% block navbar %}{% endblock %}
 {% block footer %}{% endblock %}
 
+{% block stylesheets %}
+    {{ parent() }}
+
+    {# Font Awesome #}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+    {# FullCalendar #}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css">
+
+    <style>
+        .admin-layout {
+            display: flex;
+            min-height: 100vh;
+            background: #f5f7fb;
+        }
+
+        .admin-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        .admin-content {
+            flex: 1;
+            padding: 30px;
+        }
+
+        .admin-footer {
+            background: #fff;
+            border-top: 1px solid #e9edf3;
+            font-size: 14px;
+        }
+
+        @media (max-width: 768px) {
+            .admin-content {
+                padding: 20px 15px;
+            }
+
+            .admin-footer {
+                flex-direction: column;
+                gap: 10px;
+                text-align: center;
+            }
+        }
+    </style>
+{% endblock %}
+
 {% block body %}
 <div class="admin-layout">
     {% include 'admin/partials/sidebar-admin.html.twig' %}
@@ -18,7 +66,7 @@
 
         <footer class="admin-footer d-flex justify-content-between align-items-center px-4 py-3">
             <span>Horozia ©</span>
-            <div class="d-flex gap-3">
+            <div class="d-flex gap-3 flex-wrap justify-content-center">
                 <a href="#" class="text-decoration-none text-muted">Support</a>
                 <a href="#" class="text-decoration-none text-muted">Help Center</a>
                 <a href="#" class="text-decoration-none text-muted">Privacy</a>
@@ -27,4 +75,11 @@
         </footer>
     </div>
 </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+
+    {# FullCalendar #}
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
 {% endblock %}

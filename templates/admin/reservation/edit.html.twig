@@ -3,52 +3,96 @@
 {% block title %}Modifier une réservation{% endblock %}
 
 {% block admin_content %}
-    <div class="container-fluid">
-        <h1 class="mb-4">Modifier la réservation</h1>
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Modifier la réservation</h1>
+        <a href="{{ path('app_reservation_index') }}" class="btn btn-horozia-neutral">
+            Retour
+        </a>
+    </div>
 
-        <div class="card shadow-sm border-0">
-            <div class="card-body">
-                {{ form_start(form, {'attr': {'novalidate': 'novalidate'}}) }}
+    <div class="card card-horozia">
+        <div class="card-body">
+            {{ form_start(form) }}
 
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            {{ form_label(form.dateReservation) }}
-                            {{ form_widget(form.dateReservation, {'attr': {'class': 'form-control'}}) }}
-                            {{ form_errors(form.dateReservation) }}
-                        </div>
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    {{ form_label(form.dateReservation) }}
+                    {{ form_widget(form.dateReservation, {'attr': {'class': 'form-control'}}) }}
+                    {{ form_errors(form.dateReservation) }}
+                </div>
 
-                        <div class="col-md-6 mb-3">
-                            {{ form_label(form.statut) }}
-                            {{ form_widget(form.statut, {'attr': {'class': 'form-select'}}) }}
-                            {{ form_errors(form.statut) }}
-                        </div>
-                    </div>
+                <div class="col-md-4 mb-3">
+                    {{ form_label(form.statut) }}
+                    {{ form_widget(form.statut, {'attr': {'class': 'form-select'}}) }}
+                    {{ form_errors(form.statut) }}
+                </div>
 
-                    <div class="row">
-                        <div class="col-md-4 mb-3">
-                            {{ form_label(form.idVoyage) }}
-                            {{ form_widget(form.idVoyage, {'attr': {'class': 'form-control'}}) }}
-                            {{ form_errors(form.idVoyage) }}
-                        </div>
-
-                        <div class="col-md-4 mb-3">
-                            {{ form_label(form.idUser) }}
-                            {{ form_widget(form.idUser, {'attr': {'class': 'form-control'}}) }}
-                            {{ form_errors(form.idUser) }}
-                        </div>
-
-                        <div class="col-md-4 mb-3">
-                            {{ form_label(form.nbrPersonnes) }}
-                            {{ form_widget(form.nbrPersonnes, {'attr': {'class': 'form-control'}}) }}
-                            {{ form_errors(form.nbrPersonnes) }}
-                        </div>
-                    </div>
-
-                    <button class="btn btn-warning">Mettre à jour</button>
-                    <a href="{{ path('app_reservation_index') }}" class="btn btn-secondary">Retour</a>
-
-                {{ form_end(form) }}
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Total personnes</label>
+                    <input type="text" id="total-personnes" class="form-control" value="{{ reservation.nbrPersonnes }}" readonly>
+                </div>
             </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    {{ form_label(form.voyage) }}
+                    {{ form_widget(form.voyage, {'attr': {'class': 'form-select'}}) }}
+                    {{ form_errors(form.voyage) }}
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    {{ form_label(form.user) }}
+                    {{ form_widget(form.user, {'attr': {'class': 'form-select'}}) }}
+                    {{ form_errors(form.user) }}
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    {{ form_label(form.nbAdultes) }}
+                    {{ form_widget(form.nbAdultes, {'attr': {'class': 'form-control', 'id': 'nb_adultes'}}) }}
+                    {{ form_errors(form.nbAdultes) }}
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    {{ form_label(form.nbEnfants) }}
+                    {{ form_widget(form.nbEnfants, {'attr': {'class': 'form-control', 'id': 'nb_enfants'}}) }}
+                    {{ form_errors(form.nbEnfants) }}
+                </div>
+            </div>
+
+            <div class="mt-3">
+                <button type="submit" class="btn btn-horozia-secondary">
+                    Mettre à jour
+                </button>
+            </div>
+
+            {{ form_end(form) }}
         </div>
     </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const adultesInput = document.getElementById('nb_adultes');
+            const enfantsInput = document.getElementById('nb_enfants');
+            const totalInput = document.getElementById('total-personnes');
+
+            function updateTotal() {
+                const adultes = parseInt(adultesInput?.value || 0, 10) || 0;
+                const enfants = parseInt(enfantsInput?.value || 0, 10) || 0;
+                totalInput.value = adultes + enfants;
+            }
+
+            if (adultesInput) adultesInput.addEventListener('input', updateTotal);
+            if (enfantsInput) enfantsInput.addEventListener('input', updateTotal);
+
+            updateTotal();
+        });
+    </script>
 {% endblock %}

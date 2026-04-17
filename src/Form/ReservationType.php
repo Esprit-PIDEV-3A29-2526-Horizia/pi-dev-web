@@ -54,11 +54,18 @@ class ReservationType extends AbstractType
                 'required' => false,
                 'attr' => ['class' => 'form-select']
             ])
-            ->add('nbrPersonnes', IntegerType::class, [
-                'label' => 'Nombre de personnes',
+            ->add('nbAdultes', IntegerType::class, [
+                'label' => 'Nombre d’adultes',
                 'attr' => [
                     'class' => 'form-control',
-                    'min' => 1
+                    'min' => 0
+                ]
+            ])
+            ->add('nbEnfants', IntegerType::class, [
+                'label' => 'Nombre d’enfants',
+                'attr' => [
+                    'class' => 'form-control',
+                    'min' => 0
                 ]
             ]);
     }

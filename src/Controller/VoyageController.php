@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\Voyage;
 use App\Form\VoyageType;
+use App\Service\OpenWeatherService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -14,45 +15,97 @@ use Symfony\Component\Routing\Annotation\Route;
 class VoyageController extends AbstractController
 {
     #[Route('/', name: 'app_voyage_index', methods: ['GET'])]
-    public function index(Request $request, EntityManagerInterface $entityManager): Response
-    {
-        $search = $request->query->get('search');
-        $sort = $request->query->get('sort');
+    public function index(
+        Request $request,
+        EntityManagerInterface $entityManager,
+        OpenWeatherService $openWeatherService
+    ): Response {
+        $search = trim((string) $request->query->get('search', ''));
+        $sort = trim((string) $request->query->get('sort', ''));
+        $page = max(1, (int) $request->query->get('page', 1));
+        $limit = 6;
+        $offset = ($page - 1) * $limit;
 
         $qb = $entityManager->getRepository(Voyage::class)
             ->createQueryBuilder('v')
             ->leftJoin('v.categorie', 'c')
             ->addSelect('c');
 
-        if ($search) {
-            $qb->andWhere('v.titre LIKE :search OR v.destination LIKE :search')
-                ->setParameter('search', '%' . $search . '%');
+        if ($search !== '') {
+            $qb->andWhere('LOWER(v.titre) LIKE :search OR LOWER(v.destination) LIKE :search')
+                ->setParameter('search', '%' . mb_strtolower($search) . '%');
         }
 
         switch ($sort) {
             case 'prix_asc':
                 $qb->orderBy('v.prix', 'ASC');
                 break;
+
             case 'prix_desc':
                 $qb->orderBy('v.prix', 'DESC');
                 break;
+
             case 'date_asc':
                 $qb->orderBy('v.dateDepart', 'ASC');
                 break;
+
+            case 'date_desc':
+                $qb->orderBy('v.dateDepart', 'DESC');
+                break;
+
             case 'titre_asc':
                 $qb->orderBy('v.titre', 'ASC');
                 break;
+
+            case 'titre_desc':
+                $qb->orderBy('v.titre', 'DESC');
+                break;
+
             default:
                 $qb->orderBy('v.id', 'DESC');
                 break;
         }
 
-        $voyages = $qb->getQuery()->getResult();
+        $countQb = clone $qb;
+        $totalVoyages = (int) $countQb
+            ->select('COUNT(v.id)')
+            ->resetDQLPart('orderBy')
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        $totalPages = max(1, (int) ceil($totalVoyages / $limit));
+
+        if ($page > $totalPages) {
+            $page = $totalPages;
+            $offset = ($page - 1) * $limit;
+        }
+
+        $voyages = $qb
+            ->setFirstResult($offset)
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
+
+        $weatherData = [];
+
+        foreach ($voyages as $voyage) {
+            $destination = trim((string) $voyage->getDestination());
+
+            if ($destination !== '') {
+                $weatherData[$voyage->getId()] = $openWeatherService->getWeatherByCity($destination);
+            } else {
+                $weatherData[$voyage->getId()] = null;
+            }
+        }
 
         return $this->render('admin/voyage/index.html.twig', [
             'voyages' => $voyages,
+            'weatherData' => $weatherData,
             'search' => $search,
             'sort' => $sort,
+            'currentPage' => $page,
+            'totalPages' => $totalPages,
+            'totalVoyages' => $totalVoyages,
         ]);
     }
 
@@ -63,17 +116,45 @@ class VoyageController extends AbstractController
         $form = $this->createForm(VoyageType::class, $voyage);
         $form->handleRequest($request);
 
-        if ($form->isSubmitted() && $form->isValid()) {
-            $entityManager->persist($voyage);
-            $entityManager->flush();
+        if ($form->isSubmitted()) {
+            $voyage->setPlacesRestantes($voyage->getPlacesTotal());
 
-            $this->addFlash('success', 'Voyage ajouté avec succès.');
+            if ($form->isValid()) {
+                $entityManager->persist($voyage);
+                $entityManager->flush();
 
-            return $this->redirectToRoute('app_voyage_index');
+                $this->addFlash('success', 'Voyage ajouté avec succès.');
+                return $this->redirectToRoute('app_voyage_index');
+            }
         }
 
         return $this->render('admin/voyage/new.html.twig', [
             'form' => $form->createView(),
+        ]);
+    }
+
+    #[Route('/{id}', name: 'app_voyage_show', methods: ['GET'], requirements: ['id' => '\d+'])]
+    public function show(
+        int $id,
+        EntityManagerInterface $entityManager,
+        OpenWeatherService $openWeatherService
+    ): Response {
+        $voyage = $entityManager->getRepository(Voyage::class)->find($id);
+
+        if (!$voyage) {
+            throw $this->createNotFoundException('Voyage introuvable.');
+        }
+
+        $weather = null;
+        $destination = trim((string) $voyage->getDestination());
+
+        if ($destination !== '') {
+            $weather = $openWeatherService->getWeatherByCity($destination);
+        }
+
+        return $this->render('admin/voyage/show.html.twig', [
+            'voyage' => $voyage,
+            'weather' => $weather,
         ]);
     }
 
@@ -89,12 +170,17 @@ class VoyageController extends AbstractController
         $form = $this->createForm(VoyageType::class, $voyage);
         $form->handleRequest($request);
 
-        if ($form->isSubmitted() && $form->isValid()) {
-            $entityManager->flush();
+        if ($form->isSubmitted()) {
+            if ($voyage->getPlacesRestantes() === null) {
+                $voyage->setPlacesRestantes($voyage->getPlacesTotal());
+            }
 
-            $this->addFlash('success', 'Voyage modifié avec succès.');
+            if ($form->isValid()) {
+                $entityManager->flush();
 
-            return $this->redirectToRoute('app_voyage_index');
+                $this->addFlash('success', 'Voyage modifié avec succès.');
+                return $this->redirectToRoute('app_voyage_index');
+            }
         }
 
         return $this->render('admin/voyage/edit.html.twig', [
@@ -116,21 +202,6 @@ class VoyageController extends AbstractController
         $entityManager->flush();
 
         $this->addFlash('success', 'Voyage supprimé avec succès.');
-
         return $this->redirectToRoute('app_voyage_index');
-    }
-
-    #[Route('/{id}', name: 'app_voyage_show', methods: ['GET'], requirements: ['id' => '\d+'])]
-    public function show(int $id, EntityManagerInterface $entityManager): Response
-    {
-        $voyage = $entityManager->getRepository(Voyage::class)->find($id);
-
-        if (!$voyage) {
-            throw $this->createNotFoundException('Voyage introuvable.');
-        }
-
-        return $this->render('admin/voyage/show.html.twig', [
-            'voyage' => $voyage,
-        ]);
     }
 }

@@ -1,0 +1,113 @@
+{% extends 'front/base_front.html.twig' %}
+
+{% block title %}Modifier réservation - Horozia{% endblock %}
+
+{% block body %}
+
+{% for message in app.flashes('success') %}
+    <script>
+        Swal.fire({
+            icon: 'success',
+            title: 'Succès',
+            text: "{{ message|e('js') }}",
+            confirmButtonText: 'OK'
+        });
+    </script>
+{% endfor %}
+
+{% for message in app.flashes('error') %}
+    <script>
+        Swal.fire({
+            icon: 'error',
+            title: 'Erreur',
+            text: "{{ message|e('js') }}",
+            confirmButtonText: 'OK'
+        });
+    </script>
+{% endfor %}
+
+{% if reservation.statut == 'CONFIRMEE' %}
+    <script>
+        Swal.fire({
+            icon: 'error',
+            title: 'Action impossible',
+            text: 'Une réservation confirmée ne peut pas être modifiée.',
+            confirmButtonText: 'OK'
+        }).then(() => {
+            window.location.href = "{{ path('app_front_mes_reservations') }}";
+        });
+    </script>
+{% endif %}
+
+<nav class="navbar navbar-expand-lg navbar-dark ftco_navbar ftco-navbar-light" id="ftco-navbar">
+    <div class="container">
+       <a class="navbar-brand navbar-logo" href="{{ path('app_front_home') }}">
+            <img src="{{ asset('images/logo.png') }}" alt="Horozia Logo">
+        </a>
+
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#ftco-nav"
+                aria-controls="ftco-nav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="fa fa-bars"></span> Menu
+        </button>
+
+        <div class="collapse navbar-collapse" id="ftco-nav">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item "><a href="{{ path('app_front_home') }}" class="nav-link">Accueil</a></li>
+                <li class="nav-item"><a href="{{ path('app_front_voyages') }}" class="nav-link">Voyages</a></li>
+                <li class="nav-item active"><a href="{{ path('app_front_mes_reservations') }}" class="nav-link">Mes réservations</a></li>
+                <li class="nav-item"><a href="#services" class="nav-link">Services</a></li>
+                <li class="nav-item"><a href="#contact" class="nav-link">Contact</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<section class="ftco-section reservation-page">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-7 mb-4">
+                <div class="reservation-box bg-white p-4 p-md-5 rounded shadow-sm h-100">
+                    <h2 class="mb-4">Modifier la réservation</h2>
+
+                    <form method="post">
+                        <div class="form-group">
+                            <label for="nb_personnes">Nombre de personnes</label>
+                            <input id="nb_personnes"
+                                   type="number"
+                                   name="nb_personnes"
+                                   class="form-control"
+                                   min="1"
+                                   max="{{ reservation.nbrPersonnes + voyage.placesRestantes }}"
+                                   value="{{ reservation.nbrPersonnes }}"
+                                   required>
+                        </div>
+
+                        <div class="mt-4 d-flex flex-wrap align-items-center">
+                            <a href="{{ path('app_front_mes_reservations') }}" class="btn btn-outline-secondary mr-2 mb-2">
+                                Retour
+                            </a>
+                            <button type="submit" class="btn btn-primary mb-2">
+                                Enregistrer les modifications
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="col-lg-5 mb-4">
+                <div class="reservation-summary bg-white p-4 rounded shadow-sm h-100">
+                    <h3 class="mb-4">{{ voyage.titre }}</h3>
+
+                    <p><strong>Destination :</strong> {{ voyage.destination }}</p>
+                    <p><strong>Prix :</strong> {{ voyage.prix|number_format(0, ',', ' ') }} DT / personne</p>
+                    <p><strong>Date départ :</strong> {{ voyage.dateDepart|date('d/m/Y') }}</p>
+                    <p><strong>Date retour :</strong> {{ voyage.dateRetour|date('d/m/Y') }}</p>
+                    <p><strong>Places restantes actuelles :</strong> {{ voyage.placesRestantes }}</p>
+                    <p><strong>Réservation actuelle :</strong> {{ reservation.nbrPersonnes }} personne(s)</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% endblock %}

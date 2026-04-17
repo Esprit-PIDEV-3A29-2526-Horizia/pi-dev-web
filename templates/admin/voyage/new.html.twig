@@ -71,7 +71,7 @@
             </div>
 
             <div class="row">
-                <div class="col-md-4 mb-3 {% if form.categorie.vars.errors|length > 0 %}field-error{% endif %}">
+                <div class="col-md-6 mb-3 {% if form.categorie.vars.errors|length > 0 %}field-error{% endif %}">
                     {{ form_label(form.categorie) }}
                     {{ form_widget(form.categorie, {'attr': {'class': 'form-select'}}) }}
                     {% if form.categorie.vars.errors|length > 0 %}
@@ -79,19 +79,11 @@
                     {% endif %}
                 </div>
 
-                <div class="col-md-4 mb-3 {% if form.placesTotal.vars.errors|length > 0 %}field-error{% endif %}">
+                <div class="col-md-6 mb-3 {% if form.placesTotal.vars.errors|length > 0 %}field-error{% endif %}">
                     {{ form_label(form.placesTotal) }}
                     {{ form_widget(form.placesTotal, {'attr': {'class': 'form-control'}}) }}
                     {% if form.placesTotal.vars.errors|length > 0 %}
                         <div class="validation-error">{{ form_errors(form.placesTotal) }}</div>
-                    {% endif %}
-                </div>
-
-                <div class="col-md-4 mb-3 {% if form.placesRestantes.vars.errors|length > 0 %}field-error{% endif %}">
-                    {{ form_label(form.placesRestantes) }}
-                    {{ form_widget(form.placesRestantes, {'attr': {'class': 'form-control'}}) }}
-                    {% if form.placesRestantes.vars.errors|length > 0 %}
-                        <div class="validation-error">{{ form_errors(form.placesRestantes) }}</div>
                     {% endif %}
                 </div>
             </div>

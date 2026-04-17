@@ -3,7 +3,6 @@
 namespace App\Entity;
 
 use App\Entity\Categorie;
-use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\Validator\Context\ExecutionContextInterface;
@@ -105,8 +104,6 @@ class Voyage
      * @var int|null
      *
      * @ORM\Column(name="places_restantes", type="integer", nullable=false)
-     * @Assert\NotBlank(message="Le nombre de places restantes est obligatoire.")
-     * @Assert\PositiveOrZero(message="Le nombre de places restantes doit être positif ou nul.")
      */
     private $placesRestantes;
 
@@ -211,6 +208,11 @@ class Voyage
     public function setPlacesTotal(?int $placesTotal): self
     {
         $this->placesTotal = $placesTotal;
+
+        if ($placesTotal !== null && $this->placesRestantes === null) {
+            $this->placesRestantes = $placesTotal;
+        }
+
         return $this;
     }
 
@@ -238,6 +240,12 @@ class Voyage
 
         if ($this->placesRestantes !== null && $this->placesTotal !== null && $this->placesRestantes > $this->placesTotal) {
             $context->buildViolation('Les places restantes ne peuvent pas dépasser les places totales.')
+                ->atPath('placesRestantes')
+                ->addViolation();
+        }
+
+        if ($this->placesRestantes !== null && $this->placesRestantes < 0) {
+            $context->buildViolation('Les places restantes ne peuvent pas être négatives.')
                 ->atPath('placesRestantes')
                 ->addViolation();
         }

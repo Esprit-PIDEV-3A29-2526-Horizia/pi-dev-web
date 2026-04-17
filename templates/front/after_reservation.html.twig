@@ -1,0 +1,37 @@
+{% extends 'front/base_front.html.twig' %}
+
+{% block title %}Réservation confirmée{% endblock %}
+
+{% block body %}
+<section class="ftco-section">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card shadow-sm border-0 rounded-lg p-4 text-center">
+                    <h2 class="mb-3">Réservation confirmée</h2>
+                    <p class="mb-4">
+                        Votre réservation #{{ reservation.id }} a bien été enregistrée.
+                    </p>
+
+                    <div class="mb-4">
+                        <strong>Voyage :</strong> {{ reservation.voyage.titre }}<br>
+                        <strong>Destination :</strong> {{ reservation.voyage.destination }}<br>
+                        <strong>Nombre de personnes :</strong> {{ reservation.nbrPersonnes }}<br>
+                        <strong>Prix total :</strong> {{ reservation.prixTotal }} DT
+                    </div>
+
+                    <div class="d-flex justify-content-center gap-3 flex-wrap">
+                        <a href="{{ path('app_payment_checkout', {'id': reservation.id}) }}" class="btn btn-success">
+                            Payer maintenant
+                        </a>
+
+                        <a href="{{ path('app_front_mes_reservations') }}" class="btn btn-outline-secondary">
+                            Payer plus tard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

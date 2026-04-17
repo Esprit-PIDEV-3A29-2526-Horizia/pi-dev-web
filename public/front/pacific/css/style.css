@@ -10253,3 +10253,42 @@ textarea.form-control {
     max-width: 150px !important;
   }
 }
+/* PAGE MES RESERVATIONS */
+.badge-status {
+  display: inline-block;
+  padding: 8px 12px;
+  border-radius: 30px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.badge-success-custom {
+  background: #28a745;
+}
+
+.badge-danger-custom {
+  background: #dc3545;
+}
+
+.badge-warning-custom {
+  background: #f15d30;
+}
+
+.table th,
+.table td {
+  vertical-align: middle !important;
+}
+
+.table thead th {
+  border-top: none;
+  color: #111;
+  font-weight: 700;
+}
+
+.table-hover tbody tr:hover {
+  background-color: rgba(35, 119, 156, 0.04);
+}
+.btn-danger {
+  border-radius: 8px !important;
+}
