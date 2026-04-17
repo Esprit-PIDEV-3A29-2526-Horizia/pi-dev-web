@@ -625,326 +625,358 @@ if (backBtn) {
     });
 }
         // ========== FORMULAIRE DE RÉSERVATION ==========
-        function initReservationForm() {
-            const dateArrivee = document.getElementById('date_arrivee_modal');
-            const dateDepart = document.getElementById('date_depart_modal');
-            const totalSpan = document.getElementById('total_modal');
-            const nuitsSpan = document.getElementById('nuits_modal');
-            const reservationForm = document.getElementById('reservationFormModal');
-            const formErrorsDiv = document.getElementById('formErrors');
-            const modaliteRadios = document.querySelectorAll('input[name="modalite"]');
-            const adultesInput = document.getElementById('adultes');
-            const enfantsInput = document.getElementById('enfants');
-            const modeReservationSelect = document.getElementById('mode_reservation');
-            const chambresInput = document.getElementById('nombre_chambres');
-            const prixParNuit = parseFloat(document.getElementById('prix_par_nuit_data').value);
-            const personnesSpan = document.getElementById('personnes_modal');
-            const prixPensionSpan = document.getElementById('prix_pension_nuit');
-            const pensionLabelSpan = document.getElementById('pensionLabel');
+    function initReservationForm() {
+    const dateArrivee = document.getElementById('date_arrivee_modal');
+    const dateDepart = document.getElementById('date_depart_modal');
+    const totalSpan = document.getElementById('total_modal');
+    const nuitsSpan = document.getElementById('nuits_modal');
+    const reservationForm = document.getElementById('reservationFormModal');
+    const formErrorsDiv = document.getElementById('formErrors');
+    const modaliteRadios = document.querySelectorAll('input[name="modalite"]');
+    const adultesInput = document.getElementById('adultes');
+    const enfantsInput = document.getElementById('enfants');
+    const modeReservationSelect = document.getElementById('mode_reservation');
+    const chambresInput = document.getElementById('nombre_chambres');
+    const prixParNuit = parseFloat(document.getElementById('prix_par_nuit_data').value);
+    const personnesSpan = document.getElementById('personnes_modal');
+    const prixPensionSpan = document.getElementById('prix_pension_nuit');
+    const pensionLabelSpan = document.getElementById('pensionLabel');
 
-            // Type de logement
-            const logementTypeElem = document.getElementById('logement_type');
-            const isHotel = logementTypeElem && (logementTypeElem.value === 'hôtel' || logementTypeElem.value === 'hotel');
-            const chambresCol = document.getElementById('chambresCol');
-            const repartitionContainer = document.getElementById('repartitionContainer');
-            const repartitionSelect = document.getElementById('repartition_chambres');
+    // Type de logement (hôtel ou non)
+    const logementTypeElem = document.getElementById('logement_type');
+    const isHotel = logementTypeElem && (logementTypeElem.value === 'hôtel' || logementTypeElem.value === 'hotel');
 
-            if (chambresCol) chambresCol.style.display = isHotel ? 'block' : 'none';
-            if (!isHotel && chambresInput) {
-                chambresInput.value = 1;
-                if (repartitionContainer) repartitionContainer.style.display = 'none';
-                if (repartitionSelect) repartitionSelect.value = '';
-            }
+    const chambresCol = document.getElementById('chambresCol');
+    const repartitionContainer = document.getElementById('repartitionContainer');
+    const repartitionSelect = document.getElementById('repartition_chambres');
 
-            function updateRepartitionOptions() {
-                if (!isHotel) {
-                    if (repartitionContainer) repartitionContainer.style.display = 'none';
-                    if (repartitionSelect) repartitionSelect.value = '';
-                    return;
-                }
-                const adultes = parseInt(adultesInput?.value || 1);
-                const enfants = parseInt(enfantsInput?.value || 0);
-                const totalPersonnes = adultes + enfants;
-                const chambresDemandees = parseInt(chambresInput?.value || 1);
-                const maxParChambre = 4;
-                const chambresNecessaires = Math.ceil(totalPersonnes / maxParChambre);
-                const chambresEffectives = Math.max(chambresDemandees, chambresNecessaires);
-                if (!repartitionContainer) return;
-                const oldValue = repartitionSelect ? repartitionSelect.value : '';
+    if (chambresCol) chambresCol.style.display = isHotel ? 'block' : 'none';
+    if (!isHotel && chambresInput) {
+        chambresInput.value = 1;
+        if (repartitionContainer) repartitionContainer.style.display = 'none';
+        if (repartitionSelect) repartitionSelect.value = '';
+    }
 
-                if (chambresEffectives > 1 && chambresDemandees === 1 && totalPersonnes > 0) {
-                    const combos = [];
-                    function findCombos(remaining, chambers, current) {
-                        if (chambers === 0) {
-                            if (remaining === 0) combos.push([...current]);
-                            return;
-                        }
-                        for (let i = 1; i <= Math.min(remaining, maxParChambre); i++) {
-                            current.push(i);
-                            findCombos(remaining - i, chambers - 1, current);
-                            current.pop();
-                        }
-                    }
-                    findCombos(totalPersonnes, chambresEffectives, []);
-                    const uniqueCombos = [];
-                    combos.forEach(combo => {
-                        const sorted = [...combo].sort((a,b)=>a-b);
-                        const key = sorted.join(',');
-                        if (!uniqueCombos.some(c => c.join(',') === key)) uniqueCombos.push(sorted);
-                    });
-                    repartitionSelect.innerHTML = '<option value="">Choisir une répartition</option>';
-                    uniqueCombos.forEach(combo => {
-                        const labels = combo.map(p => p + ' personne' + (p > 1 ? 's' : ''));
-                        const text = labels.join(' + ');
-                        repartitionSelect.innerHTML += `<option value="${combo.join(',')}">${text}</option>`;
-                    });
-                    if (oldValue && Array.from(repartitionSelect.options).some(opt => opt.value === oldValue)) {
-                        repartitionSelect.value = oldValue;
-                    }
-                    repartitionContainer.style.display = 'block';
-                } else {
-                    repartitionContainer.style.display = 'none';
-                    if (repartitionSelect) repartitionSelect.value = '';
-                }
-            }
-
-            function calculerTotal() {
-                const adultes = parseInt(adultesInput?.value || 1);
-                const enfants = parseInt(enfantsInput?.value || 0);
-                const nombrePersonnes = adultes + enfants;
-                const modeReservation = modeReservationSelect?.value || null;
-                let coefficient = 1.00;
-                let pensionLabel = "Prix par personne / nuit";
-                switch (modeReservation) {
-                    case 'demi_pension':
-                        coefficient = 1.20;
-                        pensionLabel = "Prix par personne / nuit (Demi-pension)";
-                        break;
-                    case 'all_inclusive':
-                        coefficient = 1.45;
-                        pensionLabel = "Prix par personne / nuit (All Inclusive)";
-                        break;
-                    case 'all_inclusive_soft(sans_alcool)':
-                        coefficient = 1.37;
-                        pensionLabel = "Prix par personne / nuit (All Inclusive Soft)";
-                        break;
-                    case 'logement_petit_dejeuner':
-                        coefficient = 1.00;
-                        pensionLabel = "Prix par personne / nuit (Petit déjeuner)";
-                        break;
-                }
-                const prixPensionNuit = prixParNuit * coefficient;
-                if (prixPensionSpan) prixPensionSpan.innerText = prixPensionNuit.toFixed(2);
-                if (pensionLabelSpan) pensionLabelSpan.innerText = pensionLabel;
-                if (personnesSpan) personnesSpan.innerText = nombrePersonnes;
-                if (dateArrivee.value && dateDepart.value) {
-                    const arrivee = new Date(dateArrivee.value);
-                    const depart = new Date(dateDepart.value);
-                    if (depart > arrivee) {
-                        const nuits = (depart - arrivee) / (1000 * 60 * 60 * 24);
-                        const total = nuits * nombrePersonnes * prixPensionNuit;
-                        if (nuitsSpan) nuitsSpan.innerText = nuits;
-                        if (totalSpan) totalSpan.innerText = total.toFixed(2) + ' DT';
-                        return;
-                    }
-                }
-                if (nuitsSpan) nuitsSpan.innerText = '0';
-                if (totalSpan) totalSpan.innerText = '0 DT';
-            }
-
-            dateArrivee.addEventListener('change', () => { calculerTotal(); updateRepartitionOptions(); });
-            dateDepart.addEventListener('change', () => { calculerTotal(); updateRepartitionOptions(); });
-            if (adultesInput) adultesInput.addEventListener('input', () => { calculerTotal(); updateRepartitionOptions(); });
-            if (enfantsInput) enfantsInput.addEventListener('input', () => { calculerTotal(); updateRepartitionOptions(); });
-            if (modeReservationSelect) modeReservationSelect.addEventListener('change', () => { calculerTotal(); updateRepartitionOptions(); });
-            if (chambresInput && isHotel) chambresInput.addEventListener('input', () => { calculerTotal(); updateRepartitionOptions(); });
-
-            calculerTotal();
-            updateRepartitionOptions();
-
-            let isSubmitting = false;
-
-            function showModalMessage(message, type = 'success') {
-                const oldMsg = document.getElementById('dynamicModalMessage');
-                if (oldMsg) oldMsg.remove();
-                const msgDiv = document.createElement('div');
-                msgDiv.id = 'dynamicModalMessage';
-                msgDiv.className = `modal-message ${type}`;
-                msgDiv.innerText = message;
-                const submitBtn = reservationForm.querySelector('button[type="submit"]');
-                if (submitBtn) {
-                    submitBtn.parentNode.insertBefore(msgDiv, submitBtn.nextSibling);
-                } else {
-                    reservationForm.appendChild(msgDiv);
-                }
-                msgDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            }
-
-            function clearModalMessage() {
-                const oldMsg = document.getElementById('dynamicModalMessage');
-                if (oldMsg) oldMsg.remove();
-            }
-
-            async function submitReservation(event) {
-                event.preventDefault();
-                if (isSubmitting) return;
-                isSubmitting = true;
-                clearModalMessage();
-
-                dateArrivee.classList.remove('is-invalid');
-                dateDepart.classList.remove('is-invalid');
-                const modaliteError = document.getElementById('modaliteError');
-                if (modaliteError) modaliteError.style.display = 'none';
-                if (formErrorsDiv) {
-                    formErrorsDiv.classList.add('d-none');
-                    formErrorsDiv.innerHTML = '';
-                }
-
-                let errorMessages = [];
-
-                if (!dateArrivee.value) {
-                    errorMessages.push('La date d\'arrivée est obligatoire.');
-                    dateArrivee.classList.add('is-invalid');
-                } else {
-                    const arrivee = new Date(dateArrivee.value);
-                    const today = new Date();
-                    today.setHours(0, 0, 0, 0);
-                    if (arrivee < today) {
-                        errorMessages.push('La date d\'arrivée ne peut pas être dans le passé.');
-                        dateArrivee.classList.add('is-invalid');
-                    }
-                }
-
-                if (!dateDepart.value) {
-                    errorMessages.push('La date de départ est obligatoire.');
-                    dateDepart.classList.add('is-invalid');
-                } else if (dateArrivee.value) {
-                    const arrivee = new Date(dateArrivee.value);
-                    const depart = new Date(dateDepart.value);
-                    if (depart <= arrivee) {
-                        errorMessages.push('La date de départ doit être postérieure à la date d\'arrivée.');
-                        dateDepart.classList.add('is-invalid');
-                    }
-                }
-
-                let selectedModalite = null;
-                modaliteRadios.forEach(radio => {
-                    if (radio.checked) selectedModalite = radio.value;
-                });
-                if (!selectedModalite) {
-                    errorMessages.push('Veuillez choisir une modalité de paiement.');
-                    if (modaliteError) modaliteError.style.display = 'block';
-                }
-
-                const modeReservation = modeReservationSelect?.value || null;
-                const pensionErrorDiv = document.getElementById('pensionError');
-                if (!modeReservation) {
-                    errorMessages.push('Veuillez choisir une formule de pension.');
-                    if (pensionErrorDiv) pensionErrorDiv.style.display = 'block';
-                    modeReservationSelect?.classList.add('is-invalid');
-                } else {
-                    if (pensionErrorDiv) pensionErrorDiv.style.display = 'none';
-                    modeReservationSelect?.classList.remove('is-invalid');
-                }
-
-                const adultes = parseInt(adultesInput?.value || 1);
-                const enfants = parseInt(enfantsInput?.value || 0);
-                const nombreChambres = parseInt(chambresInput?.value || 1);
-                if (adultes < 1) errorMessages.push('Au moins 1 adulte.');
-                if (enfants < 0) errorMessages.push('Nombre d\'enfants invalide.');
-                if (nombreChambres < 1) errorMessages.push('Au moins 1 chambre.');
-
-                if (errorMessages.length > 0) {
-                    if (formErrorsDiv) {
-                        formErrorsDiv.innerHTML = errorMessages.join('<br>');
-                        formErrorsDiv.classList.remove('d-none');
-                    }
-                    isSubmitting = false;
-                    return;
-                }
-
-                const logementId = reservationForm.querySelector('input[name="logement_id"]').value;
-                let paiementImmediat = false;
-
-                if (selectedModalite === 'En ligne') {
-                    const result = await Swal.fire({
-                        title: 'Paiement en ligne',
-                        text: 'Choisissez une option :',
-                        icon: 'question',
-                        showDenyButton: true,
-                        showCancelButton: false,
-                        confirmButtonText: 'Payer maintenant',
-                        denyButtonText: 'Payer plus tard',
-                        confirmButtonColor: '#23779C',
-                        denyButtonColor: '#6c757d'
-                    });
-                    if (result.isConfirmed) {
-                        paiementImmediat = true;
-                    } else if (result.isDenied) {
-                        paiementImmediat = false;
-                    } else {
-                        isSubmitting = false;
-                        return;
-                    }
-                }
-
-                const repartitionChambres = document.getElementById('repartition_chambres')?.value || null;
-
-                const data = {
-                    logement_id: logementId,
-                    date_arrivee: dateArrivee.value,
-                    date_depart: dateDepart.value,
-                    modalite: selectedModalite,
-                    paiement_immediat: paiementImmediat,
-                    adultes: adultes,
-                    enfants: enfants,
-                    nombre_chambres: nombreChambres,
-                    mode_reservation: modeReservation,
-                    repartition_chambres: repartitionChambres
-                };
-
-                try {
-                    const response = await fetch('/reservation/create-ajax', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
-                        body: JSON.stringify(data)
-                    });
-                    const result = await response.json();
-
-                    if (response.ok && result.success) {
-                        closeModal();
-                        if (result.stripe_url) {
-                            window.location.href = result.stripe_url;
-                        } else {
-                            await Swal.fire({
-                                title: 'Réservation confirmée',
-                                text: result.message + ' Un email de confirmation vous a été envoyé.',
-                                icon: 'success',
-                                confirmButtonColor: '#23779C',
-                                confirmButtonText: 'OK',
-                                timer: 4000,
-                                timerProgressBar: true,
-                                allowOutsideClick: false
-                            });
-                            window.location.href = "{{ path('app_front_reservation_index') }}";
-                        }
-                    } else {
-                        const errorMsg = result.message || 'Une erreur est survenue.';
-                        showModalMessage(errorMsg, 'error');
-                        isSubmitting = false;
-                    }
-                } catch (err) {
-                    console.error(err);
-                    showModalMessage('Une erreur technique est survenue. Veuillez réessayer.', 'error');
-                    isSubmitting = false;
-                }
-            }
-
-            if (reservationForm) {
-                reservationForm.removeEventListener('submit', reservationForm.submitHandler);
-                reservationForm.submitHandler = submitReservation;
-                reservationForm.addEventListener('submit', reservationForm.submitHandler);
+    // ---------- Ajustement automatique du nombre de chambres ----------
+    function adjustChambresIfNeeded() {
+        if (!isHotel) return;
+        const adultes = parseInt(adultesInput?.value || 1);
+        const enfants = parseInt(enfantsInput?.value || 0);
+        const totalPersonnes = adultes + enfants;
+        const currentChambres = parseInt(chambresInput?.value || 1);
+        if (totalPersonnes > 4 && currentChambres === 1) {
+            const needed = Math.ceil(totalPersonnes / 4);
+            if (chambresInput) {
+                chambresInput.value = needed;
+                updateRepartitionOptions();
+                calculerTotal();
             }
         }
+    }
+
+    // ---------- Mise à jour des options de répartition ----------
+    function updateRepartitionOptions() {
+        if (!isHotel) {
+            if (repartitionContainer) repartitionContainer.style.display = 'none';
+            if (repartitionSelect) repartitionSelect.value = '';
+            return;
+        }
+
+        const adultes = parseInt(adultesInput?.value || 1);
+        const enfants = parseInt(enfantsInput?.value || 0);
+        const totalPersonnes = adultes + enfants;
+        const chambresDemandees = parseInt(chambresInput?.value || 1);
+        const maxParChambre = 4;
+        const chambresNecessaires = Math.ceil(totalPersonnes / maxParChambre);
+        const chambresEffectives = Math.max(chambresDemandees, chambresNecessaires);
+
+        if (!repartitionContainer) return;
+        const oldValue = repartitionSelect ? repartitionSelect.value : '';
+
+        // Afficher la répartition si plus d'une chambre ET totalPersonnes > 0
+        if (chambresEffectives > 1 && totalPersonnes > 0) {
+            const combos = [];
+            function findCombos(remaining, chambers, current) {
+                if (chambers === 0) {
+                    if (remaining === 0) combos.push([...current]);
+                    return;
+                }
+                for (let i = 1; i <= Math.min(remaining, maxParChambre); i++) {
+                    current.push(i);
+                    findCombos(remaining - i, chambers - 1, current);
+                    current.pop();
+                }
+            }
+            findCombos(totalPersonnes, chambresEffectives, []);
+
+            const uniqueCombos = [];
+            combos.forEach(combo => {
+                const sorted = [...combo].sort((a,b)=>a-b);
+                const key = sorted.join(',');
+                if (!uniqueCombos.some(c => c.join(',') === key)) uniqueCombos.push(sorted);
+            });
+
+            repartitionSelect.innerHTML = '<option value="">Choisir une répartition</option>';
+            uniqueCombos.forEach(combo => {
+                const labels = combo.map(p => p + ' personne' + (p > 1 ? 's' : ''));
+                const text = labels.join(' + ');
+                repartitionSelect.innerHTML += `<option value="${combo.join(',')}">${text}</option>`;
+            });
+            if (oldValue && Array.from(repartitionSelect.options).some(opt => opt.value === oldValue)) {
+                repartitionSelect.value = oldValue;
+            }
+            repartitionContainer.style.display = 'block';
+        } else {
+            repartitionContainer.style.display = 'none';
+            if (repartitionSelect) repartitionSelect.value = '';
+        }
+    }
+
+    // ---------- Calcul du total ----------
+    function calculerTotal() {
+        const adultes = parseInt(adultesInput?.value || 1);
+        const enfants = parseInt(enfantsInput?.value || 0);
+        const nombrePersonnes = adultes + enfants;
+        const modeReservation = modeReservationSelect?.value || null;
+
+        let coefficient = 1.00;
+        let pensionLabel = "Prix par personne / nuit";
+        switch (modeReservation) {
+            case 'demi_pension':
+                coefficient = 1.20;
+                pensionLabel = "Prix par personne / nuit (Demi-pension)";
+                break;
+            case 'all_inclusive':
+                coefficient = 1.45;
+                pensionLabel = "Prix par personne / nuit (All Inclusive)";
+                break;
+            case 'all_inclusive_soft(sans_alcool)':
+                coefficient = 1.37;
+                pensionLabel = "Prix par personne / nuit (All Inclusive Soft)";
+                break;
+            case 'logement_petit_dejeuner':
+                coefficient = 1.00;
+                pensionLabel = "Prix par personne / nuit (Petit déjeuner)";
+                break;
+        }
+
+        const prixPensionNuit = prixParNuit * coefficient;
+        if (prixPensionSpan) prixPensionSpan.innerText = prixPensionNuit.toFixed(2);
+        if (pensionLabelSpan) pensionLabelSpan.innerText = pensionLabel;
+        if (personnesSpan) personnesSpan.innerText = nombrePersonnes;
+
+        if (dateArrivee.value && dateDepart.value) {
+            const arrivee = new Date(dateArrivee.value);
+            const depart = new Date(dateDepart.value);
+            if (depart > arrivee) {
+                const nuits = (depart - arrivee) / (1000 * 60 * 60 * 24);
+                const total = nuits * nombrePersonnes * prixPensionNuit;
+                if (nuitsSpan) nuitsSpan.innerText = nuits;
+                if (totalSpan) totalSpan.innerText = total.toFixed(2) + ' DT';
+                return;
+            }
+        }
+        if (nuitsSpan) nuitsSpan.innerText = '0';
+        if (totalSpan) totalSpan.innerText = '0 DT';
+    }
+
+    // ---------- Écouteurs d'événements ----------
+    dateArrivee.addEventListener('change', () => { calculerTotal(); updateRepartitionOptions(); });
+    dateDepart.addEventListener('change', () => { calculerTotal(); updateRepartitionOptions(); });
+    if (adultesInput) adultesInput.addEventListener('input', () => { adjustChambresIfNeeded(); calculerTotal(); updateRepartitionOptions(); });
+    if (enfantsInput) enfantsInput.addEventListener('input', () => { adjustChambresIfNeeded(); calculerTotal(); updateRepartitionOptions(); });
+    if (modeReservationSelect) modeReservationSelect.addEventListener('change', () => { calculerTotal(); updateRepartitionOptions(); });
+    if (chambresInput && isHotel) chambresInput.addEventListener('input', () => { calculerTotal(); updateRepartitionOptions(); });
+
+    // Initialisation des valeurs
+    calculerTotal();
+    updateRepartitionOptions();
+    adjustChambresIfNeeded();
+
+    // ---------- Soumission du formulaire ----------
+    let isSubmitting = false;
+
+    function showModalMessage(message, type = 'success') {
+        const oldMsg = document.getElementById('dynamicModalMessage');
+        if (oldMsg) oldMsg.remove();
+        const msgDiv = document.createElement('div');
+        msgDiv.id = 'dynamicModalMessage';
+        msgDiv.className = `modal-message ${type}`;
+        msgDiv.innerText = message;
+        const submitBtn = reservationForm.querySelector('button[type="submit"]');
+        if (submitBtn) {
+            submitBtn.parentNode.insertBefore(msgDiv, submitBtn.nextSibling);
+        } else {
+            reservationForm.appendChild(msgDiv);
+        }
+        msgDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function clearModalMessage() {
+        const oldMsg = document.getElementById('dynamicModalMessage');
+        if (oldMsg) oldMsg.remove();
+    }
+
+    async function submitReservation(event) {
+        event.preventDefault();
+        if (isSubmitting) return;
+        isSubmitting = true;
+        clearModalMessage();
+
+        dateArrivee.classList.remove('is-invalid');
+        dateDepart.classList.remove('is-invalid');
+        const modaliteError = document.getElementById('modaliteError');
+        if (modaliteError) modaliteError.style.display = 'none';
+        if (formErrorsDiv) {
+            formErrorsDiv.classList.add('d-none');
+            formErrorsDiv.innerHTML = '';
+        }
+
+        let errorMessages = [];
+
+        if (!dateArrivee.value) {
+            errorMessages.push('La date d\'arrivée est obligatoire.');
+            dateArrivee.classList.add('is-invalid');
+        } else {
+            const arrivee = new Date(dateArrivee.value);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            if (arrivee < today) {
+                errorMessages.push('La date d\'arrivée ne peut pas être dans le passé.');
+                dateArrivee.classList.add('is-invalid');
+            }
+        }
+
+        if (!dateDepart.value) {
+            errorMessages.push('La date de départ est obligatoire.');
+            dateDepart.classList.add('is-invalid');
+        } else if (dateArrivee.value) {
+            const arrivee = new Date(dateArrivee.value);
+            const depart = new Date(dateDepart.value);
+            if (depart <= arrivee) {
+                errorMessages.push('La date de départ doit être postérieure à la date d\'arrivée.');
+                dateDepart.classList.add('is-invalid');
+            }
+        }
+
+        let selectedModalite = null;
+        modaliteRadios.forEach(radio => {
+            if (radio.checked) selectedModalite = radio.value;
+        });
+        if (!selectedModalite) {
+            errorMessages.push('Veuillez choisir une modalité de paiement.');
+            if (modaliteError) modaliteError.style.display = 'block';
+        }
+
+        const modeReservation = modeReservationSelect?.value || null;
+        const pensionErrorDiv = document.getElementById('pensionError');
+        if (!modeReservation) {
+            errorMessages.push('Veuillez choisir une formule de pension.');
+            if (pensionErrorDiv) pensionErrorDiv.style.display = 'block';
+            modeReservationSelect?.classList.add('is-invalid');
+        } else {
+            if (pensionErrorDiv) pensionErrorDiv.style.display = 'none';
+            modeReservationSelect?.classList.remove('is-invalid');
+        }
+
+        const adultes = parseInt(adultesInput?.value || 1);
+        const enfants = parseInt(enfantsInput?.value || 0);
+        const nombreChambres = parseInt(chambresInput?.value || 1);
+        if (adultes < 1) errorMessages.push('Au moins 1 adulte.');
+        if (enfants < 0) errorMessages.push('Nombre d\'enfants invalide.');
+        if (nombreChambres < 1) errorMessages.push('Au moins 1 chambre.');
+
+        if (errorMessages.length > 0) {
+            if (formErrorsDiv) {
+                formErrorsDiv.innerHTML = errorMessages.join('<br>');
+                formErrorsDiv.classList.remove('d-none');
+            }
+            isSubmitting = false;
+            return;
+        }
+
+        const logementId = reservationForm.querySelector('input[name="logement_id"]').value;
+        let paiementImmediat = false;
+
+        if (selectedModalite === 'En ligne') {
+            const result = await Swal.fire({
+                title: 'Paiement en ligne',
+                text: 'Choisissez une option :',
+                icon: 'question',
+                showDenyButton: true,
+                showCancelButton: false,
+                confirmButtonText: 'Payer maintenant',
+                denyButtonText: 'Payer plus tard',
+                confirmButtonColor: '#23779C',
+                denyButtonColor: '#6c757d'
+            });
+            if (result.isConfirmed) {
+                paiementImmediat = true;
+            } else if (result.isDenied) {
+                paiementImmediat = false;
+            } else {
+                isSubmitting = false;
+                return;
+            }
+        }
+
+        const repartitionChambres = document.getElementById('repartition_chambres')?.value || null;
+
+        const data = {
+            logement_id: logementId,
+            date_arrivee: dateArrivee.value,
+            date_depart: dateDepart.value,
+            modalite: selectedModalite,
+            paiement_immediat: paiementImmediat,
+            adultes: adultes,
+            enfants: enfants,
+            nombre_chambres: nombreChambres,
+            mode_reservation: modeReservation,
+            repartition_chambres: repartitionChambres
+        };
+
+        try {
+            const response = await fetch('/reservation/create-ajax', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                body: JSON.stringify(data)
+            });
+            const result = await response.json();
+
+            if (response.ok && result.success) {
+                closeModal();
+                if (result.stripe_url) {
+                    window.location.href = result.stripe_url;
+                } else {
+                    await Swal.fire({
+                        title: 'Réservation confirmée',
+                        text: result.message + ' Un email de confirmation vous a été envoyé.',
+                        icon: 'success',
+                        confirmButtonColor: '#23779C',
+                        confirmButtonText: 'OK',
+                        timer: 4000,
+                        timerProgressBar: true,
+                        allowOutsideClick: false
+                    });
+                    window.location.href = "{{ path('app_front_reservation_index') }}";
+                }
+            } else {
+                const errorMsg = result.message || 'Une erreur est survenue.';
+                showModalMessage(errorMsg, 'error');
+                isSubmitting = false;
+            }
+        } catch (err) {
+            console.error(err);
+            showModalMessage('Une erreur technique est survenue. Veuillez réessayer.', 'error');
+            isSubmitting = false;
+        }
+    }
+
+    if (reservationForm) {
+        reservationForm.removeEventListener('submit', reservationForm.submitHandler);
+        reservationForm.submitHandler = submitReservation;
+        reservationForm.addEventListener('submit', reservationForm.submitHandler);
+    }
+}
     </script>
 {% endblock %}
