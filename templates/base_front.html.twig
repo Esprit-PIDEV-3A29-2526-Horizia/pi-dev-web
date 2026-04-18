@@ -49,18 +49,17 @@
                     <li class="nav-item {% if app.request.attributes.get('_route') == 'app_front_mes_participations' %}active{% endif %}">
                         <a href="{{ path('app_front_mes_participations') }}" class="nav-link">Mes Inscriptions</a>
                     </li>
-                    
-                    
 
-                    <!-- Mes réservations : visible seulement si connecté -->
+                    <!-- Mes réservations : dropdown avec deux options (visible seulement si connecté) -->
                     {% if app.user %}
-                        <li class="nav-item dropdown {% if app.request.attributes.get('_route') == 'app_front_reservation_index' %}active{% endif %}">
-                            <a class="nav-link dropdown-toggle" href="#" id="reservationsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <li class="nav-item dropdown {% if app.request.attributes.get('_route') starts with 'app_front_reservation' %}active{% endif %}">
+                            <a class="nav-link dropdown-toggle" href="#" id="reservationsDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 Mes réservations
                             </a>
-                            <ul class="dropdown-menu" aria-labelledby="reservationsDropdown">
-                                <li><a class="dropdown-item" href="{{ path('app_front_reservation_index') }}">Mes réservations de logements</a></li>
-                            </ul>
+                            <div class="dropdown-menu" aria-labelledby="reservationsDropdown">
+                                <a class="dropdown-item" href="{{ path('app_front_mes_reservations') }}">Mes réservations de voyages</a>
+                                <a class="dropdown-item" href="{{ path('app_front_reservationlog_index') }}">Mes réservations de logements</a>
+                            </div>
                         </li>
                     {% endif %}
 

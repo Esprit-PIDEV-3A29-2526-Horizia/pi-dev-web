@@ -70,7 +70,7 @@ class ReservationlogController extends AbstractController
             $em->persist($reservation);
             $em->flush();
             $this->addFlash('success', 'Réservation enregistrée avec succès (paiement sur place).');
-            return $this->redirectToRoute('app_front_reservation_index');
+            return $this->redirectToRoute('app_front_reservationlog_index');
         }
 
         $reservation->setStatus('en_attente');
@@ -94,7 +94,7 @@ class ReservationlogController extends AbstractController
             $em->flush();
             $this->addFlash('success', 'Paiement accepté. Réservation confirmée !');
         }
-        return $this->redirectToRoute('app_front_reservation_index');
+        return $this->redirectToRoute('app_front_reservationlog_index');
     }
 
     #[Route('/reservation/cancel/{id}', name: 'app_front_reservation_cancel')]
@@ -107,7 +107,7 @@ class ReservationlogController extends AbstractController
             $this->addFlash('error', 'Paiement annulé. Réservation annulée.');
         }
         $emailService->sendCancellationEmail($reservation->getUser()->getEmail(), $reservation, 'Paiement annulé par l\'utilisateur');
-        return $this->redirectToRoute('app_front_reservation_index');
+        return $this->redirectToRoute('app_front_reservationlog_index');
     }
 
     #[Route('/reservation/create-ajax', name: 'app_front_reservation_create_ajax', methods: ['POST'])]
@@ -250,7 +250,7 @@ class ReservationlogController extends AbstractController
         }
         if ($reservation->getStatus() !== 'en_attente' || $reservation->getModalites() !== 'En ligne') {
             $this->addFlash('error', 'Cette réservation ne peut pas être payée.');
-            return $this->redirectToRoute('app_front_reservation_index');
+            return $this->redirectToRoute('app_front_reservationlog_index');
         }
 
         $successUrl = $this->generateUrl('app_front_reservation_success', ['id' => $reservation->getIdreslog()], UrlGeneratorInterface::ABSOLUTE_URL);

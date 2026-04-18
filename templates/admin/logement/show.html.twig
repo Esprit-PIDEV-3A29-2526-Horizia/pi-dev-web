@@ -1,4 +1,4 @@
-{% extends 'admin/layout.html.twig' %}
+{% extends 'admin/base_admin.html.twig' %}
 
 {% block title %}Détail du logement - {{ logement.nom }}{% endblock %}
 
@@ -6,6 +6,38 @@
     {{ parent() }}
     <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet' />
     <style>
+        /* Styles pour garantir que le sidebar reste visible */
+        .admin-layout {
+            display: flex;
+            flex-wrap: nowrap;
+            min-height: 100vh;
+        }
+        .admin-sidebar {
+            flex-shrink: 0;
+            z-index: 1030;
+            display: block !important;
+            visibility: visible !important;
+        }
+        .admin-main {
+            flex-grow: 1;
+            overflow-x: auto;
+        }
+        .fc-view-harness {
+            width: 100% !important;
+            max-width: 100% !important;
+        }
+        .fc {
+            max-width: 100%;
+            overflow-x: auto;
+        }
+        .toggle-view { margin-bottom: 20px; }
+        .toggle-view .btn {
+            border-radius: 30px;
+            padding: 6px 20px;
+        }
+        .view-section { display: none; }
+        .view-section.active { display: block; }
+        #calendar { min-height: 500px; width: 100%; }
         .pagination-wrapper { margin-top: 20px; }
         .pagination {
             display: flex;
@@ -30,16 +62,6 @@
             color: #6c757d;
             pointer-events: none;
         }
-        .toggle-view { margin-bottom: 20px; }
-        .toggle-view .btn {
-            border-radius: 30px;
-            padding: 6px 20px;
-        }
-        .view-section { display: none; }
-        .view-section.active { display: block; }
-        #calendar { min-height: 500px; }
-
-        /* Palette de couleurs personnalisée */
         .badge-status-confirmed { background-color: #81AE8D !important; color: white; }
         .badge-status-pending { background-color: #E8B156 !important; color: #333; }
         .badge-status-cancelled { background-color: #dc3545 !important; color: white; }
@@ -135,12 +157,12 @@
                                         {% for r in reservations %}
                                             <tr>
                                                 <td>
-                                                    <a href="{{ path('admin_user_show', {'id': r.user.id}) }}" class="text-decoration-none fw-semibold text-horozia-primary">
+                                                    <a href="{{ path('app_user_show', {'id': r.user.id}) }}" class="text-decoration-none fw-semibold text-horozia-primary">
                                                         <i class="bi bi-person-circle me-1"></i>{{ r.user.nom ?: r.user.email }}
                                                     </a>
-                                                 </td>
+                                                  </td>
                                                 <td>{{ r.dateDebut|date('d/m/Y') }} → {{ r.dateFin|date('d/m/Y') }}</td>
-                                                <td>{{ r.montant|number_format(2, ',', ' ') }} DT</td>
+                                                <td class="fw-bold">{{ r.montant|number_format(2, ',', ' ') }} DT</td>
                                                 <td>
                                                     <span class="badge 
                                                         {% if r.status == 'confirmée' %}badge-status-confirmed
@@ -293,27 +315,34 @@
         const btnCalendar = document.getElementById('btnCalendarView');
         const loginUrl = '{{ path('app_login') }}';
 
-        btnTable.addEventListener('click', () => {
-            tableView.classList.add('active');
-            calendarView.classList.remove('active');
-            btnTable.classList.add('active');
-            btnCalendar.classList.remove('active');
-        });
+        if (btnTable && btnCalendar) {
+            btnTable.addEventListener('click', () => {
+                tableView.classList.add('active');
+                calendarView.classList.remove('active');
+                btnTable.classList.add('active');
+                btnCalendar.classList.remove('active');
+            });
 
-        btnCalendar.addEventListener('click', () => {
-            calendarView.classList.add('active');
-            tableView.classList.remove('active');
-            btnCalendar.classList.add('active');
-            btnTable.classList.remove('active');
-            if (!window.calendarInstance) {
-                initCalendar();
-            } else {
-                window.calendarInstance.render();
-            }
-        });
+            btnCalendar.addEventListener('click', () => {
+                calendarView.classList.add('active');
+                tableView.classList.remove('active');
+                btnCalendar.classList.add('active');
+                btnTable.classList.remove('active');
+                if (!window.calendarInstance) {
+                    initCalendar();
+                } else {
+                    window.calendarInstance.render();
+                    // Force le redimensionnement après l'affichage
+                    setTimeout(() => {
+                        if (window.calendarInstance) window.calendarInstance.updateSize();
+                    }, 100);
+                }
+            });
+        }
 
         function initCalendar() {
             const calendarEl = document.getElementById('calendar');
+            if (!calendarEl) return;
             window.calendarInstance = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'dayGridMonth',
                 locale: 'fr',
@@ -340,11 +369,12 @@
             window.calendarInstance.render();
         }
 
-        // Gestion QR code avec vérification de session
+        // Gestion QR code
         document.querySelectorAll('.btn-qr').forEach(btn => {
             btn.addEventListener('click', function(e) {
                 const id = this.dataset.id;
                 const modalBody = document.getElementById('qrModalBody');
+                if (!modalBody) return;
                 modalBody.innerHTML = '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Chargement...</span></div>';
                 fetch(`/admin/logement/qrcode/${id}`, {
                     headers: { 'X-Requested-With': 'XMLHttpRequest' }

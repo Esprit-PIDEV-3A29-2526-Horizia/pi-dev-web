@@ -30,7 +30,10 @@ services:
     App\Service\StripeService:
         arguments:
             $stripeSecretKey: '%stripe_secret_key%'
-
+    App\Service\GeminiService:
+        arguments:
+            $apiKey: '%env(GEMINI_API_KEY)%'
+            $logger: '@logger'
     # Listeners
     App\EventListener\TwoFactorLoginListener:
         tags:

@@ -1,4 +1,4 @@
-{% extends 'admin/layout.html.twig' %}
+{% extends 'admin/base_admin.html.twig' %}
 
 {% block title %}Gestion des réservations - Horozia{% endblock %}
 
@@ -6,11 +6,36 @@
     {{ parent() }}
     <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet' />
     <style>
+        /* ========== STYLES POUR MAINTENIR LE SIDEBAR VISIBLE ========== */
+        .admin-layout {
+            display: flex;
+            flex-wrap: nowrap;
+            min-height: 100vh;
+        }
+        .admin-sidebar {
+            flex-shrink: 0;
+            z-index: 1030;
+            display: block !important;
+            visibility: visible !important;
+        }
+        .admin-main {
+            flex-grow: 1;
+            overflow-x: auto;
+        }
+        .fc-view-harness {
+            width: 100% !important;
+            max-width: 100% !important;
+        }
+        .fc {
+            max-width: 100%;
+            overflow-x: auto;
+        }
+        /* ========== STYLES EXISTANTS ========== */
         .toggle-view { margin-bottom: 20px; }
         .toggle-view .btn { border-radius: 30px; padding: 6px 20px; }
         .view-section { display: none; }
         .view-section.active { display: block; }
-        #calendar { min-height: 500px; }
+        #calendar { min-height: 500px; width: 100%; }
         .pagination-wrapper { margin-top: 20px; }
         .pagination {
             display: flex;
@@ -35,12 +60,10 @@
             color: #6c757d;
             pointer-events: none;
         }
-        /* Palette de couleurs pour les statuts */
         .badge-status-confirmed { background-color: #81AE8D !important; color: white; }
         .badge-status-pending { background-color: #E8B156 !important; color: #333; }
         .badge-status-cancelled { background-color: #dc3545 !important; color: white; }
         .badge-status-default { background-color: #6c757d !important; color: white; }
-        /* Liens personnalisés */
         .link-horozia {
             color: #23779C;
             text-decoration: none;
@@ -102,7 +125,7 @@
         <button id="btnCalendarView" class="btn btn-outline-primary rounded-pill">📅 Calendrier</button>
     </div>
 
-    <!-- Section Tableau (existante) -->
+    <!-- Section Tableau -->
     <div id="tableView" class="view-section active">
         <div class="card border-0 shadow-sm rounded-4">
             <div class="card-body p-0">
@@ -131,7 +154,7 @@
                                         </a>
                                     </td>
                                     <td>
-                                        <a href="{{ path('admin_user_show', {'id': r.user.id}) }}" class="link-horozia">
+                                        <a href="{{ path('app_user_show', {'id': r.user.id}) }}" class="link-horozia">
                                             {{ r.user.prenom }} {{ r.user.nom }}
                                         </a>
                                     </td>
@@ -160,7 +183,8 @@
                                     </td>
                                 </tr>
                             {% else %}
-                                <tr><td colspan="10" class="text-center text-muted py-5"><i class="bi bi-inbox fs-1 d-block mb-2"></i>Aucune réservation trouvée.{% endfor %}
+                                <tr><td colspan="10" class="text-center text-muted py-5"><i class="bi bi-inbox fs-1 d-block mb-2"></i>Aucune réservation trouvée.</td></tr>
+                            {% endfor %}
                         </tbody>
                     </table>
                 </div>
@@ -179,7 +203,7 @@
                         <li class="page-item disabled"><span class="page-link rounded-pill me-2">&laquo; Précédent</span></li>
                     {% endif %}
 
-                    {% set totalPages = (total / limit)|round(0, 'ceil') %}
+                    {% set totalPages = (total + limit - 1) // limit %}
                     {% for p in 1..totalPages %}
                         <li class="page-item {{ p == currentPage ? 'active' : '' }}">
                             <a class="page-link rounded-pill mx-1" href="{{ path('admin_reservation_index', { 'page': p, 'search': search, 'status': status, 'sort': sort }) }}">{{ p }}</a>
@@ -250,26 +274,33 @@
     const btnTable = document.getElementById('btnTableView');
     const btnCalendar = document.getElementById('btnCalendarView');
 
-    btnTable.addEventListener('click', () => {
-        tableView.classList.add('active');
-        calendarView.classList.remove('active');
-        btnTable.classList.add('active');
-        btnCalendar.classList.remove('active');
-    });
-    btnCalendar.addEventListener('click', () => {
-        calendarView.classList.add('active');
-        tableView.classList.remove('active');
-        btnCalendar.classList.add('active');
-        btnTable.classList.remove('active');
-        if (!window.calendarInstance) {
-            initCalendar();
-        } else {
-            window.calendarInstance.render();
-        }
-    });
+    if (btnTable && btnCalendar) {
+        btnTable.addEventListener('click', () => {
+            tableView.classList.add('active');
+            calendarView.classList.remove('active');
+            btnTable.classList.add('active');
+            btnCalendar.classList.remove('active');
+        });
+        btnCalendar.addEventListener('click', () => {
+            calendarView.classList.add('active');
+            tableView.classList.remove('active');
+            btnCalendar.classList.add('active');
+            btnTable.classList.remove('active');
+            if (!window.calendarInstance) {
+                initCalendar();
+            } else {
+                window.calendarInstance.render();
+                // Force le redimensionnement après l'affichage
+                setTimeout(() => {
+                    if (window.calendarInstance) window.calendarInstance.updateSize();
+                }, 100);
+            }
+        });
+    }
 
     function initCalendar() {
         const calendarEl = document.getElementById('calendar');
+        if (!calendarEl) return;
         window.calendarInstance = new FullCalendar.Calendar(calendarEl, {
             initialView: 'dayGridMonth',
             locale: 'fr',
@@ -293,13 +324,18 @@
             height: 'auto'
         });
         window.calendarInstance.render();
+        // Recharger après l'affichage
+        setTimeout(() => {
+            if (window.calendarInstance) window.calendarInstance.refetchEvents();
+        }, 200);
     }
 
-    // Gestion QR code avec vérification de session
+    // Gestion QR code
     document.querySelectorAll('.btn-qr').forEach(btn => {
         btn.addEventListener('click', function(e) {
             const id = this.dataset.id;
             const modalBody = document.getElementById('qrModalBody');
+            if (!modalBody) return;
             modalBody.innerHTML = '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Chargement...</span></div>';
             fetch(`/admin/logement/qrcode/${id}`, {
                 headers: { 'X-Requested-With': 'XMLHttpRequest' }

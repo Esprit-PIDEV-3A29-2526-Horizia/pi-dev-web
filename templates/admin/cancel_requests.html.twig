@@ -1,0 +1,65 @@
+{% extends 'admin/base_admin.html.twig' %}
+
+{% block title %}Demandes d'annulation - Horozia{% endblock %}
+
+{% block admin_content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Demandes d'annulation en attente</h1>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-bordered table-hover">
+        <thead>
+            <tr>
+                <th>Logement</th>
+                <th>Dates</th>
+                <th>Montant</th>
+                <th>Demandée le</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in requests %}
+            <tr id="row-{{ r.idreslog }}">
+                <td>{{ r.logement.nom }}</td>
+                <td>{{ r.dateDebut|date('d/m/Y') }} → {{ r.dateFin|date('d/m/Y') }}</td>
+                <td>{{ r.montant }} DT</td>
+                <td>{{ r.createdAt|date('d/m/Y H:i') }}</td>
+                <td>
+                    <button class="btn btn-sm btn-success btn-approve" data-id="{{ r.idreslog }}">✔ Approuver</button>
+                    <button class="btn btn-sm btn-danger btn-reject" data-id="{{ r.idreslog }}">✘ Rejeter</button>
+                 </td>
+             </tr>
+            {% else %}
+            <tr>
+                <td colspan="6" class="text-center">Aucune demande en attente</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script>
+    function handleAction(id, action) {
+        fetch(`/admin/reservation/${action}-cancel/${id}`, {
+            method: 'POST',
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById(`row-${id}`).remove();
+                location.reload();
+            } else {
+                alert('Erreur: ' + (data.error || 'Inconnue'));
+            }
+        });
+    }
+    document.querySelectorAll('.btn-approve').forEach(btn => {
+        btn.addEventListener('click', () => handleAction(btn.dataset.id, 'approve'));
+    });
+    document.querySelectorAll('.btn-reject').forEach(btn => {
+        btn.addEventListener('click', () => handleAction(btn.dataset.id, 'reject'));
+    });
+</script>
+{% endblock %}

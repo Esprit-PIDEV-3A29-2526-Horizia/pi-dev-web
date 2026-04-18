@@ -9,7 +9,6 @@ use App\Service\ChambreTypeService;
 use App\Service\EmailService;
 use App\Service\PdfService;
 use App\Service\QrCodeService;
-use App\Service\ReservationlogSearchService;
 use Doctrine\ORM\EntityManagerInterface;
 use Knp\Component\Pager\PaginatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -20,45 +19,80 @@ use Symfony\Component\Routing\Annotation\Route;
 
 class MesReservationslogController extends AbstractController
 {
-    #[Route('/mes-reservations', name: 'app_front_reservation_index')]
+    // Page principale
+    #[Route('/mes-reservations_log', name: 'app_front_reservationlog_index')]
     public function index(): Response
     {
         return $this->render('front/reservationlog/index.html.twig');
     }
 
-    #[Route('/mes-reservations/ajax', name: 'app_front_reservation_ajax', methods: ['GET'])]
-    public function ajax(Request $request, ReservationlogSearchService $searchService, EntityManagerInterface $em, ChambreTypeService $chambreTypeService, PaginatorInterface $paginator): JsonResponse
-    {
+    // Route AJAX avec pagination et notifications
+  // Dans MesReservationslogController.php, remplacer la méthode ajax par celle-ci :
+
+#[Route('/mes-reservations/ajax', name: 'app_front_reservation_ajax', methods: ['GET'])]
+public function ajax(Request $request, EntityManagerInterface $em, ChambreTypeService $chambreTypeService, PaginatorInterface $paginator): JsonResponse
+{
+    try {
         $user = $this->getUser();
         if (!$user instanceof User) {
             return $this->json(['error' => 'Utilisateur non authentifié'], 401);
         }
 
-        $search = $request->query->get('search');
-        $status = $request->query->get('status');
-        $sort = $request->query->get('sort', 'date_desc');
-        $page = max(1, $request->query->getInt('page', 1));
-        $limit = max(1, $request->query->getInt('limit', 6));
+        $search = $request->query->get('search', '');
+        $status = $request->query->get('status', '');
+        $sort   = $request->query->get('sort', 'date_desc');
+        $page   = max(1, $request->query->getInt('page', 1));
+        $limit  = max(1, $request->query->getInt('limit', 6));
 
-        // Récupération des réservations via le service existant
-        $result = $searchService->getFilteredReservationsByUser($user, $search, $status, $sort, 1, 1000);
-        $allReservations = $result['reservations'];
+        // Construction directe du QueryBuilder
+        $qb = $em->getRepository(Reservationlog::class)->createQueryBuilder('r')
+            ->leftJoin('r.logement', 'l')
+            ->leftJoin('r.user', 'u')
+            ->where('r.user = :user')
+            ->setParameter('user', $user);
 
-        // Exclure les réservations annulées
-        $filteredReservations = array_filter($allReservations, function($reservation) {
-            return $reservation->getStatus() !== 'annulée';
-        });
+        // Filtre par nom de logement
+        if ($search !== '') {
+            $qb->andWhere('l.nom LIKE :search')
+               ->setParameter('search', '%' . $search . '%');
+        }
 
-        // Pagination avancée
-        $pagination = $paginator->paginate($filteredReservations, $page, $limit);
+        // Filtre par statut (sauf "annulée" déjà exclu)
+        if ($status !== '') {
+            $qb->andWhere('r.status = :status')
+               ->setParameter('status', $status);
+        }
 
-        // Notifications pour l'utilisateur connecté
+        // Exclure les réservations annulées (sauf si on filtre spécifiquement sur "annulée")
+        if ($status !== 'annulée') {
+            $qb->andWhere('r.status != :cancelled')
+               ->setParameter('cancelled', 'annulée');
+        }
+
+        // Tri
+        switch ($sort) {
+            case 'date_asc':   $qb->orderBy('r.date_debut', 'ASC'); break;
+            case 'date_desc':  $qb->orderBy('r.date_debut', 'DESC'); break;
+            case 'montant_asc': $qb->orderBy('r.montant', 'ASC'); break;
+            case 'montant_desc': $qb->orderBy('r.montant', 'DESC'); break;
+            default: $qb->orderBy('r.idreslog', 'DESC');
+        }
+
+        // Pagination avec KnpPaginator (sur le QueryBuilder)
+        $pagination = $paginator->paginate($qb, $page, $limit);
+        $reservations = $pagination->getItems();
+        $total = $pagination->getTotalItemCount();
+        $totalPages = (int) ceil($total / $limit);
+
+        // Notifications utilisateur
         $session = $request->getSession();
         $notifications = $session->get('user_notifications_' . $user->getId(), []);
         $session->remove('user_notifications_' . $user->getId());
 
         $html = '';
-        foreach ($pagination as $reservation) {
+        foreach ($reservations as $reservation) {
+            if (!$reservation->getLogement()) continue;
+
             $chambreTypeDesc = $chambreTypeService->getChambreType(
                 $reservation->getAdultes(),
                 $reservation->getEnfants(),
@@ -81,14 +115,14 @@ class MesReservationslogController extends AbstractController
                 default => 'cancelled'
             };
 
+            $createdAt = $reservation->getCreatedAt() ? $reservation->getCreatedAt()->getTimestamp() : 0;
+
             $html .= '<div class="col-md-6 col-lg-4" data-id="' . $reservation->getIdreslog() . '">
                 <div class="reservation-card">
                     <div class="reservation-card-content">
                         <div class="card-header">
                             <h5>' . htmlspecialchars($reservation->getLogement()->getNom()) . '</h5>
-                            <span class="badge-status ' . $badgeClass . '">
-                                ' . htmlspecialchars($reservation->getStatus()) . '
-                            </span>
+                            <span class="badge-status ' . $badgeClass . '">' . htmlspecialchars($reservation->getStatus()) . '</span>
                         </div>
                         <div class="card-details">
                             <div class="detail-item"><small><i class="fa fa-calendar"></i> Arrivée</small><p>' . $reservation->getDateDebut()->format('d/m/Y') . '</p></div>
@@ -103,31 +137,45 @@ class MesReservationslogController extends AbstractController
             
             if ($reservation->getStatus() !== 'terminée') {
                 $html .= '<a href="#" class="btn-action btn-edit" data-id="' . $reservation->getIdreslog() . '"><i class="fa fa-pencil"></i> Modifier</a>';
-                $html .= '<a href="#" class="btn-action btn-delete" data-id="' . $reservation->getIdreslog() . '" data-created-at="' . $reservation->getCreatedAt()->getTimestamp() . '"><i class="fa fa-trash"></i> Supprimer</a>';
+                $html .= '<a href="#" class="btn-action btn-delete" data-id="' . $reservation->getIdreslog() . '" data-created-at="' . $createdAt . '"><i class="fa fa-trash"></i> Supprimer</a>';
             }
             if ($reservation->getStatus() == 'confirmée') {
                 $html .= '<a href="#" class="btn-action btn-qr" data-id="' . $reservation->getIdreslog() . '"><i class="fa fa-qrcode"></i> QR Code</a>';
             }
             if ($reservation->getStatus() == 'en_attente' && $reservation->getModalites() == 'En ligne') {
-                $html .= '<a href="' . $this->generateUrl('app_front_reservation_pay', ['id' => $reservation->getIdreslog()]) . '" class="btn-action btn-pay" style="background: #23779C; color:white;"><i class="fa fa-credit-card"></i> Finaliser paiement</a>';
+                try {
+                    $payUrl = $this->generateUrl('app_front_reservation_pay', ['id' => $reservation->getIdreslog()]);
+                    $html .= '<a href="' . $payUrl . '" class="btn-action btn-pay" style="background: #23779C; color:white;"><i class="fa fa-credit-card"></i> Finaliser paiement</a>';
+                } catch (\Exception $e) {}
             }
             
             $html .= '</div></div></div></div>';
         }
 
-        if (empty($pagination)) {
+        if (empty($reservations)) {
             $html = '<div class="col-12"><div class="text-center py-5 bg-light rounded-4"><i class="bi bi-calendar-x display-1 text-muted mb-4 d-block"></i><h3 class="text-muted mb-3">Aucune réservation</h3><p class="text-muted mb-4">Commencez par réserver un logement.</p><a href="' . $this->generateUrl('app_front_logement_index') . '" class="btn btn-horozia-primary btn-lg px-5 rounded-pill"><i class="bi bi-house-door me-2"></i> Découvrir les logements</a></div></div>';
         }
 
         return $this->json([
             'html' => $html,
             'notifications' => $notifications,
-            'currentPage' => $pagination->getCurrentPageNumber(),
-            'totalPages' => ceil($pagination->getTotalItemCount() / $limit),
-            'total' => $pagination->getTotalItemCount()
+            'currentPage' => $page,
+            'totalPages' => $totalPages,
+            'total' => $total
         ]);
+    } catch (\Exception $e) {
+        // Log l'erreur pour le débogage
+        error_log('ERREUR AJAX RESERVATIONS: ' . $e->getMessage() . ' dans ' . $e->getFile() . ':' . $e->getLine());
+        return $this->json([
+            'html' => '<div class="col-12 text-center text-danger">Erreur technique : ' . $e->getMessage() . '</div>',
+            'notifications' => [],
+            'currentPage' => 1,
+            'totalPages' => 0,
+            'total' => 0
+        ], 500);
     }
-
+}
+    // Suppression directe (moins d'1h)
     #[Route('/reservation/delete/{id}', name: 'app_front_reservation_delete', methods: ['POST'])]
     public function delete(int $id, EntityManagerInterface $em, EmailService $emailService): JsonResponse
     {
@@ -159,6 +207,7 @@ class MesReservationslogController extends AbstractController
         return $this->json(['success' => true, 'message' => 'Réservation supprimée.']);
     }
 
+    // Demande d'annulation (plus d'1h)
     #[Route('/reservation/request-cancel/{id}', name: 'app_front_reservation_request_cancel', methods: ['POST'])]
     public function requestCancel(int $id, EntityManagerInterface $em): JsonResponse
     {
@@ -182,6 +231,7 @@ class MesReservationslogController extends AbstractController
         return $this->json(['success' => true, 'message' => 'Demande d\'annulation envoyée à l\'administrateur.']);
     }
 
+    // QR Code
     #[Route('/reservation/qrcode/{id}', name: 'app_front_reservation_qrcode', methods: ['GET'])]
     public function qrcode(int $id, EntityManagerInterface $em, QrCodeService $qrCodeService): Response
     {
@@ -227,6 +277,7 @@ class MesReservationslogController extends AbstractController
         return new Response($html);
     }
 
+    // Télécharger PDF
     #[Route('/reservation/download-pdf/{id}', name: 'app_front_reservation_download_pdf', methods: ['GET'])]
     public function downloadPdf(int $id, EntityManagerInterface $em, PdfService $pdfService): Response
     {
@@ -248,6 +299,7 @@ class MesReservationslogController extends AbstractController
         ]);
     }
 
+    // Envoyer email
     #[Route('/reservation/send-email/{id}', name: 'app_front_reservation_send_email', methods: ['POST'])]
     public function sendEmail(int $id, EntityManagerInterface $em, EmailService $emailService): JsonResponse
     {
@@ -275,6 +327,7 @@ class MesReservationslogController extends AbstractController
         }
     }
 
+    // Modale d'édition
     #[Route('/reservation/edit-modal/{id}', name: 'app_front_reservation_edit_modal', methods: ['GET'])]
     public function editModal(int $id, EntityManagerInterface $em): Response
     {
@@ -295,6 +348,7 @@ class MesReservationslogController extends AbstractController
         ]);
     }
 
+    // Éditer réservation
     #[Route('/reservation/edit/{id}', name: 'app_front_reservation_edit', methods: ['POST'])]
     public function edit(int $id, Request $request, EntityManagerInterface $em): JsonResponse
     {

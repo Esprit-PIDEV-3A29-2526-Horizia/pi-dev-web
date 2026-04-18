@@ -4,6 +4,7 @@ namespace App\Entity;
 
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Doctrine\ORM\Mapping\Column;
 use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity]
@@ -37,7 +38,7 @@ class Reservation
     #[Assert\Positive(message: 'Le nombre de personnes doit être positif.')]
     private ?int $nbrPersonnes = null;
 
-    #[ORM\Column(name: 'prix_total', type: 'float', nullable: true)]
+    #[Column(name: 'prix_total', type: 'decimal', precision: 10, scale: 2)]
     private ?float $prixTotal = null;
 
     public function __construct()

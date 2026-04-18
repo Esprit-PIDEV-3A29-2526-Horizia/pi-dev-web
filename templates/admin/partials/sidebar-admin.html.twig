@@ -4,6 +4,7 @@
     </div>
 
     <ul class="sidebar-menu">
+        <!-- Dashboard -->
         <li>
             <a class="sidebar-link {{ app.request.attributes.get('_route') == 'app_admin' ? 'active' : '' }}" href="{{ path('app_admin') }}">
                 <i class="bi bi-grid-fill"></i>
@@ -11,21 +12,23 @@
             </a>
         </li>
 
+        <!-- Gestion Utilisateurs (exemple) -->
         <li>
-        <a class="sidebar-link" href="{{ path('app_user_index') }}">
-            <i class="bi bi-person"></i>
-            <span>Gestion Utilisateurs</span>
-        </a>
+            <a class="sidebar-link" href="{{ path('app_user_index') }}">
+                <i class="bi bi-person"></i>
+                <span>Gestion Utilisateurs</span>
+            </a>
         </li>
 
+        <!-- Gestion Profils -->
         <li>
-    <a class="sidebar-link" href="{{ path('app_profil_index') }}">
-        <i class="bi bi-person"></i>
-        <span>Gestion Profile</span>
-    </a>
-</li>
+            <a class="sidebar-link" href="{{ path('app_profil_index') }}">
+                <i class="bi bi-person-badge"></i>
+                <span>Gestion Profils</span>
+            </a>
         </li>
 
+        <!-- Gestion Catégories -->
         <li>
             <a class="sidebar-link {{ app.request.attributes.get('_route') starts with 'app_categorie_' ? 'active' : '' }}" href="{{ path('app_categorie_index') }}">
                 <i class="bi bi-tags-fill"></i>
@@ -33,6 +36,7 @@
             </a>
         </li>
 
+        <!-- Gestion Voyages -->
         <li>
             <a class="sidebar-link {{ app.request.attributes.get('_route') starts with 'app_voyage_' ? 'active' : '' }}" href="{{ path('app_voyage_index') }}">
                 <i class="bi bi-airplane-fill"></i>
@@ -40,36 +44,56 @@
             </a>
         </li>
 
+        <!-- Gestion Logements -->
         <li>
-            <a class="sidebar-link {{ app.request.attributes.get('_route') starts with 'app_reservation_' ? 'active' : '' }}" href="{{ path('app_reservation_index') }}">
+            <a class="sidebar-link {{ app.request.attributes.get('_route') starts with 'admin_logement_' ? 'active' : '' }}" href="{{ path('admin_logement_index') }}">
+                <i class="bi bi-building"></i>
+                <span>Gestion Logements</span>
+            </a>
+        </li>
+
+        <!-- Gestion Réservations (logements) -->
+        <li>
+            <a class="sidebar-link {{ app.request.attributes.get('_route') == 'admin_reservation_index' ? 'active' : '' }}" href="{{ path('admin_reservation_index') }}">
                 <i class="bi bi-calendar-check-fill"></i>
                 <span>Gestion Réservations</span>
             </a>
         </li>
 
+        <!-- Demandes d'annulation (spécifique logements) -->
+        <li>
+            <a class="sidebar-link {{ app.request.attributes.get('_route') == 'admin_cancel_requests' ? 'active' : '' }}" href="{{ path('admin_cancel_requests') }}">
+                <i class="bi bi-clock-history"></i>
+                <span>Demandes annulation</span>
+                {% set pendingCount = pendingCancelRequests|default(0) %}
+                {% if pendingCount > 0 %}
+                    <span class="badge bg-danger rounded-pill ms-2">{{ pendingCount }}</span>
+                {% endif %}
+            </a>
+        </li>
+
+        <!-- Calendrier (si utilisé) -->
         <li>
             <a class="sidebar-link {{ app.request.attributes.get('_route') == 'app_calendar' ? 'active' : '' }}" href="{{ path('app_calendar') }}">
                 <i class="bi bi-calendar3"></i>
                 <span>Calendrier</span>
             </a>
         </li>
-        </li>
-                <li>
-            <a class="sidebar-link {{ app.request.attributes.get('_route') starts with 'app_participation' ? 'active' : '' }}"
-               href="{{ path('app_participation_index') }}">
+
+        <!-- Gestion Participations -->
+        <li>
+            <a class="sidebar-link {{ app.request.attributes.get('_route') starts with 'app_participation' ? 'active' : '' }}" href="{{ path('app_participation_index') }}">
                 <i class="bi bi-people-fill"></i>
                 <span>Gestion Participations</span>
             </a>
         </li>
+
+        <!-- Gestion Événements -->
         <li>
-            <a class="sidebar-link py-2
-                {{ app.request.attributes.get('_route') == 'app_event_index' ? 'active' : '' }}"
-               href="{{ path('app_event_index') }}">
-                   <i class="bi bi-list-ul"></i>
-                    <span>Gestion Événements</span>
+            <a class="sidebar-link {{ app.request.attributes.get('_route') starts with 'app_event_' ? 'active' : '' }}" href="{{ path('app_event_index') }}">
+                <i class="bi bi-list-ul"></i>
+                <span>Gestion Événements</span>
             </a>
         </li>
-
-        
     </ul>
 </div>
