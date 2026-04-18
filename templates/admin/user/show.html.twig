@@ -2,6 +2,61 @@
 
 {% block title %}Détail de l'utilisateur - {{ user.email }}{% endblock %}
 
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        /* Palette de couleurs personnalisée */
+        .badge-status-confirmed {
+            background-color: #81AE8D !important;
+            color: white;
+        }
+        .badge-status-pending {
+            background-color: #E8B156 !important;
+            color: #333;
+        }
+        .badge-status-cancelled {
+            background-color: #dc3545 !important;
+            color: white;
+        }
+        .badge-status-default {
+            background-color: #6c757d !important;
+            color: white;
+        }
+        .link-horozia {
+            color: #23779C;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .link-horozia:hover {
+            color: #1a5c7a;
+            text-decoration: underline;
+        }
+        .btn-horozia-primary {
+            background-color: #23779C;
+            border-color: #23779C;
+            color: white;
+        }
+        .btn-horozia-primary:hover {
+            background-color: #1a5c7a;
+            border-color: #1a5c7a;
+        }
+        .btn-outline-horozia {
+            color: #23779C;
+            border-color: #23779C;
+        }
+        .btn-outline-horozia:hover {
+            background-color: #23779C;
+            color: white;
+        }
+        .text-horozia-primary {
+            color: #23779C !important;
+        }
+        .bg-horozia-primary {
+            background-color: #23779C !important;
+        }
+    </style>
+{% endblock %}
+
 {% block admin_content %}
 <div class="container-fluid px-4 py-5">
     <div class="row g-5">
@@ -10,8 +65,8 @@
             <div class="card border-0 shadow-lg rounded-4 overflow-hidden mb-4">
                 <div class="card-body p-4">
                     <div class="d-flex align-items-center mb-4">
-                        <div class="bg-primary bg-opacity-10 rounded-circle p-3 me-3">
-                            <i class="bi bi-person-circle fs-1 text-primary"></i>
+                        <div class="bg-horozia-primary bg-opacity-10 rounded-circle p-3 me-3">
+                            <i class="bi bi-person-circle fs-1 text-horozia-primary"></i>
                         </div>
                         <div>
                             <h1 class="display-5 fw-bold mb-1">{{ user.prenom }} {{ user.nom }}</h1>
@@ -21,19 +76,19 @@
                     <hr>
                     <div class="row mt-4">
                         <div class="col-md-6">
-                            <h5><i class="bi bi-envelope me-2"></i>Email</h5>
+                            <h5><i class="bi bi-envelope me-2 text-horozia-primary"></i>Email</h5>
                             <p>{{ user.email }}</p>
                         </div>
                         <div class="col-md-6">
-                            <h5><i class="bi bi-phone me-2"></i>Téléphone</h5>
+                            <h5><i class="bi bi-phone me-2 text-horozia-primary"></i>Téléphone</h5>
                             <p>{{ user.telephone ?: 'Non renseigné' }}</p>
                         </div>
                         <div class="col-md-6">
-                            <h5><i class="bi bi-geo-alt me-2"></i>Adresse</h5>
+                            <h5><i class="bi bi-geo-alt me-2 text-horozia-primary"></i>Adresse</h5>
                             <p>{{ user.addresse ?: 'Non renseignée' }}</p>
                         </div>
                         <div class="col-md-6">
-                            <h5><i class="bi bi-people me-2"></i>Réservations</h5>
+                            <h5><i class="bi bi-people me-2 text-horozia-primary"></i>Réservations</h5>
                             <p>{{ reservations|length }} réservation(s)</p>
                         </div>
                     </div>
@@ -43,7 +98,9 @@
             <!-- Liste des réservations de l'utilisateur -->
             <div class="card border-0 shadow-sm rounded-4">
                 <div class="card-header bg-transparent border-0 pt-4 px-4">
-                    <h3 class="card-title fw-bold"><i class="bi bi-calendar-check me-2"></i>Ses réservations</h3>
+                    <h3 class="card-title fw-bold text-horozia-primary">
+                        <i class="bi bi-calendar-check me-2"></i>Ses réservations
+                    </h3>
                 </div>
                 <div class="card-body p-4">
                     {% if reservations %}
@@ -61,14 +118,26 @@
                                 <tbody>
                                     {% for r in reservations %}
                                         <tr>
-                                            <td><strong>{{ r.logement.nom }}</strong><br><small class="text-muted">{{ r.logement.type }}</small></td>
+                                            <td>
+                                                <a href="{{ path('admin_logement_show', {'id': r.logement.id}) }}" class="link-horozia fw-semibold">
+                                                    {{ r.logement.nom }}
+                                                </a>
+                                                <br><small class="text-muted">{{ r.logement.type }}</small>
+                                              </td>
                                             <td>{{ r.dateDebut|date('d/m/Y') }} → {{ r.dateFin|date('d/m/Y') }}</td>
                                             <td>{{ r.montant|number_format(2, ',', ' ') }} DT</td>
-                                            <td><span class="badge bg-{{ r.status == 'confirmée' ? 'success' : (r.status == 'en_attente' ? 'warning' : 'danger') }}">{{ r.status }}</span></td>
                                             <td>
-                                                {# Lien temporaire – à remplacer par une vraie route admin_reservation_show #}
-                                                <a href="#" class="btn btn-sm btn-outline-primary rounded-pill" onclick="alert('Page détail réservation à créer')">
-                                                    <i class="bi bi-eye"></i> Voir
+                                                <span class="badge 
+                                                    {% if r.status == 'confirmée' %}badge-status-confirmed
+                                                    {% elseif r.status == 'en_attente' %}badge-status-pending
+                                                    {% elseif r.status == 'annulée' %}badge-status-cancelled
+                                                    {% else %}badge-status-default{% endif %}">
+                                                    {{ r.status }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <a href="{{ path('admin_logement_show', {'id': r.logement.id}) }}" class="btn btn-sm btn-outline-horozia rounded-pill">
+                                                    <i class="bi bi-eye"></i> Détail
                                                 </a>
                                             </td>
                                         </tr>
@@ -87,10 +156,10 @@
         <div class="col-lg-4">
             <div class="card border-0 shadow-lg rounded-4 mb-4">
                 <div class="card-body text-center p-4">
-                    <a href="#" class="btn btn-primary btn-lg rounded-pill w-100 mb-2" onclick="alert('Modification utilisateur à venir')">
+                    <a href="#" class="btn btn-horozia-primary btn-lg rounded-pill w-100 mb-2" onclick="alert('Modification utilisateur à venir')">
                         <i class="bi bi-pencil-square me-2"></i>Modifier
                     </a>
-                    <a href="#" class="btn btn-outline-secondary btn-lg rounded-pill w-100" onclick="alert('Liste des utilisateurs à venir')">
+                    <a href="{{ path('admin_reservation_index') }}" class="btn btn-outline-horozia btn-lg rounded-pill w-100">
                         <i class="bi bi-arrow-left me-2"></i>Retour à la liste
                     </a>
                 </div>
