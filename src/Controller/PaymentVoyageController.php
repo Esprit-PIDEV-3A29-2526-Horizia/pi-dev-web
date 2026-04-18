@@ -30,10 +30,43 @@ class PaymentVoyageController extends AbstractController
             throw $this->createNotFoundException('Aucun voyage lié à cette réservation.');
         }
 
+        if (strtoupper((string) $reservation->getStatut()) !== 'CONFIRMEE') {
+            $this->addFlash('error', 'Le paiement est disponible uniquement pour les réservations confirmées.');
+
+            return $this->redirectToRoute('app_front_reservation_detail', [
+                'id' => $reservation->getId(),
+            ]);
+        }
+
+        $paymentStatus = method_exists($reservation, 'getPaymentStatus')
+            ? strtoupper((string) $reservation->getPaymentStatus())
+            : 'NON_PAYEE';
+
+        if ($paymentStatus === 'PAYEE') {
+            $this->addFlash('success', 'Cette réservation est déjà payée.');
+
+            return $this->redirectToRoute('app_front_reservation_detail', [
+                'id' => $reservation->getId(),
+            ]);
+        }
+
+        if (method_exists($reservation, 'getPrixTotal') && $reservation->getPrixTotal() !== null) {
+            $prixTotal = (float) $reservation->getPrixTotal();
+        } else {
+            $prixTotal = (float) $reservation->getVoyage()->getPrix() * (int) $reservation->getNbrPersonnes();
+        }
+
+        if ($prixTotal <= 0) {
+            $this->addFlash('error', 'Montant de paiement invalide.');
+
+            return $this->redirectToRoute('app_front_reservation_detail', [
+                'id' => $reservation->getId(),
+            ]);
+        }
+
         $successUrl = $request->getSchemeAndHttpHost() . '/payment/success/' . $reservation->getId();
         $cancelUrl = $request->getSchemeAndHttpHost() . '/payment/cancel/' . $reservation->getId();
 
-        $prixTotal = $reservation->getVoyage()->getPrix() * $reservation->getNbrPersonnes();
         $amountInMinorUnit = (int) round($prixTotal * 100);
 
         $checkoutUrl = $stripeService->createCheckoutSession(
@@ -58,8 +91,16 @@ class PaymentVoyageController extends AbstractController
             throw $this->createNotFoundException('Réservation introuvable.');
         }
 
-        return $this->render('front/success.html.twig', [
+        if (method_exists($reservation, 'setPaymentStatus')) {
+            $reservation->setPaymentStatus('PAYEE');
+            $entityManager->flush();
+        }
+
+        $this->addFlash('success', 'Le paiement a été effectué avec succès.');
+
+        return $this->render('front/reservation/reservation_detail.html.twig', [
             'reservation' => $reservation,
+            'currency' => 'TND',
         ]);
     }
 
@@ -72,8 +113,11 @@ class PaymentVoyageController extends AbstractController
             throw $this->createNotFoundException('Réservation introuvable.');
         }
 
-        return $this->render('front/cancel.html.twig', [
+        $this->addFlash('error', 'Le paiement a été annulé.');
+
+        return $this->render('front/reservation/reservation_detail.html.twig', [
             'reservation' => $reservation,
+            'currency' => 'TND',
         ]);
     }
 }

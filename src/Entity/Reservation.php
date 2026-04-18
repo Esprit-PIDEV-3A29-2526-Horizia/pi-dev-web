@@ -87,6 +87,11 @@ class Reservation
      */
     private $prixTotal;
 
+        /**
+     * @ORM\Column(name="payment_status", type="string", length=20, nullable=false, options={"default":"NON_PAYEE"})
+     */
+    private $paymentStatus = 'NON_PAYEE';
+
     public function __construct()
     {
         $this->dateReservation = new \DateTime();
@@ -188,6 +193,18 @@ class Reservation
     public function setPrixTotal(?float $prixTotal): self
     {
         $this->prixTotal = $prixTotal;
+        return $this;
+    }
+
+
+    public function getPaymentStatus(): ?string
+    {
+        return $this->paymentStatus;
+    }
+
+    public function setPaymentStatus(string $paymentStatus): self
+    {
+        $this->paymentStatus = $paymentStatus;
         return $this;
     }
 

@@ -1,0 +1,160 @@
+{% extends 'base_front.html.twig' %}
+
+{% block title %}QR Code - Réservation{% endblock %}
+
+{% block body %}
+{% set voyage = reservation.voyage ?? null %}
+
+<section class="hero-wrap hero-wrap-2 js-fullheight" style="background-image: url('{{ asset('front/pacific/images/image_2.jpg') }}');">
+    <div class="overlay"></div>
+    <div class="container">
+        <div class="row no-gutters slider-text js-fullheight align-items-end justify-content-center">
+            <div class="col-md-9 ftco-animate pb-5 text-center">
+                <p class="breadcrumbs">
+                    <span class="mr-2">
+                        <a href="{{ path('app_front_home') }}">Accueil <i class="fa fa-chevron-right"></i></a>
+                    </span>
+                    <span class="mr-2">
+                        <a href="{{ path('app_front_mes_reservations') }}">Mes réservations <i class="fa fa-chevron-right"></i></a>
+                    </span>
+                    <span>QR Code <i class="fa fa-chevron-right"></i></span>
+                </p>
+                <h1 class="mb-0 bread">QR Code de la réservation</h1>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="ftco-section qr-page">
+    <div class="container">
+        <div class="qr-card-main">
+            <div class="qr-header text-center">
+                <span class="qr-subtitle">Horozia</span>
+                <p>{{ voyage ? voyage.titre : 'Voyage' }}</p>
+            </div>
+
+            <div class="qr-preview-box text-center">
+                <img
+                    src="{{ path('app_reservation_qrcode', {'id': reservation.id}) }}"
+                    alt="QR Code réservation"
+                    class="qr-preview-image"
+                >
+            </div>
+
+            <div class="qr-info text-center">
+                <p>
+                    Scannez ce QR code pour accéder rapidement au détail de la réservation.
+                </p>
+            </div>
+
+            <div class="qr-actions">
+                <a href="{{ path('app_reservation_qrcode_download', {'id': reservation.id}) }}" class="btn btn-download-qr">
+                    Télécharger
+                </a>
+
+                <a href="{{ path('app_front_reservation_detail', {'id': reservation.id}) }}" class="btn btn-back-detail">
+                    Retour au détail
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+.qr-page {
+    background: #f9fafb;
+}
+
+.qr-card-main {
+    max-width: 700px;
+    margin: 0 auto;
+    background: #fff;
+    border: 1px solid #E8E3D8;
+    border-radius: 28px;
+    padding: 40px 30px;
+    box-shadow: 0 14px 30px rgba(35, 119, 156, 0.08);
+}
+
+.qr-header h2 {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #1F2937;
+    margin-bottom: 8px;
+}
+
+.qr-header p {
+    color: #6B7280;
+    margin-bottom: 0;
+}
+
+.qr-subtitle {
+    display: inline-block;
+    color: #e76f51;
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+
+.qr-preview-box {
+    margin: 30px auto 20px;
+    background: linear-gradient(145deg, #ffffff, #f6f8fb);
+    border: 1px solid #E8E3D8;
+    border-radius: 24px;
+    padding: 24px;
+    max-width: 360px;
+    box-shadow: 0 10px 24px rgba(35, 119, 156, 0.08);
+}
+
+.qr-preview-image {
+    width: 100%;
+    max-width: 280px;
+    display: block;
+    margin: 0 auto;
+}
+
+.qr-info p {
+    color: #6B7280;
+    font-size: 1rem;
+    margin-bottom: 25px;
+}
+
+.qr-actions {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.btn-download-qr,
+.btn-back-detail {
+    border: none;
+    border-radius: 14px;
+    padding: 12px 20px;
+    font-weight: 700;
+    text-decoration: none !important;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.25s ease;
+}
+
+.btn-download-qr {
+    background: #23779C;
+    color: #fff !important;
+}
+
+.btn-download-qr:hover {
+    background: #1d6483;
+    color: #fff !important;
+}
+
+.btn-back-detail {
+    background: #DACEB6;
+    color: #1F2937 !important;
+}
+
+.btn-back-detail:hover {
+    background: #cfc1a4;
+    color: #1F2937 !important;
+}
+</style>
+{% endblock %}

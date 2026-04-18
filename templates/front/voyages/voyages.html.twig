@@ -1,32 +1,9 @@
-{% extends 'front/base_front.html.twig' %}
+{% extends 'base_front.html.twig' %}
 
 {% block title %}Voyages - Horozia{% endblock %}
 
 {% block body %}
 
-<nav class="navbar navbar-expand-lg navbar-dark ftco_navbar ftco-navbar-light" id="ftco-navbar">
-    <div class="container">
-        <a class="navbar-brand navbar-logo" href="{{ path('app_front_home', {currency: currency}) }}">
-            <img src="{{ asset('images/logo.png') }}" alt="Horozia Logo">
-        </a>
-
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#ftco-nav"
-                aria-controls="ftco-nav" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="fa fa-bars"></span> Menu
-        </button>
-
-        <div class="collapse navbar-collapse" id="ftco-nav">
-            <ul class="navbar-nav ml-auto">
-                <li class="nav-item"><a href="{{ path('app_front_home', {currency: currency}) }}" class="nav-link">Accueil</a></li>
-                <li class="nav-item active"><a href="{{ path('app_front_voyages', {currency: currency}) }}" class="nav-link">Voyages</a></li>
-                <li class="nav-item"><a href="{{ path('app_front_mes_reservations') }}" class="nav-link">Mes réservations</a></li>
-                <li class="nav-item"><a href="{{ path('app_front_mes_favoris') }}" class="nav-link">Mes favoris</a></li>
-                <li class="nav-item"><a href="#services" class="nav-link">Services</a></li>
-                <li class="nav-item"><a href="#contact" class="nav-link">Contact</a></li>
-            </ul>
-        </div>
-    </div>
-</nav>
 
 <section class="hero-wrap hero-wrap-2 js-fullheight" style="background-image: url('{{ asset('front/pacific/images/bg_1.jpg') }}');">
     <div class="overlay"></div>
@@ -58,7 +35,7 @@
                                    name="search"
                                    id="search"
                                    class="form-control"
-                                   value="{{ filters.search }}"
+                                   value="{{ filters.search|default('') }}"
                                    placeholder="Titre ou destination">
                         </div>
 
@@ -68,7 +45,7 @@
                                    name="destination"
                                    id="destination"
                                    class="form-control"
-                                   value="{{ filters.destination }}"
+                                   value="{{ filters.destination|default('') }}"
                                    placeholder="Ex: Athens,GR">
                         </div>
 
@@ -78,7 +55,7 @@
                                    name="budget_max"
                                    id="budget_max"
                                    class="form-control"
-                                   value="{{ filters.budget_max }}"
+                                   value="{{ filters.budget_max|default('') }}"
                                    placeholder="Ex: 1500">
                         </div>
 
@@ -97,7 +74,9 @@
                     </div>
 
                     <div class="text-right">
-                        <a href="{{ path('app_front_voyages', {currency: currency}) }}" class="btn btn-light btn-sm">Réinitialiser</a>
+                        <a href="{{ path('app_front_voyages', {currency: currency}) }}" class="btn btn-light btn-sm">
+                            Réinitialiser
+                        </a>
                     </div>
                 </form>
             </div>
@@ -107,7 +86,7 @@
             <div class="col-md-8 heading-section text-center ftco-animate">
                 <span class="subheading">Horozia</span>
                 <h2 class="mb-4">Nos voyages</h2>
-                <p class="text-muted">{{ totalVoyages }} voyages trouvés</p>
+                <p class="text-muted">{{ voyages.getTotalItemCount }} voyages trouvés</p>
             </div>
         </div>
 
@@ -130,8 +109,7 @@
                                     type="button"
                                     class="favori-btn js-favori-toggle"
                                     data-voyage-id="{{ voyage.id }}"
-                                    title="Ajouter aux favoris"
-                                >
+                                    title="Ajouter aux favoris">
                                     <i class="fa fa-heart-o"></i>
                                 </button>
 
@@ -166,7 +144,9 @@
                                 </span>
 
                                 <h3>
-                                    <a href="{{ path('app_front_voyage_detail', {'id': voyage.id, 'currency': currency}) }}">{{ voyage.titre }}</a>
+                                    <a href="{{ path('app_front_voyage_detail', {'id': voyage.id, 'currency': currency}) }}">
+                                        {{ voyage.titre }}
+                                    </a>
                                 </h3>
 
                                 <p class="location">
@@ -186,7 +166,8 @@
                                 </ul>
 
                                 <p class="mt-3 mb-0">
-                                    <a href="{{ path('app_front_voyage_detail', {'id': voyage.id, 'currency': currency}) }}" class="btn btn-primary py-2 px-3">
+                                    <a href="{{ path('app_front_voyage_detail', {'id': voyage.id, 'currency': currency}) }}"
+                                       class="btn btn-primary py-2 px-3">
                                         Voir détails
                                     </a>
                                 </p>
@@ -201,56 +182,12 @@
             {% endif %}
         </div>
 
-        {% if totalPages > 1 %}
+        {% if voyages.getTotalItemCount > 0 %}
             <div class="row mt-5">
-                <div class="col-12">
-                    <nav aria-label="Pagination des voyages">
-                        <ul class="custom-pagination">
-                            <li class="{{ currentPage == 1 ? 'disabled' : '' }}">
-                                <a href="{{ currentPage == 1
-                                    ? '#'
-                                    : path('app_front_voyages', {
-                                        page: currentPage - 1,
-                                        budget_max: filters.budget_max,
-                                        destination: filters.destination,
-                                        search: filters.search,
-                                        currency: currency
-                                    })
-                                }}">
-                                    &lsaquo;
-                                </a>
-                            </li>
-
-                            {% for p in 1..totalPages %}
-                                <li class="{{ p == currentPage ? 'active' : '' }}">
-                                    <a href="{{ path('app_front_voyages', {
-                                        page: p,
-                                        budget_max: filters.budget_max,
-                                        destination: filters.destination,
-                                        search: filters.search,
-                                        currency: currency
-                                    }) }}">
-                                        {{ p }}
-                                    </a>
-                                </li>
-                            {% endfor %}
-
-                            <li class="{{ currentPage == totalPages ? 'disabled' : '' }}">
-                                <a href="{{ currentPage == totalPages
-                                    ? '#'
-                                    : path('app_front_voyages', {
-                                        page: currentPage + 1,
-                                        budget_max: filters.budget_max,
-                                        destination: filters.destination,
-                                        search: filters.search,
-                                        currency: currency
-                                    })
-                                }}">
-                                    &rsaquo;
-                                </a>
-                            </li>
-                        </ul>
-                    </nav>
+                <div class="col-12 d-flex justify-content-center">
+                    <div class="knp-pagination-wrapper">
+                        {{ knp_pagination_render(voyages) }}
+                    </div>
                 </div>
             </div>
         {% endif %}
@@ -259,6 +196,44 @@
 </section>
 
 <style>
+.custom-nav-dropdown {
+    position: relative;
+}
+
+.custom-dropdown-menu {
+    min-width: 220px;
+    padding: 6px;
+    margin-top: 12px;
+    border: none;
+    border-radius: 14px;
+    background: #ffffff;
+    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.14);
+}
+
+.custom-dropdown-item {
+    display: block;
+    width: 100%;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    color: #23779C !important;
+    padding: 12px 16px;
+    text-align: center;
+    transition: all 0.25s ease;
+}
+
+.custom-dropdown-item:hover,
+.custom-dropdown-item:focus {
+    background: rgba(218, 206, 182, 0.45);
+    color: #23779C !important;
+}
+
+.navbar .dropdown-toggle::after {
+    margin-left: 6px;
+    vertical-align: middle;
+    font-size: 12px;
+}
+
 .front-voyage-card {
     border-radius: 18px;
     overflow: hidden;
@@ -308,51 +283,62 @@
     font-size: 0.95rem;
 }
 
-.custom-pagination {
+.knp-pagination-wrapper nav {
+    display: flex;
+    justify-content: center;
+}
+
+.pagination {
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 14px;
+    gap: 12px;
+    padding-left: 0;
     list-style: none;
-    padding: 0;
+    flex-wrap: wrap;
     margin: 0;
 }
 
-.custom-pagination li {
-    margin: 0;
-}
-
-.custom-pagination li a {
-    width: 52px;
-    height: 52px;
-    border-radius: 50%;
+.pagination span,
+.pagination a {
+    min-width: 48px;
+    height: 48px;
+    padding: 0 14px;
+    border-radius: 999px;
+    background: #ffffff;
     border: 1px solid #e5e5e5;
-    background: #fff;
     color: #111;
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    text-decoration: none;
-    font-size: 22px;
-    font-weight: 500;
+    text-decoration: none !important;
+    font-weight: 600;
     transition: all 0.25s ease;
     box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
 
-.custom-pagination li a:hover {
+.pagination a:hover {
     background: #f8f8f8;
     transform: translateY(-2px);
     color: #111;
 }
 
-.custom-pagination li.active a {
-    background: #2f2e3d;
+.pagination .current {
+    background: #23779C;
     color: #fff;
-    border-color: #2f2e3d;
-    box-shadow: 0 6px 16px rgba(47, 46, 61, 0.25);
+    border-color: #23779C;
+    box-shadow: 0 6px 16px rgba(35, 119, 156, 0.22);
 }
 
-.custom-pagination li.disabled a {
+.pagination .first,
+.pagination .last,
+.pagination .previous,
+.pagination .next {
+    font-weight: 700;
+}
+
+.pagination .disabled,
+.pagination .disabled span {
     pointer-events: none;
     opacity: 0.45;
     background: #fafafa;
@@ -361,6 +347,18 @@
 @media (max-width: 768px) {
     .floating-weather-pill-front {
         padding: 6px 12px;
+    }
+
+    .pagination {
+        gap: 8px;
+    }
+
+    .pagination span,
+    .pagination a {
+        min-width: 42px;
+        height: 42px;
+        padding: 0 10px;
+        font-size: 14px;
     }
 }
 

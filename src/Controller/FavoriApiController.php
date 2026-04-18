@@ -6,6 +6,7 @@ use App\Entity\Favori;
 use App\Entity\Voyage;
 use App\Repository\FavoriRepository;
 use Doctrine\ORM\EntityManagerInterface;
+use Knp\Component\Pager\PaginatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Cookie;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -21,10 +22,25 @@ class FavoriApiController extends AbstractController
     }
 
     #[Route('/mes-favoris', name: 'app_front_mes_favoris', methods: ['GET'])]
-    public function mesFavoris(Request $request, FavoriRepository $favoriRepository): Response
-    {
+    public function mesFavoris(
+        Request $request,
+        FavoriRepository $favoriRepository,
+        PaginatorInterface $paginator
+    ): Response {
         $visitorToken = $this->getOrCreateVisitorToken($request);
-        $favoris = $favoriRepository->findVisitorFavorites($visitorToken);
+
+        $qb = $favoriRepository->createQueryBuilder('f')
+            ->leftJoin('f.voyage', 'v')
+            ->addSelect('v')
+            ->andWhere('f.visitorToken = :visitorToken')
+            ->setParameter('visitorToken', $visitorToken)
+            ->orderBy('f.id', 'DESC');
+
+        $favoris = $paginator->paginate(
+            $qb,
+            max(1, (int) $request->query->get('page', 1)),
+            6
+        );
 
         $response = $this->render('front/mes_favoris.html.twig', [
             'favoris' => $favoris,

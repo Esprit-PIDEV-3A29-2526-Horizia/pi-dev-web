@@ -1,34 +1,10 @@
-{% extends 'front/base_front.html.twig' %}
+{% extends 'base_front.html.twig' %}
 
 {% block title %}Mes favoris{% endblock %}
 
 {% block body %}
 
-<nav class="navbar navbar-expand-lg navbar-dark ftco_navbar ftco-navbar-light" id="ftco-navbar">
-    <div class="container">
-        <a class="navbar-brand navbar-logo" href="{{ path('app_front_home', {currency: 'TND'}) }}">
-            <img src="{{ asset('images/logo.png') }}" alt="Horozia Logo">
-        </a>
-
-        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#ftco-nav"
-                aria-controls="ftco-nav" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="fa fa-bars"></span> Menu
-        </button>
-
-        <div class="collapse navbar-collapse" id="ftco-nav">
-            <ul class="navbar-nav ml-auto">
-                <li class="nav-item"><a href="{{ path('app_front_home', {currency: 'TND'}) }}" class="nav-link">Accueil</a></li>
-                <li class="nav-item"><a href="{{ path('app_front_voyages', {currency: 'TND'}) }}" class="nav-link">Voyages</a></li>
-                <li class="nav-item"><a href="{{ path('app_front_mes_reservations') }}" class="nav-link">Mes réservations</a></li>
-                <li class="nav-item active"><a href="{{ path('app_front_mes_favoris') }}" class="nav-link">Mes favoris</a></li>
-                <li class="nav-item"><a href="#services" class="nav-link">Services</a></li>
-                <li class="nav-item"><a href="#contact" class="nav-link">Contact</a></li>
-            </ul>
-        </div>
-    </div>
-</nav>
-
-<section class="hero-wrap hero-wrap-2" style="background-image: url('{{ asset('front/pacific/images/bg_5.jpg') }}');">
+<section class="hero-wrap hero-wrap-2" style="background-image: url('{{ asset('front/pacific/images/favoris.png') }}');">
     <div class="overlay"></div>
     <div class="container">
         <div class="row no-gutters slider-text align-items-end justify-content-center" style="height: 320px;">
@@ -88,6 +64,7 @@
                                     <span class="fa fa-map-marker"></span>
                                     {{ voyage.destination }}
                                 </p>
+
                                 <div class="favori-actions">
                                     <a href="{{ path('app_front_voyage_detail', {'id': voyage.id, 'currency': 'TND'}) }}"
                                        class="btn btn-primary btn-favori-detail">
@@ -98,6 +75,13 @@
                         </div>
                     </div>
                 {% endfor %}
+
+                <div class="col-12">
+                    <div class="pagination-wrapper">
+                        {{ knp_pagination_render(favoris, 'front/pagination.html.twig') }}
+                    </div>
+                </div>
+
             {% else %}
                 <div class="col-md-8">
                     <div class="favori-empty-box text-center">
@@ -119,6 +103,69 @@
 </section>
 
 <style>
+.pagination-wrapper {
+    margin-top: 30px;
+    display: flex;
+    justify-content: center;
+}
+
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding-left: 0;
+    list-style: none;
+    margin: 0;
+}
+
+.page-item {
+    list-style: none;
+}
+
+.page-item .page-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 52px;
+    height: 52px;
+    padding: 0 22px;
+    border-radius: 999px;
+    background: #f1f3f5;
+    color: #7a8a99;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 1rem;
+    border: none;
+    box-shadow: none;
+    transition: all 0.25s ease;
+}
+
+.page-item .page-link:hover {
+    background: #e7ebef;
+    color: #23779C;
+    text-decoration: none;
+}
+
+.page-item.active .page-link {
+    background: #23779C;
+    color: #ffffff;
+    box-shadow: 0 6px 14px rgba(35, 119, 156, 0.25);
+}
+
+.page-item.disabled .page-link {
+    background: #f1f3f5;
+    color: #b8c0c8;
+    pointer-events: none;
+    opacity: 1;
+}
+
+.page-item:first-child .page-link,
+.page-item:last-child .page-link {
+    padding: 0 24px;
+}
+
 .favoris-page-section {
     background: #f8fbfd;
     padding-top: 90px;
@@ -212,23 +259,6 @@
     margin-right: 6px;
 }
 
-.favori-meta {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    margin-bottom: 22px;
-}
-
-.favori-meta-item {
-    font-size: 0.95rem;
-    color: #4b5563;
-}
-
-.favori-meta-item .fa {
-    color: #ff6b35;
-    margin-right: 8px;
-}
-
 .favori-actions {
     display: flex;
     gap: 10px;
@@ -267,6 +297,13 @@
 
     .favori-title {
         font-size: 1.35rem;
+    }
+
+    .page-item .page-link {
+        min-width: 46px;
+        height: 46px;
+        padding: 0 18px;
+        font-size: 0.95rem;
     }
 }
 </style>

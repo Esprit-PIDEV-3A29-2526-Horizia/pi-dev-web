@@ -3,16 +3,23 @@
 namespace App\Controller;
 
 use App\Entity\Reservation;
-use App\Entity\User;
 use App\Entity\Voyage;
 use App\Service\CurrencyService;
 use App\Service\OpenWeatherService;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
+use Endroid\QrCode\Builder\Builder;
+use Endroid\QrCode\Encoding\Encoding;
+use Endroid\QrCode\ErrorCorrectionLevel;
+use Endroid\QrCode\RoundBlockSizeMode;
+use Endroid\QrCode\Writer\SvgWriter;
+use Knp\Component\Pager\PaginatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 class FrontController extends AbstractController
 {
@@ -72,12 +79,9 @@ class FrontController extends AbstractController
         ManagerRegistry $doctrine,
         Request $request,
         OpenWeatherService $openWeatherService,
-        CurrencyService $currencyService
+        CurrencyService $currencyService,
+        PaginatorInterface $paginator
     ): Response {
-        $page = max(1, (int) $request->query->get('page', 1));
-        $limit = 6;
-        $offset = ($page - 1) * $limit;
-
         $qb = $doctrine->getRepository(Voyage::class)->createQueryBuilder('v')
             ->orderBy('v.id', 'DESC');
 
@@ -103,29 +107,16 @@ class FrontController extends AbstractController
                 ->setParameter('search', '%' . mb_strtolower($filters['search']) . '%');
         }
 
-        $countQb = clone $qb;
-        $totalVoyages = (int) $countQb
-            ->select('COUNT(v.id)')
-            ->resetDQLPart('orderBy')
-            ->getQuery()
-            ->getSingleScalarResult();
+        $currency = $filters['currency'];
 
-        $totalPages = max(1, (int) ceil($totalVoyages / $limit));
-
-        if ($page > $totalPages) {
-            $page = $totalPages;
-            $offset = ($page - 1) * $limit;
-        }
-
-        $voyages = $qb
-            ->setFirstResult($offset)
-            ->setMaxResults($limit)
-            ->getQuery()
-            ->getResult();
+        $voyages = $paginator->paginate(
+            $qb,
+            $request->query->getInt('page', 1),
+            6
+        );
 
         $weatherData = [];
         $convertedPrices = [];
-        $currency = $filters['currency'];
 
         foreach ($voyages as $voyage) {
             $destination = trim((string) $voyage->getDestination());
@@ -142,7 +133,7 @@ class FrontController extends AbstractController
             );
         }
 
-        return $this->render('front/voyages.html.twig', [
+        return $this->render('front/voyages/voyages.html.twig', [
             'voyages' => $voyages,
             'weatherData' => $weatherData,
             'convertedPrices' => $convertedPrices,
@@ -150,10 +141,6 @@ class FrontController extends AbstractController
             'currencySymbol' => $currencyService->getSymbol($currency),
             'allowedCurrencies' => $currencyService->getAllowedCurrencies(),
             'filters' => $filters,
-            'currentPage' => $page,
-            'totalPages' => $totalPages,
-            'totalVoyages' => $totalVoyages,
-            'limit' => $limit,
         ]);
     }
 
@@ -185,7 +172,7 @@ class FrontController extends AbstractController
             $currency
         );
 
-        return $this->render('front/detail.html.twig', [
+        return $this->render('front/voyages/detail.html.twig', [
             'voyage' => $voyage,
             'weather' => $weather,
             'currency' => $currency,
@@ -212,8 +199,10 @@ class FrontController extends AbstractController
 
         if ($voyage->getPlacesRestantes() <= 0) {
             $this->addFlash('error', 'Désolé, ce voyage est complet.');
+
             return $this->redirectToRoute('app_front_voyage_detail', [
                 'id' => $voyage->getId(),
+                'currency' => $request->query->get('currency', 'TND'),
             ]);
         }
 
@@ -237,6 +226,7 @@ class FrontController extends AbstractController
 
             if ($nbPersonnes <= 0) {
                 $this->addFlash('error', 'Veuillez sélectionner au moins 1 personne.');
+
                 return $this->redirectToRoute('app_front_reserver_voyage', [
                     'id' => $voyage->getId(),
                     'currency' => $currency,
@@ -245,13 +235,13 @@ class FrontController extends AbstractController
 
             if ($nbPersonnes > $voyage->getPlacesRestantes()) {
                 $this->addFlash('error', 'Le nombre de places demandées dépasse les places restantes.');
+
                 return $this->redirectToRoute('app_front_reserver_voyage', [
                     'id' => $voyage->getId(),
                     'currency' => $currency,
                 ]);
             }
 
-            // Toujours enregistrer en DT dans la base
             $reservation = new Reservation();
             $reservation->setVoyage($voyage);
             $reservation->setDateReservation(new \DateTime());
@@ -277,23 +267,17 @@ class FrontController extends AbstractController
                 $reservation->setPrixTotal($prixTotalDt);
             }
 
-            $user = $this->getUser();
-            if ($user instanceof User) {
-                $reservation->setUser($user);
-            }
-
             $entityManager->persist($reservation);
             $entityManager->flush();
 
             $this->addFlash('success', 'Votre demande de réservation a bien été enregistrée.');
 
-            return $this->redirectToRoute('app_front_voyage_detail', [
-                'id' => $voyage->getId(),
+            return $this->redirectToRoute('app_front_mes_reservations', [
                 'currency' => $currency,
             ]);
         }
 
-        return $this->render('front/reservation.html.twig', [
+        return $this->render('front/reservation/reservation.html.twig', [
             'voyage' => $voyage,
             'prixEnfantRatio' => $prixEnfantRatio,
             'currency' => $currency,
@@ -306,57 +290,46 @@ class FrontController extends AbstractController
     }
 
     #[Route('/mes-reservations', name: 'app_front_mes_reservations', methods: ['GET'])]
-    public function mesReservations(ManagerRegistry $doctrine, Request $request): Response
-    {
+    public function mesReservations(
+        Request $request,
+        ManagerRegistry $doctrine,
+        PaginatorInterface $paginator
+    ): Response {
+        $currency = $request->query->get('currency', 'TND');
         $selectedStatut = trim((string) $request->query->get('statut', ''));
-        $page = max(1, (int) $request->query->get('page', 1));
-        $limit = 6;
-        $offset = ($page - 1) * $limit;
+        $page = $request->query->getInt('page', 1);
 
         $qb = $doctrine->getRepository(Reservation::class)->createQueryBuilder('r')
             ->leftJoin('r.voyage', 'v')
             ->addSelect('v')
-            ->leftJoin('r.user', 'u')
-            ->addSelect('u')
             ->orderBy('r.dateReservation', 'DESC');
-
-        $user = $this->getUser();
-        if ($user instanceof User) {
-            $qb->andWhere('r.user = :user')
-                ->setParameter('user', $user);
-        }
 
         if ($selectedStatut !== '') {
             $qb->andWhere('r.statut = :statut')
                 ->setParameter('statut', $selectedStatut);
         }
 
-        $countQb = clone $qb;
-        $totalReservations = (int) $countQb
-            ->select('COUNT(r.id)')
-            ->resetDQLPart('orderBy')
-            ->getQuery()
-            ->getSingleScalarResult();
+        $reservations = $paginator->paginate($qb, $page, 6);
 
-        $totalPages = max(1, (int) ceil($totalReservations / $limit));
-
-        if ($page > $totalPages) {
-            $page = $totalPages;
-            $offset = ($page - 1) * $limit;
-        }
-
-        $reservations = $qb
-            ->setFirstResult($offset)
-            ->setMaxResults($limit)
-            ->getQuery()
-            ->getResult();
-
-        return $this->render('front/mes_reservations.html.twig', [
+        return $this->render('front/reservation/mes_reservations.html.twig', [
             'reservations' => $reservations,
             'selectedStatut' => $selectedStatut,
-            'currentPage' => $page,
-            'totalPages' => $totalPages,
-            'totalReservations' => $totalReservations,
+            'currency' => $currency,
+        ]);
+    }
+
+    #[Route('/mes-reservations/{id}', name: 'app_front_reservation_detail', methods: ['GET'], requirements: ['id' => '\d+'])]
+    public function detailReservation(int $id, ManagerRegistry $doctrine): Response
+    {
+        $reservation = $doctrine->getRepository(Reservation::class)->find($id);
+
+        if (!$reservation) {
+            throw $this->createNotFoundException('Réservation introuvable.');
+        }
+
+        return $this->render('front/reservation/reservation_detail.html.twig', [
+            'reservation' => $reservation,
+            'currency' => 'TND',
         ]);
     }
 
@@ -372,10 +345,9 @@ class FrontController extends AbstractController
             throw $this->createNotFoundException('Réservation introuvable.');
         }
 
-        $user = $this->getUser();
-        if ($user instanceof User && $reservation->getUser() && $reservation->getUser()->getId() !== $user->getId()) {
-            throw $this->createAccessDeniedException('Vous ne pouvez pas annuler cette réservation.');
-        }
+        $paymentStatus = method_exists($reservation, 'getPaymentStatus')
+            ? strtoupper((string) $reservation->getPaymentStatus())
+            : 'NON_PAYEE';
 
         if ($reservation->getStatut() === 'ANNULEE') {
             $this->addFlash('error', 'Cette réservation est déjà annulée.');
@@ -383,12 +355,13 @@ class FrontController extends AbstractController
         }
 
         if ($reservation->getStatut() === 'CONFIRMEE') {
-            $voyage = $reservation->getVoyage();
+            $this->addFlash('error', 'Une réservation confirmée ne peut pas être annulée.');
+            return $this->redirectToRoute('app_front_mes_reservations');
+        }
 
-            if ($voyage) {
-                $voyage->setPlacesRestantes($voyage->getPlacesRestantes() + $reservation->getNbrPersonnes());
-                $entityManager->persist($voyage);
-            }
+        if ($paymentStatus === 'PAYEE') {
+            $this->addFlash('error', 'Une réservation payée ne peut pas être annulée.');
+            return $this->redirectToRoute('app_front_mes_reservations');
         }
 
         $reservation->setStatut('ANNULEE');
@@ -399,4 +372,103 @@ class FrontController extends AbstractController
 
         return $this->redirectToRoute('app_front_mes_reservations');
     }
+
+    #[Route('/reservation/{id}/qrcode', name: 'app_reservation_qrcode', methods: ['GET'])]
+    public function reservationQrCode(int $id, ManagerRegistry $doctrine): Response
+    {
+        $reservation = $doctrine->getRepository(Reservation::class)->find($id);
+
+        if (!$reservation) {
+            throw $this->createNotFoundException('Réservation introuvable.');
+        }
+
+        $result = $this->buildReservationQrCode($reservation);
+
+        return new Response(
+            $result->getString(),
+            200,
+            [
+                'Content-Type' => $result->getMimeType(),
+                'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
+            ]
+        );
+    }
+
+    #[Route('/reservation/{id}/qrcode/download', name: 'app_reservation_qrcode_download', methods: ['GET'])]
+    public function downloadReservationQrCode(int $id, ManagerRegistry $doctrine): Response
+    {
+        $reservation = $doctrine->getRepository(Reservation::class)->find($id);
+
+        if (!$reservation) {
+            throw $this->createNotFoundException('Réservation introuvable.');
+        }
+
+        $result = $this->buildReservationQrCode($reservation);
+
+        $response = new Response(
+            $result->getString(),
+            200,
+            [
+                'Content-Type' => $result->getMimeType(),
+            ]
+        );
+
+        $disposition = $response->headers->makeDisposition(
+            ResponseHeaderBag::DISPOSITION_ATTACHMENT,
+            'reservation-' . $reservation->getId() . '-qrcode.svg'
+        );
+
+        $response->headers->set('Content-Disposition', $disposition);
+
+        return $response;
+    }
+
+    private function buildReservationQrCode(Reservation $reservation)
+    {
+        $detailPath = $this->generateUrl(
+            'app_front_reservation_detail',
+            ['id' => $reservation->getId()]
+        );
+
+        $baseUrl = 'http://192.168.1.13:8000'; 
+        $detailUrl = $baseUrl . $detailPath;
+
+        $logoPath = $this->getParameter('kernel.project_dir') . '/public/images/logo.png';
+
+        $builder = Builder::create()
+            ->writer(new SvgWriter())
+            ->data($detailUrl)
+            ->encoding(new Encoding('UTF-8'))
+            ->errorCorrectionLevel(ErrorCorrectionLevel::High)
+            ->size(420)
+            ->margin(16)
+            ->roundBlockSizeMode(RoundBlockSizeMode::Margin)
+            ->labelText('Horozia - Réservation #' . $reservation->getId());
+
+        if (file_exists($logoPath)) {
+            $builder
+                ->logoPath($logoPath)
+                ->logoResizeToWidth(80)
+                ->logoPunchoutBackground(true);
+        }
+
+        return $builder->build();
+    }
+
+
+    #[Route('/reservation/{id}/qrcode/view', name: 'app_reservation_qrcode_view', methods: ['GET'])]
+    public function viewReservationQrCode(int $id, ManagerRegistry $doctrine): Response
+    {
+        $reservation = $doctrine->getRepository(Reservation::class)->find($id);
+
+        if (!$reservation) {
+            throw $this->createNotFoundException('Réservation introuvable.');
+        }
+
+        return $this->render('front/reservation/qr_code_view.html.twig', [
+            'reservation' => $reservation,
+        ]);
+    }
+
+
 }
