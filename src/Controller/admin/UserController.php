@@ -1,9 +1,9 @@
 <?php
 
-namespace App\Controller\Admin;
+namespace App\Controller\admin;
 
+use App\Entity\Reservationlog;
 use App\Entity\User;
-use App\Entity\Profil;
 use App\Form\UserFormType;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -44,7 +44,7 @@ class UserController extends AbstractController
         }
 
         return $this->render('admin/user/new.html.twig', [
-            'form' => $form->createView(),  // ← ICI : passe le formulaire
+            'form' => $form->createView(),
         ]);
     }
 
@@ -74,33 +74,57 @@ class UserController extends AbstractController
         }
 
         return $this->render('admin/user/edit.html.twig', [
-            'form' => $form->createView(),  // ← ICI : passe le formulaire
+            'form' => $form->createView(),
             'user' => $user,
         ]);
     }
+
     #[Route('/{id}', name: 'app_user_delete', methods: ['POST'])]
-public function delete($id, Request $request, EntityManagerInterface $em): Response
-{
-    // Si l'ID est la chaîne 'me', on utilise l'ID de l'utilisateur connecté
-    if ($id === 'me') {
-        $id = $this->getUser()->getId();
-    } else {
-        $id = (int) $id;
+    public function delete($id, Request $request, EntityManagerInterface $em): Response
+    {
+        // Récupérer l'utilisateur connecté
+        $currentUser = $this->getUser();
+        if (!$currentUser instanceof User) {
+            throw $this->createAccessDeniedException('Utilisateur non authentifié ou invalide.');
+        }
+
+        // Si l'ID est la chaîne 'me', on utilise l'ID de l'utilisateur connecté
+        if ($id === 'me') {
+            $id = $currentUser->getId();
+        } else {
+            $id = (int) $id;
+        }
+
+        $user = $em->getRepository(User::class)->find($id);
+        if ($user) {
+            // Empêcher un utilisateur de supprimer son propre compte
+            if ($user->getId() === $currentUser->getId()) {
+                $this->addFlash('error', 'Vous ne pouvez pas supprimer votre propre compte.');
+                return $this->redirectToRoute('app_user_index');
+            }
+            $em->remove($user);
+            $em->flush();
+            $this->addFlash('success', 'Utilisateur supprimé avec succès');
+        } else {
+            $this->addFlash('error', 'Utilisateur non trouvé');
+        }
+        return $this->redirectToRoute('app_user_index');
     }
 
-    $user = $em->getRepository(User::class)->find($id);
-    if ($user) {
-        // Empêcher un utilisateur de supprimer son propre compte
-        if ($user->getId() === $this->getUser()->getId()) {
-            $this->addFlash('error', 'Vous ne pouvez pas supprimer votre propre compte.');
-            return $this->redirectToRoute('app_user_index');
-        }
-        $em->remove($user);
-        $em->flush();
-        $this->addFlash('success', 'Utilisateur supprimé avec succès');
-    } else {
-        $this->addFlash('error', 'Utilisateur non trouvé');
+    #[Route('/{id}', name: 'app_user_show', methods: ['GET'])]
+    public function show(User $user, EntityManagerInterface $em): Response
+    {
+        $reservations = $em->getRepository(Reservationlog::class)
+            ->createQueryBuilder('r')
+            ->where('r.user = :user')
+            ->setParameter('user', $user)
+            ->orderBy('r.date_debut', 'DESC')
+            ->getQuery()
+            ->getResult();
+
+        return $this->render('admin/user/show1.html.twig', [
+            'user' => $user,
+            'reservations' => $reservations,
+        ]);
     }
-    return $this->redirectToRoute('app_user_index');
-}
 }

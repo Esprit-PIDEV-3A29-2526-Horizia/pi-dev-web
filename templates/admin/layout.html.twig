@@ -1,0 +1,28 @@
+{% extends 'base.html.twig' %}
+
+{% block navbar %}
+{% endblock %}
+
+{% block body %}
+<div class="admin-layout">
+    {{ include('admin/sidebar.twig') }}
+
+    <div class="admin-main">
+        <div class="admin-topbar">
+            {{ include('admin/navbar.twig') }}
+        </div>
+        <div class="admin-content">
+            {% for label, messages in app.flashes %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ label }} alert-dismissible fade show mb-4" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endfor %}
+
+            {% block admin_content %}{% endblock %}
+        </div>
+    </div>
+</div>
+{% endblock %}

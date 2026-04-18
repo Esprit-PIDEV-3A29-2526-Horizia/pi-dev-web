@@ -3,85 +3,71 @@
 namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 
-/**
- * Modele
- *
- * @ORM\Table(name="modele", uniqueConstraints={@ORM\UniqueConstraint(name="unique_modele_par_marque", columns={"id_marque", "nom_modele"})})
- * @ORM\Entity
- */
+use App\Repository\ModeleRepository;
+
+#[ORM\Entity(repositoryClass: ModeleRepository::class)]
+#[ORM\Table(name: 'modele')]
 class Modele
 {
-    /**
-     * @var int
-     *
-     * @ORM\Column(name="id_modele", type="integer", nullable=false)
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="IDENTITY")
-     */
-    private $idModele;
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
+    private ?int $id_modele = null;
 
-    /**
-     * @var int
-     *
-     * @ORM\Column(name="id_marque", type="integer", nullable=false)
-     */
-    private $idMarque;
-
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="nom_modele", type="string", length=80, nullable=false)
-     */
-    private $nomModele;
-
-    /**
-     * @var string|null
-     *
-     * @ORM\Column(name="image", type="string", length=255, nullable=true, options={"comment"="URL ou chemin de l'image du modèle"})
-     */
-    private $image;
-
-    public function getIdModele(): ?int
+    public function getId_modele(): ?int
     {
-        return $this->idModele;
+        return $this->id_modele;
     }
 
-    public function getIdMarque(): ?int
+    public function setId_modele(int $id_modele): self
     {
-        return $this->idMarque;
-    }
-
-    public function setIdMarque(int $idMarque): static
-    {
-        $this->idMarque = $idMarque;
-
+        $this->id_modele = $id_modele;
         return $this;
     }
 
-    public function getNomModele(): ?string
+    #[ORM\Column(type: 'integer', nullable: false)]
+    private ?int $id_marque = null;
+
+    public function getId_marque(): ?int
     {
-        return $this->nomModele;
+        return $this->id_marque;
     }
 
-    public function setNomModele(string $nomModele): static
+    public function setId_marque(int $id_marque): self
     {
-        $this->nomModele = $nomModele;
-
+        $this->id_marque = $id_marque;
         return $this;
     }
+
+    #[ORM\Column(type: 'string', nullable: false)]
+    private ?string $nom_modele = null;
+
+    public function getNom_modele(): ?string
+    {
+        return $this->nom_modele;
+    }
+
+    public function setNom_modele(string $nom_modele): self
+    {
+        $this->nom_modele = $nom_modele;
+        return $this;
+    }
+
+    #[ORM\Column(type: 'string', nullable: true)]
+    private ?string $image = null;
 
     public function getImage(): ?string
     {
         return $this->image;
     }
 
-    public function setImage(?string $image): static
+    public function setImage(?string $image): self
     {
         $this->image = $image;
-
         return $this;
     }
-
 
 }

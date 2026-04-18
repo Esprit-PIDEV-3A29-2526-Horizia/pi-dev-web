@@ -1,0 +1,54 @@
+<div class="admin-sidebar">
+    <div class="sidebar-brand-center">
+        <img src="{{ asset('images/logo.png') }}" alt="Logo Horozia" class="sidebar-logo-large">
+    </div>
+
+    <ul class="sidebar-menu">
+        <li>
+            <a class="sidebar-link {{ app.request.attributes.get('_route') == 'app_admin' ? 'active' : '' }}" href="{{ path('app_admin') }}">
+                <i class="bi bi-grid-fill"></i>
+                <span>Dashboard</span>
+            </a>
+        </li>
+        <li>
+            <a class="sidebar-link" href="#">
+                <i class="bi bi-person"></i>
+                <span>Gestion Profile</span>
+            </a>
+        </li>
+        <li>
+            <a class="sidebar-link" href="#">
+                <i class="bi bi-tags-fill"></i>
+                <span>Gestion Catégories</span>
+            </a>
+        </li>
+        <li>
+            <a class="sidebar-link" href="#">
+                <i class="bi bi-airplane-fill"></i>
+                <span>Gestion Voyages</span>
+            </a>
+        </li>
+         <li>
+            <a class="sidebar-link {{ app.request.attributes.get('_route') starts with 'admin_logement' ? 'active' : '' }}" href="{{ path('admin_logement_index') }}">
+                <i class="bi bi-building"></i>
+                <span>Gestion Logements</span>
+            </a>
+        </li>
+        <li>
+            <a class="sidebar-link {{ app.request.attributes.get('_route') == 'admin_cancel_requests' ? 'active' : '' }}" href="{{ path('admin_cancel_requests') }}">
+                <i class="bi bi-calendar-check-fill"></i>
+                <span>Demandes annulation</span>
+                {% set pendingCount = pendingCancelRequests|default(0) %}
+                {% if pendingCount > 0 %}
+                    <span class="badge bg-danger rounded-pill ms-2">{{ pendingCount }}</span>
+                {% endif %}
+            </a>
+        </li>
+        <li>
+            <a class="sidebar-link" href="#">
+                <i class="bi bi-calendar-check-fill"></i>
+                <span>Gestion Réservations</span>
+            </a>
+        </li>
+    </ul>
+</div>

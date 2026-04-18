@@ -1,8 +1,13 @@
+parameters:
+    stripe_secret_key: '%env(STRIPE_SECRET_KEY)%'
+
 services:
+    # configuration par défaut
     _defaults:
         autowire: true
         autoconfigure: true
 
+    # déclaration explicite de tous les services du dossier src/
     App\:
         resource: '../src/'
         exclude:
@@ -10,11 +15,23 @@ services:
             - '../src/Entity/'
             - '../src/Kernel.php'
 
+    # contrôleurs
+    App\Controller\:
+        resource: '../src/Controller/'
+        tags: ['controller.service_arguments']
+
+    # Service CompreFace (reconnaissance faciale)
     App\Service\CompreFaceService:
         arguments:
             $apiKey: '%env(COMPREFACE_API_KEY)%'
             $baseUrl: '%env(COMPREFACE_BASE_URL)%'
 
+    # Service Stripe (paiement)
+    App\Service\StripeService:
+        arguments:
+            $stripeSecretKey: '%stripe_secret_key%'
+
+    # Listeners
     App\EventListener\TwoFactorLoginListener:
         tags:
             - { name: kernel.event_subscriber }

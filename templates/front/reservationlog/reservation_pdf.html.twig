@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Réservation Horozia</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'DejaVu Sans', sans-serif;
+            background: #fff;
+            padding: 12px;
+            font-size: 12px;
+        }
+        .container {
+            max-width: 750px;
+            margin: 0 auto;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            overflow: hidden;
+            page-break-inside: avoid;
+        }
+        /* En-tête avec tableau */
+        .header-table {
+            width: 100%;
+            background: #23779C;
+            border-collapse: collapse;
+        }
+        .header-table td {
+            padding: 8px 15px;
+            border: none;
+            vertical-align: middle;
+        }
+        .header-text {
+            text-align: left;
+            color: white;
+        }
+        .agency-name {
+            font-size: 22px;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+        .agency-sub {
+            font-size: 10px;
+            opacity: 0.9;
+        }
+        .header-text h1 {
+            font-size: 14px;
+            font-weight: normal;
+            margin-top: 4px;
+        }
+        .header-qr {
+            text-align: right;
+            width: 140px;   /* assez large pour l'image 120px */
+            background: transparent; /* pas de fond */
+        }
+        .header-qr img {
+            width: 120px;    /* QR plus grand */
+            height: 120px;
+            display: inline-block;
+            background: transparent; /* si l'image a un fond, cela ne l'enlèvera pas, mais on tente */
+        }
+        /* Contenu */
+        .content {
+            padding: 12px 15px;
+        }
+        .section {
+            margin-bottom: 12px;
+        }
+        .section-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: #23779C;
+            border-bottom: 1px solid #23779C;
+            padding-bottom: 3px;
+            margin-bottom: 8px;
+        }
+        table.data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        table.data-table td {
+            padding: 4px 4px;
+            border-bottom: 1px solid #eee;
+            vertical-align: top;
+        }
+        table.data-table td.label {
+            width: 35%;
+            font-weight: bold;
+            background-color: #f9f9f9;
+        }
+        table.data-table td.value {
+            width: 65%;
+        }
+        .badge {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: bold;
+            color: white;
+        }
+        .badge-confirmed { background: #28a745; }
+        .badge-pending { background: #ffc107; color: #333; }
+        .badge-cancelled { background: #dc3545; }
+        .footer {
+            background: #f5f5f5;
+            padding: 6px;
+            text-align: center;
+            font-size: 10px;
+            color: #666;
+            border-top: 1px solid #ddd;
+        }
+        @media print {
+            body {
+                padding: 0;
+            }
+            .header-table {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            .header-qr img {
+                background: transparent;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- En-tête : texte à gauche, QR à droite -->
+        <table class="header-table">
+            <tr>
+                <td class="header-text">
+                    <div class="agency-name">HORIZIA</div>
+                    <div class="agency-sub">TRAVEL AGENCY</div>
+                    <h1>CONFIRMATION DE RÉSERVATION</h1>
+                </td>
+                <td class="header-qr">
+                    <img src="{{ qrCodeBase64 }}" alt="QR Code">
+                </td>
+            </tr>
+        </table>
+
+        <div class="content">
+            <div class="section">
+                <div class="section-title">INFORMATIONS LOGEMENT</div>
+                <table class="data-table">
+                    <tr><td class="label">Nom</td><td class="value">{{ reservation.logement.nom }}</td></tr>
+                    <tr><td class="label">Adresse</td><td class="value">{{ reservation.logement.adresse }}</td></tr>
+                    <tr><td class="label">Type</td><td class="value">{{ reservation.logement.type }}</td></tr>
+                </table>
+            </div>
+
+            <div class="section">
+                <div class="section-title">DÉTAILS DU SÉJOUR</div>
+                <table class="data-table">
+                    <tr><td class="label">Arrivée</td><td class="value">{{ reservation.dateDebut|date('d/m/Y') }}</td></tr>
+                    <tr><td class="label">Départ</td><td class="value">{{ reservation.dateFin|date('d/m/Y') }}</td></tr>
+                    <tr><td class="label">Nombre de nuits</td><td class="value">{{ reservation.dateDebut.diff(reservation.dateFin).days }} nuit(s)</td></tr>
+                    <tr><td class="label">Adultes</td><td class="value">{{ reservation.adultes }}</td></tr>
+                    <tr><td class="label">Enfants</td><td class="value">{{ reservation.enfants }}</td></tr>
+                    <tr><td class="label">Chambres</td><td class="value">{{ reservation.nombreChambres }}</td></tr>
+                    <tr><td class="label">Type de chambres</td><td class="value">{{ chambreType }}</td></tr>
+                    <tr><td class="label">Pension</td><td class="value">{{ reservation.modeReservation ? reservation.modeReservation|replace({'_': ' '})|capitalize : '-' }}</td></tr>
+                </table>
+            </div>
+
+            <div class="section">
+                <div class="section-title">PAIEMENT</div>
+                <table class="data-table">
+                    <tr><td class="label">Prix par nuit (HT)</td><td class="value">{{ (reservation.montant / reservation.dateDebut.diff(reservation.dateFin).days)|number_format(2, ',', ' ') }} DT</td></tr>
+                    <tr><td class="label">Nombre de nuits</td><td class="value">{{ reservation.dateDebut.diff(reservation.dateFin).days }}</td></tr>
+                    <tr><td class="label">Sous-total</td><td class="value">{{ reservation.montant|number_format(2, ',', ' ') }} DT</td></tr>
+                    <tr><td class="label"><strong>Montant total TTC</strong></td><td class="value"><strong>{{ reservation.montant|number_format(2, ',', ' ') }} DT</strong></td></tr>
+                    <tr><td class="label">Modalité</td><td class="value">{{ reservation.modalites }}</td></tr>
+                    <tr>
+                        <td class="label">Statut</td>
+                        <td class="value">
+                            <span class="badge 
+                                {% if reservation.status == 'confirmée' %}badge-confirmed
+                                {% elseif reservation.status == 'en_attente' %}badge-pending
+                                {% else %}badge-cancelled{% endif %}">
+                                {{ reservation.status|upper }}
+                            </span>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <div class="footer">
+            Merci d'avoir choisi Horozia. Bon séjour !
+        </div>
+    </div>
+</body>
+</html>

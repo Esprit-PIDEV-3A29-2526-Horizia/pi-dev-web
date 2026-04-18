@@ -2,239 +2,184 @@
 
 namespace App\Entity;
 
-use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 
-/**
- * Vehicule
- *
- * @ORM\Table(name="vehicule", uniqueConstraints={@ORM\UniqueConstraint(name="immatriculation", columns={"immatriculation"})}, indexes={@ORM\Index(name="id_modele", columns={"id_modele"}), @ORM\Index(name="idx_vehicule_etat", columns={"etat"})})
- * @ORM\Entity
- */
+use App\Repository\VehiculeRepository;
+
+#[ORM\Entity(repositoryClass: VehiculeRepository::class)]
+#[ORM\Table(name: 'vehicule')]
 class Vehicule
 {
-    /**
-     * @var int
-     *
-     * @ORM\Column(name="id_vehicule", type="integer", nullable=false)
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="IDENTITY")
-     */
-    private $idVehicule;
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
+    private ?int $id_vehicule = null;
 
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="immatriculation", type="string", length=20, nullable=false, options={"comment"="ex: 123 TUN 45"})
-     */
-    private $immatriculation;
-
-    /**
-     * @var int
-     *
-     * @ORM\Column(name="id_modele", type="integer", nullable=false)
-     */
-    private $idModele;
-
-    /**
-     * @var int
-     *
-     * @ORM\Column(name="annee", type="integer", nullable=false)
-     */
-    private $annee;
-
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="carburant", type="string", length=0, nullable=false)
-     */
-    private $carburant;
-
-    /**
-     * @var string|null
-     *
-     * @ORM\Column(name="couleur", type="string", length=30, nullable=true)
-     */
-    private $couleur;
-
-    /**
-     * @var int|null
-     *
-     * @ORM\Column(name="kilometrage", type="integer", nullable=true, options={"unsigned"=true})
-     */
-    private $kilometrage = '0';
-
-    /**
-     * @var string|null
-     *
-     * @ORM\Column(name="etat", type="string", length=0, nullable=true, options={"default"="disponible"})
-     */
-    private $etat = 'disponible';
-
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="prix_par_jour", type="decimal", precision=10, scale=3, nullable=false, options={"comment"="en TND"})
-     */
-    private $prixParJour;
-
-    /**
-     * @var string|null
-     *
-     * @ORM\Column(name="photo", type="string", length=255, nullable=true, options={"comment"="chemin ou URL"})
-     */
-    private $photo;
-
-    /**
-     * @var \DateTime
-     *
-     * @ORM\Column(name="created_at", type="datetime", nullable=false, options={"default"="CURRENT_TIMESTAMP"})
-     */
-    private $createdAt = 'CURRENT_TIMESTAMP';
-
-    /**
-     * @var \DateTime
-     *
-     * @ORM\Column(name="updated_at", type="datetime", nullable=false, options={"default"="CURRENT_TIMESTAMP"})
-     */
-    private $updatedAt = 'CURRENT_TIMESTAMP';
-
-    public function getIdVehicule(): ?int
+    public function getId_vehicule(): ?int
     {
-        return $this->idVehicule;
+        return $this->id_vehicule;
     }
+
+    public function setId_vehicule(int $id_vehicule): self
+    {
+        $this->id_vehicule = $id_vehicule;
+        return $this;
+    }
+
+    #[ORM\Column(type: 'string', nullable: false)]
+    private ?string $immatriculation = null;
 
     public function getImmatriculation(): ?string
     {
         return $this->immatriculation;
     }
 
-    public function setImmatriculation(string $immatriculation): static
+    public function setImmatriculation(string $immatriculation): self
     {
         $this->immatriculation = $immatriculation;
-
         return $this;
     }
 
-    public function getIdModele(): ?int
+    #[ORM\Column(type: 'integer', nullable: false)]
+    private ?int $id_modele = null;
+
+    public function getId_modele(): ?int
     {
-        return $this->idModele;
+        return $this->id_modele;
     }
 
-    public function setIdModele(int $idModele): static
+    public function setId_modele(int $id_modele): self
     {
-        $this->idModele = $idModele;
-
+        $this->id_modele = $id_modele;
         return $this;
     }
+
+    #[ORM\Column(type: 'integer', nullable: false)]
+    private ?int $annee = null;
 
     public function getAnnee(): ?int
     {
         return $this->annee;
     }
 
-    public function setAnnee(int $annee): static
+    public function setAnnee(int $annee): self
     {
         $this->annee = $annee;
-
         return $this;
     }
+
+    #[ORM\Column(type: 'string', nullable: false)]
+    private ?string $carburant = null;
 
     public function getCarburant(): ?string
     {
         return $this->carburant;
     }
 
-    public function setCarburant(string $carburant): static
+    public function setCarburant(string $carburant): self
     {
         $this->carburant = $carburant;
-
         return $this;
     }
+
+    #[ORM\Column(type: 'string', nullable: true)]
+    private ?string $couleur = null;
 
     public function getCouleur(): ?string
     {
         return $this->couleur;
     }
 
-    public function setCouleur(?string $couleur): static
+    public function setCouleur(?string $couleur): self
     {
         $this->couleur = $couleur;
-
         return $this;
     }
+
+    #[ORM\Column(type: 'integer', nullable: true)]
+    private ?int $kilometrage = null;
 
     public function getKilometrage(): ?int
     {
         return $this->kilometrage;
     }
 
-    public function setKilometrage(?int $kilometrage): static
+    public function setKilometrage(?int $kilometrage): self
     {
         $this->kilometrage = $kilometrage;
-
         return $this;
     }
 
-    public function getEtat(): ?string
+    #[ORM\Column(type: 'integer', nullable: true)]
+    private ?int $etat = null;
+
+    public function getEtat(): ?int
     {
         return $this->etat;
     }
 
-    public function setEtat(?string $etat): static
+    public function setEtat(?int $etat): self
     {
         $this->etat = $etat;
-
         return $this;
     }
 
-    public function getPrixParJour(): ?string
+    #[ORM\Column(type: 'decimal', nullable: false)]
+    private ?float $prix_par_jour = null;
+
+    public function getPrix_par_jour(): ?float
     {
-        return $this->prixParJour;
+        return $this->prix_par_jour;
     }
 
-    public function setPrixParJour(string $prixParJour): static
+    public function setPrix_par_jour(float $prix_par_jour): self
     {
-        $this->prixParJour = $prixParJour;
-
+        $this->prix_par_jour = $prix_par_jour;
         return $this;
     }
+
+    #[ORM\Column(type: 'string', nullable: true)]
+    private ?string $photo = null;
 
     public function getPhoto(): ?string
     {
         return $this->photo;
     }
 
-    public function setPhoto(?string $photo): static
+    public function setPhoto(?string $photo): self
     {
         $this->photo = $photo;
-
         return $this;
     }
 
-    public function getCreatedAt(): ?\DateTimeInterface
+    #[ORM\Column(type: 'datetime', nullable: false)]
+    private ?\DateTimeInterface $created_at = null;
+
+    public function getCreated_at(): ?\DateTimeInterface
     {
-        return $this->createdAt;
+        return $this->created_at;
     }
 
-    public function setCreatedAt(\DateTimeInterface $createdAt): static
+    public function setCreated_at(\DateTimeInterface $created_at): self
     {
-        $this->createdAt = $createdAt;
-
+        $this->created_at = $created_at;
         return $this;
     }
 
-    public function getUpdatedAt(): ?\DateTimeInterface
+    #[ORM\Column(type: 'datetime', nullable: false)]
+    private ?\DateTimeInterface $updated_at = null;
+
+    public function getUpdated_at(): ?\DateTimeInterface
     {
-        return $this->updatedAt;
+        return $this->updated_at;
     }
 
-    public function setUpdatedAt(\DateTimeInterface $updatedAt): static
+    public function setUpdated_at(\DateTimeInterface $updated_at): self
     {
-        $this->updatedAt = $updatedAt;
-
+        $this->updated_at = $updated_at;
         return $this;
     }
-
 
 }

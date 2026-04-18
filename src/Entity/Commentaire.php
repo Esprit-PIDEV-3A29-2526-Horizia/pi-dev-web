@@ -2,147 +2,115 @@
 
 namespace App\Entity;
 
-use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 
-/**
- * Commentaire
- *
- * @ORM\Table(name="commentaire", indexes={@ORM\Index(name="publication_id", columns={"publication_id"})})
- * @ORM\Entity
- */
+use App\Repository\CommentaireRepository;
+
+#[ORM\Entity(repositoryClass: CommentaireRepository::class)]
+#[ORM\Table(name: 'commentaire')]
 class Commentaire
 {
-    /**
-     * @var int
-     *
-     * @ORM\Column(name="id", type="integer", nullable=false)
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="IDENTITY")
-     */
-    private $id;
-
-    /**
-     * @var int|null
-     *
-     * @ORM\Column(name="utilisateur_id", type="integer", nullable=true)
-     */
-    private $utilisateurId = '0';
-
-    /**
-     * @var string|null
-     *
-     * @ORM\Column(name="auteur", type="string", length=100, nullable=true)
-     */
-    private $auteur;
-
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="contenu", type="text", length=65535, nullable=false)
-     */
-    private $contenu;
-
-    /**
-     * @var \DateTime
-     *
-     * @ORM\Column(name="date_creation", type="datetime", nullable=false, options={"default"="CURRENT_TIMESTAMP"})
-     */
-    private $dateCreation = 'CURRENT_TIMESTAMP';
-
-    /**
-     * @var bool|null
-     *
-     * @ORM\Column(name="modifie", type="boolean", nullable=true)
-     */
-    private $modifie = '0';
-
-    /**
-     * @var \Publications
-     *
-     * @ORM\ManyToOne(targetEntity="Publications")
-     * @ORM\JoinColumns({
-     *   @ORM\JoinColumn(name="publication_id", referencedColumnName="id")
-     * })
-     */
-    private $publication;
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
+    private ?int $id = null;
 
     public function getId(): ?int
     {
         return $this->id;
     }
 
-    public function getUtilisateurId(): ?int
+    public function setId(int $id): self
     {
-        return $this->utilisateurId;
-    }
-
-    public function setUtilisateurId(?int $utilisateurId): static
-    {
-        $this->utilisateurId = $utilisateurId;
-
+        $this->id = $id;
         return $this;
     }
+
+    #[ORM\ManyToOne(targetEntity: Publication::class, inversedBy: 'commentaires')]
+    #[ORM\JoinColumn(name: 'publication_id', referencedColumnName: 'id')]
+    private ?Publication $publication = null;
+
+    public function getPublication(): ?Publication
+    {
+        return $this->publication;
+    }
+
+    public function setPublication(?Publication $publication): self
+    {
+        $this->publication = $publication;
+        return $this;
+    }
+
+    #[ORM\Column(type: 'integer', nullable: true)]
+    private ?int $utilisateur_id = null;
+
+    public function getUtilisateur_id(): ?int
+    {
+        return $this->utilisateur_id;
+    }
+
+    public function setUtilisateur_id(?int $utilisateur_id): self
+    {
+        $this->utilisateur_id = $utilisateur_id;
+        return $this;
+    }
+
+    #[ORM\Column(type: 'string', nullable: true)]
+    private ?string $auteur = null;
 
     public function getAuteur(): ?string
     {
         return $this->auteur;
     }
 
-    public function setAuteur(?string $auteur): static
+    public function setAuteur(?string $auteur): self
     {
         $this->auteur = $auteur;
-
         return $this;
     }
+
+    #[ORM\Column(type: 'text', nullable: false)]
+    private ?string $contenu = null;
 
     public function getContenu(): ?string
     {
         return $this->contenu;
     }
 
-    public function setContenu(string $contenu): static
+    public function setContenu(string $contenu): self
     {
         $this->contenu = $contenu;
-
         return $this;
     }
 
-    public function getDateCreation(): ?\DateTimeInterface
+    #[ORM\Column(type: 'datetime', nullable: false)]
+    private ?\DateTimeInterface $date_creation = null;
+
+    public function getDate_creation(): ?\DateTimeInterface
     {
-        return $this->dateCreation;
+        return $this->date_creation;
     }
 
-    public function setDateCreation(\DateTimeInterface $dateCreation): static
+    public function setDate_creation(\DateTimeInterface $date_creation): self
     {
-        $this->dateCreation = $dateCreation;
-
+        $this->date_creation = $date_creation;
         return $this;
     }
 
-    public function isModifie(): ?bool
+    #[ORM\Column(type: 'integer', nullable: true)]
+    private ?int $modifie = null;
+
+    public function getModifie(): ?int
     {
         return $this->modifie;
     }
 
-    public function setModifie(?bool $modifie): static
+    public function setModifie(?int $modifie): self
     {
         $this->modifie = $modifie;
-
         return $this;
     }
-
-    public function getPublication(): ?Publications
-    {
-        return $this->publication;
-    }
-
-    public function setPublication(?Publications $publication): static
-    {
-        $this->publication = $publication;
-
-        return $this;
-    }
-
 
 }

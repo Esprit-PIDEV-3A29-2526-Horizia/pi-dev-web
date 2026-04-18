@@ -1,0 +1,48 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Reservationlog{% endblock %}
+
+{% block body %}
+    <h1>Reservationlog</h1>
+
+    <table class="table">
+        <tbody>
+            <tr>
+                <th>Idreslog</th>
+                <td>{{ reservation.idreslog }}</td>
+            </tr>
+            <tr>
+                <th>Idlog</th>
+                <td>{{ reservation.idlog }}</td>
+            </tr>
+            <tr>
+                <th>Idc</th>
+                <td>{{ reservation.idc }}</td>
+            </tr>
+            <tr>
+                <th>Date_debut</th>
+                <td>{{ reservation.dateDebut ? reservation.dateDebut|date('Y-m-d H:i:s') : '' }}</td>
+            </tr>
+            <tr>
+                <th>Date_fin</th>
+                <td>{{ reservation.dateFin ? reservation.dateFin|date('Y-m-d H:i:s') : '' }}</td>
+            </tr>
+            <tr>
+                <th>Montant</th>
+                <td>{{ reservation.montant }}</td>
+            </tr>
+            <tr>
+                <th>Status</th>
+                <td>{{ reservation.status }}</td>
+            </tr>
+            <tr>
+                <th>Modalites</th>
+                <td>{{ reservation.modalites }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <a href="{{ path('admin_reservationlog_admin_edit',
+
+    {{ include('reservationlog_admin/_delete_form.html.twig') }}
+{% endblock %}

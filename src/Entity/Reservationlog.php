@@ -1,164 +1,123 @@
 <?php
+// src/Entity/Reservationlog.php
 
 namespace App\Entity;
 
-use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use App\Repository\ReservationlogRepository;
+use Symfony\Component\Validator\Constraints as Assert;
 
-/**
- * Reservationlog
- *
- * @ORM\Table(name="reservationlog", indexes={@ORM\Index(name="fk_reservation_logement", columns={"idlog"}), @ORM\Index(name="fk_reservation_user", columns={"idc"})})
- * @ORM\Entity
- */
+#[ORM\Entity(repositoryClass: ReservationlogRepository::class)]
+#[ORM\Table(name: 'reservationlog')]
 class Reservationlog
 {
-    /**
-     * @var int
-     *
-     * @ORM\Column(name="idreslog", type="integer", nullable=false)
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="IDENTITY")
-     */
-    private $idreslog;
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
+    private ?int $idreslog = null;
 
-    /**
-     * @var int
-     *
-     * @ORM\Column(name="idlog", type="integer", nullable=false)
-     */
-    private $idlog;
+    #[ORM\ManyToOne(targetEntity: Logement::class, inversedBy: 'reservationlogs')]
+    #[ORM\JoinColumn(name: 'idlog', referencedColumnName: 'id')]
+    private ?Logement $logement = null;
 
-    /**
-     * @var int
-     *
-     * @ORM\Column(name="idc", type="integer", nullable=false)
-     */
-    private $idc;
+    #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'reservationlogs')]
+    #[ORM\JoinColumn(name: 'idc', referencedColumnName: 'id')]
+    private ?User $user = null;
 
-    /**
-     * @var \DateTime
-     *
-     * @ORM\Column(name="date_debut", type="datetime", nullable=false)
-     */
-    private $dateDebut;
+    #[ORM\Column(type: 'datetime', nullable: false)]
+    #[Assert\NotNull(message: "La date d'arrivée est obligatoire.")]
+    #[Assert\GreaterThanOrEqual(value: "today", message: "La date d'arrivée ne peut pas être dans le passé.")]
+    private ?\DateTimeInterface $date_debut = null;
 
-    /**
-     * @var \DateTime
-     *
-     * @ORM\Column(name="date_fin", type="datetime", nullable=false)
-     */
-    private $dateFin;
+    #[ORM\Column(type: 'datetime', nullable: false)]
+    #[Assert\NotNull(message: "La date de départ est obligatoire.")]
+    #[Assert\GreaterThan(propertyPath: "date_debut", message: "La date de départ doit être postérieure à la date d'arrivée.")]
+    private ?\DateTimeInterface $date_fin = null;
 
-    /**
-     * @var float
-     *
-     * @ORM\Column(name="montant", type="float", precision=10, scale=0, nullable=false)
-     */
-    private $montant;
+    #[ORM\Column(type: 'float', nullable: false)]
+    #[Assert\NotNull(message: "Le montant est obligatoire.")]
+    #[Assert\Positive(message: "Le montant doit être positif.")]
+    private ?float $montant = null;
 
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="status", type="string", length=50, nullable=false)
-     */
-    private $status;
+    #[ORM\Column(type: 'string', nullable: false)]
+    private ?string $status = null;
 
-    /**
-     * @var string|null
-     *
-     * @ORM\Column(name="modalites", type="string", length=255, nullable=true)
-     */
-    private $modalites;
+    #[ORM\Column(type: 'string', nullable: true)]
+    #[Assert\Choice(choices: ['En ligne', 'Sur place'], message: "Modalité invalide.")]
+    private ?string $modalites = null;
 
-    public function getIdreslog(): ?int
-    {
-        return $this->idreslog;
-    }
+    // NOUVEAUX CHAMPS
+    #[ORM\Column(type: 'integer', options: ['default' => 1])]
+    #[Assert\NotNull(message: "Le nombre d'adultes est obligatoire.")]
+    #[Assert\Positive(message: "Le nombre d'adultes doit être positif.")]
+    private int $adultes = 1;
 
-    public function getIdlog(): ?int
-    {
-        return $this->idlog;
-    }
+    #[ORM\Column(type: 'integer', options: ['default' => 0])]
+    #[Assert\NotNull(message: "Le nombre d'enfants est obligatoire.")]
+    #[Assert\PositiveOrZero(message: "Le nombre d'enfants doit être zéro ou positif.")]
+    private int $enfants = 0;
 
-    public function setIdlog(int $idlog): static
-    {
-        $this->idlog = $idlog;
+    #[ORM\Column(type: 'integer', options: ['default' => 1])]
+    #[Assert\NotNull(message: "Le nombre de chambres est obligatoire.")]
+    #[Assert\Positive(message: "Le nombre de chambres doit être positif.")]
+    private int $nombreChambres = 1;
 
-        return $this;
-    }
+    #[ORM\Column(type: 'string', length: 50, nullable: true)]
+    // Supprimé : #[Assert\NotNull]
+    #[Assert\Choice(choices: ['all_inclusive', 'demi_pension', 'petit_dejeuner', 'soft'], message: "Type de pension invalide.")]
+    private ?string $modeReservation = null;
+#[ORM\Column(name: 'created_at', type: 'datetime', nullable: false)]
+private ?\DateTimeInterface $createdAt = null;
 
-    public function getIdc(): ?int
-    {
-        return $this->idc;
-    }
+public function getCreatedAt(): ?\DateTimeInterface
+{
+    return $this->createdAt;
+}
 
-    public function setIdc(int $idc): static
-    {
-        $this->idc = $idc;
+public function setCreatedAt(\DateTimeInterface $createdAt): self
+{
+    $this->createdAt = $createdAt;
+    return $this;
+}
+#[ORM\Column(type: 'string', length: 255, nullable: true)]
+private ?string $repartitionChambres = null;
 
-        return $this;
-    }
+public function getRepartitionChambres(): ?string { return $this->repartitionChambres; }
+public function setRepartitionChambres(?string $repartitionChambres): self { $this->repartitionChambres = $repartitionChambres; return $this; }
+    // Getters & Setters (existants + nouveaux)
+    public function getIdreslog(): ?int { return $this->idreslog; }
+    public function setIdreslog(int $idreslog): self { $this->idreslog = $idreslog; return $this; }
 
-    public function getDateDebut(): ?\DateTimeInterface
-    {
-        return $this->dateDebut;
-    }
+    public function getLogement(): ?Logement { return $this->logement; }
+    public function setLogement(?Logement $logement): self { $this->logement = $logement; return $this; }
 
-    public function setDateDebut(\DateTimeInterface $dateDebut): static
-    {
-        $this->dateDebut = $dateDebut;
+    public function getUser(): ?User { return $this->user; }
+    public function setUser(?User $user): self { $this->user = $user; return $this; }
 
-        return $this;
-    }
+    public function getDateDebut(): ?\DateTimeInterface { return $this->date_debut; }
+    public function setDateDebut(\DateTimeInterface $date_debut): self { $this->date_debut = $date_debut; return $this; }
 
-    public function getDateFin(): ?\DateTimeInterface
-    {
-        return $this->dateFin;
-    }
+    public function getDateFin(): ?\DateTimeInterface { return $this->date_fin; }
+    public function setDateFin(\DateTimeInterface $date_fin): self { $this->date_fin = $date_fin; return $this; }
 
-    public function setDateFin(\DateTimeInterface $dateFin): static
-    {
-        $this->dateFin = $dateFin;
+    public function getMontant(): ?float { return $this->montant; }
+    public function setMontant(float $montant): self { $this->montant = $montant; return $this; }
 
-        return $this;
-    }
+    public function getStatus(): ?string { return $this->status; }
+    public function setStatus(string $status): self { $this->status = $status; return $this; }
 
-    public function getMontant(): ?float
-    {
-        return $this->montant;
-    }
+    public function getModalites(): ?string { return $this->modalites; }
+    public function setModalites(?string $modalites): self { $this->modalites = $modalites; return $this; }
 
-    public function setMontant(float $montant): static
-    {
-        $this->montant = $montant;
+    public function getAdultes(): int { return $this->adultes; }
+    public function setAdultes(int $adultes): self { $this->adultes = $adultes; return $this; }
 
-        return $this;
-    }
+    public function getEnfants(): int { return $this->enfants; }
+    public function setEnfants(int $enfants): self { $this->enfants = $enfants; return $this; }
 
-    public function getStatus(): ?string
-    {
-        return $this->status;
-    }
+    public function getNombreChambres(): int { return $this->nombreChambres; }
+    public function setNombreChambres(int $nombreChambres): self { $this->nombreChambres = $nombreChambres; return $this; }
 
-    public function setStatus(string $status): static
-    {
-        $this->status = $status;
-
-        return $this;
-    }
-
-    public function getModalites(): ?string
-    {
-        return $this->modalites;
-    }
-
-    public function setModalites(?string $modalites): static
-    {
-        $this->modalites = $modalites;
-
-        return $this;
-    }
-
-
+    public function getModeReservation(): ?string { return $this->modeReservation; }
+    public function setModeReservation(?string $modeReservation): self { $this->modeReservation = $modeReservation; return $this; }
 }

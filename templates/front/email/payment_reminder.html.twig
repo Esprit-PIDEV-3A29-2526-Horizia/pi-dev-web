@@ -1,0 +1,12 @@
+<h2>⚠️ Dernière chance pour finaliser votre paiement</h2>
+<p>Bonjour {{ reservation.user.email }},</p>
+<p>Votre réservation pour le logement <strong>{{ reservation.logement.nom }}</strong> expire dans :</p>
+<p style="font-size: 24px; font-weight: bold; color: #dc3545;">{{ timeLeft }}</p>
+<p>Si vous ne finalisez pas le paiement avant ce délai, votre réservation sera automatiquement annulée.</p>
+<p>
+    <a href="{{ url('app_front_reservation_pay', {'id': reservation.idreslog}) }}" 
+       style="background: #23779C; color: white; padding: 10px 20px; text-decoration: none; border-radius: 30px;">
+       Finaliser le paiement
+    </a>
+</p>
+<p>Merci de votre confiance.</p>
