@@ -1,0 +1,58 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Publication{% endblock %}
+
+{% block body %}
+    <h1>Publication</h1>
+
+    <table class="table">
+        <tbody>
+            <tr>
+                <th>Id</th>
+                <td>{{ publication.id }}</td>
+            </tr>
+            <tr>
+                <th>Titre</th>
+                <td>{{ publication.titre }}</td>
+            </tr>
+            <tr>
+                <th>Description</th>
+                <td>{{ publication.description }}</td>
+            </tr>
+            <tr>
+                <th>Image</th>
+                <td>{{ publication.image }}</td>
+            </tr>
+            <tr>
+                <th>Categorie</th>
+                <td>{{ publication.categorie }}</td>
+            </tr>
+            <tr>
+                <th>Utilisateur_id</th>
+                <td>{{ publication.utilisateurId }}</td>
+            </tr>
+            <tr>
+                <th>Auteur</th>
+                <td>{{ publication.auteur }}</td>
+            </tr>
+            <tr>
+                <th>Likes</th>
+                <td>{{ publication.likes }}</td>
+            </tr>
+            <tr>
+                <th>Commentaires</th>
+                <td>{{ publication.commentaires }}</td>
+            </tr>
+            <tr>
+                <th>Date_creation</th>
+                <td>{{ publication.dateCreation ? publication.dateCreation|date('Y-m-d H:i:s') : '' }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <a href="{{ path('app_yes_index') }}">back to list</a>
+
+    <a href="{{ path('app_yes_edit', {'id': publication.id}) }}">edit</a>
+
+    {{ include('yes/_delete_form.html.twig') }}
+{% endblock %}

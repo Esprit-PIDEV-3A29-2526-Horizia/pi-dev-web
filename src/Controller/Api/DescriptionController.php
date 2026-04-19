@@ -14,13 +14,20 @@ class DescriptionController extends AbstractController
     public function generate(Request $request, DescriptionGenerator $generator): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
-        $titre = $data['titre'] ?? '';
-        $categorie = $data['categorie'] ?? '';
-        $ville = $data['ville'] ?? '';
-        $pays = $data['pays'] ?? '';
+        $titre = trim($data['titre'] ?? '');
+        $categorie = trim($data['categorie'] ?? '');
+        $ville = trim($data['ville'] ?? '');
+        $pays = trim($data['pays'] ?? '');
 
-        if (!$titre || !$categorie) {
-            return $this->json(['error' => 'Titre et catégorie requis'], 400);
+        // Validation côté serveur (pas de HTML5/JS)
+        if (empty($titre)) {
+            return $this->json(['error' => 'Le titre est obligatoire.'], 400);
+        }
+        if (strlen($titre) < 3) {
+            return $this->json(['error' => 'Le titre doit comporter au moins 3 caractères.'], 400);
+        }
+        if (empty($categorie)) {
+            return $this->json(['error' => 'La catégorie est obligatoire.'], 400);
         }
 
         $description = $generator->generateDescription($titre, $categorie, $ville, $pays);
@@ -31,11 +38,14 @@ class DescriptionController extends AbstractController
     public function translate(Request $request, DescriptionGenerator $generator): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
-        $description = $data['description'] ?? '';
+        $description = trim($data['description'] ?? '');
         $lang = $data['lang'] ?? 'en';
 
-        if (!$description) {
-            return $this->json(['error' => 'Description manquante'], 400);
+        if (empty($description)) {
+            return $this->json(['error' => 'La description est manquante.'], 400);
+        }
+        if (strlen($description) < 10) {
+            return $this->json(['error' => 'La description doit comporter au moins 10 caractères.'], 400);
         }
 
         $translated = $generator->translateDescription($description, $lang);

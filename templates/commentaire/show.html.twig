@@ -1,0 +1,36 @@
+@'
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}Commentaire #{{ commentaire.id }}{% endblock %}
+
+{% block admin_content %}
+<div class="card">
+    <div class="card-header">
+        <h2>Commentaire #{{ commentaire.id }}</h2>
+        <div class="mt-2">
+            <a href="{{ path('admin_commentaire_edit', {'id': commentaire.id}) }}" class="btn btn-warning">Modifier</a>
+            <form method="post" action="{{ path('admin_commentaire_delete', {'id': commentaire.id}) }}" style="display: inline-block;">
+                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ commentaire.id) }}">
+                <button class="btn btn-danger" onclick="return confirm('Supprimer ce commentaire ?')">Supprimer</button>
+            </form>
+            <a href="{{ path('admin_commentaire_index') }}" class="btn btn-secondary">Retour</a>
+        </div>
+    </div>
+    <div class="card-body">
+        <p><strong>Publication :</strong> 
+            <a href="{{ path('admin_publication_show', {'id': commentaire.publication.id}) }}">
+                {{ commentaire.publication.titre }} (ID {{ commentaire.publication.id }})
+            </a>
+        </p>
+        <p><strong>Auteur :</strong> {{ commentaire.auteur }}</p>
+        <p><strong>Date de création :</strong> {{ commentaire.dateCreation|date('d/m/Y H:i') }}</p>
+        <p><strong>Modifié :</strong> {{ commentaire.modifie ? 'Oui' : 'Non' }}</p>
+        <hr>
+        <p><strong>Contenu :</strong></p>
+        <div class="border p-3 bg-light rounded">
+            {{ commentaire.contenu|nl2br }}
+        </div>
+    </div>
+</div>
+{% endblock %}
+'@ | Out-File -FilePath templates\admin\commentaire\show.html.twig -Encoding utf8

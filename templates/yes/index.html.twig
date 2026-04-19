@@ -1,0 +1,51 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Publication index{% endblock %}
+
+{% block body %}
+    <h1>Publication index</h1>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Titre</th>
+                <th>Description</th>
+                <th>Image</th>
+                <th>Categorie</th>
+                <th>Utilisateur_id</th>
+                <th>Auteur</th>
+                <th>Likes</th>
+                <th>Commentaires</th>
+                <th>Date_creation</th>
+                <th>actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for publication in publications %}
+            <tr>
+                <td>{{ publication.id }}</td>
+                <td>{{ publication.titre }}</td>
+                <td>{{ publication.description }}</td>
+                <td>{{ publication.image }}</td>
+                <td>{{ publication.categorie }}</td>
+                <td>{{ publication.utilisateurId }}</td>
+                <td>{{ publication.auteur }}</td>
+                <td>{{ publication.likes }}</td>
+                <td>{{ publication.commentaires }}</td>
+                <td>{{ publication.dateCreation ? publication.dateCreation|date('Y-m-d H:i:s') : '' }}</td>
+                <td>
+                    <a href="{{ path('app_yes_show', {'id': publication.id}) }}">show</a>
+                    <a href="{{ path('app_yes_edit', {'id': publication.id}) }}">edit</a>
+                </td>
+            </tr>
+        {% else %}
+            <tr>
+                <td colspan="11">no records found</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <a href="{{ path('app_yes_new') }}">Create new</a>
+{% endblock %}

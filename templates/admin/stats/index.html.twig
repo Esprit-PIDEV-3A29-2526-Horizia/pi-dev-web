@@ -1,0 +1,125 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}Tableau de bord des publications{% endblock %}
+
+{% block admin_content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>Tableau de bord des publications</h1>
+    {# Pas de bouton "Nouvelle publication" ici, mais on garde l'en-tête cohérent #}
+</div>
+
+{# Cartes récapitulatives (KPI) #}
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card text-white bg-primary">
+            <div class="card-body">
+                <h5 class="card-title">Total publications</h5>
+                <p class="card-text display-4">{{ totalPublications|default(0) }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-success">
+            <div class="card-body">
+                <h5 class="card-title">Total likes</h5>
+                <p class="card-text display-4">{{ totalLikes|default(0) }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-info">
+            <div class="card-body">
+                <h5 class="card-title">Total commentaires</h5>
+                <p class="card-text display-4">{{ totalCommentaires|default(0) }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# Tableau : Publications par catégorie (identique au style des listes) #}
+<div class="card mb-4">
+    <div class="card-header">
+        Publications par catégorie
+    </div>
+    <div class="card-body">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Catégorie</th>
+                    <th>Nombre de publications</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for categorie in categories|default([]) %}
+                <tr>
+                    <td>{{ categorie.categorie }}</td>
+                    <td>{{ categorie.count }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="2" class="text-center">Aucune catégorie trouvée</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{# Top 5 des publications les plus likées (affichées comme des cartes, sans image) #}
+<div class="card mb-4">
+    <div class="card-header">
+        🔥 Top 5 des publications les plus likées
+    </div>
+    <div class="card-body">
+        <div class="row">
+            {% for pub in topPublications|default([]) %}
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ pub.titre }}</h5>
+                        <p class="card-text">
+                            <i class="bi bi-heart-fill text-danger"></i> {{ pub.likes }} likes
+                        </p>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="col-12">
+                <div class="alert alert-info">Aucune publication trouvée.</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+{# Évolution mensuelle (12 derniers mois) #}
+<div class="card">
+    <div class="card-header">
+        📈 Évolution des publications (12 derniers mois)
+    </div>
+    <div class="card-body">
+        <table class="table table-bordered">
+            <thead class="table-light">
+                <tr>
+                    <th>Année</th>
+                    <th>Mois</th>
+                    <th>Nombre de publications</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ev in evolution|default([]) %}
+                <tr>
+                    <td>{{ ev.annee }}</td>
+                    <td>{{ ev.mois }}</td>
+                    <td>{{ ev.total }}</td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="3" class="text-center">Aucune donnée mensuelle</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

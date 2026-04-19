@@ -1,55 +1,89 @@
 {% extends 'admin/layout.html.twig' %}
 
-{% block title %}{{ publication.titre }}{% endblock %}
+{% block title %}{{ publication.titre }} - Détail{% endblock %}
 
 {% block admin_content %}
 <div class="card">
-    <div class="card-header">
-        <h2>{{ publication.titre }}</h2>
-        <div class="mt-2">
-            <a href="{{ path('admin_publication_edit', {'id': publication.id}) }}" class="btn btn-warning">Modifier</a>
+    <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
+        <h2 class="mb-0">{{ publication.titre }}</h2>
+        <div class="mt-2 mt-sm-0">
+            <a href="{{ path('admin_publication_edit', {'id': publication.id}) }}" class="btn btn-warning">
+                <i class="bi bi-pencil"></i> Modifier
+            </a>
             {{ include('admin/publication/_delete_form.html.twig') }}
             <a href="{{ path('admin_commentaire_index', {'publication': publication.id}) }}" class="btn btn-info">
                 <i class="bi bi-chat-dots-fill"></i> Voir les commentaires
             </a>
-            <a href="{{ path('admin_publication_index') }}" class="btn btn-secondary">Retour</a>
+            <a href="{{ path('admin_publication_index') }}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Retour
+            </a>
         </div>
     </div>
     <div class="card-body">
-        <p><strong>Catégorie :</strong> {{ publication.categorie }}</p>
-        <p><strong>Auteur :</strong> {{ publication.auteur }}</p>
-        <p><strong>Date :</strong> {{ publication.dateCreation|date('d/m/Y H:i') }}</p>
-        {% if publication.ville or publication.pays %}
-            <p><strong>Localisation :</strong> {{ publication.ville }}{{ publication.ville and publication.pays ? ', ' : '' }}{{ publication.pays }}</p>
-        {% endif %}
-        {% if publication.tags %}
-            <p><strong>Tags :</strong> {{ publication.tags|join(', ') }}</p>
-        {% endif %}
-        <hr>
-        <p>{{ publication.description|nl2br }}</p>
-        {% if publication.image %}
-            <img src="{{ asset(publication.image) }}" class="img-fluid">
-        {% endif %}
+        <div class="row">
+            <div class="col-md-8">
+                <dl class="row">
+                    <dt class="col-sm-3">Catégorie</dt>
+                    <dd class="col-sm-9">{{ publication.categorie }}</dd>
+
+                    <dt class="col-sm-3">Auteur</dt>
+                    <dd class="col-sm-9">{{ publication.auteur }}</dd>
+
+                    <dt class="col-sm-3">Date</dt>
+                    <dd class="col-sm-9">{{ publication.dateCreation|date('d/m/Y H:i') }}</dd>
+
+                    {% if publication.ville or publication.pays %}
+                        <dt class="col-sm-3">Localisation</dt>
+                        <dd class="col-sm-9">{{ publication.ville }}{{ publication.ville and publication.pays ? ', ' : '' }}{{ publication.pays }}</dd>
+                    {% endif %}
+
+                    {% if publication.tags %}
+                        <dt class="col-sm-3">Tags</dt>
+                        <dd class="col-sm-9">{{ publication.tags|join(', ') }}</dd>
+                    {% endif %}
+
+                    <dt class="col-sm-3">Likes</dt>
+                    <dd class="col-sm-9">{{ publication.likes }}</dd>
+                </dl>
+                <hr>
+                <h5>Description</h5>
+                <p>{{ publication.description|nl2br }}</p>
+            </div>
+            {% if publication.image %}
+            <div class="col-md-4 text-center">
+                <img src="{{ asset(publication.image) }}" class="img-fluid rounded shadow" alt="{{ publication.titre }}">
+            </div>
+            {% endif %}
+        </div>
 
         <hr>
         <h4>Commentaires ({{ publication.commentaires }})</h4>
         {% if commentaires is defined and commentaires|length > 0 %}
             <div class="table-responsive">
-                <table class="table table-sm">
-                    <thead>
-                        <tr><th>Auteur</th><th>Commentaire</th><th>Date</th><th>Actions</th></tr>
+                <table class="table table-sm table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Auteur</th>
+                            <th>Commentaire</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+                        </tr>
                     </thead>
                     <tbody>
                     {% for com in commentaires|slice(0, 5) %}
                         <tr>
                             <td>{{ com.auteur }}</td>
-                            <td>{{ com.contenu|slice(0, 80) }}...</td>
+                            <td>{{ com.contenu|length > 80 ? com.contenu|slice(0, 80) ~ '...' : com.contenu }}</td>
                             <td>{{ com.dateCreation|date('d/m/Y H:i') }}</td>
                             <td>
-                                <a href="{{ path('admin_commentaire_edit', {'id': com.id}) }}" class="btn btn-sm btn-warning">Modifier</a>
+                                <a href="{{ path('admin_commentaire_edit', {'id': com.id}) }}" class="btn btn-sm btn-warning">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
                                 <form method="post" action="{{ path('admin_commentaire_delete', {'id': com.id}) }}" style="display:inline">
                                     <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ com.id) }}">
-                                    <button class="btn btn-sm btn-danger" onclick="return confirm('Supprimer ?')">Supprimer</button>
+                                    <button class="btn btn-sm btn-danger" onclick="return confirm('Supprimer ce commentaire ?')">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
                                 </form>
                             </td>
                         </tr>
@@ -57,11 +91,15 @@
                     </tbody>
                 </table>
                 {% if publication.commentaires > 5 %}
-                    <a href="{{ path('admin_commentaire_index', {'publication': publication.id}) }}" class="btn btn-link">Voir tous les commentaires</a>
+                    <div class="mt-2">
+                        <a href="{{ path('admin_commentaire_index', {'publication': publication.id}) }}" class="btn btn-outline-info btn-sm">
+                            Voir tous les {{ publication.commentaires }} commentaires
+                        </a>
+                    </div>
                 {% endif %}
             </div>
         {% else %}
-            <p>Aucun commentaire pour cette publication.</p>
+            <div class="alert alert-info">Aucun commentaire pour cette publication.</div>
         {% endif %}
     </div>
 </div>

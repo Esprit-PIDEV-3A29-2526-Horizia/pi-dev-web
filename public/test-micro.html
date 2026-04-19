@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head><title>Test micro</title></head>
+<body>
+    <button id="start">Dictée</button>
+    <textarea id="result" rows="4" cols="50"></textarea>
+    <script>
+        const btn = document.getElementById('start');
+        const textarea = document.getElementById('result');
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (!SpeechRecognition) {
+            alert("Votre navigateur ne supporte pas la reconnaissance vocale.");
+        } else {
+            const recognition = new SpeechRecognition();
+            recognition.lang = 'fr-FR';
+            recognition.interimResults = false;
+            btn.onclick = () => {
+                recognition.start();
+                btn.textContent = 'Écoute...';
+                recognition.onresult = (e) => {
+                    textarea.value = e.results[0][0].transcript;
+                    btn.textContent = 'Dictée';
+                };
+                recognition.onerror = (e) => {
+                    alert('Erreur : ' + e.error);
+                    btn.textContent = 'Dictée';
+                };
+                recognition.onend = () => btn.textContent = 'Dictée';
+            };
+        }
+    </script>
+</body>
+</html>

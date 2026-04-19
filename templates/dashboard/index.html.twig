@@ -1,0 +1,65 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}Tableau de bord - Horizia{% endblock %}
+
+{% block admin_content %}
+<div class="row">
+    <div class="col-md-4 mb-4">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <h5 class="card-title">Publications</h5>
+                <p class="card-text display-4">{{ totalPublications|default(0) }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <h5 class="card-title">Commentaires</h5>
+                <p class="card-text display-4">{{ totalCommentaires|default(0) }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <h5 class="card-title">Likes</h5>
+                <p class="card-text display-4">{{ totalLikes|default(0) }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-white fw-bold">Top 5 publications les plus likées</div>
+            <ul class="list-group list-group-flush">
+                {% for pub in topPublications %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        {{ pub.titre }}
+                        <span class="badge bg-danger rounded-pill">❤️ {{ pub.likes }}</span>
+                    </li>
+                {% else %}
+                    <li class="list-group-item">Aucune publication</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-white fw-bold">Dernières publications</div>
+            <ul class="list-group list-group-flush">
+                {% for pub in dernieresActivites %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        {{ pub.titre }}
+                        <small>{{ pub.dateCreation|date('d/m/Y') }}</small>
+                    </li>
+                {% else %}
+                    <li class="list-group-item">Aucune publication</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

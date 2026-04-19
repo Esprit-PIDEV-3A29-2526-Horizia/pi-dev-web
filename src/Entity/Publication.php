@@ -20,10 +20,12 @@ class Publication
 
     #[ORM\Column(length: 255)]
     #[Assert\NotBlank(message: "Le titre est obligatoire.")]
+    #[Assert\Length(min: 3, max: 255, minMessage: "Le titre doit comporter au moins 3 caractères.")]
     private ?string $titre = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
     #[Assert\NotBlank(message: "La description est obligatoire.")]
+    #[Assert\Length(min: 10, minMessage: "La description doit comporter au moins 10 caractères.")]
     private ?string $description = null;
 
     #[ORM\Column(length: 500, nullable: true)]
@@ -69,13 +71,11 @@ class Publication
         $this->commentaireList = new ArrayCollection();
     }
 
-    // Id
     public function getId(): ?int
     {
         return $this->id;
     }
 
-    // Titre
     public function getTitre(): ?string
     {
         return $this->titre;
@@ -87,7 +87,6 @@ class Publication
         return $this;
     }
 
-    // Description
     public function getDescription(): ?string
     {
         return $this->description;
@@ -99,7 +98,6 @@ class Publication
         return $this;
     }
 
-    // Image
     public function getImage(): ?string
     {
         return $this->image;
@@ -111,7 +109,6 @@ class Publication
         return $this;
     }
 
-    // Catégorie
     public function getCategorie(): ?string
     {
         return $this->categorie;
@@ -123,7 +120,6 @@ class Publication
         return $this;
     }
 
-    // Utilisateur_id
     public function getUtilisateurId(): ?int
     {
         return $this->utilisateur_id;
@@ -135,7 +131,6 @@ class Publication
         return $this;
     }
 
-    // Auteur
     public function getAuteur(): ?string
     {
         return $this->auteur;
@@ -147,7 +142,6 @@ class Publication
         return $this;
     }
 
-    // Likes
     public function getLikes(): ?int
     {
         return $this->likes;
@@ -159,7 +153,24 @@ class Publication
         return $this;
     }
 
-    // Commentaires (compteur)
+    /**
+     * Incrémente le compteur de likes de 1.
+     */
+    public function incrementLikes(): static
+    {
+        $this->likes++;
+        return $this;
+    }
+
+    /**
+     * Décrémente le compteur de likes de 1.
+     */
+    public function decrementLikes(): static
+    {
+        $this->likes--;
+        return $this;
+    }
+
     public function getCommentaires(): ?int
     {
         return $this->commentaires;
@@ -171,7 +182,6 @@ class Publication
         return $this;
     }
 
-    // Date de création
     public function getDateCreation(): ?\DateTimeImmutable
     {
         return $this->date_creation;
@@ -183,7 +193,6 @@ class Publication
         return $this;
     }
 
-    // Ville
     public function getVille(): ?string
     {
         return $this->ville;
@@ -195,7 +204,6 @@ class Publication
         return $this;
     }
 
-    // Pays
     public function getPays(): ?string
     {
         return $this->pays;
@@ -207,7 +215,6 @@ class Publication
         return $this;
     }
 
-    // Tags
     public function getTags(): ?array
     {
         return $this->tags;
@@ -219,7 +226,6 @@ class Publication
         return $this;
     }
 
-    // Collection de commentaires
     public function getCommentaireList(): Collection
     {
         return $this->commentaireList;
@@ -230,6 +236,8 @@ class Publication
         if (!$this->commentaireList->contains($commentaire)) {
             $this->commentaireList->add($commentaire);
             $commentaire->setPublication($this);
+            // Mettre à jour le compteur de commentaires
+            $this->commentaires = $this->commentaireList->count();
         }
         return $this;
     }
@@ -240,29 +248,20 @@ class Publication
             if ($commentaire->getPublication() === $this) {
                 $commentaire->setPublication(null);
             }
+            // Mettre à jour le compteur de commentaires
+            $this->commentaires = $this->commentaireList->count();
         }
         return $this;
     }
 
+    // Méthodes addCommentaireList / removeCommentaireList (si nécessaires)
     public function addCommentaireList(Commentaire $commentaireList): static
     {
-        if (!$this->commentaireList->contains($commentaireList)) {
-            $this->commentaireList->add($commentaireList);
-            $commentaireList->setPublication($this);
-        }
-
-        return $this;
+        return $this->addCommentaire($commentaireList);
     }
 
     public function removeCommentaireList(Commentaire $commentaireList): static
     {
-        if ($this->commentaireList->removeElement($commentaireList)) {
-            // set the owning side to null (unless already changed)
-            if ($commentaireList->getPublication() === $this) {
-                $commentaireList->setPublication(null);
-            }
-        }
-
-        return $this;
+        return $this->removeCommentaire($commentaireList);
     }
 }

@@ -2,71 +2,358 @@
 
 {% block title %}{{ publication.titre }} - Horozia{% endblock %}
 
+{% block hero %}{% endblock %}
+
 {% block body %}
 <section class="ftco-section">
     <div class="container">
-        <div class="row">
-            <div class="col-md-8 ftco-animate">
-                <h1>{{ publication.titre }}</h1>
-                <p class="mb-3">
-                    <span class="text-muted">Par {{ publication.auteur }} • {{ publication.dateCreation|date('d/m/Y') }}</span>
-                    {% if publication.ville or publication.pays %}
-                        • {{ publication.ville }}{{ publication.ville and publication.pays ? ', ' : '' }}{{ publication.pays }}
+        <div class="row justify-content-center">
+            <div class="col-md-10">
+                {# Carte de la publication #}
+                <div class="card shadow-sm mb-5">
+                    {% if publication.image %}
+                        <img src="{{ asset(publication.image) }}" class="card-img-top" alt="{{ publication.titre }}" style="max-height: 500px; object-fit: cover;">
+                    {% else %}
+                        <img src="https://placehold.co/1200x600" class="card-img-top" alt="Image par défaut" style="max-height: 500px; object-fit: cover;">
                     {% endif %}
-                </p>
-                <div class="mb-3">
-                    <span class="badge bg-secondary">{{ publication.categorie }}</span>
-                    {% for tag in publication.tags %}
-                        <span class="badge bg-light">#{{ tag }}</span>
-                    {% endfor %}
-                </div>
-                {% if publication.image %}
-                    <img src="{{ asset(publication.image) }}" class="img-fluid rounded mb-4">
-                {% endif %}
-                <div class="card mb-4">
                     <div class="card-body">
-                        {{ publication.description|nl2br }}
+                        <span class="badge bg-secondary mb-2">{{ publication.categorie }}</span>
+                        <h1 class="card-title">{{ publication.titre }}</h1>
+                        {% if publication.ville or publication.pays %}
+                            <p class="text-muted">
+                                <i class="fa fa-map-marker-alt"></i>
+                                {% if publication.ville %}{{ publication.ville }}{% endif %}
+                                {% if publication.pays %}{% if publication.ville %}, {% endif %}{{ publication.pays }}{% endif %}
+                            </p>
+                        {% endif %}
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <small class="text-muted">
+                                <i class="fa fa-user"></i> {{ publication.auteur }} •
+                                <i class="fa fa-calendar-alt"></i> {{ publication.dateCreation|date('d/m/Y') }}
+                            </small>
+                            <div>
+                                <span class="me-2"><i class="fa fa-heart text-danger"></i> {{ publication.likes }}</span>
+                                <span><i class="fa fa-comment"></i> {{ publication.commentaires }}</span>
+                            </div>
+                        </div>
+                        <div class="card-text">
+                            {{ publication.description|nl2br }}
+                        </div>
+                        <hr>
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <a href="{{ path('front_publication_index') }}" class="btn btn-secondary">
+                                <i class="fa fa-arrow-left"></i> Retour
+                            </a>
+                            <div class="d-flex gap-2">
+                                {# Boutons Modifier / Supprimer pour l'auteur ou admin #}
+                                {% if app.user and (app.user.userIdentifier == publication.auteur or is_granted('ROLE_ADMIN')) %}
+                                    <a href="{{ path('front_publication_edit', {'id': publication.id}) }}" class="btn btn-sm btn-warning">
+                                        <i class="fa fa-edit"></i> Modifier
+                                    </a>
+                                    <form method="post" action="{{ path('front_publication_delete', {'id': publication.id}) }}" style="display:inline-block">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('delete_publication_' ~ publication.id) }}">
+                                        <button class="btn btn-sm btn-danger" onclick="return confirm('Supprimer cette publication ?')">
+                                            <i class="fa fa-trash"></i> Supprimer
+                                        </button>
+                                    </form>
+                                {% endif %}
+                                {# Bouton Like #}
+                                {% set liked = publication.id in likedIds|default([]) %}
+                                <button class="btn btn-sm like-btn {% if liked %}btn-danger{% else %}btn-outline-danger{% endif %}" data-id="{{ publication.id }}">
+                                    ❤️ <span class="likes-count">{{ publication.likes }}</span> J'aime
+                                </button>
+                                {# Bouton Favori #}
+                                {% set isFavorite = publication.id in favoritesIds|default([]) %}
+                                <button class="btn btn-sm favorite-btn {% if isFavorite %}btn-warning{% else %}btn-outline-warning{% endif %}" data-id="{{ publication.id }}">
+                                    <i class="fa {% if isFavorite %}fa-star{% else %}fa-star-o{% endif %}"></i> Favoris
+                                </button>
+                            </div>
+                        </div>
+
+                        {# Boutons de partage #}
+                        {% set url = url('front_publication_show', {'id': publication.id}) %}
+                        {% set titre = publication.titre|url_encode %}
+                        {% set description = publication.description|slice(0, 200)|url_encode %}
+                        <div class="share-buttons d-flex flex-wrap gap-2 mt-3 pt-2 border-top">
+                            <a href="https://www.facebook.com/sharer/sharer.php?u={{ url }}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-primary" title="Partager sur Facebook">
+                                <i class="fa fa-facebook"></i> Facebook
+                            </a>
+                            <a href="https://twitter.com/intent/tweet?url={{ url }}&text={{ titre }}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-info" title="Partager sur Twitter">
+                                <i class="fa fa-twitter"></i> Twitter
+                            </a>
+                            <a href="https://www.linkedin.com/shareArticle?mini=true&url={{ url }}&title={{ titre }}&summary={{ description }}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-secondary" title="Partager sur LinkedIn">
+                                <i class="fa fa-linkedin"></i> LinkedIn
+                            </a>
+                            <a href="https://wa.me/?text={{ titre }}%20{{ url }}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-success" title="Partager sur WhatsApp">
+                                <i class="fa fa-whatsapp"></i> WhatsApp
+                            </a>
+                            <button class="btn btn-sm btn-outline-secondary copy-link-btn" data-url="{{ url }}" title="Copier le lien">
+                                <i class="fa fa-link"></i> Copier le lien
+                            </button>
+                        </div>
                     </div>
                 </div>
 
-                <form method="post" action="{{ path('front_publication_like', {'id': publication.id}) }}" class="d-inline">
-                    <input type="hidden" name="_token" value="{{ csrf_token('like' ~ publication.id) }}">
-                    <button type="submit" class="btn btn-outline-danger">
-                        <i class="fa fa-heart"></i> {{ publication.likes }} J'aime
-                    </button>
-                </form>
-            </div>
+                {# Section commentaires (identique à votre version) #}
+                <div id="comment-form" class="mt-5">
+                    <h3 class="mb-4">Commentaires ({{ publication.commentaires }})</h3>
 
-            <div class="col-md-4 ftco-animate">
-                <div class="card">
-                    <div class="card-header bg-primary text-white">Commentaires ({{ publication.commentaires }})</div>
-                    <div class="card-body">
-                        {{ form_start(commentForm) }}
-                            {{ form_row(commentForm.auteur, {'attr': {'class': 'form-control', 'placeholder': 'Votre nom'}}) }}
-                            {{ form_row(commentForm.contenu, {'attr': {'rows': 4, 'class': 'form-control', 'placeholder': 'Votre commentaire...'}}) }}
-                            <button type="submit" class="btn btn-primary mt-2">Publier</button>
-                        {{ form_end(commentForm) }}
-                        <hr>
+                    {# Liste des commentaires existants #}
+                    <div class="comments-list mb-5">
                         {% for commentaire in commentaires %}
-                            <div class="mb-3">
-                                <strong>{{ commentaire.auteur }}</strong>
-                                <small class="text-muted float-end">{{ commentaire.dateCreation|date('d/m/Y H:i') }}</small>
-                                <p>{{ commentaire.contenu }}</p>
-                                {% if app.user and (app.user.userIdentifier == commentaire.auteur or is_granted('ROLE_ADMIN')) %}
-                                    <a href="{{ path('front_commentaire_edit', {'id': commentaire.id}) }}" class="btn btn-sm btn-outline-primary">Modifier</a>
-                                    <form method="post" action="{{ path('front_commentaire_delete', {'id': commentaire.id}) }}" style="display:inline">
-                                        <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ commentaire.id) }}">
-                                        <button class="btn btn-sm btn-outline-danger" onclick="return confirm('Supprimer ?')">Supprimer</button>
-                                    </form>
-                                {% endif %}
+                            <div class="card mb-3 {% if loop.index is odd %}bg-light{% endif %}">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <strong><i class="fa fa-user-circle"></i> {{ commentaire.auteur ?? 'Anonyme' }}</strong>
+                                        <div>
+                                            <button class="btn btn-sm btn-outline-secondary read-comment-btn" data-text="{{ commentaire.contenu|e('html_attr') }}">
+                                                🔊 Lire
+                                            </button>
+                                            <small class="text-muted ms-2">{{ commentaire.dateCreation|date('d/m/Y H:i') }}</small>
+                                        </div>
+                                    </div>
+                                    <p class="mt-2 mb-0">{{ commentaire.contenu|nl2br }}</p>
+                                    {% if commentaire.modifie %}
+                                        <small class="text-muted">(modifié)</small>
+                                    {% endif %}
+                                    <div class="mt-2">
+                                        {% if app.user and (app.user.userIdentifier == commentaire.auteur or is_granted('ROLE_ADMIN')) %}
+                                            <a href="{{ path('front_commentaire_edit', {'id': commentaire.id}) }}" class="btn btn-sm btn-outline-secondary">
+                                                <i class="fa fa-edit"></i> Modifier
+                                            </a>
+                                            <form method="post" action="{{ path('front_commentaire_delete', {'id': commentaire.id}) }}" style="display:inline-block">
+                                                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ commentaire.id) }}">
+                                                <button class="btn btn-sm btn-outline-danger" onclick="return confirm('Supprimer ce commentaire ?')">
+                                                    <i class="fa fa-trash"></i> Supprimer
+                                                </button>
+                                            </form>
+                                        {% endif %}
+                                    </div>
+                                </div>
                             </div>
                         {% else %}
-                            <p class="text-muted">Soyez le premier à commenter.</p>
+                            <div class="alert alert-info">Aucun commentaire pour l'instant. Soyez le premier à commenter !</div>
                         {% endfor %}
+                    </div>
+
+                    {# Formulaire d'ajout de commentaire #}
+                    <div class="card">
+                        <div class="card-header bg-primary text-white">
+                            <i class="fa fa-comment-dots"></i> Ajouter un commentaire
+                        </div>
+                        <div class="card-body">
+                            {{ form_start(commentForm, {'attr': {'novalidate': 'novalidate', 'class': 'comment-form'}}) }}
+                                {{ form_errors(commentForm) }}
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        {{ form_row(commentForm.auteur, {'attr': {'placeholder': 'Votre nom (facultatif)', 'class': 'form-control'}}) }}
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    {{ form_label(commentForm.contenu, 'Votre commentaire') }}
+                                    <div class="input-group">
+                                        {{ form_widget(commentForm.contenu, {'attr': {'class': 'comment-textarea form-control', 'placeholder': 'Écrivez votre commentaire...', 'rows': 4}}) }}
+                                        <div class="input-group-append">
+                                            <button type="button" class="btn btn-outline-secondary start-record-btn" data-target="{{ commentForm.contenu.vars.id }}">
+                                                🎙️ Dictée
+                                            </button>
+                                        </div>
+                                    </div>
+                                    {{ form_errors(commentForm.contenu) }}
+                                </div>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fa fa-paper-plane"></i> Commenter
+                                </button>
+                            {{ form_end(commentForm) }}
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </section>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Gestion du like (AJAX)
+            const likeBtn = document.querySelector('.like-btn');
+            if (likeBtn) {
+                likeBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const publicationId = this.dataset.id;
+                    fetch(`/publication/${publicationId}/like`, {
+                        method: 'POST',
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        const likesSpan = this.querySelector('.likes-count');
+                        likesSpan.textContent = data.likesCount;
+                        if (data.liked) {
+                            this.classList.remove('btn-outline-danger');
+                            this.classList.add('btn-danger');
+                        } else {
+                            this.classList.remove('btn-danger');
+                            this.classList.add('btn-outline-danger');
+                        }
+                    })
+                    .catch(error => console.error('Erreur like:', error));
+                });
+            }
+
+            // Gestion des favoris (AJAX)
+            const favBtn = document.querySelector('.favorite-btn');
+            if (favBtn) {
+                favBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const publicationId = this.dataset.id;
+                    const icon = this.querySelector('i');
+                    fetch(`/favorite/${publicationId}/toggle`, {
+                        method: 'POST',
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.isFavorite) {
+                            this.classList.remove('btn-outline-warning');
+                            this.classList.add('btn-warning');
+                            icon.classList.remove('fa-star-o');
+                            icon.classList.add('fa-star');
+                        } else {
+                            this.classList.remove('btn-warning');
+                            this.classList.add('btn-outline-warning');
+                            icon.classList.remove('fa-star');
+                            icon.classList.add('fa-star-o');
+                        }
+                    })
+                    .catch(error => console.error('Erreur favori:', error));
+                });
+            }
+
+            // Copier le lien
+            document.querySelectorAll('.copy-link-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const url = this.dataset.url;
+                    navigator.clipboard.writeText(url).then(() => {
+                        alert('Lien copié dans le presse-papiers !');
+                    }).catch(() => {
+                        alert('Impossible de copier le lien.');
+                    });
+                });
+            });
+
+            // Speech-to-Text (Dictée)
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            let activeRecognition = null;
+            let activeButton = null;
+
+            const startListening = (button, textarea) => {
+                if (!SpeechRecognition) {
+                    alert("Votre navigateur ne supporte pas la reconnaissance vocale. Utilisez Chrome ou Edge.");
+                    return;
+                }
+                if (activeRecognition && activeButton === button) {
+                    activeRecognition.stop();
+                    return;
+                }
+                if (activeRecognition) activeRecognition.stop();
+
+                const recognition = new SpeechRecognition();
+                recognition.lang = 'fr-FR';
+                recognition.interimResults = true;
+                recognition.continuous = true;
+
+                recognition.onstart = () => {
+                    activeRecognition = recognition;
+                    activeButton = button;
+                    button.innerHTML = '⏹️ Arrêter';
+                    button.classList.add('btn-danger');
+                    button.classList.remove('btn-outline-secondary');
+                    textarea.classList.add('bg-light');
+                };
+                recognition.onend = () => {
+                    if (activeRecognition === recognition) {
+                        activeRecognition = null;
+                        activeButton = null;
+                    }
+                    button.innerHTML = '🎙️ Dictée';
+                    button.classList.remove('btn-danger');
+                    button.classList.add('btn-outline-secondary');
+                    textarea.classList.remove('bg-light');
+                };
+                recognition.onresult = (event) => {
+                    let finalTranscript = '';
+                    for (let i = event.resultIndex; i < event.results.length; i++) {
+                        if (event.results[i].isFinal) {
+                            finalTranscript += event.results[i][0].transcript;
+                        }
+                    }
+                    if (finalTranscript) {
+                        const currentValue = textarea.value;
+                        textarea.value = currentValue + (currentValue ? ' ' : '') + finalTranscript;
+                    }
+                };
+                recognition.onerror = (event) => {
+                    console.error('Erreur reconnaissance:', event.error);
+                    alert(`Erreur: ${event.error}. Vérifiez votre microphone.`);
+                    recognition.stop();
+                };
+                recognition.start();
+            };
+
+            const attachDictation = () => {
+                const btn = document.querySelector('.start-record-btn');
+                if (btn && !btn.dataset.listenerAttached) {
+                    const targetId = btn.getAttribute('data-target');
+                    const textarea = document.getElementById(targetId);
+                    if (textarea) {
+                        btn.addEventListener('click', () => startListening(btn, textarea));
+                        btn.dataset.listenerAttached = 'true';
+                    }
+                }
+            };
+            attachDictation();
+            new MutationObserver(attachDictation).observe(document.body, { childList: true, subtree: true });
+
+            // Text-to-Speech (Lecture) sur les commentaires existants
+            const speakText = (text) => {
+                if (!text.trim()) {
+                    alert("Rien à lire.");
+                    return;
+                }
+                if (window.speechSynthesis.speaking) window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'fr-FR';
+                utterance.rate = 1;
+                utterance.pitch = 1;
+                utterance.volume = 1;
+                utterance.onerror = (event) => alert('Erreur lors de la lecture.');
+                window.speechSynthesis.speak(utterance);
+            };
+
+            const attachReadButtons = () => {
+                document.querySelectorAll('.read-comment-btn').forEach(btn => {
+                    if (btn.dataset.listenerAttached) return;
+                    const text = btn.getAttribute('data-text');
+                    btn.addEventListener('click', () => speakText(text));
+                    btn.dataset.listenerAttached = 'true';
+                });
+            };
+            attachReadButtons();
+            new MutationObserver(attachReadButtons).observe(document.body, { childList: true, subtree: true });
+
+            // Défilement automatique vers le formulaire si ancre #comment-form
+            if (window.location.hash === '#comment-form') {
+                const formElement = document.getElementById('comment-form');
+                if (formElement) {
+                    formElement.scrollIntoView({ behavior: 'smooth' });
+                    const textarea = formElement.querySelector('textarea');
+                    if (textarea) textarea.focus();
+                }
+            }
+        });
+    </script>
 {% endblock %}

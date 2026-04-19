@@ -1,0 +1,36 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}Tableau de bord - Horizia{% endblock %}
+
+{% block admin_content %}
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+    <h1 class="h2">Tableau de bord</h1>
+</div>
+
+<div class="row">
+    <div class="col-md-4 mb-4">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <h5 class="card-title">Publications</h5>
+                <p class="card-text display-4">{{ totalPublications|default(0) }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <h5 class="card-title">Commentaires</h5>
+                <p class="card-text display-4">{{ totalCommentaires|default(0) }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <h5 class="card-title">Likes</h5>
+                <p class="card-text display-4">{{ totalLikes|default(0) }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

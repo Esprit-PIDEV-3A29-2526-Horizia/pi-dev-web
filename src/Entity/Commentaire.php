@@ -21,14 +21,14 @@ class Commentaire
     private ?Publication $publication = null;
 
     #[ORM\Column(nullable: true)]
-    private ?int $utilisateur_id = 0;
+    private ?int $utilisateur_id = null;
 
     #[ORM\Column(length: 100, nullable: true)]
     private ?string $auteur = null;
 
     #[ORM\Column(type: Types::TEXT)]
     #[Assert\NotBlank(message: "Le commentaire ne peut pas être vide.")]
-    #[Assert\Length(min: 2, max: 500)]
+    #[Assert\Length(min: 2, max: 500, minMessage: "Le commentaire doit comporter au moins 2 caractères.", maxMessage: "Le commentaire ne peut pas dépasser 500 caractères.")]
     private ?string $contenu = null;
 
     #[ORM\Column]
@@ -42,11 +42,20 @@ class Commentaire
         $this->date_creation = new \DateTimeImmutable();
     }
 
-    // ... getters/setters (id, publication, utilisateur_id, auteur, contenu, date_creation, modifie)
-
     public function getId(): ?int
     {
         return $this->id;
+    }
+
+    public function getPublication(): ?Publication
+    {
+        return $this->publication;
+    }
+
+    public function setPublication(?Publication $publication): static
+    {
+        $this->publication = $publication;
+        return $this;
     }
 
     public function getUtilisateurId(): ?int
@@ -57,7 +66,6 @@ class Commentaire
     public function setUtilisateurId(?int $utilisateur_id): static
     {
         $this->utilisateur_id = $utilisateur_id;
-
         return $this;
     }
 
@@ -69,7 +77,6 @@ class Commentaire
     public function setAuteur(?string $auteur): static
     {
         $this->auteur = $auteur;
-
         return $this;
     }
 
@@ -81,7 +88,6 @@ class Commentaire
     public function setContenu(string $contenu): static
     {
         $this->contenu = $contenu;
-
         return $this;
     }
 
@@ -93,7 +99,6 @@ class Commentaire
     public function setDateCreation(\DateTimeImmutable $date_creation): static
     {
         $this->date_creation = $date_creation;
-
         return $this;
     }
 
@@ -105,19 +110,6 @@ class Commentaire
     public function setModifie(?bool $modifie): static
     {
         $this->modifie = $modifie;
-
-        return $this;
-    }
-
-    public function getPublication(): ?Publication
-    {
-        return $this->publication;
-    }
-
-    public function setPublication(?Publication $publication): static
-    {
-        $this->publication = $publication;
-
         return $this;
     }
 }

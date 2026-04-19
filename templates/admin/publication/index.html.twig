@@ -1,73 +1,157 @@
 {% extends 'admin/layout.html.twig' %}
 
-{% block title %}Gestion des Publications - Horizia{% endblock %}
+{% block title %}Gestion des publications{% endblock %}
 
 {% block admin_content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h1>Gestion des Publications</h1>
-    <a href="{{ path('admin_publication_new') }}" class="btn btn-horozia-primary">
-        <i class="bi bi-plus-lg"></i> Nouvelle publication
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+    <h1 class="h2"><i class="bi bi-newspaper"></i> Publications</h1>
+    <a href="{{ path('admin_publication_new') }}" class="btn btn-success">
+        <i class="bi bi-plus-circle"></i> Nouvelle publication
     </a>
 </div>
 
-<div class="card mb-4">
+{# Filtres (recherche et catégorie) #}
+<div class="card mb-4 shadow-sm">
     <div class="card-body">
         <form method="get" class="row g-3">
             <div class="col-md-6">
-                <input type="text" name="search" class="form-control" placeholder="Rechercher une publication..." value="{{ app.request.query.get('search') }}">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" name="search" class="form-control" placeholder="Rechercher..." value="{{ app.request.query.get('search') }}">
+                </div>
             </div>
             <div class="col-md-4">
                 <select name="categorie" class="form-select">
                     <option value="">Toutes catégories</option>
                     {% for cat in ['Plage','Montagne','Ville','Désert','Campagne','Historique'] %}
-                        <option value="{{ cat }}" {% if app.request.query.get('categorie') == cat %}selected{% endif %}>{{ cat }}</option>
+                        <option value="{{ cat }}" {{ app.request.query.get('categorie') == cat ? 'selected' : '' }}>{{ cat }}</option>
                     {% endfor %}
                 </select>
             </div>
             <div class="col-md-2">
-                <button type="submit" class="btn btn-horozia-secondary w-100">Filtrer</button>
+                <button type="submit" class="btn btn-secondary w-100">
+                    <i class="bi bi-funnel"></i> Filtrer
+                </button>
             </div>
         </form>
     </div>
 </div>
 
-<div class="row">
+{# Barre de tri #}
+<div class="mb-4">
+    <strong><i class="bi bi-arrow-repeat"></i> Trier par :</strong>
+    <div class="btn-group flex-wrap mt-2 mt-sm-0" role="group">
+        <a href="{{ path('admin_publication_index', app.request.query.all|merge({'sort': 'id', 'direction': (current_sort == 'id' and current_direction == 'ASC') ? 'DESC' : 'ASC'})) }}" 
+           class="btn btn-sm btn-outline-secondary {% if current_sort == 'id' %}active{% endif %}">
+            ID {% if current_sort == 'id' %}{% if current_direction == 'ASC' %}▲{% else %}▼{% endif %}{% endif %}
+        </a>
+        <a href="{{ path('admin_publication_index', app.request.query.all|merge({'sort': 'titre', 'direction': (current_sort == 'titre' and current_direction == 'ASC') ? 'DESC' : 'ASC'})) }}" 
+           class="btn btn-sm btn-outline-secondary {% if current_sort == 'titre' %}active{% endif %}">
+            Titre {% if current_sort == 'titre' %}{% if current_direction == 'ASC' %}▲{% else %}▼{% endif %}{% endif %}
+        </a>
+        <a href="{{ path('admin_publication_index', app.request.query.all|merge({'sort': 'categorie', 'direction': (current_sort == 'categorie' and current_direction == 'ASC') ? 'DESC' : 'ASC'})) }}" 
+           class="btn btn-sm btn-outline-secondary {% if current_sort == 'categorie' %}active{% endif %}">
+            Catégorie {% if current_sort == 'categorie' %}{% if current_direction == 'ASC' %}▲{% else %}▼{% endif %}{% endif %}
+        </a>
+        <a href="{{ path('admin_publication_index', app.request.query.all|merge({'sort': 'date_creation', 'direction': (current_sort == 'date_creation' and current_direction == 'ASC') ? 'DESC' : 'ASC'})) }}" 
+           class="btn btn-sm btn-outline-secondary {% if current_sort == 'date_creation' %}active{% endif %}">
+            Date {% if current_sort == 'date_creation' %}{% if current_direction == 'ASC' %}▲{% else %}▼{% endif %}{% endif %}
+        </a>
+        <a href="{{ path('admin_publication_index', app.request.query.all|merge({'sort': 'likes', 'direction': (current_sort == 'likes' and current_direction == 'ASC') ? 'DESC' : 'ASC'})) }}" 
+           class="btn btn-sm btn-outline-secondary {% if current_sort == 'likes' %}active{% endif %}">
+            Likes {% if current_sort == 'likes' %}{% if current_direction == 'ASC' %}▲{% else %}▼{% endif %}{% endif %}
+        </a>
+        <a href="{{ path('admin_publication_index', app.request.query.all|merge({'sort': 'commentaires', 'direction': (current_sort == 'commentaires' and current_direction == 'ASC') ? 'DESC' : 'ASC'})) }}" 
+           class="btn btn-sm btn-outline-secondary {% if current_sort == 'commentaires' %}active{% endif %}">
+            Commentaires {% if current_sort == 'commentaires' %}{% if current_direction == 'ASC' %}▲{% else %}▼{% endif %}{% endif %}
+        </a>
+    </div>
+</div>
+
+{# Grille des publications améliorée (sans likes ni compteur) #}
+<div class="row g-4">
     {% for publication in publications %}
-    <div class="col-md-6 col-lg-4 mb-4">
-        <div class="card h-100 shadow-sm">
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100 shadow-sm border-0 rounded-4 overflow-hidden transition-all hover-shadow">
             {% if publication.image %}
-                <img src="{{ asset(publication.image) }}" class="card-img-top" style="height: 200px; object-fit: cover;" onerror="this.src='https://placehold.co/600x400?text=Image+manquante'">
+                <div class="card-img-top overflow-hidden" style="height: 200px;">
+                    <img src="{{ asset(publication.image) }}" class="w-100 h-100 object-fit-cover" alt="{{ publication.titre }}"
+                         style="transition: transform 0.3s ease; object-fit: cover;"
+                         onerror="this.onerror=null; this.src='https://placehold.co/600x400?text=Image+manquante';">
+                </div>
             {% else %}
-                <div class="bg-light text-center py-5">Pas d'image</div>
+                <div class="bg-light text-center py-5" style="height: 200px; display: flex; align-items: center; justify-content: center;">
+                    <i class="bi bi-image fs-1 text-secondary"></i>
+                </div>
             {% endif %}
             <div class="card-body">
-                <h5 class="card-title">{{ publication.titre }}</h5>
-                <p class="card-text text-muted small">{{ publication.description|slice(0, 100) }}...</p>
-                <div class="mb-2">
-                    <span class="badge bg-secondary">{{ publication.categorie }}</span>
+                <h5 class="card-title fw-bold">{{ publication.titre }}</h5>
+                <p class="card-text text-muted small">{{ publication.description|slice(0, 80) }}...</p>
+                <div class="mb-3">
+                    {# Badge catégorie coloré #}
+                    {% set categorieColors = {
+                        'Plage': 'primary',
+                        'Montagne': 'success',
+                        'Ville': 'info',
+                        'Désert': 'warning',
+                        'Campagne': 'secondary',
+                        'Historique': 'dark'
+                    } %}
+                    {% set color = categorieColors[publication.categorie] ?? 'secondary' %}
+                    <span class="badge bg-{{ color }}">{{ publication.categorie }}</span>
                     <span class="badge bg-light text-dark">{{ publication.auteur }}</span>
                 </div>
-                <div class="d-flex justify-content-between align-items-center">
-                    <small class="text-muted">{{ publication.dateCreation|date('d/m/Y') }}</small>
-                    <div>
-                        <a href="{{ path('admin_publication_show', {'id': publication.id}) }}" class="btn btn-sm btn-outline-primary" title="Voir">
-                            <i class="bi bi-eye"></i>
-                        </a>
-                        <a href="{{ path('admin_publication_edit', {'id': publication.id}) }}" class="btn btn-sm btn-outline-warning" title="Modifier">
-                            <i class="bi bi-pencil"></i>
-                        </a>
-                        <a href="{{ path('admin_commentaire_index', {'publication': publication.id}) }}" class="btn btn-sm btn-outline-info" title="Commentaires">
-                            <i class="bi bi-chat-dots-fill"></i>
-                        </a>
-                    </div>
+                {# Affichage uniquement de la date (sans likes ni commentaires) #}
+                <div class="d-flex justify-content-start align-items-center small text-muted">
+                    <span><i class="bi bi-calendar3"></i> {{ publication.dateCreation|date('d/m/Y') }}</span>
+                </div>
+            </div>
+            <div class="card-footer bg-transparent border-top-0 pb-3">
+                <div class="d-flex flex-wrap gap-2 justify-content-between">
+                    <a href="{{ path('admin_publication_show', {id: publication.id}) }}" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-eye"></i> Voir détail
+                    </a>
+                    <a href="{{ path('admin_publication_commentaires', {id: publication.id}) }}" class="btn btn-sm btn-outline-info">
+                        <i class="bi bi-chat-dots"></i> Commentaires
+                    </a>
+                    <a href="{{ path('admin_publication_edit', {id: publication.id}) }}" class="btn btn-sm btn-outline-warning">
+                        <i class="bi bi-pencil"></i>
+                    </a>
+                    <form method="post" action="{{ path('admin_publication_delete', {id: publication.id}) }}" style="display:inline-block">
+                        <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ publication.id) }}">
+                        <button class="btn btn-sm btn-outline-danger" onclick="return confirm('Supprimer cette publication ?')">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </form>
                 </div>
             </div>
         </div>
     </div>
     {% else %}
         <div class="col-12">
-            <div class="alert alert-info">Aucune publication trouvée.</div>
+            <div class="alert alert-info text-center">Aucune publication trouvée.</div>
         </div>
     {% endfor %}
 </div>
+
+{# Pagination #}
+<div class="navigation d-flex justify-content-center mt-5">
+    {{ knp_pagination_render(publications) }}
+</div>
+
+<style>
+    .transition-all {
+        transition: all 0.3s ease;
+    }
+    .hover-shadow:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 0.75rem 1.5rem rgba(0,0,0,0.1) !important;
+    }
+    .object-fit-cover {
+        object-fit: cover;
+    }
+    .card-img-top img:hover {
+        transform: scale(1.05);
+    }
+</style>
 {% endblock %}

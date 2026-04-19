@@ -1,0 +1,47 @@
+{% extends 'front/base_front.html.twig' %}
+
+{% block title %}Modifier une publication{% endblock %}
+
+{% block hero %}{% endblock %}
+
+{% block body %}
+<section class="ftco-section">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h2 class="h4 mb-0">Modifier la publication</h2>
+                    </div>
+                    <div class="card-body">
+                        {{ form_start(form, {'attr': {'novalidate': 'novalidate', 'enctype': 'multipart/form-data'}}) }}
+                            {{ form_errors(form) }}
+                            {{ form_row(form.titre, {'attr': {'class': 'form-control'}}) }}
+                            {{ form_row(form.categorie, {'attr': {'class': 'form-control'}}) }}
+                            <div class="row">
+                                <div class="col-md-6">{{ form_row(form.ville, {'attr': {'class': 'form-control'}}) }}</div>
+                                <div class="col-md-6">{{ form_row(form.pays, {'attr': {'class': 'form-control'}}) }}</div>
+                            </div>
+                            {{ form_row(form.description, {'attr': {'class': 'form-control', 'rows': 6}}) }}
+                            {{ form_row(form.tags, {'attr': {'class': 'form-control'}}) }}
+                            {{ form_row(form.imageFile, {'attr': {'class': 'form-control'}}) }}
+                            {% if publication.image %}
+                                <div class="mb-3">
+                                    <label class="form-label">Image actuelle</label>
+                                    <div>
+                                        <img src="{{ asset(publication.image) }}" alt="Image" style="max-height: 100px;">
+                                    </div>
+                                </div>
+                            {% endif %}
+                            <div class="d-flex justify-content-end gap-2 mt-3">
+                                <a href="{{ path('front_publication_show', {'id': publication.id}) }}" class="btn btn-secondary">Annuler</a>
+                                <button type="submit" class="btn btn-primary">Enregistrer</button>
+                            </div>
+                        {{ form_end(form) }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

@@ -79,16 +79,16 @@
             <tr>
                 <td>{{ commentaire.id }}</td>
                 <td>
-                    <a href="{{ path('admin_publication_show', {'id': commentaire.publication.id}) }}" target="_blank">
+                    <a href="{{ path('admin_publication_edit', {'id': commentaire.publication.id}) }}" target="_blank">
                         {{ commentaire.publication.titre }} (ID {{ commentaire.publication.id }})
                     </a>
                 </td>
                 <td>{{ commentaire.auteur }}</td>
-                <td>{{ commentaire.contenu|slice(0, 80) }}...</td>
+                <td>{{ commentaire.contenu|slice(0, 80) }}...{% if commentaire.contenu|length > 80 %}{% endif %}</td>
                 <td>{{ commentaire.dateCreation|date('d/m/Y H:i') }}</td>
                 <td>{{ commentaire.modifie ? 'Oui' : 'Non' }}</td>
                 <td>
-                    <a href="{{ path('admin_commentaire_show', {'id': commentaire.id}) }}" class="btn btn-sm btn-outline-primary">Voir</a>
+                    {# Le lien "Voir" peut être commenté si la route n'existe pas #}
                     <a href="{{ path('admin_commentaire_edit', {'id': commentaire.id}) }}" class="btn btn-sm btn-outline-warning">Modifier</a>
                     <form method="post" action="{{ path('admin_commentaire_delete', {'id': commentaire.id}) }}" style="display: inline-block;">
                         <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ commentaire.id) }}">
@@ -97,7 +97,7 @@
                 </td>
             </tr>
         {% else %}
-            <tr><td colspan="7">Aucun commentaire trouvé.{% if publication %} Utilisez le formulaire ci-dessus pour en ajouter.{% endif %}</td></tr>
+            <tr><td colspan="7">Aucun commentaire trouvé.{% if publication %} Utilisez le formulaire ci-dessus pour en ajouter.{% endif %}↩
         {% endfor %}
         </tbody>
     </table>
@@ -108,10 +108,8 @@
     {{ parent() }}
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // ----- Pour le formulaire d'ajout (nouveau commentaire) -----
             const newTextarea = document.getElementById('newCommentText');
             if (newTextarea) {
-                // Dictée vocale
                 const micNewBtn = document.getElementById('startDictationNew');
                 if (micNewBtn) {
                     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -156,7 +154,6 @@
                     }
                 }
 
-                // Lecture audio
                 const readNewBtn = document.getElementById('readNewComment');
                 if (readNewBtn) {
                     readNewBtn.addEventListener('click', () => {
@@ -177,9 +174,6 @@
                     });
                 }
             }
-
-            // ----- Si la page d'édition existe déjà (elle gère son propre textarea avec id "commentText")
-            // Nous n'interférons pas avec le script de edit.html.twig.
         });
     </script>
 {% endblock %}

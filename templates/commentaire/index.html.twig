@@ -1,0 +1,67 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}Gestion des commentaires{% endblock %}
+
+{% block admin_content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Gestion des commentaires</h1>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-6">
+                <input type="number" name="publication" class="form-control" placeholder="ID de la publication" value="{{ filtre_publication }}">
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-secondary w-100">Filtrer</button>
+            </div>
+            <div class="col-md-4">
+                <a href="{{ path('admin_commentaire_index') }}" class="btn btn-outline-secondary w-100">Réinitialiser</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-striped table-hover">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Publication</th>
+                <th>Auteur</th>
+                <th>Commentaire</th>
+                <th>Date</th>
+                <th>Modifié</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for commentaire in commentaires %}
+            <tr>
+                <td>{{ commentaire.id }}</td>
+                <td>
+                    <a href="{{ path('admin_publication_show', {'id': commentaire.publication.id}) }}" target="_blank">
+                        {{ commentaire.publication.titre }} (ID {{ commentaire.publication.id }})
+                    </a>
+                 </td>
+                <td>{{ commentaire.auteur }}</td>
+                <td>{{ commentaire.contenu|slice(0, 80) }}...</td>
+                <td>{{ commentaire.dateCreation|date('d/m/Y H:i') }}</td>
+                <td>{{ commentaire.modifie ? 'Oui' : 'Non' }}</td>
+                <td>
+                    <a href="{{ path('admin_commentaire_show', {'id': commentaire.id}) }}" class="btn btn-sm btn-outline-primary">Voir</a>
+                    <a href="{{ path('admin_commentaire_edit', {'id': commentaire.id}) }}" class="btn btn-sm btn-outline-warning">Modifier</a>
+                    <form method="post" action="{{ path('admin_commentaire_delete', {'id': commentaire.id}) }}" style="display: inline-block;">
+                        <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ commentaire.id) }}">
+                        <button class="btn btn-sm btn-outline-danger" onclick="return confirm('Supprimer ce commentaire ?')">Supprimer</button>
+                    </form>
+                 </td>
+             </tr>
+        {% else %}
+            <tr><td colspan="7">Aucun commentaire trouvé.</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

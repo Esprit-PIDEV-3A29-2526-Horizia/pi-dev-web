@@ -1,0 +1,54 @@
+{% extends 'admin/layout.html.twig' %}
+
+{% block title %}Commentaires de "{{ publication.titre }}"{% endblock %}
+
+{% block admin_content %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h2 class="mb-0">Commentaires de "{{ publication.titre }}"</h2>
+        <a href="{{ path('admin_publication_show', {id: publication.id}) }}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Retour à la publication
+        </a>
+    </div>
+    <div class="card-body">
+        {% if commentaires is defined and commentaires|length > 0 %}
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>Auteur</th>
+                            <th>Commentaire</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for com in commentaires %}
+                        <tr>
+                            <td>{{ com.id }}</td>
+                            <td>{{ com.auteur }}</td>
+                            <td>{{ com.contenu|nl2br }}</td>
+                            <td>{{ com.dateCreation|date('d/m/Y H:i') }}</td>
+                            <td>
+                                <a href="{{ path('admin_commentaire_edit', {id: com.id}) }}" class="btn btn-sm btn-warning">
+                                    <i class="bi bi-pencil"></i> Modifier
+                                </a>
+                                <form method="post" action="{{ path('admin_commentaire_delete', {id: com.id}) }}" style="display: inline-block;">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ com.id) }}">
+                                    <button class="btn btn-sm btn-danger" onclick="return confirm('Supprimer ce commentaire ?')">
+                                        <i class="bi bi-trash"></i> Supprimer
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="alert alert-info">Aucun commentaire pour cette publication.</div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

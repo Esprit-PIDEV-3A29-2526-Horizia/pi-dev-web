@@ -1,10 +1,10 @@
 {% extends 'admin/layout.html.twig' %}
 
-{% block title %}{{ publication.id ? 'Modifier' : 'Nouvelle' }} publication{% endblock %}
+{% block title %}Nouvelle publication{% endblock %}
 
 {% block admin_content %}
 <div class="card">
-    <div class="card-header bg-white"><h2>{{ publication.id ? 'Modifier' : 'Nouvelle' }} publication</h2></div>
+    <div class="card-header bg-white"><h2>Nouvelle publication</h2></div>
     <div class="card-body">
         {{ include('admin/publication/_form.html.twig') }}
     </div>
