@@ -1,0 +1,124 @@
+{% extends 'admin/layout.html.twig' %}
+{% block title %}Modifier {{ vehicule.immatriculation }} — Horizia{% endblock %}
+{% block topbar_title %}Modifier véhicule{% endblock %}
+{% block admin_content %}
+
+<div class="page-header">
+    <div class="page-header-left">
+        <div class="page-header-icon"><i class="bi bi-pencil-fill"></i></div>
+        <div><h2>{{ vehicule.immatriculation }}</h2></div>
+    </div>
+    <a href="{{ path('admin_vehicule_index') }}" class="btn btn-horozia-outline btn-sm">
+        <i class="bi bi-arrow-left me-1"></i>Retour
+    </a>
+</div>
+
+{# ── ERREURS GLOBALES PHP ── #}
+{% if not form.vars.valid and form.vars.submitted %}
+<div class="alert alert-danger d-flex align-items-center gap-2 mb-3">
+    <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+    <div><strong>Veuillez corriger les erreurs ci-dessous.</strong>{{ form_errors(form) }}</div>
+</div>
+{% endif %}
+
+{{ form_start(form, {'attr': {'novalidate': 'novalidate'}}) }}
+<div class="row g-3">
+    <div class="col-lg-8">
+        <div class="form-section">
+            <div class="form-section-title">
+                <i class="bi bi-truck-front-fill" style="color:var(--color-primary);"></i>Informations véhicule
+            </div>
+            <div class="row g-3">
+
+                <div class="col-md-6">
+                    <label class="form-label fw-600">Immatriculation <span class="text-danger">*</span></label>
+                    {{ form_widget(form.immatriculation, {'attr': {'class': 'form-control' ~ (form.immatriculation.vars.errors|length > 0 ? ' is-invalid' : '')}}) }}
+                    {{ form_errors(form.immatriculation) }}
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label fw-600">Modèle <span class="text-danger">*</span></label>
+                    {{ form_widget(form.modele, {'attr': {'class': 'form-control' ~ (form.modele.vars.errors|length > 0 ? ' is-invalid' : '')}}) }}
+                    {{ form_errors(form.modele) }}
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label fw-600">Année <span class="text-danger">*</span></label>
+                    {{ form_widget(form.annee, {'attr': {'class': 'form-control' ~ (form.annee.vars.errors|length > 0 ? ' is-invalid' : '')}}) }}
+                    {{ form_errors(form.annee) }}
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label fw-600">Carburant <span class="text-danger">*</span></label>
+                    {{ form_widget(form.carburant, {'attr': {'class': 'form-control' ~ (form.carburant.vars.errors|length > 0 ? ' is-invalid' : '')}}) }}
+                    {{ form_errors(form.carburant) }}
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label fw-600">Couleur</label>
+                    {{ form_widget(form.couleur, {'attr': {'class': 'form-control' ~ (form.couleur.vars.errors|length > 0 ? ' is-invalid' : '')}}) }}
+                    {{ form_errors(form.couleur) }}
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label fw-600">Kilométrage <span class="text-danger">*</span></label>
+                    {{ form_widget(form.kilometrage, {'attr': {'class': 'form-control' ~ (form.kilometrage.vars.errors|length > 0 ? ' is-invalid' : '')}}) }}
+                    {{ form_errors(form.kilometrage) }}
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label fw-600">État <span class="text-danger">*</span></label>
+                    {{ form_widget(form.etat, {'attr': {'class': 'form-control' ~ (form.etat.vars.errors|length > 0 ? ' is-invalid' : '')}}) }}
+                    {{ form_errors(form.etat) }}
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label fw-600">Prix par jour (TND) <span class="text-danger">*</span></label>
+                    {{ form_widget(form.prixParJour, {'attr': {'class': 'form-control' ~ (form.prixParJour.vars.errors|length > 0 ? ' is-invalid' : ''), 'step': '0.001'}}) }}
+                    {{ form_errors(form.prixParJour) }}
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label fw-600">Photo (URL)</label>
+                    {{ form_widget(form.photo, {'attr': {'class': 'form-control' ~ (form.photo.vars.errors|length > 0 ? ' is-invalid' : '')}}) }}
+                    {{ form_errors(form.photo) }}
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="form-section">
+            <button type="submit" class="btn btn-horozia-primary w-100 mb-2">
+                <i class="bi bi-check-lg me-2"></i>Enregistrer
+            </button>
+            <a href="{{ path('admin_vehicule_show', {id: vehicule.idVehicule}) }}" class="btn btn-horozia-outline w-100 mb-2">
+                <i class="bi bi-eye me-1"></i>Voir
+            </a>
+            <a href="{{ path('admin_vehicule_index') }}" class="btn btn-horozia-outline w-100 mb-3">Annuler</a>
+
+            {# ✅ Bouton suppression — déclenche le form HORS du form principal via l'attribut "form" #}
+            <button type="submit"
+                    form="form-delete-vehicule"
+                    class="btn btn-horozia-danger w-100 btn-sm"
+                    onclick="return confirm('Supprimer ce véhicule ?')">
+                <i class="bi bi-trash me-1"></i>Supprimer
+            </button>
+        </div>
+        <div class="form-section mt-3" style="font-size:.82rem;color:#6c757d;">
+            <i class="bi bi-info-circle me-1"></i>Les champs marqués <span class="text-danger fw-700">*</span> sont obligatoires.
+        </div>
+    </div>
+</div>
+{{ form_end(form) }}
+
+{# ✅ Form de suppression HORS du form principal — plus d'imbrication de <form> #}
+<form id="form-delete-vehicule"
+      method="post"
+      action="{{ path('admin_vehicule_delete', {id: vehicule.idVehicule}) }}"
+      style="display:none;">
+    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ vehicule.idVehicule) }}">
+</form>
+
+{% endblock %}

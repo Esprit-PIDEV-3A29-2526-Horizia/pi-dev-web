@@ -2,61 +2,40 @@
 
 namespace App\Entity;
 
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
-/**
- * Modele
- *
- * @ORM\Table(name="modele", uniqueConstraints={@ORM\UniqueConstraint(name="unique_modele_par_marque", columns={"id_marque", "nom_modele"})})
- * @ORM\Entity
- */
+#[ORM\Entity]
+#[ORM\Table(name: 'modele')]
 class Modele
 {
-    /**
-     * @var int
-     *
-     * @ORM\Column(name="id_modele", type="integer", nullable=false)
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="IDENTITY")
-     */
-    private $idModele;
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(name: 'id_modele', type: 'integer')]
+    private ?int $idModele = null;
 
-    /**
-     * @var int
-     *
-     * @ORM\Column(name="id_marque", type="integer", nullable=false)
-     */
-    private $idMarque;
+    #[ORM\Column(name: 'nom_modele', type: 'string', length: 80)]
+    private ?string $nomModele = null;
 
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="nom_modele", type="string", length=80, nullable=false)
-     */
-    private $nomModele;
+    #[ORM\Column(name: 'image', type: 'string', length: 255, nullable: true)]
+    private ?string $image = null;
 
-    /**
-     * @var string|null
-     *
-     * @ORM\Column(name="image", type="string", length=255, nullable=true, options={"comment"="URL ou chemin de l'image du modèle"})
-     */
-    private $image;
+    #[ORM\ManyToOne(inversedBy: 'modeles')]
+    #[ORM\JoinColumn(name: 'id_marque', referencedColumnName: 'id_marque', nullable: false)]
+    private ?Marque $marque = null;
+
+    #[ORM\OneToMany(targetEntity: Vehicule::class, mappedBy: 'modele')]
+    private Collection $vehicules;
+
+    public function __construct()
+    {
+        $this->vehicules = new ArrayCollection();
+    }
 
     public function getIdModele(): ?int
     {
         return $this->idModele;
-    }
-
-    public function getIdMarque(): ?int
-    {
-        return $this->idMarque;
-    }
-
-    public function setIdMarque(int $idMarque): static
-    {
-        $this->idMarque = $idMarque;
-
-        return $this;
     }
 
     public function getNomModele(): ?string
@@ -67,7 +46,6 @@ class Modele
     public function setNomModele(string $nomModele): static
     {
         $this->nomModele = $nomModele;
-
         return $this;
     }
 
@@ -79,9 +57,46 @@ class Modele
     public function setImage(?string $image): static
     {
         $this->image = $image;
-
         return $this;
     }
 
+    public function getMarque(): ?Marque
+    {
+        return $this->marque;
+    }
 
+    public function setMarque(?Marque $marque): static
+    {
+        $this->marque = $marque;
+        return $this;
+    }
+
+    public function getVehicules(): Collection
+    {
+        return $this->vehicules;
+    }
+
+    public function addVehicule(Vehicule $vehicule): static
+    {
+        if (!$this->vehicules->contains($vehicule)) {
+            $this->vehicules->add($vehicule);
+            $vehicule->setModele($this);
+        }
+        return $this;
+    }
+
+    public function removeVehicule(Vehicule $vehicule): static
+    {
+        if ($this->vehicules->removeElement($vehicule)) {
+            if ($vehicule->getModele() === $this) {
+                $vehicule->setModele(null);
+            }
+        }
+        return $this;
+    }
+    public function __toString(): string
+{
+    $marqueNom = $this->marque ? $this->marque->getNomMarque() : '';
+    return trim($marqueNom . ' ' . ($this->nomModele ?? ''));
+}
 }

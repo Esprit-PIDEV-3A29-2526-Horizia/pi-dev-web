@@ -1,0 +1,24 @@
+:root {
+    --hz-primary: #2563eb;
+    --hz-secondary: #1e40af;
+    --hz-accent: #f59e0b;
+    --hz-dark: #1e293b;
+    --hz-light: #f8fafc;
+    --hz-gray: #64748b;
+}
+.hz-client { min-height: 100vh; background: var(--hz-light); font-family: 'Segoe UI', sans-serif; }
+.hz-navbar { background: white; padding: 16px 32px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 8px rgba(0,0,0,.08); position: sticky; top: 0; z-index: 100; }
+.hz-navbar-brand a { text-decoration: none; display: flex; align-items: center; gap: 10px; font-size: 1.4rem; font-weight: 700; color: var(--hz-primary); }
+.hz-navbar-links { display: flex; gap: 24px; }
+.hz-navbar-links a { text-decoration: none; color: var(--hz-gray); font-weight: 500; padding: 8px 16px; border-radius: 8px; transition: all .2s; }
+.hz-navbar-links a:hover, .hz-navbar-links a.active { background: var(--hz-primary); color: white; }
+.hz-page-banner { background: linear-gradient(135deg, var(--hz-primary), var(--hz-secondary)); color: white; padding: 48px 32px; text-align: center; }
+.hz-page-banner h1 { font-size: 2rem; font-weight: 700; margin: 0 0 8px; }
+.hz-page-banner p { opacity: .85; margin: 0; }
+.hz-footer { background: var(--hz-dark); color: white; padding: 32px; margin-top: 48px; }
+.hz-footer-content { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 24px; }
+.hz-footer-brand span { font-size: 1.4rem; font-weight: 700; color: var(--hz-accent); }
+.hz-footer-links { display: flex; gap: 16px; flex-wrap: wrap; }
+.hz-footer-links a { color: #94a3b8; text-decoration: none; transition: color .2s; }
+.hz-footer-links a:hover { color: white; }
+.hz-footer-copy { color: #64748b; font-size: .85rem; }

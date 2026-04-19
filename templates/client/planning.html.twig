@@ -1,0 +1,632 @@
+{% extends 'client/base_client.html.twig' %}
+{% block title %}Planning des Disponibilités — Horizia{% endblock %}
+{% block navbar_extra_class %}nav-static{% endblock %}
+{% block nav_planning %}active{% endblock %}
+
+{% block stylesheets %}
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+    --orange    : #e84a3e;
+    --teal      : #23779C;
+    --teal-dk   : #1a5a78;
+    --dark      : #1a1a2e;
+    --avail-bg  : #d1fae5;
+    --avail-fg  : #065f46;
+    --avail-dot : #10b981;
+    --busy-bg   : #fee2e2;
+    --busy-fg   : #991b1b;
+    --busy-dot  : #ef4444;
+    --warn-bg   : #fef3c7;
+    --warn-fg   : #92400e;
+    --warn-dot  : #f59e0b;
+    --radius    : 18px;
+}
+*,*::before,*::after{box-sizing:border-box;}
+body{font-family:'DM Sans',sans-serif;}
+
+/* HERO */
+.plan-hero{background:linear-gradient(135deg,#0d1b2a 0%,#1b3a4b 50%,var(--teal-dk) 100%);padding:80px 0 0;position:relative;overflow:hidden;}
+.plan-hero::after{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.025'%3E%3Ccircle cx='40' cy='40' r='1'/%3E%3C/g%3E%3C/svg%3E");}
+.hero-wrap{max-width:1280px;margin:0 auto;padding:0 32px;position:relative;z-index:2;}
+.hero-row{display:flex;gap:32px;align-items:flex-start;flex-wrap:wrap;padding-bottom:28px;}
+.hero-left{flex:1;min-width:280px;}
+.hero-bc{display:flex;align-items:center;gap:6px;margin-bottom:12px;}
+.hero-bc a{color:rgba(255,255,255,.4);text-decoration:none;font-size:.82rem;transition:color .2s;}
+.hero-bc a:hover{color:rgba(255,255,255,.7);}
+.hero-bc span{color:rgba(255,255,255,.2);font-size:.82rem;}
+.hero-bc strong{color:rgba(255,255,255,.7);font-size:.82rem;}
+.hero-title{font-family:'Syne',sans-serif;font-size:2.6rem;font-weight:800;color:#fff;margin:0 0 8px;letter-spacing:-1px;line-height:1.1;}
+.hero-sub{color:rgba(255,255,255,.55);font-size:.9rem;margin:0;}
+
+/* WEATHER CARD */
+.wcard{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:22px 26px;backdrop-filter:blur(16px);color:white;min-width:300px;max-width:380px;flex-shrink:0;}
+.wcard.empty{display:flex;align-items:center;gap:10px;color:rgba(255,255,255,.4);font-size:.85rem;}
+.wc-top{display:flex;align-items:center;gap:16px;margin-bottom:14px;}
+.wc-icon img{width:60px;height:60px;}
+.wc-temp{font-family:'Syne',sans-serif;font-size:2.6rem;font-weight:800;line-height:1;}
+.wc-desc{font-size:.82rem;opacity:.7;text-transform:capitalize;margin-top:2px;}
+.wc-city{font-size:.74rem;opacity:.45;margin-top:3px;}
+.wc-details{display:flex;gap:18px;flex-wrap:wrap;margin-bottom:14px;}
+.wc-det{font-size:.76rem;opacity:.6;display:flex;align-items:center;gap:5px;}
+.wc-reco{border-radius:10px;padding:10px 14px;font-size:.8rem;font-weight:600;display:flex;align-items:center;gap:8px;line-height:1.4;}
+.wc-reco.good{background:rgba(16,185,129,.15);color:#6ee7b7;border:1px solid rgba(16,185,129,.25);}
+.wc-reco.mid{background:rgba(245,158,11,.15);color:#fcd34d;border:1px solid rgba(245,158,11,.25);}
+.wc-reco.bad{background:rgba(239,68,68,.15);color:#fca5a5;border:1px solid rgba(239,68,68,.25);}
+
+/* FORECAST */
+.fc-strip{display:flex;gap:6px;margin-top:14px;padding-top:14px;border-top:1px solid rgba(255,255,255,.08);overflow-x:auto;scrollbar-width:none;}
+.fc-strip::-webkit-scrollbar{display:none;}
+.fc-day{display:flex;flex-direction:column;align-items:center;gap:3px;padding:8px 10px;border-radius:10px;min-width:52px;background:rgba(255,255,255,.05);transition:background .2s;}
+.fc-day:hover{background:rgba(255,255,255,.1);}
+.fc-day.bad-w{background:rgba(239,68,68,.12);}
+.fc-dname{font-size:.68rem;font-weight:700;opacity:.5;text-transform:uppercase;letter-spacing:.4px;}
+.fc-dicon img{width:28px;height:28px;}
+.fc-dtemp{font-size:.8rem;font-weight:700;}
+.fc-dtemp small{font-size:.65rem;opacity:.5;font-weight:400;}
+
+/* TABS */
+.tabs-bar{background:rgba(255,255,255,.05);border-top:1px solid rgba(255,255,255,.08);margin-top:24px;}
+.tabs-inner{max-width:1280px;margin:0 auto;padding:0 32px;display:flex;gap:0;}
+.vtab{background:transparent;border:none;color:rgba(255,255,255,.4);padding:15px 24px;font-family:'DM Sans',sans-serif;font-weight:600;font-size:.86rem;cursor:pointer;border-bottom:3px solid transparent;transition:all .2s;display:flex;align-items:center;gap:8px;white-space:nowrap;}
+.vtab:hover{color:rgba(255,255,255,.75);}
+.vtab.active{color:#fff;border-bottom-color:var(--orange);}
+
+/* BODY */
+.plan-body{max-width:1280px;margin:0 auto;padding:32px 32px 80px;background:#f0f4f8;min-height:60vh;}
+
+/* ALERT */
+.alert-bar{border-radius:12px;padding:14px 20px;margin-bottom:24px;font-weight:600;font-size:.88rem;display:flex;align-items:center;gap:10px;}
+.alert-bar.good{background:#d1fae5;color:#065f46;border:1px solid #6ee7b7;}
+.alert-bar.mid{background:#fef3c7;color:#92400e;border:1px solid #fcd34d;}
+.alert-bar.bad{background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;}
+
+/* STATS */
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:24px;}
+.stat-box{background:white;border-radius:14px;padding:16px 18px;box-shadow:0 2px 10px rgba(0,0,0,.05);display:flex;align-items:center;gap:12px;}
+.stat-ico{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.15rem;flex-shrink:0;}
+.stat-ico.green{background:#d1fae5;} .stat-ico.red{background:#fee2e2;} .stat-ico.blue{background:#dbeafe;} .stat-ico.yellow{background:#fef3c7;}
+.stat-val{font-family:'Syne',sans-serif;font-size:1.55rem;font-weight:800;color:var(--dark);line-height:1;}
+.stat-lbl{font-size:.72rem;color:#9ca3af;font-weight:500;margin-top:2px;}
+
+/* FILTERS */
+.filters-bar{background:white;border-radius:14px;padding:14px 18px;box-shadow:0 2px 10px rgba(0,0,0,.05);display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:24px;}
+.filters-bar label{font-weight:600;font-size:.8rem;color:#6b7280;margin:0;white-space:nowrap;}
+.filters-bar select{border:1.5px solid #e5e7eb;border-radius:9px;padding:7px 12px;font-size:.84rem;font-family:'DM Sans',sans-serif;color:#374151;background:#f9fafb;cursor:pointer;transition:border-color .2s;}
+.filters-bar select:focus{outline:none;border-color:var(--teal);}
+.btn-go{background:var(--teal);color:white;border:none;border-radius:9px;padding:8px 20px;font-weight:700;font-size:.84rem;cursor:pointer;display:flex;align-items:center;gap:6px;font-family:'DM Sans',sans-serif;transition:all .2s;}
+.btn-go:hover{background:var(--teal-dk);transform:translateY(-1px);}
+.legend{display:flex;align-items:center;gap:14px;margin-left:auto;flex-wrap:wrap;}
+.leg-item{display:flex;align-items:center;gap:6px;font-size:.78rem;color:#6b7280;font-weight:500;}
+.leg-dot{width:10px;height:10px;border-radius:3px;}
+
+/* VIEWS */
+#view-cal,#view-cards,#view-gantt{display:none;}
+#view-cal.active,#view-cards.active,#view-gantt.active{display:block;}
+
+/* CALENDAR */
+.cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+.cal-nav-title{font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;color:var(--dark);}
+.cal-nav-btns{display:flex;gap:8px;}
+.cal-btn{background:white;border:2px solid #e5e7eb;border-radius:10px;width:38px;height:38px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s;color:var(--dark);}
+.cal-btn:hover{border-color:var(--teal);color:var(--teal);}
+.month-grid{background:white;border-radius:var(--radius);box-shadow:0 4px 20px rgba(0,0,0,.07);overflow:hidden;}
+.month-grid-head{display:grid;grid-template-columns:repeat(7,1fr);background:var(--dark);}
+.month-grid-head div{text-align:center;padding:13px 6px;font-size:.72rem;font-weight:700;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:.8px;}
+.month-grid-head div:nth-child(6),.month-grid-head div:nth-child(7){color:rgba(255,255,255,.3);}
+.month-grid-body{display:grid;grid-template-columns:repeat(7,1fr);}
+.cal-cell{border-right:1px solid #f3f4f6;border-bottom:1px solid #f3f4f6;min-height:100px;padding:8px;position:relative;transition:background .15s;}
+.cal-cell:hover{background:#fafafa;}
+.cal-cell.other{opacity:.35;}
+.cal-cell.is-today .d-num{background:var(--teal);color:white;box-shadow:0 2px 8px rgba(35,119,156,.4);}
+.cal-cell.is-weekend{background:#fafcff;}
+.cal-cell.meteo-bad::after{content:'⚡';position:absolute;top:5px;right:6px;font-size:.65rem;opacity:.5;}
+.d-num{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.8rem;font-weight:700;color:#374151;margin-bottom:5px;}
+.d-events{display:flex;flex-direction:column;gap:2px;}
+.d-event{font-size:.65rem;padding:2px 6px;border-radius:4px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.d-event.avail{background:var(--avail-bg);color:var(--avail-fg);}
+.d-event.busy{background:var(--busy-bg);color:var(--busy-fg);}
+.d-event.warn{background:var(--warn-bg);color:var(--warn-fg);}
+
+/* CARDS */
+.vhl-cards-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:18px;}
+.vhl-pcard{background:white;border-radius:var(--radius);box-shadow:0 3px 14px rgba(0,0,0,.06);overflow:hidden;transition:transform .25s,box-shadow .25s;}
+.vhl-pcard:hover{transform:translateY(-5px);box-shadow:0 12px 40px rgba(0,0,0,.11);}
+.vhl-pcard-head{padding:18px 18px 0;display:flex;align-items:flex-start;justify-content:space-between;gap:10px;}
+.vhl-pname{font-family:'Syne',sans-serif;font-size:1rem;font-weight:800;color:var(--dark);}
+.vhl-pplate{font-size:.72rem;color:#9ca3af;margin-top:2px;}
+.etat-pill{padding:3px 11px;border-radius:20px;font-size:.7rem;font-weight:700;white-space:nowrap;flex-shrink:0;}
+.etat-pill.dispo{background:var(--avail-bg);color:var(--avail-fg);}
+.etat-pill.loue{background:var(--busy-bg);color:var(--busy-fg);}
+.etat-pill.autre{background:#f3f4f6;color:#6b7280;}
+.meteo-adv{margin:10px 18px 0;padding:8px 12px;border-radius:8px;font-size:.76rem;font-weight:600;display:flex;align-items:center;gap:7px;}
+.meteo-adv.good{background:var(--avail-bg);color:var(--avail-fg);}
+.meteo-adv.mid{background:var(--warn-bg);color:var(--warn-fg);}
+.meteo-adv.bad{background:var(--busy-bg);color:var(--busy-fg);}
+.day-strip{padding:14px 18px;display:flex;gap:3px;overflow-x:auto;scrollbar-width:none;}
+.day-strip::-webkit-scrollbar{display:none;}
+.ds-day{display:flex;flex-direction:column;align-items:center;gap:2px;flex-shrink:0;}
+.ds-lbl{font-size:.55rem;color:#9ca3af;font-weight:600;text-transform:uppercase;}
+.ds-dot{width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:.62rem;font-weight:700;transition:transform .15s;}
+.ds-dot:hover{transform:scale(1.2);}
+.ds-dot.a{background:var(--avail-bg);color:var(--avail-fg);}
+.ds-dot.b{background:var(--busy-bg);color:var(--busy-fg);}
+.ds-dot.t{background:var(--teal);color:white;box-shadow:0 2px 6px rgba(35,119,156,.4);}
+.ds-dot.w{background:var(--warn-bg);color:var(--warn-fg);}
+.vhl-pcard-foot{border-top:1px solid #f3f4f6;padding:12px 18px;display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.avail-pct{font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:800;}
+.avail-pct.high{color:var(--avail-dot);} .avail-pct.medium{color:var(--warn-dot);} .avail-pct.low{color:var(--busy-dot);}
+.avail-bar{height:4px;background:#f3f4f6;border-radius:2px;margin-top:5px;width:110px;overflow:hidden;}
+.avail-bar-fill{height:100%;border-radius:2px;transition:width .7s ease;}
+.btn-rsv{background:var(--orange);color:white;border:none;border-radius:8px;padding:7px 14px;font-size:.78rem;font-weight:700;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:5px;font-family:'DM Sans',sans-serif;transition:all .2s;white-space:nowrap;}
+.btn-rsv:hover{background:#c73a2e;color:white;transform:translateY(-1px);text-decoration:none;}
+
+/* GANTT */
+.gantt-wrap{background:white;border-radius:var(--radius);box-shadow:0 4px 20px rgba(0,0,0,.07);overflow:hidden;}
+.gantt-scroll{overflow-x:auto;}
+.gantt-table{border-collapse:collapse;width:100%;min-width:1000px;}
+.gantt-table th{background:var(--dark);color:rgba(255,255,255,.55);font-size:.68rem;font-weight:700;text-align:center;padding:9px 4px;text-transform:uppercase;letter-spacing:.5px;border-right:1px solid rgba(255,255,255,.04);white-space:nowrap;}
+.gantt-table th.vhl-h{min-width:190px;text-align:left;padding:9px 16px;color:rgba(255,255,255,.85);font-size:.78rem;}
+.gantt-table th.wknd{background:#16232e;}
+.gantt-table th.today-h{background:var(--teal);color:white;}
+.gantt-table th.bad-w{background:#2a1a0a;color:#fcd34d;}
+.gantt-table td{border-right:1px solid #f3f4f6;border-bottom:1px solid #f3f4f6;height:54px;padding:0;position:relative;}
+.gantt-table td.vhl-td{padding:9px 16px;background:#fafafa;border-right:2px solid #e5e7eb;min-width:190px;}
+.g-vname{font-weight:700;font-size:.86rem;color:var(--dark);}
+.g-vplate{font-size:.7rem;color:#9ca3af;margin-top:2px;}
+.gantt-table td.g-busy{background:rgba(239,68,68,.1);}
+.gantt-table td.g-busy::after{content:'';position:absolute;inset:5px;background:var(--orange);border-radius:4px;opacity:.65;}
+.gantt-table td.g-today::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:2px;height:100%;background:var(--teal);opacity:.6;z-index:1;}
+.gantt-table td.g-wknd:not(.g-busy){background:#f9fafb;}
+.gantt-table td.g-meteo:not(.g-busy)::before{content:'⚡';position:absolute;top:3px;right:3px;font-size:.55rem;opacity:.5;}
+.gantt-table tr:hover td{background:rgba(35,119,156,.03)!important;}
+.gantt-table tr:hover td.g-busy{background:rgba(239,68,68,.1)!important;}
+.gantt-table tr:hover td.vhl-td{background:#f0f8fc!important;}
+.g-tip{position:fixed;background:rgba(26,26,46,.95);color:white;padding:8px 12px;border-radius:8px;font-size:.78rem;pointer-events:none;z-index:9999;opacity:0;transition:opacity .15s;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,.3);}
+.g-tip.show{opacity:1;}
+
+/* EMPTY */
+.empty-planning{text-align:center;padding:80px 20px;background:white;border-radius:var(--radius);box-shadow:0 2px 10px rgba(0,0,0,.05);}
+
+@media(max-width:992px){
+    .plan-body{padding:24px 16px 60px;}
+    .hero-wrap{padding:0 16px;}
+    .tabs-inner{padding:0 16px;overflow-x:auto;}
+    .wcard{min-width:unset;width:100%;max-width:none;}
+    .hero-title{font-size:2rem;}
+    .vhl-cards-grid{grid-template-columns:1fr;}
+    .stats-row{grid-template-columns:repeat(2,1fr);}
+}
+@media(max-width:576px){
+    .vtab{padding:12px 14px;font-size:.78rem;}
+    .cal-cell{min-height:60px;}
+    .d-events{display:none;}
+}
+</style>
+{% endblock %}
+
+{% block body %}
+
+{# ══ HERO ══ #}
+<div class="plan-hero">
+<div class="hero-wrap">
+<div class="hero-row">
+
+    <div class="hero-left">
+        <div class="hero-bc">
+            <a href="{{ path('client_accueil') }}">Accueil</a>
+            <span>/</span>
+            <strong>Planning</strong>
+        </div>
+        <h1 class="hero-title">
+            <span style="color:var(--orange);">📅</span> Planning<br>des Disponibilités
+        </h1>
+        <p class="hero-sub">Disponibilité de notre flotte en temps réel avec météo intégrée</p>
+    </div>
+
+    {# MÉTÉO CARD (données serveur via WeatherService) #}
+    {% if meteo %}
+    <div class="wcard">
+        <div class="wc-top">
+            <div class="wc-icon">
+                <img src="{{ meteo.icone_url }}" alt="{{ meteo.description }}" onerror="this.style.display='none'">
+            </div>
+            <div>
+                <div class="wc-temp">{{ meteo.temperature }}°C</div>
+                <div class="wc-desc">{{ meteo.description }}</div>
+                <div class="wc-city">📍 {{ meteo.ville }}, TN</div>
+            </div>
+        </div>
+        <div class="wc-details">
+            <div class="wc-det"><i class="fas fa-tint"></i> {{ meteo.humidity }}% humidité</div>
+            <div class="wc-det"><i class="fas fa-wind"></i> {{ meteo.vent }} km/h vent</div>
+            <div class="wc-det"><i class="fas fa-thermometer-half"></i> Ressenti {{ meteo.ressenti }}°C</div>
+        </div>
+
+        {% if meteo.alerte %}
+            <div class="wc-reco {{ meteo.alerte.type == 'danger' ? 'bad' : 'mid' }}">
+                {{ meteo.alerte.message }}
+            </div>
+        {% else %}
+            <div class="wc-reco good">
+                ✅ Conditions idéales pour la location aujourd'hui !
+            </div>
+        {% endif %}
+
+        {% if previsions %}
+        <div class="fc-strip">
+            {% for fc in previsions %}
+            <div class="fc-day {{ fc.alerte ? 'bad-w' : '' }}" title="{{ fc.description }}">
+                <div class="fc-dname">{{ fc.jour_nom }}</div>
+                <div class="fc-dicon">
+                    <img src="{{ fc.icone_url }}" alt="" onerror="this.parentElement.textContent='🌡️'">
+                </div>
+                <div class="fc-dtemp">{{ fc.temp_max }}°<small>/{{ fc.temp_min }}°</small></div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+    {% else %}
+    <div class="wcard empty">
+        <i class="fas fa-cloud" style="font-size:1.5rem;opacity:.4;"></i>
+        Données météo indisponibles
+    </div>
+    {% endif %}
+
+</div>
+
+{# TABS #}
+<div class="tabs-bar">
+<div class="tabs-inner">
+    <button class="vtab active" id="tab-cal"   onclick="switchTab('cal')">
+        <i class="fas fa-calendar-alt"></i> Calendrier
+    </button>
+    <button class="vtab" id="tab-cards" onclick="switchTab('cards')">
+        <i class="fas fa-th-large"></i> Vue Véhicules
+    </button>
+    <button class="vtab" id="tab-gantt" onclick="switchTab('gantt')">
+        <i class="fas fa-stream"></i> Gantt
+    </button>
+</div>
+</div>
+</div>
+</div>
+
+{# ══ BODY ══ #}
+<div class="plan-body">
+
+    {# ALERT BAR météo #}
+    {% if meteo and meteo.alerte %}
+    <div class="alert-bar {{ meteo.alerte.type == 'danger' ? 'bad' : 'mid' }}">
+        <i class="fas fa-exclamation-triangle"></i>
+        {{ meteo.alerte.message }} — Prévenez vos clients et vérifiez les retours prévus.
+    </div>
+    {% elseif meteo %}
+    <div class="alert-bar good">
+        <i class="fas fa-sun"></i>
+        Belle journée à {{ meteo.ville }} ({{ meteo.temperature }}°C, {{ meteo.description }}) — Conditions de conduite excellentes.
+    </div>
+    {% endif %}
+
+    {# STATS #}
+    <div class="stats-row">
+        <div class="stat-box">
+            <div class="stat-ico green"><i class="fas fa-check-circle" style="color:#10b981;"></i></div>
+            <div><div class="stat-val">{{ nb_disponibles }}</div><div class="stat-lbl">Disponibles</div></div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-ico red"><i class="fas fa-car" style="color:#ef4444;"></i></div>
+            <div><div class="stat-val">{{ nb_loues }}</div><div class="stat-lbl">En location</div></div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-ico blue"><i class="fas fa-percentage" style="color:#3b82f6;"></i></div>
+            <div><div class="stat-val">{{ taux_occupation }}%</div><div class="stat-lbl">Taux occupation</div></div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-ico yellow"><i class="fas fa-calendar" style="color:#f59e0b;"></i></div>
+            <div><div class="stat-val">{{ nb_jours_mois }}</div><div class="stat-lbl">Jours ce mois</div></div>
+        </div>
+    </div>
+
+    {# FILTERS #}
+    <form method="GET" action="{{ path('client_planning') }}" class="filters-bar">
+        <label>Mois :</label>
+        <select name="mois">
+            {% for m in 1..12 %}
+            <option value="{{ m }}" {% if m == mois %}selected{% endif %}>
+                {{ ['','Jan','Fév','Mar','Avr','Mai','Juin','Juil','Août','Sep','Oct','Nov','Déc'][m] }}
+            </option>
+            {% endfor %}
+        </select>
+        <label>Année :</label>
+        <select name="annee">
+            {% for a in (annee-1)..(annee+2) %}
+            <option value="{{ a }}" {% if a == annee %}selected{% endif %}>{{ a }}</option>
+            {% endfor %}
+        </select>
+        <label>Véhicule :</label>
+        <select name="vehicule_id">
+            <option value="">Tous</option>
+            {% for v in vehicules %}
+            <option value="{{ v.idVehicule }}" {% if v.idVehicule == vehicule_id %}selected{% endif %}>
+                {{ v.modele.marque.nomMarque }} {{ v.modele.nomModele }} — {{ v.immatriculation }}
+            </option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="btn-go"><i class="fas fa-filter"></i> Filtrer</button>
+        <div class="legend">
+            <div class="leg-item"><div class="leg-dot" style="background:var(--avail-dot);"></div>Disponible</div>
+            <div class="leg-item"><div class="leg-dot" style="background:var(--busy-dot);"></div>Réservé</div>
+            <div class="leg-item"><div class="leg-dot" style="background:var(--warn-dot);"></div>Risque météo</div>
+        </div>
+    </form>
+
+    {% if vehicules is empty %}
+    <div class="empty-planning">
+        <div style="font-size:4rem;margin-bottom:20px;opacity:.25;">📅</div>
+        <h5 style="color:#9ca3af;">Aucun véhicule enregistré</h5>
+    </div>
+    {% else %}
+
+    {# ══ VUE 1 : CALENDRIER ══ #}
+    <div id="view-cal" class="active">
+        <div class="cal-nav">
+            <div class="cal-nav-btns">
+                <button class="cal-btn" onclick="navMois(-1)"><i class="fas fa-chevron-left"></i></button>
+                <button class="cal-btn" onclick="navMois(1)"><i class="fas fa-chevron-right"></i></button>
+            </div>
+            <div class="cal-nav-title" id="cal-title"></div>
+            <a href="{{ path('client_catalogue') }}" class="btn-rsv" style="font-size:.82rem;padding:9px 18px;">
+                <i class="fas fa-car"></i> Réserver
+            </a>
+        </div>
+        <div class="month-grid">
+            <div class="month-grid-head">
+                <div>Lun</div><div>Mar</div><div>Mer</div><div>Jeu</div><div>Ven</div><div>Sam</div><div>Dim</div>
+            </div>
+            <div class="month-grid-body" id="cal-body"></div>
+        </div>
+    </div>
+
+    {# ══ VUE 2 : CARTES VÉHICULES ══ #}
+    <div id="view-cards">
+        <div class="vhl-cards-grid">
+            {% for vehicule in vehicules %}
+            {% set vid   = vehicule.idVehicule %}
+            {% set jOcc  = occupation_par_vehicule[vid] ?? [] %}
+            {% set nbOcc = jOcc|length %}
+            {% set pct   = nb_jours_mois > 0 ? (((nb_jours_mois - nbOcc) / nb_jours_mois) * 100)|round : 100 %}
+            {% set isLou = vehicule.etat == 'louee' %}
+            {% set tdDay = "now"|date('j') %}
+
+            <div class="vhl-pcard">
+                <div class="vhl-pcard-head">
+                    <div>
+                        <div class="vhl-pname">{{ vehicule.modele.marque.nomMarque }} {{ vehicule.modele.nomModele }}</div>
+                        <div class="vhl-pplate">
+                            <i class="fas fa-id-card" style="color:var(--orange);font-size:.7rem;margin-right:4px;"></i>
+                            {{ vehicule.immatriculation }}{% if vehicule.couleur %} · {{ vehicule.couleur }}{% endif %}
+                        </div>
+                    </div>
+                    <span class="etat-pill {{ isLou ? 'loue' : (vehicule.etat == 'disponible' ? 'dispo' : 'autre') }}">
+                        {{ isLou ? '🔴 Loué' : (vehicule.etat == 'disponible' ? '🟢 Disponible' : '⚙️ '~vehicule.etat) }}
+                    </span>
+                </div>
+
+                {# Météo advisory personnalisé #}
+                {% if meteo %}
+                    {% if meteo.alerte and meteo.alerte.type == 'danger' %}
+                    <div class="meteo-adv bad">⛈️ Mauvais temps prévu — informer le client</div>
+                    {% elseif meteo.alerte %}
+                    <div class="meteo-adv mid">⚠️ {{ meteo.description }} — conditions à surveiller</div>
+                    {% else %}
+                    <div class="meteo-adv good">☀️ Météo idéale · {{ meteo.temperature }}°C à {{ meteo.ville }}</div>
+                    {% endif %}
+                {% endif %}
+
+                {# Strip 30 jours #}
+                <div class="day-strip">
+                    {% set dowLabels = ['L','M','M','J','V','S','D'] %}
+                    {% for d in 1..nb_jours_mois %}
+                    {% set isOcc  = d in jOcc %}
+                    {% set isTd   = d == tdDay %}
+                    {% set isWarn = meteo and meteo.alerte and d >= tdDay and d <= (tdDay + 5) and not isOcc %}
+                    <div class="ds-day" title="{{ d }}/{{ mois }}/{{ annee }} — {{ isOcc ? 'Réservé' : (isTd ? 'Aujourd\'hui' : 'Disponible') }}{{ isWarn ? ' ⚡' : '' }}">
+                        <div class="ds-lbl">{{ dowLabels[((d + 1) % 7)] }}</div>
+                        <div class="ds-dot {{ isTd ? 't' : (isOcc ? 'b' : (isWarn ? 'w' : 'a')) }}">{{ d }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div class="vhl-pcard-foot">
+                    <div>
+                        <div class="avail-pct {{ pct >= 60 ? 'high' : (pct >= 30 ? 'medium' : 'low') }}">{{ pct }}%</div>
+                        <small style="font-size:.72rem;color:#9ca3af;">disponible ce mois</small>
+                        <div class="avail-bar">
+                            <div class="avail-bar-fill" style="width:{{ pct }}%;background:{{ pct >= 60 ? '#10b981' : (pct >= 30 ? '#f59e0b' : '#ef4444') }};"></div>
+                        </div>
+                    </div>
+                    {% if vehicule.etat == 'disponible' %}
+                    <a href="{{ path('client_reservation', {id: vid}) }}" class="btn-rsv">
+                        <i class="fas fa-calendar-check"></i> Réserver
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    {# ══ VUE 3 : GANTT ══ #}
+    <div id="view-gantt">
+        <div class="gantt-wrap">
+        <div class="gantt-scroll">
+        <table class="gantt-table">
+            <thead>
+                <tr>
+                    <th class="vhl-h">Véhicule</th>
+                    {% set tdDay = "now"|date('j') %}
+                    {% for d in 1..nb_jours_mois %}
+                    {% set dow   = ((d + 1) % 7) %}
+                    {% set isTd  = d == tdDay %}
+                    {% set isBad = meteo and meteo.alerte and d >= tdDay and d <= (tdDay + 5) %}
+                    <th class="{{ isTd ? 'today-h' : (isBad ? 'bad-w' : (dow >= 5 ? 'wknd' : '')) }}"
+                        title="{{ d }}/{{ mois }}/{{ annee }}{{ isBad ? ' ⚡ Risque météo' : '' }}">
+                        {{ d }}<br><span style="font-size:.58rem;opacity:.5;">{{ ['L','M','M','J','V','S','D'][dow] }}</span>
+                    </th>
+                    {% endfor %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for vehicule in vehicules %}
+                {% set vid  = vehicule.idVehicule %}
+                {% set jOcc = occupation_par_vehicule[vid] ?? [] %}
+                <tr>
+                    <td class="vhl-td">
+                        <div class="g-vname">{{ vehicule.modele.marque.nomMarque }} {{ vehicule.modele.nomModele }}</div>
+                        <div class="g-vplate">{{ vehicule.immatriculation }}</div>
+                    </td>
+                    {% for d in 1..nb_jours_mois %}
+                    {% set isOcc = d in jOcc %}
+                    {% set isTd  = d == tdDay %}
+                    {% set dow   = ((d + 1) % 7) %}
+                    {% set isBad = meteo and meteo.alerte and d >= tdDay and d <= (tdDay + 5) and not isOcc %}
+                    <td class="{{ isOcc ? 'g-busy' : 'g-avail' }} {{ isTd ? 'g-today' : '' }} {{ dow >= 5 and not isOcc ? 'g-wknd' : '' }} {{ isBad ? 'g-meteo' : '' }}"
+                        data-label="{{ vehicule.modele.marque.nomMarque }} {{ vehicule.modele.nomModele }} — {{ d }}/{{ mois }} : {{ isOcc ? 'Réservé' : 'Disponible' }}{{ isBad ? ' ⚡ Risque météo' : '' }}"
+                        onmouseenter="showTip(event,this)" onmouseleave="hideTip()">
+                    </td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        </div>
+        </div>
+        <div style="display:flex;gap:20px;flex-wrap:wrap;margin-top:14px;padding:0 4px;">
+            <div class="leg-item"><div style="width:20px;height:12px;border-radius:3px;background:var(--busy-dot);opacity:.65;"></div> Réservé</div>
+            <div class="leg-item"><div style="width:20px;height:12px;border-radius:3px;background:#f3f4f6;border:1px solid #e5e7eb;"></div> Disponible</div>
+            <div class="leg-item"><div style="width:3px;height:12px;border-radius:1px;background:var(--teal);opacity:.6;"></div> Aujourd'hui</div>
+            <div class="leg-item" style="font-size:.76rem;color:#9ca3af;">⚡ Risque météo (5 prochains jours)</div>
+        </div>
+    </div>
+
+    {% endif %}
+
+    <div class="text-center" style="margin-top:48px;">
+        <a href="{{ path('client_catalogue') }}" class="btn btn-orange"
+           style="border-radius:30px;padding:13px 36px;font-weight:700;display:inline-flex;align-items:center;gap:10px;">
+            <i class="fas fa-car"></i> Voir le catalogue &amp; réserver
+        </a>
+    </div>
+</div>
+
+<div class="g-tip" id="g-tip"></div>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+const MOIS      = {{ mois }};
+const ANNEE     = {{ annee }};
+const JOURS_OCC = new Set({{ jours_occupes|json_encode|raw }});
+const NB_JOURS  = {{ nb_jours_mois }};
+const METEO_BAD = {{ (meteo and meteo.alerte) ? 'true' : 'false' }};
+const MOIS_NOMS = ['','Janvier','Février','Mars','Avril','Mai','Juin',
+                   'Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+
+/* ── SWITCH TAB ── */
+function switchTab(id) {
+    ['cal','cards','gantt'].forEach(v => {
+        document.getElementById('view-'+v).classList.toggle('active', v===id);
+        document.getElementById('tab-'+v).classList.toggle('active', v===id);
+    });
+    localStorage.setItem('hz_plan_tab', id);
+}
+
+/* ── BUILD CALENDAR ── */
+let calMois = MOIS, calAnnee = ANNEE;
+
+function buildCal(mois, annee) {
+    const body   = document.getElementById('cal-body');
+    const title  = document.getElementById('cal-title');
+    const today  = new Date();
+    const nbDays = new Date(annee, mois, 0).getDate();
+    let firstDow = new Date(annee, mois-1, 1).getDay();
+    firstDow = firstDow === 0 ? 6 : firstDow - 1;
+
+    title.textContent = MOIS_NOMS[mois] + ' ' + annee;
+    body.innerHTML = '';
+
+    for (let i = 0; i < firstDow; i++) {
+        const c = document.createElement('div');
+        c.className = 'cal-cell other';
+        body.appendChild(c);
+    }
+
+    for (let d = 1; d <= nbDays; d++) {
+        const dow  = (firstDow + d - 1) % 7;
+        const isTd = (d === today.getDate() && mois === today.getMonth()+1 && annee === today.getFullYear());
+        const isOc = (mois === MOIS && annee === ANNEE && JOURS_OCC.has(d));
+        const isBd = METEO_BAD && mois === MOIS && annee === ANNEE
+                     && d >= today.getDate() && d <= today.getDate() + 5;
+
+        const c = document.createElement('div');
+        c.className = 'cal-cell'
+            + (isTd ? ' is-today' : '')
+            + (dow >= 5 ? ' is-weekend' : '')
+            + (isBd && !isOc ? ' meteo-bad' : '');
+
+        const dn = document.createElement('div');
+        dn.className = 'd-num'; dn.textContent = d;
+        c.appendChild(dn);
+
+        const ev = document.createElement('div');
+        ev.className = 'd-events';
+        const e = document.createElement('div');
+        e.className = 'd-event ' + (isOc ? 'busy' : (isBd ? 'warn' : 'avail'));
+        e.textContent = isOc ? '🚗 Réservé' : (isBd ? '⚡ Météo' : '✓ Libre');
+        ev.appendChild(e);
+        c.appendChild(ev);
+        body.appendChild(c);
+    }
+
+    const total = firstDow + nbDays;
+    const rem   = total % 7 === 0 ? 0 : 7 - (total % 7);
+    for (let i = 0; i < rem; i++) {
+        const c = document.createElement('div');
+        c.className = 'cal-cell other';
+        body.appendChild(c);
+    }
+}
+
+function navMois(dir) {
+    calMois += dir;
+    if (calMois > 12) { calMois = 1; calAnnee++; }
+    if (calMois < 1)  { calMois = 12; calAnnee--; }
+    buildCal(calMois, calAnnee);
+}
+
+/* ── GANTT TOOLTIP ── */
+const tip = document.getElementById('g-tip');
+function showTip(e, el) {
+    tip.textContent = el.dataset.label || '';
+    tip.classList.add('show');
+    document.addEventListener('mousemove', moveTip);
+}
+function moveTip(e) {
+    tip.style.left = (e.clientX + 14) + 'px';
+    tip.style.top  = (e.clientY - 34) + 'px';
+}
+function hideTip() {
+    tip.classList.remove('show');
+    document.removeEventListener('mousemove', moveTip);
+}
+
+/* ── INIT ── */
+document.addEventListener('DOMContentLoaded', function () {
+    const saved = localStorage.getItem('hz_plan_tab') || 'cal';
+    switchTab(saved);
+    buildCal(MOIS, ANNEE);
+});
+</script>
+{% endblock %}

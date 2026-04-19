@@ -1,0 +1,146 @@
+{% extends 'client/base_client.html.twig' %}
+{% block title %}Horizia - Accueil{% endblock %}
+{% block nav_accueil %}active{% endblock %}
+
+{% block body %}
+
+{# ── HERO ── #}
+<div class="hero-full">
+    <div class="hero-bg" style="background-image:url('{{ asset('front/pacific/images/back.jpg') }}');"></div>
+    <div class="hero-overlay"></div>
+    <div class="container hero-content">
+        <div class="row">
+            <div class="col-md-8 col-lg-7">
+                <span class="hero-subtitle">Bienvenue chez Horizia</span>
+                <h1 class="hero-title">Découvrez votre<br>prochain véhicule</h1>
+                <p class="hero-desc">
+                    Horizia vous propose des véhicules soigneusement sélectionnés,
+                    une réservation simple et une expérience moderne pour vos déplacements.
+                </p>
+                <div>
+                    <a href="{{ path('client_catalogue') }}" class="btn-orange btn-lg mr-3" style="border-radius:30px; padding:14px 36px; display:inline-block; text-decoration:none; font-weight:600;">
+                        <i class="fas fa-car mr-2"></i>Voir le catalogue
+                    </a>
+                    <a href="{{ path('client_mes_reservations') }}" class="btn-outline-teal" style="display:inline-block; text-decoration:none; padding:13px 30px; border-radius:30px; border:2px solid rgba(255,255,255,.5); color:#fff;">
+                        <i class="fas fa-search mr-2"></i>Mes réservations
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# ── STATS ── #}
+<section style="background:var(--teal); padding:36px 0;">
+    <div class="container">
+        <div class="row text-center text-white">
+            <div class="col-6 col-md-3 mb-3 mb-md-0">
+                <h3 style="font-size:2.2rem; font-weight:800; margin:0;">50+</h3>
+                <p style="opacity:.8; margin:0; font-size:.9rem;">Véhicules disponibles</p>
+            </div>
+            <div class="col-6 col-md-3 mb-3 mb-md-0">
+                <h3 style="font-size:2.2rem; font-weight:800; margin:0;">500+</h3>
+                <p style="opacity:.8; margin:0; font-size:.9rem;">Clients satisfaits</p>
+            </div>
+            <div class="col-6 col-md-3 mb-3 mb-md-0">
+                <h3 style="font-size:2.2rem; font-weight:800; margin:0;">24/7</h3>
+                <p style="opacity:.8; margin:0; font-size:.9rem;">Support client</p>
+            </div>
+            <div class="col-6 col-md-3">
+                <h3 style="font-size:2.2rem; font-weight:800; margin:0;">5★</h3>
+                <p style="opacity:.8; margin:0; font-size:.9rem;">Note moyenne</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+{# ── SERVICES ── #}
+<section class="section section-gray">
+    <div class="container">
+        <div class="row justify-content-center mb-5">
+            <div class="col-md-7 text-center section-title">
+                <span class="sub">Nos services</span>
+                <h2>Pourquoi choisir Horizia ?</h2>
+            </div>
+        </div>
+        <div class="row">
+            {% for item in [
+                {icon:'fa-car',        title:'Flotte premium',      desc:'Des véhicules récents, bien entretenus et parfaitement assurés pour votre sécurité.'},
+                {icon:'fa-bolt',       title:'Réservation rapide',  desc:'Réservez en moins de 2 minutes depuis votre téléphone ou ordinateur.'},
+                {icon:'fa-shield-alt', title:'100 % sécurisé',      desc:'Paiement sécurisé et confirmation instantanée par email.'}
+            ] %}
+            <div class="col-md-4 mb-4">
+                <div class="card text-center p-4 h-100">
+                    <div class="mb-3">
+                        <span class="icon-circle">
+                            <i class="fas {{ item.icon }} fa-lg text-teal"></i>
+                        </span>
+                    </div>
+                    <h5 style="font-weight:700;">{{ item.title }}</h5>
+                    <p class="text-muted">{{ item.desc }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+{# ── VÉHICULES EN VEDETTE ── #}
+{% if vehicules is defined and vehicules|length > 0 %}
+<section class="section">
+    <div class="container">
+        <div class="row justify-content-center mb-5">
+            <div class="col-md-7 text-center section-title">
+                <span class="sub">Notre flotte</span>
+                <h2>Véhicules disponibles</h2>
+            </div>
+        </div>
+        <div class="row">
+            {% for vehicule in vehicules|slice(0,3) %}
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <div style="position:relative; overflow:hidden;">
+                        <img src="{{ vehicule.image ? (vehicule.image starts with 'http' ? vehicule.image : asset('uploads/vehicules/'~vehicule.image)) : 'https://via.placeholder.com/400x220/23779C/fff?text='~vehicule.marque }}"
+                             class="card-img-top" alt="{{ vehicule.marque }}"
+                             onerror="this.src='https://via.placeholder.com/400x220/23779C/fff?text={{ vehicule.marque }}'"
+                             style="height:200px; object-fit:cover;">
+                        <span class="price-badge">{{ vehicule.prixParJour ?? '—' }} DT / jour</span>
+                    </div>
+                    <div class="card-body">
+                        <h5 class="font-weight-700">{{ vehicule.marque }} {{ vehicule.modele }}</h5>
+                        <p class="text-muted small mb-0">
+                            <i class="fas fa-gas-pump mr-1 text-teal"></i>{{ vehicule.carburant ?? 'N/A' }}
+                            &nbsp;·&nbsp;
+                            <i class="fas fa-users mr-1 text-teal"></i>{{ vehicule.nombrePlaces ?? '—' }} places
+                        </p>
+                    </div>
+                    <div class="card-footer bg-white border-0 pb-3">
+                        <a href="{{ path('client_reservation', {id:vehicule.id}) }}" class="btn btn-orange btn-block">
+                            <i class="fas fa-calendar-check mr-2"></i>Réserver
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="text-center mt-3">
+            <a href="{{ path('client_catalogue') }}" class="btn-outline-teal" style="display:inline-block; text-decoration:none; padding:12px 32px;">
+                Tout le catalogue <i class="fas fa-arrow-right ml-2"></i>
+            </a>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+{# ── CTA ── #}
+<section style="background:linear-gradient(135deg, var(--teal), var(--teal-dk)); padding:72px 0; text-align:center;">
+    <div class="container text-white">
+        <h2 style="font-size:2rem; font-weight:800; margin-bottom:12px;">Prêt à prendre la route ?</h2>
+        <p style="opacity:.85; font-size:1.05rem; margin-bottom:32px;">Réservez votre véhicule dès maintenant et profitez de nos meilleurs tarifs.</p>
+        <a href="{{ path('client_catalogue') }}" class="btn-orange" style="display:inline-block; text-decoration:none; padding:14px 42px; border-radius:30px; font-size:1rem; font-weight:600;">
+            <i class="fas fa-car mr-2"></i>Réserver maintenant
+        </a>
+    </div>
+</section>
+
+{% endblock %}

@@ -2,102 +2,55 @@
 
 namespace App\Entity;
 
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
-/**
- * Vehicule
- *
- * @ORM\Table(name="vehicule", uniqueConstraints={@ORM\UniqueConstraint(name="immatriculation", columns={"immatriculation"})}, indexes={@ORM\Index(name="id_modele", columns={"id_modele"}), @ORM\Index(name="idx_vehicule_etat", columns={"etat"})})
- * @ORM\Entity
- */
+#[ORM\Entity]
+#[ORM\Table(name: 'vehicule')]
 class Vehicule
 {
-    /**
-     * @var int
-     *
-     * @ORM\Column(name="id_vehicule", type="integer", nullable=false)
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="IDENTITY")
-     */
-    private $idVehicule;
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(name: 'id_vehicule', type: 'integer')]
+    private ?int $idVehicule = null;
 
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="immatriculation", type="string", length=20, nullable=false, options={"comment"="ex: 123 TUN 45"})
-     */
-    private $immatriculation;
+    #[ORM\Column(name: 'immatriculation', type: 'string', length: 20)]
+    private ?string $immatriculation = null;
 
-    /**
-     * @var int
-     *
-     * @ORM\Column(name="id_modele", type="integer", nullable=false)
-     */
-    private $idModele;
+    #[ORM\ManyToOne(inversedBy: 'vehicules')]
+    #[ORM\JoinColumn(name: 'id_modele', referencedColumnName: 'id_modele', nullable: false)]
+    private ?Modele $modele = null;
 
-    /**
-     * @var int
-     *
-     * @ORM\Column(name="annee", type="integer", nullable=false)
-     */
-    private $annee;
+    #[ORM\Column(name: 'annee', type: 'integer')]
+    private ?int $annee = null;
 
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="carburant", type="string", length=0, nullable=false)
-     */
-    private $carburant;
+    #[ORM\Column(name: 'carburant', type: 'string', length: 20)]
+    private ?string $carburant = null;
 
-    /**
-     * @var string|null
-     *
-     * @ORM\Column(name="couleur", type="string", length=30, nullable=true)
-     */
-    private $couleur;
+    #[ORM\Column(name: 'couleur', type: 'string', length: 30, nullable: true)]
+    private ?string $couleur = null;
 
-    /**
-     * @var int|null
-     *
-     * @ORM\Column(name="kilometrage", type="integer", nullable=true, options={"unsigned"=true})
-     */
-    private $kilometrage = '0';
+    #[ORM\Column(name: 'kilometrage', type: 'integer')]
+    private ?int $kilometrage = null;
 
-    /**
-     * @var string|null
-     *
-     * @ORM\Column(name="etat", type="string", length=0, nullable=true, options={"default"="disponible"})
-     */
-    private $etat = 'disponible';
+    #[ORM\Column(name: 'etat', type: 'string', length: 20)]
+    private ?string $etat = 'disponible';
 
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="prix_par_jour", type="decimal", precision=10, scale=3, nullable=false, options={"comment"="en TND"})
-     */
-    private $prixParJour;
+    #[ORM\Column(name: 'prix_par_jour', type: 'decimal', precision: 10, scale: 3)]
+    private ?string $prixParJour = null;
 
-    /**
-     * @var string|null
-     *
-     * @ORM\Column(name="photo", type="string", length=255, nullable=true, options={"comment"="chemin ou URL"})
-     */
-    private $photo;
+    #[ORM\Column(name: 'photo', type: 'string', length: 255, nullable: true)]
+    private ?string $photo = null;
 
-    /**
-     * @var \DateTime
-     *
-     * @ORM\Column(name="created_at", type="datetime", nullable=false, options={"default"="CURRENT_TIMESTAMP"})
-     */
-    private $createdAt = 'CURRENT_TIMESTAMP';
+    #[ORM\OneToMany(targetEntity: Location::class, mappedBy: 'vehicule')]
+    private Collection $locations;
 
-    /**
-     * @var \DateTime
-     *
-     * @ORM\Column(name="updated_at", type="datetime", nullable=false, options={"default"="CURRENT_TIMESTAMP"})
-     */
-    private $updatedAt = 'CURRENT_TIMESTAMP';
+    public function __construct()
+    {
+        $this->locations = new ArrayCollection();
+    }
 
     public function getIdVehicule(): ?int
     {
@@ -112,19 +65,17 @@ class Vehicule
     public function setImmatriculation(string $immatriculation): static
     {
         $this->immatriculation = $immatriculation;
-
         return $this;
     }
 
-    public function getIdModele(): ?int
+    public function getModele(): ?Modele
     {
-        return $this->idModele;
+        return $this->modele;
     }
 
-    public function setIdModele(int $idModele): static
+    public function setModele(?Modele $modele): static
     {
-        $this->idModele = $idModele;
-
+        $this->modele = $modele;
         return $this;
     }
 
@@ -136,7 +87,6 @@ class Vehicule
     public function setAnnee(int $annee): static
     {
         $this->annee = $annee;
-
         return $this;
     }
 
@@ -148,7 +98,6 @@ class Vehicule
     public function setCarburant(string $carburant): static
     {
         $this->carburant = $carburant;
-
         return $this;
     }
 
@@ -160,7 +109,6 @@ class Vehicule
     public function setCouleur(?string $couleur): static
     {
         $this->couleur = $couleur;
-
         return $this;
     }
 
@@ -169,10 +117,9 @@ class Vehicule
         return $this->kilometrage;
     }
 
-    public function setKilometrage(?int $kilometrage): static
+    public function setKilometrage(int $kilometrage): static
     {
         $this->kilometrage = $kilometrage;
-
         return $this;
     }
 
@@ -181,10 +128,9 @@ class Vehicule
         return $this->etat;
     }
 
-    public function setEtat(?string $etat): static
+    public function setEtat(string $etat): static
     {
         $this->etat = $etat;
-
         return $this;
     }
 
@@ -196,7 +142,6 @@ class Vehicule
     public function setPrixParJour(string $prixParJour): static
     {
         $this->prixParJour = $prixParJour;
-
         return $this;
     }
 
@@ -208,33 +153,34 @@ class Vehicule
     public function setPhoto(?string $photo): static
     {
         $this->photo = $photo;
-
         return $this;
     }
 
-    public function getCreatedAt(): ?\DateTimeInterface
+    public function getLocations(): Collection
     {
-        return $this->createdAt;
+        return $this->locations;
     }
 
-    public function setCreatedAt(\DateTimeInterface $createdAt): static
+    public function addLocation(Location $location): static
     {
-        $this->createdAt = $createdAt;
-
+        if (!$this->locations->contains($location)) {
+            $this->locations->add($location);
+            $location->setVehicule($this);
+        }
         return $this;
     }
 
-    public function getUpdatedAt(): ?\DateTimeInterface
+    public function removeLocation(Location $location): static
     {
-        return $this->updatedAt;
-    }
-
-    public function setUpdatedAt(\DateTimeInterface $updatedAt): static
-    {
-        $this->updatedAt = $updatedAt;
-
+        if ($this->locations->removeElement($location)) {
+            if ($location->getVehicule() === $this) {
+                $location->setVehicule(null);
+            }
+        }
         return $this;
     }
-
-
+    public function __toString(): string
+{
+    return $this->immatriculation ?? '';
+}
 }

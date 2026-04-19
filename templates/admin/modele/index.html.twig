@@ -1,0 +1,36 @@
+{% extends 'admin/layout.html.twig' %}
+{% block title %}Modeles â€“ Horizia{% endblock %}
+{% block topbar_title %}Modeles{% endblock %}
+{% block admin_content %}
+<div class="page-header">
+    <div class="page-header-left">
+        <div class="page-header-icon"><i class="bi bi-list-ul"></i></div>
+        <div><h2>Modeles <span class="badge-count">{{ modeles|length }}</span></h2><p class="text-muted mb-0" style="font-size:.92rem;">Modeles de vehicules</p></div>
+    </div>
+    <a href="{{ path('admin_modele_new') }}" class="btn btn-horozia-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>Nouveau modele</a>
+</div>
+<div class="card-horozia">
+    <div class="table-responsive">
+        <table class="table dashboard-table mb-0">
+            <thead><tr class="table-horozia"><th>#</th><th>Marque</th><th>Modele</th><th>Vehicules</th><th>Actions</th></tr></thead>
+            <tbody>
+                {% for modele in modeles %}
+                <tr>
+                    <td style="font-weight:700;color:var(--color-primary);">{{ modele.idModele }}</td>
+                    <td><span style="background:rgba(61,148,202,.12);color:#174f6a;padding:4px 10px;border-radius:20px;font-size:.82rem;font-weight:700;">{{ modele.marque.nomMarque }}</span></td>
+                    <td style="font-weight:600;">{{ modele.nomModele }}</td>
+                    <td>{{ modele.vehicules|length }} vehicule(s)</td>
+                    <td>
+                        <div class="d-flex gap-1">
+                            <a href="{{ path('admin_modele_show', {id: modele.idModele}) }}" class="action-btn action-btn-view"><i class="bi bi-eye"></i></a>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="5" class="text-center py-4" style="color:#6c757d;">Aucun modele trouve.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

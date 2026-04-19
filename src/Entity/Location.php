@@ -5,198 +5,97 @@ namespace App\Entity;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
-/**
- * Location
- *
- * @ORM\Table(name="location", indexes={@ORM\Index(name="idx_location_dates", columns={"date_debut", "date_fin_prevue"}), @ORM\Index(name="idx_location_ville", columns={"client_ville"}), @ORM\Index(name="idx_location_vehicule", columns={"id_vehicule"}), @ORM\Index(name="idx_location_statut", columns={"statut"}), @ORM\Index(name="idx_location_coords", columns={"client_latitude", "client_longitude"})})
- * @ORM\Entity
- */
+#[ORM\Entity]
+#[ORM\Table(name: 'location')]
 class Location
 {
-    /**
-     * @var int
-     *
-     * @ORM\Column(name="id_location", type="integer", nullable=false)
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="IDENTITY")
-     */
-    private $idLocation;
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(name: 'id_location', type: 'integer')]
+    private ?int $idLocation = null;
 
-    /**
-     * @var int
-     *
-     * @ORM\Column(name="id_vehicule", type="integer", nullable=false)
-     */
-    private $idVehicule;
+    #[ORM\ManyToOne(inversedBy: 'locations')]
+    #[ORM\JoinColumn(name: 'id_vehicule', referencedColumnName: 'id_vehicule', nullable: false)]
+    private ?Vehicule $vehicule = null;
 
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="client_nom_complet", type="string", length=100, nullable=false)
-     */
-    private $clientNomComplet;
+    #[ORM\Column(name: 'client_nom_complet', type: 'string', length: 100)]
+    private ?string $clientNomComplet = null;
 
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="client_telephone", type="string", length=15, nullable=false)
-     */
-    private $clientTelephone;
+    #[ORM\Column(name: 'client_telephone', type: 'string', length: 15)]
+    private ?string $clientTelephone = null;
 
-    /**
-     * @var string|null
-     *
-     * @ORM\Column(name="client_cin", type="string", length=20, nullable=true)
-     */
-    private $clientCin;
+    #[ORM\Column(name: 'client_cin', type: 'string', length: 20, nullable: true)]
+    private ?string $clientCin = null;
 
-    /**
-     * @var string|null
-     *
-     * @ORM\Column(name="client_adresse", type="string", length=255, nullable=true, options={"comment"="Adresse complète du client"})
-     */
-    private $clientAdresse;
+    #[ORM\Column(name: 'client_adresse', type: 'string', length: 255, nullable: true)]
+    private ?string $clientAdresse = null;
 
-    /**
-     * @var string|null
-     *
-     * @ORM\Column(name="client_ville", type="string", length=100, nullable=true, options={"comment"="Ville du client"})
-     */
-    private $clientVille;
+    #[ORM\Column(name: 'client_ville', type: 'string', length: 100, nullable: true)]
+    private ?string $clientVille = null;
 
-    /**
-     * @var string|null
-     *
-     * @ORM\Column(name="client_code_postal", type="string", length=10, nullable=true, options={"comment"="Code postal"})
-     */
-    private $clientCodePostal;
+    #[ORM\Column(name: 'client_code_postal', type: 'string', length: 10, nullable: true)]
+    private ?string $clientCodePostal = null;
 
-    /**
-     * @var float|null
-     *
-     * @ORM\Column(name="client_latitude", type="float", precision=10, scale=0, nullable=true, options={"comment"="Coordonnée GPS - Latitude"})
-     */
-    private $clientLatitude;
+    #[ORM\Column(name: 'client_latitude', type: 'float', nullable: true)]
+    private ?float $clientLatitude = null;
 
-    /**
-     * @var float|null
-     *
-     * @ORM\Column(name="client_longitude", type="float", precision=10, scale=0, nullable=true, options={"comment"="Coordonnée GPS - Longitude"})
-     */
-    private $clientLongitude;
+    #[ORM\Column(name: 'client_longitude', type: 'float', nullable: true)]
+    private ?float $clientLongitude = null;
 
-    /**
-     * @var string|null
-     *
-     * @ORM\Column(name="client_permis_numero", type="string", length=20, nullable=true)
-     */
-    private $clientPermisNumero;
+    #[ORM\Column(name: 'client_permis_numero', type: 'string', length: 20, nullable: true)]
+    private ?string $clientPermisNumero = null;
 
-    /**
-     * @var \DateTime
-     *
-     * @ORM\Column(name="date_debut", type="datetime", nullable=false)
-     */
-    private $dateDebut;
+    #[ORM\Column(name: 'date_debut', type: 'datetime')]
+    private ?\DateTimeInterface $dateDebut = null;
 
-    /**
-     * @var \DateTime
-     *
-     * @ORM\Column(name="date_fin_prevue", type="datetime", nullable=false)
-     */
-    private $dateFinPrevue;
+    #[ORM\Column(name: 'date_fin_prevue', type: 'datetime')]
+    private ?\DateTimeInterface $dateFinPrevue = null;
 
-    /**
-     * @var \DateTime|null
-     *
-     * @ORM\Column(name="date_fin_reelle", type="datetime", nullable=true)
-     */
-    private $dateFinReelle;
+    #[ORM\Column(name: 'date_fin_reelle', type: 'datetime', nullable: true)]
+    private ?\DateTimeInterface $dateFinReelle = null;
 
-    /**
-     * @var int
-     *
-     * @ORM\Column(name="kilometrage_debut", type="integer", nullable=false, options={"unsigned"=true})
-     */
-    private $kilometrageDebut;
+    #[ORM\Column(name: 'kilometrage_debut', type: 'integer')]
+    private ?int $kilometrageDebut = null;
 
-    /**
-     * @var int|null
-     *
-     * @ORM\Column(name="kilometrage_retour", type="integer", nullable=true, options={"unsigned"=true})
-     */
-    private $kilometrageRetour;
+    #[ORM\Column(name: 'kilometrage_retour', type: 'integer', nullable: true)]
+    private ?int $kilometrageRetour = null;
 
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="prix_par_jour", type="decimal", precision=10, scale=3, nullable=false, options={"comment"="copié du véhicule au moment de la réservation"})
-     */
-    private $prixParJour;
+    #[ORM\Column(name: 'prix_par_jour', type: 'decimal', precision: 10, scale: 3)]
+    private ?string $prixParJour = null;
 
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="montant_total", type="decimal", precision=10, scale=3, nullable=false, options={"comment"="à calculer : prix × jours + extras"})
-     */
-    private $montantTotal;
+    #[ORM\Column(name: 'montant_total', type: 'decimal', precision: 10, scale: 3)]
+    private ?string $montantTotal = null;
 
-    /**
-     * @var string|null
-     *
-     * @ORM\Column(name="avance", type="decimal", precision=10, scale=3, nullable=true, options={"default"="0.000"})
-     */
-    private $avance = '0.000';
+    #[ORM\Column(name: 'avance', type: 'decimal', precision: 10, scale: 3, nullable: true)]
+    private ?string $avance = null;
 
-    /**
-     * @var string|null
-     *
-     * @ORM\Column(name="reste_a_payer", type="decimal", precision=10, scale=3, nullable=true)
-     */
-    private $resteAPayer;
+    #[ORM\Column(name: 'statut', type: 'string', length: 20, nullable: true)]
+    private ?string $statut = 'réservée';
 
-    /**
-     * @var string|null
-     *
-     * @ORM\Column(name="statut", type="string", length=0, nullable=true, options={"default"="réservée"})
-     */
-    private $statut = 'réservée';
+    #[ORM\Column(name: 'notes', type: 'text', nullable: true)]
+    private ?string $notes = null;
 
-    /**
-     * @var string|null
-     *
-     * @ORM\Column(name="notes", type="text", length=65535, nullable=true, options={"comment"="dégâts, remarques, etc."})
-     */
-    private $notes;
+    // ✅ Nouveau champ extras JSON
+    #[ORM\Column(name: 'extras', type: 'json', nullable: true)]
+    private ?array $extras = null;
 
-    /**
-     * @var \DateTime
-     *
-     * @ORM\Column(name="created_at", type="datetime", nullable=false, options={"default"="CURRENT_TIMESTAMP"})
-     */
-    private $createdAt = 'CURRENT_TIMESTAMP';
-
-    /**
-     * @var \DateTime
-     *
-     * @ORM\Column(name="updated_at", type="datetime", nullable=false, options={"default"="CURRENT_TIMESTAMP"})
-     */
-    private $updatedAt = 'CURRENT_TIMESTAMP';
+    // ──────────────────────────────────────────
+    // GETTERS / SETTERS
+    // ──────────────────────────────────────────
 
     public function getIdLocation(): ?int
     {
         return $this->idLocation;
     }
 
-    public function getIdVehicule(): ?int
+    public function getVehicule(): ?Vehicule
     {
-        return $this->idVehicule;
+        return $this->vehicule;
     }
 
-    public function setIdVehicule(int $idVehicule): static
+    public function setVehicule(?Vehicule $vehicule): static
     {
-        $this->idVehicule = $idVehicule;
-
+        $this->vehicule = $vehicule;
         return $this;
     }
 
@@ -208,7 +107,6 @@ class Location
     public function setClientNomComplet(string $clientNomComplet): static
     {
         $this->clientNomComplet = $clientNomComplet;
-
         return $this;
     }
 
@@ -220,7 +118,6 @@ class Location
     public function setClientTelephone(string $clientTelephone): static
     {
         $this->clientTelephone = $clientTelephone;
-
         return $this;
     }
 
@@ -232,7 +129,6 @@ class Location
     public function setClientCin(?string $clientCin): static
     {
         $this->clientCin = $clientCin;
-
         return $this;
     }
 
@@ -244,7 +140,6 @@ class Location
     public function setClientAdresse(?string $clientAdresse): static
     {
         $this->clientAdresse = $clientAdresse;
-
         return $this;
     }
 
@@ -256,7 +151,6 @@ class Location
     public function setClientVille(?string $clientVille): static
     {
         $this->clientVille = $clientVille;
-
         return $this;
     }
 
@@ -268,7 +162,6 @@ class Location
     public function setClientCodePostal(?string $clientCodePostal): static
     {
         $this->clientCodePostal = $clientCodePostal;
-
         return $this;
     }
 
@@ -280,7 +173,6 @@ class Location
     public function setClientLatitude(?float $clientLatitude): static
     {
         $this->clientLatitude = $clientLatitude;
-
         return $this;
     }
 
@@ -292,7 +184,6 @@ class Location
     public function setClientLongitude(?float $clientLongitude): static
     {
         $this->clientLongitude = $clientLongitude;
-
         return $this;
     }
 
@@ -304,7 +195,6 @@ class Location
     public function setClientPermisNumero(?string $clientPermisNumero): static
     {
         $this->clientPermisNumero = $clientPermisNumero;
-
         return $this;
     }
 
@@ -316,7 +206,6 @@ class Location
     public function setDateDebut(\DateTimeInterface $dateDebut): static
     {
         $this->dateDebut = $dateDebut;
-
         return $this;
     }
 
@@ -328,7 +217,6 @@ class Location
     public function setDateFinPrevue(\DateTimeInterface $dateFinPrevue): static
     {
         $this->dateFinPrevue = $dateFinPrevue;
-
         return $this;
     }
 
@@ -340,7 +228,6 @@ class Location
     public function setDateFinReelle(?\DateTimeInterface $dateFinReelle): static
     {
         $this->dateFinReelle = $dateFinReelle;
-
         return $this;
     }
 
@@ -352,7 +239,6 @@ class Location
     public function setKilometrageDebut(int $kilometrageDebut): static
     {
         $this->kilometrageDebut = $kilometrageDebut;
-
         return $this;
     }
 
@@ -364,7 +250,6 @@ class Location
     public function setKilometrageRetour(?int $kilometrageRetour): static
     {
         $this->kilometrageRetour = $kilometrageRetour;
-
         return $this;
     }
 
@@ -376,7 +261,6 @@ class Location
     public function setPrixParJour(string $prixParJour): static
     {
         $this->prixParJour = $prixParJour;
-
         return $this;
     }
 
@@ -388,7 +272,6 @@ class Location
     public function setMontantTotal(string $montantTotal): static
     {
         $this->montantTotal = $montantTotal;
-
         return $this;
     }
 
@@ -400,19 +283,6 @@ class Location
     public function setAvance(?string $avance): static
     {
         $this->avance = $avance;
-
-        return $this;
-    }
-
-    public function getResteAPayer(): ?string
-    {
-        return $this->resteAPayer;
-    }
-
-    public function setResteAPayer(?string $resteAPayer): static
-    {
-        $this->resteAPayer = $resteAPayer;
-
         return $this;
     }
 
@@ -424,7 +294,6 @@ class Location
     public function setStatut(?string $statut): static
     {
         $this->statut = $statut;
-
         return $this;
     }
 
@@ -436,33 +305,56 @@ class Location
     public function setNotes(?string $notes): static
     {
         $this->notes = $notes;
-
         return $this;
     }
 
-    public function getCreatedAt(): ?\DateTimeInterface
+    // ──────────────────────────────────────────
+    // EXTRAS
+    // ──────────────────────────────────────────
+
+    public function getExtras(): ?array
     {
-        return $this->createdAt;
+        return $this->extras;
     }
 
-    public function setCreatedAt(\DateTimeInterface $createdAt): static
+    public function setExtras(?array $extras): static
     {
-        $this->createdAt = $createdAt;
-
+        $this->extras = $extras;
         return $this;
     }
 
-    public function getUpdatedAt(): ?\DateTimeInterface
+    /**
+     * Retourne le total des extras en TND
+     */
+    public function getExtrasTotal(): float
     {
-        return $this->updatedAt;
+        if (!$this->extras) {
+            return 0.0;
+        }
+        return (float) array_sum($this->extras);
     }
 
-    public function setUpdatedAt(\DateTimeInterface $updatedAt): static
+    /**
+     * Calcule et met à jour le montant total automatiquement
+     * Formule : prix_par_jour × nb_jours + total_extras
+     */
+    public function calculerMontantTotal(): void
     {
-        $this->updatedAt = $updatedAt;
-
-        return $this;
+        $debut = $this->dateDebut;
+        $fin   = $this->dateFinPrevue;
+        if (!$debut || !$fin) {
+            return;
+        }
+        $jours        = max(1, (int) $debut->diff($fin)->days);
+        $base         = (float) $this->prixParJour * $jours;
+        $this->montantTotal = (string) round($base + $this->getExtrasTotal(), 3);
     }
 
-
+    /**
+     * Calcule le reste à payer (montantTotal - avance)
+     */
+    public function getResteAPayer(): float
+    {
+        return max(0, (float) $this->montantTotal - (float) $this->avance);
+    }
 }

@@ -1,0 +1,54 @@
+{# templates/admin/vehicule/_pagination.html.twig #}
+{% set debut = (page - 1) * limit + 1 %}
+{% set fin   = min(page * limit, total) %}
+
+{# Params de filtre à conserver dans chaque lien de pagination #}
+{% set baseParams = {
+    vue:      vue,
+    immat:    rechercheImmat,
+    etat:     filtreEtat,
+    carburant:filtreCarburant,
+    marque:   filtreMarque,
+    tri:      tri
+} %}
+
+<div class="pagination-bar">
+    <span class="pg-info">
+        Affichage <strong>{{ debut }}–{{ fin }}</strong> de <strong>{{ total }}</strong> véhicule(s)
+    </span>
+
+    {% if total_pages > 1 %}
+    <div class="pg-btns">
+
+        {# ← Précédent #}
+        {% if page > 1 %}
+        <a href="{{ path('admin_vehicule_index', baseParams|merge({page: page - 1})) }}" class="pg-btn">
+            <i class="bi bi-chevron-left"></i>
+        </a>
+        {% else %}
+        <span class="pg-btn disabled"><i class="bi bi-chevron-left"></i></span>
+        {% endif %}
+
+        {# Numéros #}
+        {% for p in 1..total_pages %}
+            {% if p == 1 or p == total_pages or (p >= page - 2 and p <= page + 2) %}
+                {% if not loop.first and p > loop.revindex0 + 1 %}
+                    <span class="pg-dots">…</span>
+                {% endif %}
+                <a href="{{ path('admin_vehicule_index', baseParams|merge({page: p})) }}"
+                   class="pg-btn {{ p == page ? 'active' : '' }}">{{ p }}</a>
+            {% endif %}
+        {% endfor %}
+
+        {# → Suivant #}
+        {% if page < total_pages %}
+        <a href="{{ path('admin_vehicule_index', baseParams|merge({page: page + 1})) }}" class="pg-btn">
+            <i class="bi bi-chevron-right"></i>
+        </a>
+        {% else %}
+        <span class="pg-btn disabled"><i class="bi bi-chevron-right"></i></span>
+        {% endif %}
+
+    </div>
+    {% endif %}
+</div>

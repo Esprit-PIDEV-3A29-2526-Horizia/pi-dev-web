@@ -1,0 +1,861 @@
+{% extends 'admin/layout.html.twig' %}
+{% block title %}Nouvelle location – Horizia{% endblock %}
+{% block topbar_title %}Nouvelle location{% endblock %}
+{% block admin_content %}
+
+<div class="page-header">
+    <div class="page-header-left">
+        <div class="page-header-icon"><i class="bi bi-plus-circle-fill"></i></div>
+        <div>
+            <h2>Nouvelle location</h2>
+            <p class="text-muted mb-0" style="font-size:.92rem;">Remplissez les informations ci-dessous</p>
+        </div>
+    </div>
+    <a href="{{ path('admin_location_index') }}" class="btn btn-horozia-outline btn-sm">
+        <i class="bi bi-arrow-left me-1"></i>Retour
+    </a>
+</div>
+
+{# ── ERREURS GLOBALES PHP ── #}
+{% if not form.vars.valid and form.vars.submitted %}
+<div class="alert alert-danger d-flex align-items-center gap-2 mb-3">
+    <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+    <div>
+        <strong>Veuillez corriger les erreurs ci-dessous avant de soumettre.</strong>
+        {{ form_errors(form) }}
+    </div>
+</div>
+{% endif %}
+
+{{ form_start(form, {'attr': {'novalidate': 'novalidate', 'id': 'location-form'}}) }}
+<div class="row g-3">
+
+    {# ════════════════════════════════════════
+       COLONNE PRINCIPALE — 8 colonnes
+    ════════════════════════════════════════ #}
+    <div class="col-lg-8">
+
+        {# ── VÉHICULE ── #}
+        <div class="form-section">
+            <div class="form-section-title">
+                <i class="bi bi-truck-front-fill" style="color:var(--color-primary);"></i> Véhicule
+            </div>
+
+            {# Select Symfony caché — soumet la valeur au form #}
+            <div class="d-none">
+                {{ form_widget(form.vehicule) }}
+            </div>
+            {{ form_errors(form.vehicule) }}
+
+            {# Données JSON injectées depuis Twig — lues par JS directement (fiable) #}
+            <script id="vhl_data" type="application/json">
+            [{% for v in vehicules %}{% if not loop.first %},{% endif %}{"value":{{ v.idVehicule }},"marque":{{ v.modele.marque.nomMarque|default('')|json_encode|raw }},"modele":{{ v.modele.nomModele|default('')|json_encode|raw }},"immat":{{ v.immatriculation|default('')|json_encode|raw }},"etat":{{ v.etat|default('disponible')|json_encode|raw }},"prix":{{ v.prixParJour|default('')|json_encode|raw }}}{% endfor %}]
+            </script>
+
+            {# Champ de recherche + bouton + dropdown #}
+            <div class="vhl-search-wrapper">
+                <div class="input-group">
+                    <span class="input-group-text" style="background:#f8f9fa;border-color:rgba(0,0,0,.15);">
+                        <i class="bi bi-search" style="color:#adb5bd;font-size:.85rem;"></i>
+                    </span>
+                    <input type="text"
+                           id="vhl_search"
+                           class="form-control"
+                           placeholder="Rechercher — marque, modèle, immatriculation…"
+                           autocomplete="off"
+                           role="combobox"
+                           aria-expanded="false"
+                           aria-controls="vhl_list"
+                           aria-autocomplete="list"
+                           style="border-left:none;">
+                    <button type="button" id="btn_open_vhl"
+                            class="btn btn-horozia-outline"
+                            title="Voir tous les véhicules">
+                        <i class="bi bi-chevron-down" id="vhl_chevron"></i>
+                    </button>
+                </div>
+
+                {# Liste déroulante — positionnée en absolu sous le champ #}
+                <div id="vhl_list"
+                     class="vhl-dropdown"
+                     role="listbox"
+                     aria-label="Véhicules disponibles">
+                    {# Rempli dynamiquement par JS #}
+                </div>
+            </div>
+
+            {# Aperçu du véhicule sélectionné #}
+            <div id="vhl_preview" class="d-none mt-2">
+                <div class="d-flex align-items-center gap-3 p-3 vhl-selected-box">
+                    <div class="vhl-selected-icon">
+                        <i class="bi bi-car-front-fill"></i>
+                    </div>
+                    <div class="flex-grow-1 overflow-hidden">
+                        <div class="fw-700 text-truncate" id="vhl_preview_nom"
+                             style="font-size:.95rem;">—</div>
+                        <div class="text-muted text-truncate" id="vhl_preview_sub"
+                             style="font-size:.8rem;">—</div>
+                    </div>
+                    <button type="button" id="btn_changer_vhl"
+                            class="btn btn-horozia-outline btn-sm flex-shrink-0">
+                        <i class="bi bi-pencil me-1"></i>Changer
+                    </button>
+                </div>
+            </div>
+
+            <div class="mt-3">
+                {{ form_label(form.prixParJour) }}
+                {{ form_widget(form.prixParJour, {'attr': {
+                    'class': 'form-control' ~ (form.prixParJour.vars.errors|length > 0 ? ' is-invalid' : ''),
+                    'id': 'prix_par_jour', 'step': '0.001'
+                }}) }}
+                {{ form_errors(form.prixParJour) }}
+            </div>
+        </div>
+
+        {# ── INFORMATIONS CLIENT ── #}
+        <div class="form-section">
+            <div class="form-section-title">
+                <i class="bi bi-person-fill" style="color:var(--color-primary);"></i> Informations client
+            </div>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    {{ form_label(form.clientNomComplet) }}
+                    {{ form_widget(form.clientNomComplet, {'attr': {
+                        'class': 'form-control' ~ (form.clientNomComplet.vars.errors|length > 0 ? ' is-invalid' : ''),
+                        'placeholder': 'Nom et prénom complet'
+                    }}) }}
+                    {{ form_errors(form.clientNomComplet) }}
+                </div>
+                <div class="col-md-6">
+                    {{ form_label(form.clientTelephone) }}
+                    {{ form_widget(form.clientTelephone, {'attr': {
+                        'class': 'form-control' ~ (form.clientTelephone.vars.errors|length > 0 ? ' is-invalid' : ''),
+                        'placeholder': '+216 XX XXX XXX'
+                    }}) }}
+                    {{ form_errors(form.clientTelephone) }}
+                </div>
+
+                {# CIN + Scanner #}
+                <div class="col-md-6">
+                    {{ form_label(form.clientCin) }}
+                    <div class="input-group">
+                        {{ form_widget(form.clientCin, {'attr': {
+                            'class': 'form-control' ~ (form.clientCin.vars.errors|length > 0 ? ' is-invalid' : ''),
+                            'id': 'cin_input', 'maxlength': '8', 'placeholder': '12345678'
+                        }}) }}
+                        <button type="button" class="btn btn-horozia-outline" id="btn-scan-cin"
+                                title="Scanner la CIN par photo">
+                            <i class="bi bi-camera-fill me-1"></i>Scanner
+                        </button>
+                    </div>
+                    <input type="file" id="cin_file_input" accept="image/*" capture="environment" class="d-none">
+                    <div id="cin-scan-status" style="font-size:.8rem;margin-top:4px;"></div>
+                    {{ form_errors(form.clientCin) }}
+                </div>
+
+                <div class="col-md-6">
+                    {{ form_label(form.clientPermisNumero) }}
+                    {{ form_widget(form.clientPermisNumero, {'attr': {
+                        'class': 'form-control' ~ (form.clientPermisNumero.vars.errors|length > 0 ? ' is-invalid' : ''),
+                        'placeholder': 'Numéro de permis'
+                    }}) }}
+                    {{ form_errors(form.clientPermisNumero) }}
+                </div>
+
+                <div class="col-md-6">
+                    {{ form_label(form.clientVille) }}
+                    {{ form_widget(form.clientVille, {'attr': {
+                        'class': 'form-control' ~ (form.clientVille.vars.errors|length > 0 ? ' is-invalid' : ''),
+                        'id': 'ville_input'
+                    }}) }}
+                    {{ form_errors(form.clientVille) }}
+                </div>
+                <div class="col-md-6">
+                    {{ form_label(form.clientCodePostal) }}
+                    {{ form_widget(form.clientCodePostal, {'attr': {
+                        'class': 'form-control' ~ (form.clientCodePostal.vars.errors|length > 0 ? ' is-invalid' : ''),
+                        'id': 'cp_input'
+                    }}) }}
+                    {{ form_errors(form.clientCodePostal) }}
+                </div>
+
+                {# Adresse + Géolocalisation #}
+                <div class="col-12">
+                    {{ form_label(form.clientAdresse) }}
+                    <div class="input-group">
+                        {{ form_widget(form.clientAdresse, {'attr': {
+                            'class': 'form-control' ~ (form.clientAdresse.vars.errors|length > 0 ? ' is-invalid' : ''),
+                            'id': 'adresse_input',
+                            'placeholder': 'Ex : 12 Rue de la Liberté, Tunis'
+                        }}) }}
+                        <button type="button" class="btn btn-horozia-outline" id="btn-geolocate"
+                                title="Géolocaliser cette adresse">
+                            <i class="bi bi-pin-map-fill me-1"></i>Localiser
+                        </button>
+                    </div>
+                    <div id="geo-status" style="font-size:.8rem;margin-top:4px;"></div>
+                    {{ form_errors(form.clientAdresse) }}
+                </div>
+
+                <input type="hidden" id="lat_hidden"
+                       name="{{ form.clientLatitude.vars.full_name ?? 'location[clientLatitude]' }}"
+                       value="{{ form.clientLatitude.vars.value ?? '' }}">
+                <input type="hidden" id="lon_hidden"
+                       name="{{ form.clientLongitude.vars.full_name ?? 'location[clientLongitude]' }}"
+                       value="{{ form.clientLongitude.vars.value ?? '' }}">
+
+                <div id="geo-distance-badge" class="col-12 d-none">
+                    <span class="badge" style="background:var(--color-primary);font-size:.8rem;padding:6px 10px;">
+                        <i class="bi bi-pin-map me-1"></i>Distance agence : <span id="geo-distance-val"></span>
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        {# ── PÉRIODE ── #}
+        <div class="form-section">
+            <div class="form-section-title">
+                <i class="bi bi-calendar-range" style="color:var(--color-primary);"></i> Période de location
+            </div>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    {{ form_label(form.dateDebut) }}
+                    {{ form_widget(form.dateDebut, {'attr': {
+                        'class': 'form-control' ~ (form.dateDebut.vars.errors|length > 0 ? ' is-invalid' : ''),
+                        'id': 'date_debut'
+                    }}) }}
+                    {{ form_errors(form.dateDebut) }}
+                </div>
+                <div class="col-md-6">
+                    {{ form_label(form.dateFinPrevue) }}
+                    {{ form_widget(form.dateFinPrevue, {'attr': {
+                        'class': 'form-control' ~ (form.dateFinPrevue.vars.errors|length > 0 ? ' is-invalid' : ''),
+                        'id': 'date_fin'
+                    }}) }}
+                    {{ form_errors(form.dateFinPrevue) }}
+                </div>
+                <div class="col-md-6">
+                    {{ form_label(form.dateFinReelle) }}
+                    {{ form_widget(form.dateFinReelle, {'attr': {'class': 'form-control'}}) }}
+                    {{ form_errors(form.dateFinReelle) }}
+                </div>
+                <div class="col-md-6">
+                    {{ form_label(form.kilometrageDebut) }}
+                    {{ form_widget(form.kilometrageDebut, {'attr': {
+                        'class': 'form-control' ~ (form.kilometrageDebut.vars.errors|length > 0 ? ' is-invalid' : '')
+                    }}) }}
+                    {{ form_errors(form.kilometrageDebut) }}
+                </div>
+            </div>
+        </div>
+
+        {# ── EXTRAS ── #}
+        <div class="form-section">
+            <div class="form-section-title">
+                <i class="bi bi-plus-circle" style="color:var(--color-primary);"></i> Options supplémentaires
+            </div>
+            <div class="row g-2">
+                {% set extras_icons = {
+                    'siege_bebe':                'bi-person-fill',
+                    'gps':                       'bi-geo-alt-fill',
+                    'plein_carburant':           'bi-fuel-pump-fill',
+                    'conducteur_supplementaire': 'bi-person-plus-fill',
+                    'wifi':                      'bi-wifi',
+                    'assurance_complementaire':  'bi-shield-check'
+                } %}
+                {% for cle, extra in extras_dispo %}
+                <div class="col-md-4">
+                    <label class="extra-card" id="card_{{ cle }}">
+                        <input type="checkbox" name="extras[]" value="{{ cle }}"
+                               onchange="calculerTotal(); toggleCard(this)">
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="bi {{ extras_icons[cle] ?? 'bi-star' }}"
+                               style="color:var(--color-primary);font-size:20px;flex-shrink:0;"></i>
+                            <div>
+                                <div class="fw-600" style="font-size:.88rem;">{{ extra.label }}</div>
+                                <div style="font-size:.8rem;color:#6c757d;">+{{ extra.prix }} TND</div>
+                            </div>
+                        </div>
+                    </label>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        {# ── FACTURATION ── #}
+        <div class="form-section">
+            <div class="form-section-title">
+                <i class="bi bi-receipt" style="color:var(--color-primary);"></i> Facturation
+            </div>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    {{ form_label(form.avance) }}
+                    {{ form_widget(form.avance, {'attr': {
+                        'class': 'form-control' ~ (form.avance.vars.errors|length > 0 ? ' is-invalid' : '')
+                    }}) }}
+                    {{ form_errors(form.avance) }}
+                </div>
+                <div class="col-md-6">
+                    {{ form_label(form.statut) }}
+                    {{ form_widget(form.statut, {'attr': {
+                        'class': 'form-control' ~ (form.statut.vars.errors|length > 0 ? ' is-invalid' : '')
+                    }}) }}
+                    {{ form_errors(form.statut) }}
+                </div>
+            </div>
+            <div class="mt-3 p-3"
+                 style="background:linear-gradient(135deg,rgba(35,119,156,.08),rgba(35,119,156,.15));
+                        border:2px solid var(--color-primary);border-radius:12px;">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <div style="font-size:.82rem;color:#6c757d;font-weight:600;">Calcul automatique</div>
+                        <div id="resume_calcul" style="font-size:.78rem;color:#6c757d;margin-top:2px;">
+                            Prix/jour × jours + extras
+                        </div>
+                    </div>
+                    <div style="font-size:26px;font-weight:800;color:var(--color-primary);">
+                        <span id="montant_affiche">0,000</span> TND
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {# ── NOTES ── #}
+        <div class="form-section">
+            <div class="form-section-title">
+                <i class="bi bi-chat-text" style="color:var(--color-primary);"></i> Notes
+            </div>
+            {{ form_widget(form.notes, {'attr': {
+                'class': 'form-control' ~ (form.notes.vars.errors|length > 0 ? ' is-invalid' : '')
+            }}) }}
+            {{ form_errors(form.notes) }}
+        </div>
+
+    </div>{# /col-lg-8 #}
+
+    {# ════════════════════════════════════════
+       COLONNE LATÉRALE — 4 colonnes
+    ════════════════════════════════════════ #}
+    <div class="col-lg-4">
+
+        <div class="form-section">
+            <div class="form-section-title">Actions</div>
+            <button type="submit" form="location-form" class="btn btn-horozia-primary w-100 mb-2">
+                <i class="bi bi-check-lg me-2"></i>Créer la location
+            </button>
+            <a href="{{ path('admin_location_index') }}" class="btn btn-horozia-outline w-100">
+                Annuler
+            </a>
+        </div>
+
+        <div class="form-section">
+            <div class="form-section-title">
+                <i class="bi bi-envelope" style="color:var(--color-primary);"></i> Email client
+            </div>
+            <input type="email"
+                   name="email_client"
+                   id="email_client"
+                   form="location-form"
+                   class="form-control"
+                   placeholder="client@email.com">
+            <div class="text-muted mt-1" style="font-size:.78rem;">
+                Un email de confirmation sera envoyé si renseigné.
+            </div>
+        </div>
+
+        <div class="form-section">
+            <div class="form-section-title">
+                <i class="bi bi-list-check" style="color:var(--color-primary);"></i> Récapitulatif
+            </div>
+            <div id="recap_lines" style="font-size:.84rem;">
+                <div class="text-muted" style="font-size:.82rem;">
+                    Sélectionnez un véhicule et des dates pour voir le récapitulatif.
+                </div>
+            </div>
+        </div>
+
+    </div>{# /col-lg-4 #}
+
+</div>
+{{ form_end(form) }}
+
+{# ═══════ STYLES ═══════ #}
+<style>
+/* ── Extras ── */
+.extra-card {
+    display:block; padding:10px 14px;
+    border:2px solid rgba(0,0,0,.08); border-radius:10px;
+    cursor:pointer; transition:all .2s;
+    background:rgba(255,255,255,.03); margin-bottom:0;
+}
+.extra-card:hover    { border-color:var(--color-primary); }
+.extra-card.selected { border-color:var(--color-primary); background:rgba(35,119,156,.1); }
+.extra-card input[type=checkbox] { display:none; }
+
+/* ── Sélecteur véhicule ── */
+.vhl-search-wrapper {
+    position: relative;
+}
+.vhl-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    border: 1.5px solid rgba(35,119,156,.35);
+    border-top: none;
+    border-radius: 0 0 10px 10px;
+    background: #fff;
+    max-height: 300px;
+    overflow-y: auto;
+    display: none;
+    z-index: 1050;
+    box-shadow: 0 8px 24px rgba(0,0,0,.13);
+}
+.vhl-dropdown.open { display: block; }
+
+#vhl_search:focus {
+    border-color: var(--color-primary);
+    box-shadow: none;
+    outline: none;
+}
+.vhl-search-wrapper .input-group:focus-within {
+    box-shadow: 0 0 0 .2rem rgba(35,119,156,.15);
+    border-radius: 6px;
+}
+.vhl-search-wrapper .input-group:focus-within .input-group-text,
+.vhl-search-wrapper .input-group:focus-within #vhl_search,
+.vhl-search-wrapper .input-group:focus-within #btn_open_vhl {
+    border-color: var(--color-primary);
+}
+.vhl-search-wrapper.open .input-group .input-group-text,
+.vhl-search-wrapper.open #vhl_search,
+.vhl-search-wrapper.open #btn_open_vhl {
+    border-bottom-left-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+}
+
+/* Chaque ligne véhicule */
+.vhl-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 14px;
+    cursor: pointer;
+    border-bottom: 1px solid rgba(0,0,0,.05);
+    transition: background .12s;
+    font-size: .88rem;
+    user-select: none;
+}
+.vhl-item:last-child { border-bottom: none; }
+.vhl-item:hover,
+.vhl-item.highlighted { background: rgba(35,119,156,.08); }
+.vhl-item.active-selected { background: rgba(35,119,156,.14); }
+
+.vhl-item-icon {
+    width: 38px; height: 38px;
+    border-radius: 8px;
+    background: rgba(35,119,156,.12);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    color: var(--color-primary);
+    font-size: 18px;
+}
+.vhl-item-body { flex: 1; overflow: hidden; }
+.vhl-item-title {
+    font-weight: 700;
+    line-height: 1.3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.vhl-item-sub {
+    font-size: .76rem;
+    color: #6c757d;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.vhl-item-prix {
+    flex-shrink: 0;
+    font-weight: 700;
+    font-size: .82rem;
+    color: var(--color-primary);
+    white-space: nowrap;
+}
+.vhl-empty {
+    padding: 18px;
+    text-align: center;
+    color: #adb5bd;
+    font-size: .85rem;
+}
+
+/* Aperçu sélectionné */
+.vhl-selected-box {
+    background: rgba(35,119,156,.07);
+    border: 2px solid var(--color-primary);
+    border-radius: 10px;
+}
+.vhl-selected-icon {
+    width: 42px; height: 42px;
+    border-radius: 10px;
+    background: rgba(35,119,156,.15);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    color: var(--color-primary);
+    font-size: 22px;
+}
+
+/* Scrollbar fine */
+.vhl-dropdown::-webkit-scrollbar { width: 5px; }
+.vhl-dropdown::-webkit-scrollbar-track { background: transparent; }
+.vhl-dropdown::-webkit-scrollbar-thumb { background: rgba(35,119,156,.3); border-radius: 4px; }
+</style>
+
+{# ═══════ JAVASCRIPT ═══════ #}
+<script>
+const EXTRAS_PRIX = {
+    siege_bebe:15, gps:10, plein_carburant:50,
+    conducteur_supplementaire:20, wifi:8, assurance_complementaire:25
+};
+
+function toggleCard(cb) {
+    cb.closest('label').classList.toggle('selected', cb.checked);
+}
+
+/* ── Calcul automatique ── */
+function calculerTotal() {
+    const debut = document.getElementById('date_debut')?.value || '';
+    const fin   = document.getElementById('date_fin')?.value   || '';
+    const prix  = parseFloat(document.getElementById('prix_par_jour')?.value || 0);
+
+    let jours = 0;
+    if (debut && fin) {
+        const d1 = new Date(debut), d2 = new Date(fin);
+        jours = Math.max(1, Math.ceil((d2 - d1) / 86400000));
+    }
+    let extras = 0;
+    document.querySelectorAll('input[name="extras[]"]:checked')
+            .forEach(cb => { extras += EXTRAS_PRIX[cb.value] || 0; });
+
+    const total = (prix * jours) + extras;
+    const el = document.getElementById('montant_affiche');
+    const re = document.getElementById('resume_calcul');
+    if (el) el.textContent = total.toFixed(3).replace('.', ',');
+    if (re) re.textContent = prix.toFixed(3) + ' TND × ' + jours + ' jour(s) + ' + extras + ' TND extras = ' + total.toFixed(3) + ' TND';
+
+    const recapEl = document.getElementById('recap_lines');
+    if (recapEl && (jours > 0 || prix > 0)) {
+        recapEl.innerHTML = `
+            <div class="d-flex justify-content-between py-1" style="border-bottom:1px solid #eef2f7;">
+                <span>Prix / jour</span>
+                <span style="color:var(--color-primary);font-weight:700;">${prix.toFixed(3)} TND</span>
+            </div>
+            <div class="d-flex justify-content-between py-1" style="border-bottom:1px solid #eef2f7;">
+                <span>Durée</span><span style="font-weight:700;">${jours} jour(s)</span>
+            </div>
+            <div class="d-flex justify-content-between py-1" style="border-bottom:1px solid #eef2f7;">
+                <span>Extras</span><span style="font-weight:700;">${extras} TND</span>
+            </div>
+            <div class="d-flex justify-content-between py-2 mt-1"
+                 style="font-size:.92rem;font-weight:800;color:var(--color-primary);">
+                <span>Total estimé</span><span>${total.toFixed(3)} TND</span>
+            </div>`;
+    }
+}
+
+['date_debut','date_fin','prix_par_jour'].forEach(id => {
+    document.getElementById(id)?.addEventListener('input',  calculerTotal);
+    document.getElementById(id)?.addEventListener('change', calculerTotal);
+});
+
+/* ════════════════════════════════════════════════
+   SÉLECTEUR VÉHICULE AVEC RECHERCHE + DROPDOWN
+════════════════════════════════════════════════ */
+document.addEventListener('DOMContentLoaded', function () {
+
+    // ── Trouver le <select> natif Symfony (id généré automatiquement) ──
+    const nativeSel  = document.querySelector('select[name$="[vehicule]"]')
+                    || document.querySelector('select[id$="_vehicule"]');
+    const searchEl   = document.getElementById('vhl_search');
+    const listEl     = document.getElementById('vhl_list');
+    const previewEl  = document.getElementById('vhl_preview');
+    const previewNom = document.getElementById('vhl_preview_nom');
+    const previewSub = document.getElementById('vhl_preview_sub');
+    const btnChanger = document.getElementById('btn_changer_vhl');
+    const btnOpen    = document.getElementById('btn_open_vhl');
+    const chevron    = document.getElementById('vhl_chevron');
+    const wrapper    = searchEl?.closest('.vhl-search-wrapper');
+    const prixEl     = document.getElementById('prix_par_jour');
+
+    if (!searchEl || !listEl) return;
+
+    // ── Lire les données JSON injectées par Twig (fiable, sans dépendre du select) ──
+    let vehicules = [];
+    try {
+        const raw = document.getElementById('vhl_data')?.textContent || '[]';
+        vehicules = JSON.parse(raw).map(v => ({
+            value  : String(v.value),
+            label  : (v.marque + ' ' + v.modele + ' — ' + v.immat).trim(),
+            marque : v.marque || '',
+            modele : v.modele || '',
+            immat  : v.immat  || '',
+            etat   : v.etat   || 'disponible',
+            prix   : v.prix   !== undefined ? String(v.prix) : '',
+        }));
+    } catch(e) { console.warn('vhl_data parse error', e); }
+
+    let highlighted = -1;
+    let isOpen = false;
+
+    // ── Ouvrir/fermer ──
+    function openList() {
+        renderList(searchEl.value);
+        listEl.classList.add('open');
+        wrapper?.classList.add('open');
+        searchEl.setAttribute('aria-expanded', 'true');
+        if (chevron) { chevron.className = 'bi bi-chevron-up'; }
+        isOpen = true;
+    }
+
+    function closeList() {
+        listEl.classList.remove('open');
+        wrapper?.classList.remove('open');
+        searchEl.setAttribute('aria-expanded', 'false');
+        if (chevron) { chevron.className = 'bi bi-chevron-down'; }
+        isOpen = false;
+        highlighted = -1;
+    }
+
+    // ── Rendre la liste filtrée ──
+    function renderList(query) {
+        const q = (query || '').toLowerCase().trim();
+        const filtered = q
+            ? vehicules.filter(v =>
+                v.marque.toLowerCase().includes(q) ||
+                v.modele.toLowerCase().includes(q) ||
+                v.immat.toLowerCase().includes(q)  ||
+                v.label.toLowerCase().includes(q))
+            : vehicules;
+
+        highlighted = -1;
+        listEl.innerHTML = '';
+
+        if (!filtered.length) {
+            listEl.innerHTML = '<div class="vhl-empty"><i class="bi bi-search me-2"></i>Aucun véhicule trouvé.</div>';
+            return;
+        }
+
+        filtered.forEach((v, idx) => {
+            const div = document.createElement('div');
+            div.className = 'vhl-item' +
+                (String(nativeSel.value) === String(v.value) ? ' active-selected' : '');
+            div.setAttribute('role', 'option');
+            div.setAttribute('data-idx', idx);
+
+            const etatBadge = v.etat === 'disponible'
+                ? `<span style="font-size:.7rem;background:rgba(25,135,84,.12);color:#198754;padding:1px 6px;border-radius:20px;margin-left:6px;">disponible</span>`
+                : (v.etat ? `<span style="font-size:.7rem;background:rgba(108,117,125,.1);color:#6c757d;padding:1px 6px;border-radius:20px;margin-left:6px;">${v.etat}</span>` : '');
+
+            div.innerHTML = `
+                <div class="vhl-item-icon"><i class="bi bi-car-front-fill"></i></div>
+                <div class="vhl-item-body">
+                    <div class="vhl-item-title">
+                        ${v.marque ? `<span style="color:var(--color-primary);">${v.marque}</span> ` : ''}${v.modele || v.label}
+                        ${etatBadge}
+                    </div>
+                    <div class="vhl-item-sub">
+                        <i class="bi bi-card-text me-1"></i>${v.immat}
+                    </div>
+                </div>
+                ${v.prix ? `<div class="vhl-item-prix">${parseFloat(v.prix).toFixed(3)}<br><span style="font-size:.68rem;font-weight:400;">TND/j</span></div>` : ''}`;
+
+            div.addEventListener('mousedown', e => { e.preventDefault(); selectVehicule(v); });
+            listEl.appendChild(div);
+        });
+    }
+
+    // ── Sélectionner un véhicule ──
+    function selectVehicule(v) {
+        // Synchroniser le <select> natif Symfony
+        if (nativeSel) {
+            nativeSel.value = v.value;
+            // Fallback: chercher l'option par son texte si la valeur ne matche pas
+            if (nativeSel.value !== v.value) {
+                Array.from(nativeSel.options).forEach(opt => {
+                    if (opt.value === v.value || opt.text.includes(v.immat)) {
+                        nativeSel.value = opt.value;
+                    }
+                });
+            }
+        }
+
+        if (v.prix && prixEl && !prixEl.value) {
+            prixEl.value = parseFloat(v.prix).toFixed(3);
+        }
+
+        const titre = (v.marque && v.modele) ? `${v.marque} ${v.modele}` : v.label;
+        previewNom.textContent = titre;
+        previewSub.textContent = v.immat + (v.prix ? '  ·  ' + parseFloat(v.prix).toFixed(3) + ' TND/jour' : '');
+        previewEl.classList.remove('d-none');
+
+        closeList();
+        searchEl.value = '';
+        calculerTotal();
+    }
+
+    // ── Bouton toggle ──
+    btnOpen?.addEventListener('click', function (e) {
+        e.preventDefault();
+        if (isOpen) { closeList(); } else { searchEl.focus(); openList(); }
+    });
+
+    // ── Ouvrir la liste au chargement (tous les véhicules visibles d'emblée) ──
+    openList();
+
+    // ── Événements champ de recherche ──
+    searchEl.addEventListener('focus', function() { if (!isOpen) openList(); });
+    searchEl.addEventListener('input', function () {
+        renderList(this.value);
+        if (!isOpen) openList();
+    });
+    // Ne fermer que si on clique vraiment hors du widget
+    document.addEventListener('click', function(e) {
+        if (!wrapper?.contains(e.target)) closeList();
+    });
+
+    // ── Navigation clavier ──
+    searchEl.addEventListener('keydown', function (e) {
+        const items = listEl.querySelectorAll('.vhl-item');
+        if (!items.length) return;
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (!isOpen) openList();
+            highlighted = Math.min(highlighted + 1, items.length - 1);
+            items.forEach((it, i) => it.classList.toggle('highlighted', i === highlighted));
+            items[highlighted]?.scrollIntoView({ block: 'nearest' });
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            highlighted = Math.max(highlighted - 1, 0);
+            items.forEach((it, i) => it.classList.toggle('highlighted', i === highlighted));
+            items[highlighted]?.scrollIntoView({ block: 'nearest' });
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            if (highlighted >= 0) items[highlighted]?.dispatchEvent(new MouseEvent('mousedown'));
+        } else if (e.key === 'Escape') {
+            closeList();
+        }
+    });
+
+    // Bouton Changer
+    btnChanger?.addEventListener('click', () => {
+        previewEl.classList.add('d-none');
+        nativeSel.value = '';
+        prixEl.value    = '';
+        searchEl.value  = '';
+        searchEl.focus();
+        openList();
+        calculerTotal();
+    });
+
+    // Rechargement avec erreur — restaurer la sélection
+    if (nativeSel?.value) {
+        const found = vehicules.find(v => v.value === String(nativeSel.value));
+        if (found) selectVehicule(found);
+    }
+
+    // Afficher immédiatement tous les véhicules disponibles au chargement
+    renderList('');
+
+    calculerTotal();
+});
+
+/* ════════════════════════════════════════════════
+   SCANNER CIN
+════════════════════════════════════════════════ */
+const btnScanCin   = document.getElementById('btn-scan-cin');
+const cinFileInput = document.getElementById('cin_file_input');
+const cinStatus    = document.getElementById('cin-scan-status');
+const cinInput     = document.getElementById('cin_input')
+                  || document.querySelector('[id$="_clientCin"]');
+
+btnScanCin?.addEventListener('click', () => cinFileInput?.click());
+
+cinFileInput?.addEventListener('change', async function () {
+    const file = this.files[0];
+    if (!file) return;
+    cinStatus.innerHTML = `<span class="text-warning"><i class="bi bi-hourglass-split me-1"></i>Analyse en cours…</span>`;
+    btnScanCin.disabled = true;
+
+    const toBase64 = f => new Promise((res, rej) => {
+        const r = new FileReader();
+        r.onload = () => res(r.result.split(',')[1]);
+        r.onerror = rej;
+        r.readAsDataURL(f);
+    });
+
+    const tryOCR = async (engine) => {
+        const b64 = await toBase64(file);
+        const fd  = new FormData();
+        fd.append('base64Image', 'data:' + file.type + ';base64,' + b64);
+        fd.append('language', 'ara'); fd.append('OCREngine', engine); fd.append('apikey', 'K81891239788957');
+        return (await fetch('https://api.ocr.space/parse/image', { method:'POST', body:fd })).json();
+    };
+
+    try {
+        let data = await tryOCR(2);
+        if (!data?.ParsedResults?.[0]?.ParsedText) data = await tryOCR(1);
+        const match = (data?.ParsedResults?.[0]?.ParsedText || '').replace(/\s/g,'').match(/\d{8}/);
+        if (match) {
+            if (cinInput) cinInput.value = match[0];
+            cinStatus.innerHTML = `<span class="text-success"><i class="bi bi-check-circle me-1"></i>CIN détecté : <strong>${match[0]}</strong></span>`;
+        } else {
+            cinStatus.innerHTML = `<span class="text-danger"><i class="bi bi-exclamation-circle me-1"></i>Aucun numéro à 8 chiffres trouvé.</span>`;
+        }
+    } catch (err) {
+        cinStatus.innerHTML = `<span class="text-danger"><i class="bi bi-x-circle me-1"></i>Erreur OCR : ${err.message}</span>`;
+    } finally { btnScanCin.disabled = false; cinFileInput.value = ''; }
+});
+
+/* ════════════════════════════════════════════════
+   GÉOLOCALISATION
+════════════════════════════════════════════════ */
+const btnGeo    = document.getElementById('btn-geolocate');
+const geoStatus = document.getElementById('geo-status');
+const distBadge = document.getElementById('geo-distance-badge');
+const distVal   = document.getElementById('geo-distance-val');
+const AGENCE_LAT = 36.8190, AGENCE_LON = 10.1658;
+
+function haversine(la1,lo1,la2,lo2) {
+    const R=6371, r=x=>x*Math.PI/180, dLa=r(la2-la1), dLo=r(lo2-lo1);
+    const a=Math.sin(dLa/2)**2+Math.cos(r(la1))*Math.cos(r(la2))*Math.sin(dLo/2)**2;
+    return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+
+btnGeo?.addEventListener('click', async function () {
+    const adresseEl = document.getElementById('adresse_input') || document.querySelector('[id$="_clientAdresse"]');
+    const adresse   = adresseEl?.value?.trim();
+    if (!adresse) { geoStatus.innerHTML=`<span class="text-warning"><i class="bi bi-exclamation-triangle me-1"></i>Saisissez d'abord une adresse.</span>`; return; }
+    geoStatus.innerHTML=`<span class="text-warning"><i class="bi bi-hourglass-split me-1"></i>Localisation en cours…</span>`;
+    btnGeo.disabled=true;
+    try {
+        const res = await (await fetch('https://nominatim.openstreetmap.org/search?q='+encodeURIComponent(adresse)+'&format=json&addressdetails=1&limit=1',{headers:{'Accept-Language':'fr'}})).json();
+        if (!res.length) throw new Error('Adresse introuvable');
+        const lat=parseFloat(res[0].lat), lon=parseFloat(res[0].lon), addr=res[0].address||{};
+        document.getElementById('lat_hidden').value=lat;
+        document.getElementById('lon_hidden').value=lon;
+        const fV=document.getElementById('ville_input'), fC=document.getElementById('cp_input');
+        if(fV&&!fV.value) fV.value=addr.city||addr.town||addr.village||'';
+        if(fC&&!fC.value) fC.value=addr.postcode||'';
+        const dist=haversine(AGENCE_LAT,AGENCE_LON,lat,lon);
+        geoStatus.innerHTML=`<span class="text-success"><i class="bi bi-check-circle me-1"></i>${res[0].display_name}</span>`;
+        if(distVal) distVal.textContent=dist.toFixed(1)+' km';
+        if(distBadge) distBadge.classList.remove('d-none');
+    } catch(err) {
+        geoStatus.innerHTML=`<span class="text-danger"><i class="bi bi-x-circle me-1"></i>${err.message}</span>`;
+    } finally { btnGeo.disabled=false; }
+});
+</script>
+
+{% endblock %}

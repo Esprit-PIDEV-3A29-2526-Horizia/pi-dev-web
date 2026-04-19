@@ -1,0 +1,285 @@
+{% extends 'client/base_client.html.twig' %}
+{% block title %}Horizia - Réserver{% endblock %}
+{% block navbar_extra_class %}nav-static{% endblock %}
+
+{% block body %}
+
+<div class="hero-banner">
+    <div class="inner">
+        <h1><i class="fas fa-calendar-check mr-2"></i>Réserver un véhicule</h1>
+        {% if vehicule is defined %}
+            <p>{{ vehicule.modele.marque.nomMarque }} {{ vehicule.modele.nomModele }}</p>
+        {% endif %}
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ path('client_accueil') }}">Accueil</a></li>
+                <li class="breadcrumb-item"><a href="{{ path('client_catalogue') }}">Catalogue</a></li>
+                <li class="breadcrumb-item active">Réservation</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<section class="section">
+    <div class="container">
+
+        {# ── Erreurs PHP (envoyées par le controller) ── #}
+        {% if errors is defined and errors|length > 0 %}
+        <div class="alert alert-danger mb-4">
+            <strong><i class="fas fa-exclamation-triangle mr-2"></i>Veuillez corriger les erreurs suivantes :</strong>
+            <ul class="mb-0 mt-2">
+                {% for e in errors %}<li>{{ e }}</li>{% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <div class="row">
+
+            {# ── Infos véhicule ── #}
+            {% if vehicule is defined %}
+            <div class="col-md-4 mb-5">
+                <div class="card card-teal h-100">
+                    {% if vehicule.photo %}
+                        <img src="{{ vehicule.photo starts with 'http' ? vehicule.photo : asset('uploads/vehicules/' ~ vehicule.photo) }}"
+                             alt="{{ vehicule.modele.marque.nomMarque }} {{ vehicule.modele.nomModele }}"
+                             style="height:200px; object-fit:cover; width:100%;">
+                    {% else %}
+                        <div class="d-flex align-items-center justify-content-center"
+                             style="height:200px; background:rgba(255,255,255,.15);">
+                            <i class="fas fa-car fa-4x opacity-50 text-white"></i>
+                        </div>
+                    {% endif %}
+                    <div class="card-body p-4">
+                        <h4 class="font-weight-800 mb-3">
+                            {{ vehicule.modele.marque.nomMarque }}
+                            {{ vehicule.modele.nomModele }}
+                        </h4>
+                        <ul class="list-unstyled">
+                            <li class="mb-2"><i class="fas fa-calendar-alt mr-2"></i>Année : {{ vehicule.annee }}</li>
+                            <li class="mb-2"><i class="fas fa-gas-pump mr-2"></i>{{ vehicule.carburant|capitalize }}</li>
+                            <li class="mb-2"><i class="fas fa-palette mr-2"></i>{{ vehicule.couleur ?? '—' }}</li>
+                            <li class="mb-2"><i class="fas fa-tachometer-alt mr-2"></i>{{ vehicule.kilometrage|number_format(0,',',' ') }} km</li>
+                            <li class="mb-2"><i class="fas fa-credit-card mr-2"></i>
+                                <strong>{{ vehicule.prixParJour }} DT</strong> / jour
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            {# ── Formulaire ── #}
+            <div class="col-md-{% if vehicule is defined %}8{% else %}12{% endif %}">
+                <div class="card">
+                    <div class="card-header-teal">
+                        <i class="fas fa-user mr-2"></i>Informations de réservation
+                    </div>
+                    <div class="card-body p-4">
+
+                        <form method="post" action="{{ path('client_reservation', {id: vehicule.idVehicule}) }}" novalidate id="reservation-form">
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label>Nom complet <span class="text-danger">*</span></label>
+                                    <input type="text" name="nom_complet" id="nom_complet"
+                                           class="form-control {% if errors is defined and errors.nom_complet is defined %}is-invalid{% endif %}"
+                                           placeholder="Votre nom"
+                                           value="{{ data.nom_complet ?? '' }}">
+                                    {% if errors is defined and errors.nom_complet is defined %}
+                                        <div class="invalid-feedback">{{ errors.nom_complet }}</div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label>CIN / Passport <span class="text-danger">*</span></label>
+                                    <input type="text" name="cin" id="cin"
+                                           class="form-control {% if errors is defined and errors.cin is defined %}is-invalid{% endif %}"
+                                           placeholder="Numéro CIN (8 chiffres)"
+                                           maxlength="8"
+                                           value="{{ data.cin ?? '' }}">
+                                    {% if errors is defined and errors.cin is defined %}
+                                        <div class="invalid-feedback">{{ errors.cin }}</div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label>Email</label>
+                                    <input type="email" name="email" id="email"
+                                           class="form-control {% if errors is defined and errors.email is defined %}is-invalid{% endif %}"
+                                           placeholder="votre@email.com"
+                                           value="{{ data.email ?? '' }}">
+                                    {% if errors is defined and errors.email is defined %}
+                                        <div class="invalid-feedback">{{ errors.email }}</div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label>Téléphone <span class="text-danger">*</span></label>
+                                    <input type="text" name="telephone" id="telephone"
+                                           class="form-control {% if errors is defined and errors.telephone is defined %}is-invalid{% endif %}"
+                                           placeholder="+216 XX XXX XXX"
+                                           value="{{ data.telephone ?? '' }}">
+                                    {% if errors is defined and errors.telephone is defined %}
+                                        <div class="invalid-feedback">{{ errors.telephone }}</div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label>Adresse</label>
+                                    <input type="text" name="adresse"
+                                           class="form-control"
+                                           placeholder="Votre adresse"
+                                           value="{{ data.adresse ?? '' }}">
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label>Notes</label>
+                                    <input type="text" name="notes"
+                                           class="form-control"
+                                           placeholder="Remarques éventuelles"
+                                           value="{{ data.notes ?? '' }}">
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label>Date de début <span class="text-danger">*</span></label>
+                                    <input type="date" name="date_debut" id="date_debut"
+                                           class="form-control {% if errors is defined and errors.date_debut is defined %}is-invalid{% endif %}"
+                                           value="{{ data.date_debut ?? date_debut ?? '' }}"
+                                           min="{{ 'now'|date('Y-m-d') }}">
+                                    {% if errors is defined and errors.date_debut is defined %}
+                                        <div class="invalid-feedback">{{ errors.date_debut }}</div>
+                                    {% endif %}
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label>Date de fin <span class="text-danger">*</span></label>
+                                    <input type="date" name="date_fin" id="date_fin"
+                                           class="form-control {% if errors is defined and errors.date_fin is defined %}is-invalid{% endif %}"
+                                           value="{{ data.date_fin ?? date_fin ?? '' }}">
+                                    {% if errors is defined and errors.date_fin is defined %}
+                                        <div class="invalid-feedback">{{ errors.date_fin }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            {# ── Extras ── #}
+                            <div class="mb-4">
+                                <h6 class="font-weight-700 mb-3">Options supplémentaires</h6>
+                                <div class="row">
+                                    <div class="col-md-4 mb-2">
+                                        <div class="custom-control custom-checkbox">
+                                            <input type="checkbox" class="custom-control-input" id="gps" name="gps" value="1"
+                                                   {% if data.gps is defined %}checked{% endif %}>
+                                            <label class="custom-control-label" for="gps">GPS (+10 DT)</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 mb-2">
+                                        <div class="custom-control custom-checkbox">
+                                            <input type="checkbox" class="custom-control-input" id="siege_bebe" name="siege_bebe" value="1"
+                                                   {% if data.siege_bebe is defined %}checked{% endif %}>
+                                            <label class="custom-control-label" for="siege_bebe">Siège bébé (+15 DT)</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 mb-2">
+                                        <div class="custom-control custom-checkbox">
+                                            <input type="checkbox" class="custom-control-input" id="assurance" name="assurance" value="1"
+                                                   {% if data.assurance is defined %}checked{% endif %}>
+                                            <label class="custom-control-label" for="assurance">Assurance complémentaire (+25 DT)</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {# ── Récap prix ── #}
+                            {% if vehicule is defined %}
+                            <div class="payment-box" id="recap-box" style="display:none;">
+                                <h6 class="font-weight-700 mb-3">Détails du paiement</h6>
+                                <div class="payment-row">
+                                    <span>Nombre de jours :</span>
+                                    <span id="nb-jours">0 jour(s)</span>
+                                </div>
+                                <div class="payment-row">
+                                    <span>Prix par jour :</span>
+                                    <span>{{ vehicule.prixParJour }} DT</span>
+                                </div>
+                                <div class="payment-row">
+                                    <span>Extras :</span>
+                                    <span id="prix-extras">0 DT</span>
+                                </div>
+                                <div class="payment-row total">
+                                    <span>Total :</span>
+                                    <span id="prix-total">0 DT</span>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            {# ── Conditions ── #}
+                            <div class="custom-control custom-checkbox my-4">
+                                <input type="checkbox" class="custom-control-input {% if errors is defined and errors.conditions is defined %}is-invalid{% endif %}"
+                                       id="conditions" name="conditions" value="1"
+                                       {% if data.conditions is defined %}checked{% endif %}>
+                                <label class="custom-control-label" for="conditions">
+                                    J'accepte les <a href="#" class="text-orange">conditions générales</a> de location <span class="text-danger">*</span>
+                                </label>
+                                {% if errors is defined and errors.conditions is defined %}
+                                    <div class="invalid-feedback d-block">{{ errors.conditions }}</div>
+                                {% endif %}
+                            </div>
+
+                            <button type="submit" class="btn btn-orange btn-block"
+                                    style="border-radius:30px; padding:14px; font-size:1rem; font-weight:600;">
+                                <i class="fas fa-check-circle mr-2"></i>Confirmer la réservation
+                            </button>
+                            <a href="{{ path('client_catalogue') }}"
+                               class="btn btn-outline-secondary btn-block mt-2"
+                               style="border-radius:30px;">
+                                <i class="fas fa-arrow-left mr-2"></i>Retour au catalogue
+                            </a>
+
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+{% if vehicule is defined %}
+<script>
+const PRIX_JOUR = {{ vehicule.prixParJour }};
+const EXTRAS = { gps: 10, siege_bebe: 15, assurance: 25 };
+
+function calcPrix() {
+    const d1 = new Date(document.getElementById('date_debut').value);
+    const d2 = new Date(document.getElementById('date_fin').value);
+    if (!d1 || !d2 || isNaN(d1) || isNaN(d2)) return;
+    const jours = Math.ceil((d2 - d1) / 86400000);
+    if (jours <= 0) return;
+
+    let extras = 0;
+    ['gps','siege_bebe','assurance'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el && el.checked) extras += EXTRAS[id];
+    });
+
+    const total = jours * PRIX_JOUR + extras;
+    document.getElementById('nb-jours').textContent   = jours + ' jour(s)';
+    document.getElementById('prix-extras').textContent = extras.toFixed(3) + ' DT';
+    document.getElementById('prix-total').textContent  = total.toFixed(3) + ' DT';
+    document.getElementById('recap-box').style.display = 'block';
+}
+
+document.getElementById('date_debut').addEventListener('change', calcPrix);
+document.getElementById('date_fin').addEventListener('change',   calcPrix);
+['gps','siege_bebe','assurance'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('change', calcPrix);
+});
+</script>
+{% endif %}
+{% endblock %}
