@@ -6,6 +6,7 @@ use App\Entity\Voyage;
 use App\Form\VoyageType;
 use App\Service\OpenWeatherService;
 use Doctrine\ORM\EntityManagerInterface;
+use Knp\Component\Pager\PaginatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -18,13 +19,11 @@ class VoyageController extends AbstractController
     public function index(
         Request $request,
         EntityManagerInterface $entityManager,
-        OpenWeatherService $openWeatherService
+        OpenWeatherService $openWeatherService,
+        PaginatorInterface $paginator
     ): Response {
         $search = trim((string) $request->query->get('search', ''));
         $sort = trim((string) $request->query->get('sort', ''));
-        $page = max(1, (int) $request->query->get('page', 1));
-        $limit = 6;
-        $offset = ($page - 1) * $limit;
 
         $qb = $entityManager->getRepository(Voyage::class)
             ->createQueryBuilder('v')
@@ -33,7 +32,7 @@ class VoyageController extends AbstractController
 
         if ($search !== '') {
             $qb->andWhere('LOWER(v.titre) LIKE :search OR LOWER(v.destination) LIKE :search')
-                ->setParameter('search', '%' . mb_strtolower($search) . '%');
+               ->setParameter('search', '%' . mb_strtolower($search) . '%');
         }
 
         switch ($sort) {
@@ -66,25 +65,11 @@ class VoyageController extends AbstractController
                 break;
         }
 
-        $countQb = clone $qb;
-        $totalVoyages = (int) $countQb
-            ->select('COUNT(v.id)')
-            ->resetDQLPart('orderBy')
-            ->getQuery()
-            ->getSingleScalarResult();
-
-        $totalPages = max(1, (int) ceil($totalVoyages / $limit));
-
-        if ($page > $totalPages) {
-            $page = $totalPages;
-            $offset = ($page - 1) * $limit;
-        }
-
-        $voyages = $qb
-            ->setFirstResult($offset)
-            ->setMaxResults($limit)
-            ->getQuery()
-            ->getResult();
+        $voyages = $paginator->paginate(
+            $qb->getQuery(),
+            $request->query->getInt('page', 1),
+            6
+        );
 
         $weatherData = [];
 
@@ -103,9 +88,6 @@ class VoyageController extends AbstractController
             'weatherData' => $weatherData,
             'search' => $search,
             'sort' => $sort,
-            'currentPage' => $page,
-            'totalPages' => $totalPages,
-            'totalVoyages' => $totalVoyages,
         ]);
     }
 

@@ -2,14 +2,14 @@
 
 namespace App\Entity;
 
-use App\Repository\FavoriRepository;
+use App\Repository\FavoriVoyageRepository;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * @ORM\Entity(repositoryClass=FavoriRepository::class)
- * @ORM\Table(name="favori")
+ * @ORM\Entity(repositoryClass=FavoriVoyageRepository::class)
+ * @ORM\Table(name="favorivoyage")
  */
-class Favori
+class FavoriVoyage
 {
     /**
      * @ORM\Id

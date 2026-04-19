@@ -88,13 +88,13 @@
                         <div class="d-flex gap-2 mt-3">
                             <a href="{{ path('app_categorie_edit', {'id': categorie.id}) }}"
                                class="btn btn-voyage-edit flex-fill">
-                                <i class="bi bi-pencil-square me-1"></i> 
+                                <i class="bi bi-pencil-square me-1"></i>
                             </a>
 
                             <a href="{{ path('app_categorie_delete', {'id': categorie.id}) }}"
                                class="btn btn-voyage-delete flex-fill btn-delete-categorie"
                                data-categorie-name="{{ categorie.nom }}">
-                                <i class="bi bi-trash me-1"></i> 
+                                <i class="bi bi-trash me-1"></i>
                             </a>
                         </div>
                     </div>
@@ -112,7 +112,89 @@
     <div id="categorieNoResult" class="dashboard-card text-center text-muted py-5 mt-4 d-none">
         Aucune catégorie ne correspond à votre recherche.
     </div>
+
+    {% if categories.paginationData is defined and categories.pageCount > 1 %}
+        <div class="col-12 mt-4">
+            <div class="pagination-wrapper">
+                {{ knp_pagination_render(categories, 'front/pagination.html.twig') }}
+            </div>
+        </div>
+    {% endif %}
 </div>
+
+<style>
+.pagination-wrapper {
+    margin-top: 30px;
+    display: flex;
+    justify-content: center;
+}
+
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding-left: 0;
+    list-style: none;
+    margin: 0;
+}
+
+.page-item {
+    list-style: none;
+}
+
+.page-item .page-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 52px;
+    height: 52px;
+    padding: 0 22px;
+    border-radius: 999px;
+    background: #f1f3f5;
+    color: #7a8a99;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 1rem;
+    border: none;
+    box-shadow: none;
+    transition: all 0.25s ease;
+}
+
+.page-item .page-link:hover {
+    background: #e7ebef;
+    color: #23779C;
+    text-decoration: none;
+}
+
+.page-item.active .page-link {
+    background: #23779C;
+    color: #ffffff;
+    box-shadow: 0 6px 14px rgba(35, 119, 156, 0.25);
+}
+
+.page-item.disabled .page-link {
+    background: #f1f3f5;
+    color: #b8c0c8;
+    pointer-events: none;
+    opacity: 1;
+}
+
+.page-item:first-child .page-link,
+.page-item:last-child .page-link {
+    padding: 0 24px;
+}
+
+@media (max-width: 768px) {
+    .page-item .page-link {
+        min-width: 46px;
+        height: 46px;
+        padding: 0 18px;
+        font-size: 0.95rem;
+    }
+}
+</style>
 {% endblock %}
 
 {% block javascripts %}

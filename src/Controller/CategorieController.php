@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\Categorie;
 use App\Form\CategorieType;
 use Doctrine\ORM\EntityManagerInterface;
+use Knp\Component\Pager\PaginatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -14,31 +15,40 @@ use Symfony\Component\Routing\Annotation\Route;
 class CategorieController extends AbstractController
 {
     #[Route('/', name: 'app_categorie_index', methods: ['GET'])]
-    public function index(Request $request, EntityManagerInterface $entityManager): Response
-    {
-        $search = $request->query->get('search');
-        $sort = $request->query->get('sort');
+    public function index(
+        Request $request,
+        EntityManagerInterface $entityManager,
+        PaginatorInterface $paginator
+    ): Response {
+        $search = $request->query->get('search', '');
+        $sort = $request->query->get('sort', '');
 
         $qb = $entityManager->getRepository(Categorie::class)->createQueryBuilder('c');
 
-        if ($search) {
+        if (!empty($search)) {
             $qb->andWhere('c.nom LIKE :search OR c.description LIKE :search')
-                ->setParameter('search', '%' . $search . '%');
+               ->setParameter('search', '%' . $search . '%');
         }
 
         switch ($sort) {
             case 'nom_asc':
                 $qb->orderBy('c.nom', 'ASC');
                 break;
+
             case 'nom_desc':
                 $qb->orderBy('c.nom', 'DESC');
                 break;
+
             default:
                 $qb->orderBy('c.id', 'DESC');
                 break;
         }
 
-        $categories = $qb->getQuery()->getResult();
+        $categories = $paginator->paginate(
+            $qb->getQuery(),
+            $request->query->getInt('page', 1),
+            6
+        );
 
         return $this->render('admin/categorie/index.html.twig', [
             'categories' => $categories,

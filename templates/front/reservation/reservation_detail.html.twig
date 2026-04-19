@@ -104,7 +104,7 @@
                             </div>
 
                             <div class="detail-image-content">
-                                <div class="image-mini-label">Réservation </div>
+                                <div class="image-mini-label">Réservation</div>
                                 <div class="image-main-date">
                                     {{ reservation.dateReservation ? reservation.dateReservation|date('Y-m-d') : '' }}
                                 </div>
@@ -211,8 +211,8 @@
 
                                 {% if statut != 'ANNULEE' and statut != 'CONFIRMEE' and paymentStatus != 'PAYEE' %}
                                     <form method="post"
-                                        action="{{ path('app_front_annuler_reservation', {'id': reservation.id}) }}"
-                                        class="cancel-reservation-form d-inline-block">
+                                          action="{{ path('app_front_annuler_reservation', {'id': reservation.id}) }}"
+                                          class="cancel-reservation-form d-inline-block">
                                         <input type="hidden" name="_token" value="{{ csrf_token('annuler_reservation_' ~ reservation.id) }}">
                                         <button type="submit" class="btn btn-palette-cancel">
                                             Annuler
@@ -433,7 +433,8 @@
     color: #5f5a4f;
 }
 
-.detail-actions {
+.detail-actions,
+.qr-actions {
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
@@ -443,7 +444,8 @@
 .btn-palette-detail,
 .btn-palette-confirm,
 .btn-palette-cancel,
-.btn-download-qr {
+.btn-download-qr,
+.btn-view-qr {
     border: none;
     border-radius: 12px;
     padding: 10px 16px;
@@ -532,11 +534,21 @@
 .btn-download-qr {
     background: var(--hz-blue-dark);
     color: #fff !important;
-    transition: 0.25s ease;
 }
 
 .btn-download-qr:hover {
     background: #1d6483;
+    color: #fff !important;
+    transform: translateY(-2px);
+}
+
+.btn-view-qr {
+    background: var(--hz-green);
+    color: #fff !important;
+}
+
+.btn-view-qr:hover {
+    background: #709b7b;
     color: #fff !important;
     transform: translateY(-2px);
 }

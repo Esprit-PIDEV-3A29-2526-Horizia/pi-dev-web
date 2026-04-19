@@ -23,7 +23,7 @@
                     </span>
                     <span>Réserver <i class="fa fa-chevron-right"></i></span>
                 </p>
-                <h1 class="mb-0 bread">Réserver {{ voyage.titre }}</h1>
+                <h1 class="mb-0 bread">Réserver votre {{ voyage.titre }}</h1>
             </div>
         </div>
     </div>
@@ -258,10 +258,6 @@
                         </div>
 
                         <hr>
-
-                        <div class="summary-description">
-                            {{ voyage.description|length > 260 ? voyage.description|slice(0, 260) ~ '...' : voyage.description }}
-                        </div>
                     </div>
                 </div>
             </div>

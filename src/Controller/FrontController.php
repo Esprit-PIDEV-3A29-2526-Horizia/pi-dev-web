@@ -469,6 +469,4 @@ class FrontController extends AbstractController
             'reservation' => $reservation,
         ]);
     }
-
-
 }

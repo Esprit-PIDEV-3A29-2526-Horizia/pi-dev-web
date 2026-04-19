@@ -145,6 +145,14 @@
                     </div>
                 </div>
             {% endfor %}
+
+            {% if reservations.paginationData is defined and reservations.pageCount > 1 %}
+                <div class="col-12 mt-4">
+                    <div class="pagination-wrapper">
+                        {{ knp_pagination_render(reservations, 'front/pagination.html.twig') }}
+                    </div>
+                </div>
+            {% endif %}
         </div>
     {% else %}
         <div class="card empty-card">
@@ -371,9 +379,81 @@
     align-items: center;
 }
 
+.pagination-wrapper {
+    margin-top: 30px;
+    display: flex;
+    justify-content: center;
+}
+
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding-left: 0;
+    list-style: none;
+    margin: 0;
+}
+
+.page-item {
+    list-style: none;
+}
+
+.page-item .page-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 52px;
+    height: 52px;
+    padding: 0 22px;
+    border-radius: 999px;
+    background: #f1f3f5;
+    color: #7a8a99;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 1rem;
+    border: none;
+    box-shadow: none;
+    transition: all 0.25s ease;
+}
+
+.page-item .page-link:hover {
+    background: #e7ebef;
+    color: #23779C;
+    text-decoration: none;
+}
+
+.page-item.active .page-link {
+    background: #23779C;
+    color: #ffffff;
+    box-shadow: 0 6px 14px rgba(35, 119, 156, 0.25);
+}
+
+.page-item.disabled .page-link {
+    background: #f1f3f5;
+    color: #b8c0c8;
+    pointer-events: none;
+    opacity: 1;
+}
+
+.page-item:first-child .page-link,
+.page-item:last-child .page-link {
+    padding: 0 24px;
+}
+
 @media (max-width: 991px) {
     .btn-palette-reset {
         width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    .page-item .page-link {
+        min-width: 46px;
+        height: 46px;
+        padding: 0 18px;
+        font-size: 0.95rem;
     }
 }
 </style>
@@ -404,6 +484,7 @@
                     params.delete('sort');
                 }
 
+                params.delete('page');
                 window.location.search = params.toString();
             }
 
@@ -434,11 +515,9 @@
                 form.addEventListener('submit', function (e) {
                     e.preventDefault();
 
-                    const reservationId = this.dataset.reservationId || '';
-
                     Swal.fire({
                         title: 'Confirmer cette réservation ?',
-                        html: `Vous êtes sur le point de confirmer la réservation <strong>#${reservationId}</strong>.`,
+                        html: `Vous êtes sur le point de confirmer la réservation.`,
                         icon: 'question',
                         showCancelButton: true,
                         confirmButtonColor: '#81AE8D',

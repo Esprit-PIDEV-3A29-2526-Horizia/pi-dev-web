@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\Reservation;
 use App\Form\ReservationType;
 use Doctrine\ORM\EntityManagerInterface;
+use Knp\Component\Pager\PaginatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -15,8 +16,11 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 class ReservationController extends AbstractController
 {
     #[Route('/', name: 'app_reservation_index', methods: ['GET'])]
-    public function index(Request $request, EntityManagerInterface $entityManager): Response
-    {
+    public function index(
+        Request $request,
+        EntityManagerInterface $entityManager,
+        PaginatorInterface $paginator
+    ): Response {
         $search = trim((string) $request->query->get('search', ''));
         $sort = (string) $request->query->get('sort', '');
 
@@ -56,8 +60,14 @@ class ReservationController extends AbstractController
                 break;
         }
 
+        $reservations = $paginator->paginate(
+            $qb->getQuery(),
+            $request->query->getInt('page', 1),
+            6
+        );
+
         return $this->render('admin/reservation/index.html.twig', [
-            'reservations' => $qb->getQuery()->getResult(),
+            'reservations' => $reservations,
             'search' => $search,
             'sort' => $sort,
         ]);
@@ -148,7 +158,7 @@ class ReservationController extends AbstractController
         EntityManagerInterface $entityManager,
         \App\Service\BrevoMailerService $brevoMailerService,
         UrlGeneratorInterface $urlGenerator
-        ): Response {
+    ): Response {
         $reservation = $entityManager->getRepository(Reservation::class)->find($id);
 
         if (!$reservation) {
@@ -252,69 +262,65 @@ class ReservationController extends AbstractController
     }
 
     #[Route('/{id}/annuler', name: 'app_reservation_annuler', methods: ['POST'])]
-public function annuler(
-    int $id,
-    EntityManagerInterface $entityManager,
-    \App\Service\BrevoMailerService $brevoMailerService
-): Response {
-    $reservation = $entityManager->getRepository(Reservation::class)->find($id);
+    public function annuler(
+        int $id,
+        EntityManagerInterface $entityManager,
+        \App\Service\BrevoMailerService $brevoMailerService
+    ): Response {
+        $reservation = $entityManager->getRepository(Reservation::class)->find($id);
 
-    if (!$reservation) {
-        throw $this->createNotFoundException('Réservation introuvable.');
-    }
+        if (!$reservation) {
+            throw $this->createNotFoundException('Réservation introuvable.');
+        }
 
-    if ($reservation->getStatut() === 'ANNULEE') {
-        $this->addFlash('info', 'Cette réservation est déjà annulée.');
-        return $this->redirectToRoute('app_reservation_index');
-    }
-
-    $voyage = $reservation->getVoyage();
-
-    if ($reservation->getStatut() === 'CONFIRMEE' && $voyage) {
-        $voyage->setPlacesRestantes(
-            $voyage->getPlacesRestantes() + $reservation->getNbrPersonnes()
-        );
-    }
-
-    $reservation->setStatut('ANNULEE');
-    $entityManager->flush();
-
-    $user = $reservation->getUser();
-
-    if ($user && method_exists($user, 'getEmail') && $user->getEmail()) {
-        try {
-            $fullName = '';
-
-            if (method_exists($user, 'getPrenom') && method_exists($user, 'getNom')) {
-                $fullName = trim(($user->getPrenom() ?? '') . ' ' . ($user->getNom() ?? ''));
-            } elseif (method_exists($user, 'getNom')) {
-                $fullName = (string) ($user->getNom() ?? '');
-            }
-
-            if ($voyage) {
-                $brevoMailerService->sendReservationCancellation(
-                    $user->getEmail(),
-                    $fullName !== '' ? $fullName : 'Client',
-                    (string) $voyage->getTitre(),
-                    (string) $voyage->getDestination(),
-                    $voyage->getDateDepart()?->format('d/m/Y') ?? '',
-                    $voyage->getDateRetour()?->format('d/m/Y') ?? '',
-                    (int) $reservation->getNbrPersonnes(),
-                    $reservation->getId()
-                );
-            }
-        } catch (\Throwable $e) {
-            $this->addFlash('warning', 'Réservation annulée, mais email non envoyé : '.$e->getMessage());
+        if ($reservation->getStatut() === 'ANNULEE') {
+            $this->addFlash('info', 'Cette réservation est déjà annulée.');
             return $this->redirectToRoute('app_reservation_index');
         }
+
+        $voyage = $reservation->getVoyage();
+
+        if ($reservation->getStatut() === 'CONFIRMEE' && $voyage) {
+            $voyage->setPlacesRestantes(
+                $voyage->getPlacesRestantes() + $reservation->getNbrPersonnes()
+            );
+        }
+
+        $reservation->setStatut('ANNULEE');
+        $entityManager->flush();
+
+        $user = $reservation->getUser();
+
+        if ($user && method_exists($user, 'getEmail') && $user->getEmail()) {
+            try {
+                $fullName = '';
+
+                if (method_exists($user, 'getPrenom') && method_exists($user, 'getNom')) {
+                    $fullName = trim(($user->getPrenom() ?? '') . ' ' . ($user->getNom() ?? ''));
+                } elseif (method_exists($user, 'getNom')) {
+                    $fullName = (string) ($user->getNom() ?? '');
+                }
+
+                if ($voyage) {
+                    $brevoMailerService->sendReservationCancellation(
+                        $user->getEmail(),
+                        $fullName !== '' ? $fullName : 'Client',
+                        (string) $voyage->getTitre(),
+                        (string) $voyage->getDestination(),
+                        $voyage->getDateDepart()?->format('d/m/Y') ?? '',
+                        $voyage->getDateRetour()?->format('d/m/Y') ?? '',
+                        (int) $reservation->getNbrPersonnes(),
+                        $reservation->getId()
+                    );
+                }
+            } catch (\Throwable $e) {
+                $this->addFlash('warning', 'Réservation annulée, mais email non envoyé : ' . $e->getMessage());
+                return $this->redirectToRoute('app_reservation_index');
+            }
+        }
+
+        $this->addFlash('success', 'Réservation annulée avec succès.');
+
+        return $this->redirectToRoute('app_reservation_index');
     }
-
-    $this->addFlash('success', 'Réservation annulée avec succès.');
-
-    return $this->redirectToRoute('app_reservation_index');
-}
-
-
-
-
 }

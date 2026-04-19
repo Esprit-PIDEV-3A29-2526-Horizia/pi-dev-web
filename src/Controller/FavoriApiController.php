@@ -2,9 +2,9 @@
 
 namespace App\Controller;
 
-use App\Entity\Favori;
+use App\Entity\FavoriVoyage;
 use App\Entity\Voyage;
-use App\Repository\FavoriRepository;
+use App\Repository\FavoriVoyageRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Knp\Component\Pager\PaginatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -24,7 +24,7 @@ class FavoriApiController extends AbstractController
     #[Route('/mes-favoris', name: 'app_front_mes_favoris', methods: ['GET'])]
     public function mesFavoris(
         Request $request,
-        FavoriRepository $favoriRepository,
+        FavoriVoyageRepository $favoriRepository,
         PaginatorInterface $paginator
     ): Response {
         $visitorToken = $this->getOrCreateVisitorToken($request);
@@ -59,7 +59,7 @@ class FavoriApiController extends AbstractController
     public function check(
         int $id,
         Request $request,
-        FavoriRepository $favoriRepository,
+        FavoriVoyageRepository $favoriRepository,
         EntityManagerInterface $entityManager
     ): JsonResponse {
         try {
@@ -99,7 +99,7 @@ class FavoriApiController extends AbstractController
     public function toggle(
         int $id,
         Request $request,
-        FavoriRepository $favoriRepository,
+        FavoriVoyageRepository $favoriRepository,
         EntityManagerInterface $entityManager
     ): JsonResponse {
         try {
@@ -125,7 +125,7 @@ class FavoriApiController extends AbstractController
                     'message' => 'Voyage retiré des favoris.',
                 ]);
             } else {
-                $favori = new Favori();
+                $favori = new FavoriVoyage();
                 $favori->setVisitorToken($visitorToken);
                 $favori->setVoyage($voyage);
 

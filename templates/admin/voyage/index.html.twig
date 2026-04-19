@@ -158,6 +158,14 @@
                         </div>
                     </div>
                 {% endfor %}
+
+                {% if voyages.paginationData is defined and voyages.pageCount > 1 %}
+                    <div class="col-12 mt-4">
+                        <div class="pagination-wrapper">
+                            {{ knp_pagination_render(voyages, 'front/pagination.html.twig') }}
+                        </div>
+                    </div>
+                {% endif %}
             {% else %}
                 <div class="col-12">
                     <div class="alert alert-light border text-center py-4 rounded-4">
@@ -166,54 +174,6 @@
                 </div>
             {% endif %}
         </div>
-
-        {% if totalPages is defined and totalPages > 1 %}
-            <div class="row mt-4">
-                <div class="col-12">
-                    <nav aria-label="Pagination admin voyages">
-                        <ul class="custom-pagination">
-                            <li class="{{ currentPage == 1 ? 'disabled' : '' }}">
-                                <a href="{{ currentPage == 1
-                                    ? '#'
-                                    : path('app_voyage_index', {
-                                        page: currentPage - 1,
-                                        search: search,
-                                        sort: sort
-                                    })
-                                }}">
-                                    &lsaquo;
-                                </a>
-                            </li>
-
-                            {% for p in 1..totalPages %}
-                                <li class="{{ p == currentPage ? 'active' : '' }}">
-                                    <a href="{{ path('app_voyage_index', {
-                                        page: p,
-                                        search: search,
-                                        sort: sort
-                                    }) }}">
-                                        {{ p }}
-                                    </a>
-                                </li>
-                            {% endfor %}
-
-                            <li class="{{ currentPage == totalPages ? 'disabled' : '' }}">
-                                <a href="{{ currentPage == totalPages
-                                    ? '#'
-                                    : path('app_voyage_index', {
-                                        page: currentPage + 1,
-                                        search: search,
-                                        sort: sort
-                                    })
-                                }}">
-                                    &rsaquo;
-                                </a>
-                            </li>
-                        </ul>
-                    </nav>
-                </div>
-            </div>
-        {% endif %}
     </div>
 
     <div id="voyages-calendar-view" style="display: none;">
@@ -455,50 +415,67 @@
     color: #ffffff;
 }
 
-.custom-pagination {
+.pagination-wrapper {
+    margin-top: 30px;
+    display: flex;
+    justify-content: center;
+}
+
+.pagination {
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 14px;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding-left: 0;
     list-style: none;
-    padding: 0;
     margin: 0;
 }
 
-.custom-pagination li a {
-    width: 52px;
-    height: 52px;
-    border-radius: 50%;
-    border: 1px solid #e5e5e5;
-    background: #fff;
-    color: #111;
-    display: flex;
+.page-item {
+    list-style: none;
+}
+
+.page-item .page-link {
+    display: inline-flex;
     align-items: center;
     justify-content: center;
+    min-width: 52px;
+    height: 52px;
+    padding: 0 22px;
+    border-radius: 999px;
+    background: #f1f3f5;
+    color: #7a8a99;
     text-decoration: none;
-    font-size: 22px;
-    font-weight: 500;
+    font-weight: 700;
+    font-size: 1rem;
+    border: none;
+    box-shadow: none;
     transition: all 0.25s ease;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
 
-.custom-pagination li a:hover {
-    background: #f8f8f8;
-    transform: translateY(-2px);
-    color: #111;
+.page-item .page-link:hover {
+    background: #e7ebef;
+    color: #23779C;
+    text-decoration: none;
 }
 
-.custom-pagination li.active a {
-    background: #2f2e3d;
-    color: #fff;
-    border-color: #2f2e3d;
-    box-shadow: 0 6px 16px rgba(47, 46, 61, 0.25);
+.page-item.active .page-link {
+    background: #23779C;
+    color: #ffffff;
+    box-shadow: 0 6px 14px rgba(35, 119, 156, 0.25);
 }
 
-.custom-pagination li.disabled a {
+.page-item.disabled .page-link {
+    background: #f1f3f5;
+    color: #b8c0c8;
     pointer-events: none;
-    opacity: 0.45;
-    background: #fafafa;
+    opacity: 1;
+}
+
+.page-item:first-child .page-link,
+.page-item:last-child .page-link {
+    padding: 0 24px;
 }
 
 #voyages-calendar .fc-toolbar-title {
@@ -534,6 +511,13 @@
 
     .floating-weather-pill {
         padding: 6px 12px;
+    }
+
+    .page-item .page-link {
+        min-width: 46px;
+        height: 46px;
+        padding: 0 18px;
+        font-size: 0.95rem;
     }
 }
 </style>
