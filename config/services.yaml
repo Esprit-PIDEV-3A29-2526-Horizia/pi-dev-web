@@ -1,4 +1,3 @@
-# This file is the entry point to configure your own services.
 parameters:
 
 services:
@@ -13,5 +12,13 @@ services:
             - '../src/Entity/'
             - '../src/Kernel.php'
 
-    App\Twig\StatsExtension:
-        tags: ['twig.extension']
+    # add more service definitions when explicit configuration is needed
+    # please note that last definitions always *replace* previous ones
+    App\Service\WeatherService:
+        arguments:
+            $apiKey: '%env(OPENWEATHER_API_KEY)%'
+
+    App\Service\WhatsAppService:
+        arguments:
+            $accountSid: '%env(TWILIO_ACCOUNT_SID)%'
+            $authToken:  '%env(TWILIO_AUTH_TOKEN)%'

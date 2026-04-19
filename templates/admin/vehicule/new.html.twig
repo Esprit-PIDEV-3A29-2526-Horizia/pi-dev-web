@@ -1,36 +1,102 @@
 {% extends 'admin/layout.html.twig' %}
-{% block title %}Nouveau vehicule â€“ Horizia{% endblock %}
-{% block topbar_title %}Nouveau vehicule{% endblock %}
+{% block title %}Nouveau véhicule — Horizia{% endblock %}
+{% block topbar_title %}Nouveau véhicule{% endblock %}
 {% block admin_content %}
+
 <div class="page-header">
     <div class="page-header-left">
         <div class="page-header-icon"><i class="bi bi-plus-circle-fill"></i></div>
-        <div><h2>Nouveau vehicule</h2></div>
+        <div><h2>Nouveau véhicule</h2></div>
     </div>
-    <a href="{{ path('admin_vehicule_index') }}" class="btn btn-horozia-outline btn-sm"><i class="bi bi-arrow-left me-1"></i>Retour</a>
+    <a href="{{ path('admin_vehicule_index') }}" class="btn btn-horozia-outline btn-sm">
+        <i class="bi bi-arrow-left me-1"></i>Retour
+    </a>
 </div>
-{{ form_start(form) }}
+
+{# ── ERREURS GLOBALES PHP ── #}
+{% if not form.vars.valid and form.vars.submitted %}
+<div class="alert alert-danger d-flex align-items-center gap-2 mb-3">
+    <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+    <div><strong>Veuillez corriger les erreurs ci-dessous.</strong>{{ form_errors(form) }}</div>
+</div>
+{% endif %}
+
+{{ form_start(form, {'attr': {'novalidate': 'novalidate'}}) }}
 <div class="row g-3">
     <div class="col-lg-8">
         <div class="form-section">
-            <div class="form-section-title"><i class="bi bi-truck-front-fill" style="color:var(--color-primary);"></i>Informations vehicule</div>
+            <div class="form-section-title">
+                <i class="bi bi-truck-front-fill" style="color:var(--color-primary);"></i>Informations véhicule
+            </div>
             <div class="row g-3">
-                <div class="col-md-6"><label class="form-label">Immatriculation</label>{{ form_widget(form.immatriculation) }}{{ form_errors(form.immatriculation) }}</div>
-                <div class="col-md-6"><label class="form-label">Modele</label>{{ form_widget(form.modele) }}{{ form_errors(form.modele) }}</div>
-                <div class="col-md-4"><label class="form-label">Annee</label>{{ form_widget(form.annee) }}{{ form_errors(form.annee) }}</div>
-                <div class="col-md-4"><label class="form-label">Carburant</label>{{ form_widget(form.carburant) }}{{ form_errors(form.carburant) }}</div>
-                <div class="col-md-4"><label class="form-label">Couleur</label>{{ form_widget(form.couleur) }}{{ form_errors(form.couleur) }}</div>
-                <div class="col-md-6"><label class="form-label">Kilometrage</label>{{ form_widget(form.kilometrage) }}{{ form_errors(form.kilometrage) }}</div>
-                <div class="col-md-6"><label class="form-label">Etat</label>{{ form_widget(form.etat) }}{{ form_errors(form.etat) }}</div>
-                <div class="col-md-6"><label class="form-label">Prix par jour (TND)</label>{{ form_widget(form.prixParJour) }}{{ form_errors(form.prixParJour) }}</div>
-                <div class="col-md-6"><label class="form-label">Photo (URL)</label>{{ form_widget(form.photo) }}{{ form_errors(form.photo) }}</div>
+
+                <div class="col-md-6">
+                    <label class="form-label fw-600">Immatriculation <span class="text-danger">*</span></label>
+                    {{ form_widget(form.immatriculation, {'attr': {'class': 'form-control' ~ (form.immatriculation.vars.errors|length > 0 ? ' is-invalid' : ''), 'placeholder': 'Ex: 123TU4567'}}) }}
+                    {{ form_errors(form.immatriculation) }}
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label fw-600">Modèle <span class="text-danger">*</span></label>
+                    {{ form_widget(form.modele, {'attr': {'class': 'form-control' ~ (form.modele.vars.errors|length > 0 ? ' is-invalid' : '')}}) }}
+                    {{ form_errors(form.modele) }}
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label fw-600">Année <span class="text-danger">*</span></label>
+                    {{ form_widget(form.annee, {'attr': {'class': 'form-control' ~ (form.annee.vars.errors|length > 0 ? ' is-invalid' : ''), 'placeholder': '2020'}}) }}
+                    {{ form_errors(form.annee) }}
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label fw-600">Carburant <span class="text-danger">*</span></label>
+                    {{ form_widget(form.carburant, {'attr': {'class': 'form-control' ~ (form.carburant.vars.errors|length > 0 ? ' is-invalid' : '')}}) }}
+                    {{ form_errors(form.carburant) }}
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label fw-600">Couleur</label>
+                    {{ form_widget(form.couleur, {'attr': {'class': 'form-control' ~ (form.couleur.vars.errors|length > 0 ? ' is-invalid' : ''), 'placeholder': 'Ex: Rouge'}}) }}
+                    {{ form_errors(form.couleur) }}
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label fw-600">Kilométrage <span class="text-danger">*</span></label>
+                    {{ form_widget(form.kilometrage, {'attr': {'class': 'form-control' ~ (form.kilometrage.vars.errors|length > 0 ? ' is-invalid' : ''), 'placeholder': '0'}}) }}
+                    {{ form_errors(form.kilometrage) }}
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label fw-600">État <span class="text-danger">*</span></label>
+                    {{ form_widget(form.etat, {'attr': {'class': 'form-control' ~ (form.etat.vars.errors|length > 0 ? ' is-invalid' : '')}}) }}
+                    {{ form_errors(form.etat) }}
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label fw-600">Prix par jour (TND) <span class="text-danger">*</span></label>
+                    {{ form_widget(form.prixParJour, {'attr': {'class': 'form-control' ~ (form.prixParJour.vars.errors|length > 0 ? ' is-invalid' : ''), 'placeholder': '0.000', 'step': '0.001'}}) }}
+                    {{ form_errors(form.prixParJour) }}
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label fw-600">Photo (URL)</label>
+                    {{ form_widget(form.photo, {'attr': {'class': 'form-control' ~ (form.photo.vars.errors|length > 0 ? ' is-invalid' : ''), 'placeholder': 'https://...'}}) }}
+                    {{ form_errors(form.photo) }}
+                </div>
+
             </div>
         </div>
     </div>
+
     <div class="col-lg-4">
         <div class="form-section">
-            <button type="submit" class="btn btn-horozia-primary w-100 mb-2"><i class="bi bi-check-lg me-2"></i>Enregistrer</button>
+            <button type="submit" class="btn btn-horozia-primary w-100 mb-2">
+                <i class="bi bi-check-lg me-2"></i>Enregistrer
+            </button>
             <a href="{{ path('admin_vehicule_index') }}" class="btn btn-horozia-outline w-100">Annuler</a>
+        </div>
+        <div class="form-section mt-3" style="font-size:.82rem;color:#6c757d;">
+            <i class="bi bi-info-circle me-1"></i>Les champs marqués <span class="text-danger fw-700">*</span> sont obligatoires.
         </div>
     </div>
 </div>

@@ -1,240 +1,27 @@
-{% set route = app.request.attributes.get('_route') %}
 <nav class="admin-topbar">
     <div class="d-flex align-items-center gap-3">
-
-        {# Toggle sidebar #}
         <button type="button" id="sidebarToggle" class="sidebar-toggle-btn">
             <i class="bi bi-list"></i>
         </button>
-
-        <span style="font-weight:700;color:#1f2d3d;font-size:1.05rem;">
-            {% block topbar_title %}Admin{% endblock %}
-        </span>
+        <span style="font-weight:700;color:#1f2d3d;font-size:1.05rem;">{% block topbar_title %}Admin{% endblock %}</span>
     </div>
-
-    {# ══════════════════════════════════════════════
-       BOUTONS DE NAVIGATION RAPIDE (centre)
-    ══════════════════════════════════════════════ #}
-    <div class="d-none d-lg-flex align-items-center gap-1">
-
-        <a href="{{ path('admin_location_index') }}"
-           class="topbar-nav-btn {{ route starts with 'admin_location' ? 'active' : '' }}">
-            <i class="bi bi-file-earmark-text me-1"></i>Locations
-        </a>
-
-        <a href="{{ path('admin_vehicule_index') }}"
-           class="topbar-nav-btn {{ route starts with 'admin_vehicule' ? 'active' : '' }}">
-            <i class="bi bi-truck-front me-1"></i>Véhicules
-        </a>
-
-        <a href="{{ path('admin_marque_index') }}"
-           class="topbar-nav-btn {{ route starts with 'admin_marque' ? 'active' : '' }}">
-            <i class="bi bi-bookmark me-1"></i>Marques
-        </a>
-
-        <a href="{{ path('admin_modele_index') }}"
-           class="topbar-nav-btn {{ route starts with 'admin_modele' ? 'active' : '' }}">
-            <i class="bi bi-card-list me-1"></i>Modèles
-        </a>
-
-        <a href="{{ path('admin_documents_index') }}"
-           class="topbar-nav-btn {{ route starts with 'admin_documents' ? 'active' : '' }}">
-            <i class="bi bi-receipt me-1"></i>Facturation
-        </a>
-
-        <a href="{{ path('admin_planning_index') }}"
-           class="topbar-nav-btn {{ route starts with 'admin_planning' ? 'active' : '' }}">
-            <i class="bi bi-calendar3 me-1"></i>Planning
-        </a>
-
-    </div>
-
-    <div class="d-flex align-items-center gap-2">
-
-        {# ══════════════════════════════════════════════
-           BOUTON STATISTIQUES LOCATIONS (dropdown)
-        ══════════════════════════════════════════════ #}
-        <div class="dropdown">
-            <button class="topbar-stats-btn" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside">
-                <i class="bi bi-bar-chart-fill me-1"></i>
-                <span class="d-none d-md-inline">Statistiques</span>
-                <i class="bi bi-chevron-down ms-1" style="font-size:.7rem;"></i>
-            </button>
-
-            <div class="dropdown-menu dropdown-menu-end stats-dropdown shadow border-0 p-3"
-                 style="min-width:340px;">
-
-                <div class="stats-dropdown-title mb-3">
-                    <i class="bi bi-calendar-check-fill me-2" style="color:var(--color-secondary);"></i>
-                    Statistiques — {{ moisNom ?? 'Ce mois' }}
-                </div>
-
-                <div class="row g-2 mb-3">
-                    <div class="col-6">
-                        <div class="mini-stat-card">
-                            <div class="mini-stat-icon soft-blue">
-                                <i class="bi bi-truck-front-fill"></i>
-                            </div>
-                            <div>
-                                <div class="mini-stat-label">Véhicules dispo</div>
-                                <div class="mini-stat-value">{{ stats_vehiculesDisponibles ?? vehiculesDisponibles ?? '—' }}</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-6">
-                        <div class="mini-stat-card">
-                            <div class="mini-stat-icon soft-yellow">
-                                <i class="bi bi-key-fill"></i>
-                            </div>
-                            <div>
-                                <div class="mini-stat-label">Véhicules loués</div>
-                                <div class="mini-stat-value">{{ stats_vehiculesLoues ?? vehiculesLoues ?? '—' }}</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-6">
-                        <div class="mini-stat-card">
-                            <div class="mini-stat-icon soft-green">
-                                <i class="bi bi-calendar-check-fill"></i>
-                            </div>
-                            <div>
-                                <div class="mini-stat-label">Locations actives</div>
-                                <div class="mini-stat-value">{{ stats_locationsActives ?? locationsActives ?? '—' }}</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-6">
-                        <div class="mini-stat-card">
-                            <div class="mini-stat-icon soft-neutral">
-                                <i class="bi bi-cash-coin"></i>
-                            </div>
-                            <div>
-                                <div class="mini-stat-label">CA du mois</div>
-                                <div class="mini-stat-value" style="font-size:.95rem;">
-                                    {{ (stats_caMois ?? caMois ?? 0)|number_format(0,',',' ') }} DT
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {% set taux = stats_tauxOccupation ?? tauxOccupation ?? 0 %}
-                <div class="mb-3">
-                    <div class="d-flex justify-content-between align-items-center mb-1">
-                        <span style="font-size:.82rem;font-weight:600;color:#4d5965;">
-                            <i class="bi bi-speedometer2 me-1"></i>Taux d'occupation
-                        </span>
-                        <span style="font-size:.82rem;font-weight:700;color:var(--color-primary);">
-                            {{ taux }}%
-                        </span>
-                    </div>
-                    <div style="background:#eef2f7;border-radius:99px;height:8px;overflow:hidden;">
-                        <div style="height:100%;width:{{ taux }}%;
-                                    background:linear-gradient(90deg,#23779C,#3D94CA);
-                                    border-radius:99px;transition:.6s;"></div>
-                    </div>
-                </div>
-
-                {% if topModele is defined and topModele.total is defined and topModele.total > 0 %}
-                <div class="mb-3 p-2 rounded-2" style="background:rgba(61,148,202,.07);">
-                    <div style="font-size:.78rem;color:#6c757d;font-weight:600;margin-bottom:2px;">
-                        <i class="bi bi-trophy-fill me-1" style="color:var(--color-warning);"></i>
-                        Top modèle loué
-                    </div>
-                    <div style="font-size:.95rem;font-weight:700;color:var(--color-primary);">
-                        {{ topModele.nomMarque }} {{ topModele.nomModele }}
-                        <span style="font-size:.78rem;color:#6c757d;font-weight:500;">
-                            — {{ topModele.total }} location(s)
-                        </span>
-                    </div>
-                </div>
-                {% endif %}
-
-                {% if statuts is defined and statuts|length > 0 %}
-                <div class="mb-2">
-                    <div style="font-size:.78rem;color:#6c757d;font-weight:600;margin-bottom:6px;">
-                        <i class="bi bi-pie-chart-fill me-1"></i>Répartition statuts
-                    </div>
-                    {% for statut, nb in statuts %}
-                    <div class="d-flex justify-content-between align-items-center mb-1">
-                        <span style="font-size:.8rem;">{{ statut|capitalize }}</span>
-                        <span class="
-                            {% if statut == 'réservée' %}badge-reservee
-                            {% elseif statut == 'en_cours' %}badge-en-cours
-                            {% elseif statut == 'terminée' %}badge-terminee
-                            {% elseif statut == 'annulée' %}badge-annulee
-                            {% else %}badge-count{% endif %}
-                        " style="font-size:.75rem;">{{ nb }}</span>
-                    </div>
-                    {% endfor %}
-                </div>
-                {% endif %}
-
-                <hr class="my-2">
-                <a href="{{ path('admin_location_index') }}"
-                   class="d-block text-center text-decoration-none"
-                   style="font-size:.82rem;font-weight:600;color:var(--color-secondary);">
-                    <i class="bi bi-arrow-right-circle me-1"></i>Voir toutes les locations
-                </a>
-            </div>
-        </div>
-
-        {# Cloche #}
+    <div class="d-flex align-items-center gap-3">
         <button class="topbar-icon-btn position-relative" type="button">
             <i class="bi bi-bell fs-5"></i>
         </button>
-
-        {# Menu utilisateur #}
         <div class="dropdown">
-            <button class="btn border-0 bg-transparent d-flex align-items-center gap-2 p-0"
-                    type="button" data-bs-toggle="dropdown">
-                <div style="width:36px;height:36px;border-radius:50%;
-                            background:linear-gradient(135deg,#23779C,#3D94CA);
-                            display:flex;align-items:center;justify-content:center;color:#fff;">
+            <button class="btn border-0 bg-transparent d-flex align-items-center gap-2 p-0" type="button" data-bs-toggle="dropdown">
+                <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#23779C,#3D94CA);display:flex;align-items:center;justify-content:center;color:#fff;">
                     <i class="bi bi-person-fill"></i>
                 </div>
                 <span class="fw-semibold text-dark d-none d-md-inline">Administrateur</span>
                 <i class="bi bi-chevron-down small text-muted"></i>
             </button>
-            <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3 p-2"
-                style="min-width:200px;">
-                <li>
-                    <a class="dropdown-item rounded-2 py-2" href="{{ path('admin_dashboard') }}">
-                        <i class="bi bi-grid me-2"></i>Dashboard
-                    </a>
-                </li>
+            <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3 p-2" style="min-width:200px;">
+                <li><a class="dropdown-item rounded-2 py-2" href="{{ path('admin_dashboard') }}"><i class="bi bi-grid me-2"></i>Dashboard</a></li>
                 <li><hr class="dropdown-divider"></li>
-                <li>
-                    <a class="dropdown-item rounded-2 py-2 text-danger" href="#">
-                        <i class="bi bi-box-arrow-right me-2"></i>Déconnexion
-                    </a>
-                </li>
+                <li><a class="dropdown-item rounded-2 py-2 text-danger" href="#"><i class="bi bi-box-arrow-right me-2"></i>Deconnexion</a></li>
             </ul>
         </div>
-
     </div>
 </nav>
-
-<style>
-.topbar-nav-btn {
-    display: inline-flex;
-    align-items: center;
-    padding: 6px 12px;
-    border-radius: 8px;
-    font-size: .82rem;
-    font-weight: 600;
-    color: #4d5965;
-    text-decoration: none;
-    transition: all .2s;
-    white-space: nowrap;
-}
-.topbar-nav-btn:hover {
-    background: rgba(35, 119, 156, .1);
-    color: #23779C;
-    text-decoration: none;
-}
-.topbar-nav-btn.active {
-    background: rgba(35, 119, 156, .15);
-    color: #23779C;
-}
-</style>

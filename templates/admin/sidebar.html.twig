@@ -1,72 +1,45 @@
 {% set route = app.request.attributes.get('_route') %}
-<div class="admin-sidebar" id="adminSidebar">
-
+<div class="admin-sidebar">
     <div class="sidebar-brand-center">
-        <img src="{{ asset('images/logo.jpeg') }}" alt="Horizia" class="sidebar-logo-large">
-        <span class="sidebar-brand-text">HORIZIA</span>
-        <span class="sidebar-brand-sub">Location de Vehicules</span>
+        <img src="{{ asset('images/logo.png') }}" alt="Horizia" class="sidebar-logo-large">
+        <span style="color:#fff;font-weight:800;font-size:1.1rem;letter-spacing:1px;">HORIZIA</span>
+        <span style="color:rgba(255,255,255,.5);font-size:.75rem;">Location de Vehicules</span>
     </div>
-
     <ul class="sidebar-menu">
-
         <li>
-            <a class="sidebar-link {{ route in ['admin_dashboard','admin_dashboard_index'] ? 'active' : '' }}"
-               href="{{ path('admin_dashboard') }}" data-tooltip="Dashboard">
-                <i class="bi bi-grid-fill sidebar-icon"></i>
-                <span class="sidebar-label">Dashboard</span>
+            <a class="sidebar-link {{ route starts with 'admin_dashboard' ? 'active' : '' }}" href="{{ path('admin_dashboard') }}">
+                <i class="bi bi-grid-fill"></i><span>Dashboard</span>
             </a>
         </li>
-
         <li>
-            <a class="sidebar-link {{ route starts with 'admin_profile' ? 'active' : '' }}"
-               href="#" data-tooltip="Gestion Profile">
-                <i class="bi bi-person-fill sidebar-icon"></i>
-                <span class="sidebar-label">Gestion Profile</span>
+            <a class="sidebar-link {{ route starts with 'admin_vehicule' ? 'active' : '' }}" href="{{ path('admin_vehicule_index') }}">
+                <i class="bi bi-truck-front-fill"></i><span>Vehicules</span>
             </a>
         </li>
-
         <li>
-            <a class="sidebar-link {{ (route starts with 'admin_marque' or route starts with 'admin_modele') ? 'active' : '' }}"
-               href="{{ path('admin_marque_index') }}" data-tooltip="Gestion Catégories">
-                <i class="bi bi-tags-fill sidebar-icon"></i>
-                <span class="sidebar-label">Gestion Catégories</span>
+            <a class="sidebar-link {{ route starts with 'admin_location' ? 'active' : '' }}" href="{{ path('admin_location_index') }}">
+                <i class="bi bi-calendar-check-fill"></i><span>Locations</span>
             </a>
         </li>
-
         <li>
-            <a class="sidebar-link {{ route starts with 'admin_vehicule' ? 'active' : '' }}"
-               href="{{ path('admin_vehicule_index') }}" data-tooltip="Gestion Voyages">
-                <i class="bi bi-airplane-fill sidebar-icon"></i>
-                <span class="sidebar-label">Gestion Voyages</span>
+            <a class="sidebar-link {{ route starts with 'admin_planning' ? 'active' : '' }}" href="{{ path('admin_planning_index') }}">
+                <i class="bi bi-calendar3"></i><span>Planning</span>
             </a>
         </li>
-
         <li>
-            <a class="sidebar-link {{ route starts with 'admin_planning' ? 'active' : '' }}"
-               href="{{ path('admin_planning_index') }}" data-tooltip="Gestion Logements">
-                <i class="bi bi-building-fill sidebar-icon"></i>
-                <span class="sidebar-label">Gestion Logements</span>
+            <a class="sidebar-link {{ route starts with 'admin_documents' ? 'active' : '' }}" href="{{ path('admin_documents_index') }}">
+                <i class="bi bi-file-earmark-text-fill"></i><span>Documents</span>
             </a>
         </li>
-
-        <li>
-            <a class="sidebar-link {{ route starts with 'admin_documents' ? 'active' : '' }}"
-               href="{{ path('admin_documents_index') }}" data-tooltip="Gestion Réservations">
-                <i class="bi bi-journal-bookmark-fill sidebar-icon"></i>
-                <span class="sidebar-label">Gestion Réservations</span>
+        <li style="border-top:1px solid rgba(255,255,255,.08);margin-top:8px;padding-top:8px;">
+            <a class="sidebar-link {{ route starts with 'admin_marque' ? 'active' : '' }}" href="{{ path('admin_marque_index') }}">
+                <i class="bi bi-tags-fill"></i><span>Marques</span>
             </a>
         </li>
-
-        <li class="sidebar-separator"></li>
-
-        {# ★ Ta partie — Gestion Locations #}
         <li>
-            <a class="sidebar-link sidebar-link-accent {{ route starts with 'admin_location' ? 'active' : '' }}"
-               href="{{ path('admin_location_index') }}" data-tooltip="Gestion Locations">
-                <i class="bi bi-calendar-check-fill sidebar-icon"></i>
-                <span class="sidebar-label">Gestion Locations</span>
+            <a class="sidebar-link {{ route starts with 'admin_modele' ? 'active' : '' }}" href="{{ path('admin_modele_index') }}">
+                <i class="bi bi-list-ul"></i><span>Modeles</span>
             </a>
         </li>
-
     </ul>
 </div>

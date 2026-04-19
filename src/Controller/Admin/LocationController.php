@@ -10,6 +10,7 @@ use App\Service\ContratService;
 use App\Service\EmailService;
 use App\Service\GeolocationService;
 use App\Service\OCRService;
+use App\Service\WhatsAppService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bridge\Doctrine\Attribute\MapEntity;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -22,9 +23,6 @@ use DateTime;
 #[Route('/admin/location')]
 class LocationController extends AbstractController
 {
-    // ─────────────────────────────────────────────────────────
-    // Liste des extras disponibles (libellé + prix fixe en TND)
-    // ─────────────────────────────────────────────────────────
     private const EXTRAS_DISPONIBLES = [
         'siege_bebe'                => ['label' => 'Siège bébé',               'prix' => 15.0],
         'gps'                       => ['label' => 'GPS',                       'prix' => 10.0],
@@ -41,14 +39,27 @@ class LocationController extends AbstractController
     public function index(LocationRepository $repository, Request $request): Response
     {
         $recherche = $request->query->get('search', '');
+        $page      = max(1, (int) $request->query->get('page', 1));
+        $vue       = $request->query->get('vue', 'table');
+        $limit     = $vue === 'cards' ? 6 : 10;
 
-        $locations = !empty($recherche)
+        $tousLesResultats = !empty($recherche)
             ? $repository->rechercherParClient($recherche)
             : $repository->findBy([], ['dateDebut' => 'DESC']);
 
+        $total      = count($tousLesResultats);
+        $totalPages = max(1, (int) ceil($total / $limit));
+        $page       = min($page, $totalPages);
+        $locations  = array_slice($tousLesResultats, ($page - 1) * $limit, $limit);
+
         return $this->render('admin/location/index.html.twig', [
-            'locations' => $locations,
-            'recherche' => $recherche,
+            'locations'   => $locations,
+            'recherche'   => $recherche,
+            'page'        => $page,
+            'total_pages' => $totalPages,
+            'total'       => $total,
+            'limit'       => $limit,
+            'vue'         => $vue,
         ]);
     }
 
@@ -61,7 +72,8 @@ class LocationController extends AbstractController
         EntityManagerInterface $em,
         VehiculeRepository $vehiculeRepository,
         ContratService $contratService,
-        EmailService $emailService
+        EmailService $emailService,
+        WhatsAppService $whatsAppService
     ): Response {
         $location = new Location();
         $form     = $this->createForm(LocationType::class, $location);
@@ -69,7 +81,7 @@ class LocationController extends AbstractController
 
         if ($form->isSubmitted() && $form->isValid()) {
 
-            // ✅ Gérer les extras cochés
+            // ── Extras ──
             $extrasChoisis = $request->request->all('extras');
             $extrasData    = [];
             foreach ((array) $extrasChoisis as $cle) {
@@ -78,16 +90,12 @@ class LocationController extends AbstractController
                 }
             }
             $location->setExtras(empty($extrasData) ? null : $extrasData);
-
-            // ✅ Calcul automatique du montant total
             $location->calculerMontantTotal();
 
-            // Statut par défaut
             if (empty($location->getStatut())) {
                 $location->setStatut('réservée');
             }
 
-            // Mettre le véhicule en "louee"
             $vehicule = $location->getVehicule();
             if ($vehicule) {
                 $vehicule->setEtat('louee');
@@ -97,7 +105,7 @@ class LocationController extends AbstractController
             $em->persist($location);
             $em->flush();
 
-            // Email de confirmation (optionnel)
+            // ── Email de confirmation ──
             $emailClient = trim($request->request->get('email_client', ''));
             if (!empty($emailClient)) {
                 try {
@@ -106,6 +114,19 @@ class LocationController extends AbstractController
                 } catch (\Exception $e) {
                     $this->addFlash('warning', 'Email non envoyé : ' . $e->getMessage());
                 }
+            }
+
+            // ── WhatsApp de confirmation ──
+            // Utilise le numéro WhatsApp saisi dans le form, ou le téléphone du client par défaut
+            $whatsappTel = trim($request->request->get('whatsapp_client', ''))
+                ?: $location->getClientTelephone();
+
+            if (!empty($whatsappTel)) {
+                $r = $whatsAppService->envoyerConfirmationReservation($location, $whatsappTel);
+                $this->addFlash(
+                    $r['succes'] ? 'info' : 'warning',
+                    '💬 WhatsApp : ' . $r['message']
+                );
             }
 
             $this->addFlash('success', 'Location créée avec succès !');
@@ -129,7 +150,15 @@ class LocationController extends AbstractController
         $this->addFlash('success', $count . ' location(s) mise(s) à jour automatiquement.');
         return $this->redirectToRoute('admin_location_index');
     }
-
+    #[Route('/test-whatsapp', name: 'admin_location_test_whatsapp', methods: ['GET'])]
+public function testWhatsapp(WhatsAppService $whatsAppService): JsonResponse
+{
+    $resultat = $whatsAppService->envoyer(
+        '+21694670088', // ← le numéro qui a rejoint le sandbox
+        '🧪 Test WhatsApp depuis Horizia !'
+    );
+    return $this->json($resultat);
+}
     // ══════════════════════════════════════════════════════════
     // 👁️ VOIR
     // ══════════════════════════════════════════════════════════
@@ -151,14 +180,16 @@ class LocationController extends AbstractController
         Request $request,
         #[MapEntity(mapping: ['id' => 'idLocation'])] Location $location,
         EntityManagerInterface $em,
-        VehiculeRepository $vehiculeRepository
+        VehiculeRepository $vehiculeRepository,
+        WhatsAppService $whatsAppService
     ): Response {
-        $form = $this->createForm(LocationType::class, $location);
+        $ancienStatut = $location->getStatut();
+        $form         = $this->createForm(LocationType::class, $location);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
 
-            // ✅ Gérer les extras cochés
+            // ── Extras ──
             $extrasChoisis = $request->request->all('extras');
             $extrasData    = [];
             foreach ((array) $extrasChoisis as $cle) {
@@ -167,21 +198,33 @@ class LocationController extends AbstractController
                 }
             }
             $location->setExtras(empty($extrasData) ? null : $extrasData);
-
-            // ✅ Recalcul automatique du montant total
             $location->calculerMontantTotal();
 
-            // Mettre à jour l'état du véhicule
             $vehicule = $location->getVehicule();
             if ($vehicule) {
                 $nouvelEtat = in_array($location->getStatut(), ['terminée', 'annulée', 'no_show'])
-                    ? 'disponible'
-                    : 'louee';
+                    ? 'disponible' : 'louee';
                 $vehicule->setEtat($nouvelEtat);
                 $em->persist($vehicule);
             }
 
             $em->flush();
+
+            // ── WhatsApp automatique selon changement de statut ──
+            $telephone     = $location->getClientTelephone();
+            $nouveauStatut = $location->getStatut();
+
+            if (!empty($telephone)) {
+                if ($nouveauStatut === 'annulée' && $ancienStatut !== 'annulée') {
+                    $r = $whatsAppService->envoyerAnnulation($location, $telephone);
+                    $this->addFlash($r['succes'] ? 'info' : 'warning', '💬 WhatsApp annulation : ' . $r['message']);
+                }
+                if ($nouveauStatut === 'terminée' && $ancienStatut !== 'terminée') {
+                    $r = $whatsAppService->envoyerNotificationRetour($location, $telephone);
+                    $this->addFlash($r['succes'] ? 'info' : 'warning', '💬 WhatsApp retour : ' . $r['message']);
+                }
+            }
+
             $this->addFlash('success', 'Location modifiée avec succès !');
             return $this->redirectToRoute('admin_location_index');
         }
@@ -213,15 +256,44 @@ class LocationController extends AbstractController
             $em->flush();
             $this->addFlash('success', 'Location supprimée avec succès !');
         }
-
         return $this->redirectToRoute('admin_location_index');
     }
 
     // ══════════════════════════════════════════════════════════
+    // 💬 AJAX — ENVOYER WHATSAPP MANUELLEMENT depuis show.html
+    // POST /admin/location/{id}/whatsapp
+    // Params: type (confirmation|rappel|retour|annulation), telephone (optionnel)
+    // ══════════════════════════════════════════════════════════
+    #[Route('/{id}/whatsapp', name: 'admin_location_whatsapp', methods: ['POST'])]
+    public function envoyerWhatsapp(
+        #[MapEntity(mapping: ['id' => 'idLocation'])] Location $location,
+        Request $request,
+        WhatsAppService $whatsAppService
+    ): JsonResponse {
+        $type      = $request->request->get('type', 'confirmation');
+        $telephone = trim($request->request->get('telephone', ''))
+            ?: $location->getClientTelephone();
+
+        if (empty($telephone)) {
+            return $this->json(['success' => false, 'message' => 'Numéro de téléphone manquant.'], 400);
+        }
+
+        $resultat = match ($type) {
+            'confirmation' => $whatsAppService->envoyerConfirmationReservation($location, $telephone),
+            'rappel'       => $whatsAppService->envoyerRappel($location, $telephone),
+            'retour'       => $whatsAppService->envoyerNotificationRetour($location, $telephone),
+            'annulation'   => $whatsAppService->envoyerAnnulation($location, $telephone),
+            default        => ['succes' => false, 'message' => 'Type inconnu : ' . $type],
+        };
+
+        return $this->json([
+            'success' => $resultat['succes'],
+            'message' => $resultat['message'],
+        ], $resultat['succes'] ? 200 : 400);
+    }
+
+    // ══════════════════════════════════════════════════════════
     // 📷 AJAX — SCANNER CIN (OCR)
-    // POST /admin/location/scan-cin
-    // Body (multipart): image = fichier image de la CIN
-    // Retourne : { success, cin } ou { success: false, message }
     // ══════════════════════════════════════════════════════════
     #[Route('/scan-cin', name: 'admin_location_scan_cin', methods: ['POST'])]
     public function scanCin(Request $request, OCRService $ocrService): JsonResponse
@@ -231,28 +303,21 @@ class LocationController extends AbstractController
         if (!$fichier) {
             return $this->json(['success' => false, 'message' => 'Aucune image reçue.'], 400);
         }
-
-        // ✅ Vérifier la taille AVANT de déplacer (getSize() fonctionne sur l'objet UploadedFile)
         if ($fichier->getSize() > 5 * 1024 * 1024) {
             return $this->json(['success' => false, 'message' => 'Image trop lourde (max 5 Mo).'], 400);
         }
 
-        // ✅ Déplacer d'abord dans un répertoire temporaire
         $tempDir  = sys_get_temp_dir();
         $ext      = $fichier->getClientOriginalExtension() ?: 'jpg';
         $tempName = 'cin_' . uniqid() . '.' . $ext;
         $fichier->move($tempDir, $tempName);
         $tempPath = $tempDir . DIRECTORY_SEPARATOR . $tempName;
 
-        // ✅ Vérifier le type MIME sur le fichier réel (pas sur l'objet UploadedFile)
         $typesAutorises = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
         $mimeDetecte    = mime_content_type($tempPath) ?: 'unknown';
         if (!in_array($mimeDetecte, $typesAutorises)) {
             unlink($tempPath);
-            return $this->json([
-                'success' => false,
-                'message' => 'Format non supporté (' . $mimeDetecte . '). Utilisez JPG ou PNG.',
-            ], 400);
+            return $this->json(['success' => false, 'message' => 'Format non supporté (' . $mimeDetecte . '). Utilisez JPG ou PNG.'], 400);
         }
 
         $resultat = [];
@@ -261,30 +326,20 @@ class LocationController extends AbstractController
         } catch (\Exception $e) {
             $resultat = ['erreur' => $e->getMessage()];
         } finally {
-            if (file_exists($tempPath)) {
-                unlink($tempPath);
-            }
+            if (file_exists($tempPath)) unlink($tempPath);
         }
 
         if (isset($resultat['erreur'])) {
             return $this->json(['success' => false, 'message' => $resultat['erreur']], 500);
         }
-
         if (isset($resultat['cin'])) {
             return $this->json(['success' => true, 'cin' => $resultat['cin']]);
         }
-
-        return $this->json([
-            'success' => false,
-            'message' => $resultat['info'] ?? 'CIN non détectée. Vérifiez la qualité de l\'image.',
-        ]);
+        return $this->json(['success' => false, 'message' => $resultat['info'] ?? 'CIN non détectée.']);
     }
 
     // ══════════════════════════════════════════════════════════
     // 🗺️ AJAX — GÉOLOCALISER UNE ADRESSE
-    // POST /admin/location/geolocate
-    // Body (JSON ou form): adresse = string
-    // Retourne : { success, latitude, longitude, adresse_formatee, ville, code_postal }
     // ══════════════════════════════════════════════════════════
     #[Route('/geolocate', name: 'admin_location_geolocate', methods: ['POST'])]
     public function geolocate(Request $request, GeolocationService $geolocationService): JsonResponse
@@ -299,10 +354,7 @@ class LocationController extends AbstractController
         try {
             $resultat = $geolocationService->geocoderAdresse(trim($adresse));
         } catch (\Exception $e) {
-            return $this->json([
-                'success' => false,
-                'message' => 'Erreur réseau : impossible de contacter le service de géolocalisation.',
-            ], 503);
+            return $this->json(['success' => false, 'message' => 'Erreur réseau : impossible de contacter le service de géolocalisation.'], 503);
         }
 
         if (isset($resultat['erreur'])) {
@@ -310,10 +362,7 @@ class LocationController extends AbstractController
         }
 
         try {
-            $distanceKm = $geolocationService->calculerDistanceDepuisAgence(
-                (float) $resultat['latitude'],
-                (float) $resultat['longitude']
-            );
+            $distanceKm       = $geolocationService->calculerDistanceDepuisAgence((float) $resultat['latitude'], (float) $resultat['longitude']);
             $distanceFormatee = $geolocationService->formaterDistance($distanceKm);
         } catch (\Exception $e) {
             $distanceFormatee = null;
@@ -329,4 +378,5 @@ class LocationController extends AbstractController
             'distance_agence'  => $distanceFormatee,
         ]);
     }
+
 }

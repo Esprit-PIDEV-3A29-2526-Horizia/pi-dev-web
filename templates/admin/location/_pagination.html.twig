@@ -1,0 +1,47 @@
+{# templates/admin/location/_pagination.html.twig #}
+{# Variables attendues : page, total_pages, total, limit, vue, recherche #}
+
+{% set debut = (page - 1) * limit + 1 %}
+{% set fin   = min(page * limit, total) %}
+
+<div class="pagination-bar">
+    <span class="pg-info">
+        Affichage <strong>{{ debut }}–{{ fin }}</strong> de <strong>{{ total }}</strong> location(s)
+    </span>
+
+    {% if total_pages > 1 %}
+    <div class="pg-btns">
+
+        {# ← Précédent #}
+        {% if page > 1 %}
+        <a href="{{ path('admin_location_index', {page: page - 1, vue: vue, search: recherche}) }}" class="pg-btn" title="Page précédente">
+            <i class="bi bi-chevron-left"></i>
+        </a>
+        {% else %}
+        <span class="pg-btn disabled"><i class="bi bi-chevron-left"></i></span>
+        {% endif %}
+
+        {# Numéros de pages #}
+        {% for p in 1..total_pages %}
+            {% if p == 1 or p == total_pages or (p >= page - 2 and p <= page + 2) %}
+                {% if loop.index > 1 and p > (loop.previtem ?? 0) + 1 %}
+                    <span class="pg-dots">…</span>
+                {% endif %}
+                <a href="{{ path('admin_location_index', {page: p, vue: vue, search: recherche}) }}"
+                   class="pg-btn {{ p == page ? 'active' : '' }}">{{ p }}</a>
+                {% set _ = loop.index %}
+            {% endif %}
+        {% endfor %}
+
+        {# → Suivant #}
+        {% if page < total_pages %}
+        <a href="{{ path('admin_location_index', {page: page + 1, vue: vue, search: recherche}) }}" class="pg-btn" title="Page suivante">
+            <i class="bi bi-chevron-right"></i>
+        </a>
+        {% else %}
+        <span class="pg-btn disabled"><i class="bi bi-chevron-right"></i></span>
+        {% endif %}
+
+    </div>
+    {% endif %}
+</div>

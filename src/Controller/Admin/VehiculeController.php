@@ -16,19 +16,26 @@ use Symfony\Component\Routing\Annotation\Route;
 #[Route('/admin/vehicule')]
 class VehiculeController extends AbstractController
 {
-    // 📋 LISTE des véhicules avec filtres
+    // 📋 LISTE des véhicules avec filtres + pagination
     #[Route('/', name: 'admin_vehicule_index', methods: ['GET'])]
     public function index(
         VehiculeRepository $repository,
         Request $request,
         MarqueRepository $marqueRepository
     ): Response {
-        // Récupérer les paramètres de filtre
-        $rechercheImmat = $request->query->get('immat', '');
-        $filtreEtat = $request->query->get('etat', '');
+        // Paramètres de filtre
+        $rechercheImmat  = $request->query->get('immat', '');
+        $filtreEtat      = $request->query->get('etat', '');
         $filtreCarburant = $request->query->get('carburant', '');
-        $filtreMarque = $request->query->get('marque', '');
-        $tri = $request->query->get('tri', 'immatriculation');
+        $filtreMarque    = $request->query->get('marque', '');
+        $tri             = $request->query->get('tri', 'immatriculation');
+
+        // Vue (table ou cards) et pagination
+        $vue  = $request->query->get('vue', 'table');
+        $page = max(1, (int) $request->query->get('page', 1));
+
+        // Nombre de résultats par page selon la vue
+        $limit = ($vue === 'cards') ? 6 : 10;
 
         // Construire la requête
         $qb = $repository->createQueryBuilder('v')
@@ -78,19 +85,41 @@ class VehiculeController extends AbstractController
                 $qb->orderBy('v.immatriculation', 'ASC');
         }
 
-        $vehicules = $qb->getQuery()->getResult();
+        // Compter le total (avant pagination)
+        $countQb = clone $qb;
+        $total   = (int) $countQb->select('COUNT(v.idVehicule)')
+                                  ->getQuery()
+                                  ->getSingleScalarResult();
+
+        // Calculer le nombre de pages
+        $total_pages = max(1, (int) ceil($total / $limit));
+        $page        = min($page, $total_pages); // Sécurité : page ne dépasse pas le max
+
+        // Appliquer la pagination
+        $vehicules = $qb->select('v', 'm', 'ma')
+                        ->setFirstResult(($page - 1) * $limit)
+                        ->setMaxResults($limit)
+                        ->getQuery()
+                        ->getResult();
 
         // Récupérer les marques pour le filtre
         $marques = $marqueRepository->findAllAlphabetique();
 
         return $this->render('admin/vehicule/index.html.twig', [
-            'vehicules' => $vehicules,
-            'marques' => $marques,
-            'rechercheImmat' => $rechercheImmat,
-            'filtreEtat' => $filtreEtat,
+            'vehicules'       => $vehicules,
+            'marques'         => $marques,
+            // Filtres
+            'rechercheImmat'  => $rechercheImmat,
+            'filtreEtat'      => $filtreEtat,
             'filtreCarburant' => $filtreCarburant,
-            'filtreMarque' => $filtreMarque,
-            'tri' => $tri,
+            'filtreMarque'    => $filtreMarque,
+            'tri'             => $tri,
+            // Vue & pagination
+            'vue'             => $vue,
+            'page'            => $page,
+            'limit'           => $limit,
+            'total'           => $total,
+            'total_pages'     => $total_pages,
         ]);
     }
 
@@ -115,8 +144,8 @@ class VehiculeController extends AbstractController
         }
 
         return $this->render('admin/vehicule/new.html.twig', [
-            'form' => $form->createView(),
-            'marques' => $marqueRepository->findAllAlphabetique(),
+            'form'             => $form->createView(),
+            'marques'          => $marqueRepository->findAllAlphabetique(),
             'modeleRepository' => $modeleRepository,
         ]);
     }
@@ -149,9 +178,9 @@ class VehiculeController extends AbstractController
         }
 
         return $this->render('admin/vehicule/edit.html.twig', [
-            'form' => $form->createView(),
-            'vehicule' => $vehicule,
-            'marques' => $marqueRepository->findAllAlphabetique(),
+            'form'             => $form->createView(),
+            'vehicule'         => $vehicule,
+            'marques'          => $marqueRepository->findAllAlphabetique(),
             'modeleRepository' => $modeleRepository,
         ]);
     }
@@ -161,8 +190,7 @@ class VehiculeController extends AbstractController
     public function delete(Request $request, Vehicule $vehicule, EntityManagerInterface $em): Response
     {
         if ($this->isCsrfTokenValid('delete' . $vehicule->getIdVehicule(), $request->request->get('_token'))) {
-            
-            // Vérifier si le véhicule a des locations associées
+
             if ($vehicule->getLocations()->count() > 0) {
                 $this->addFlash('error', 'Impossible de supprimer ce véhicule car il a ' . $vehicule->getLocations()->count() . ' location(s) associée(s).');
             } else {
@@ -180,15 +208,15 @@ class VehiculeController extends AbstractController
     public function getModelesByMarque(int $id, ModeleRepository $modeleRepository): Response
     {
         $modeles = $modeleRepository->findByMarque($id);
-        
+
         $data = [];
         foreach ($modeles as $modele) {
             $data[] = [
-                'id' => $modele->getIdModele(),
+                'id'  => $modele->getIdModele(),
                 'nom' => $modele->getNomModele(),
             ];
         }
-        
+
         return $this->json($data);
     }
 }

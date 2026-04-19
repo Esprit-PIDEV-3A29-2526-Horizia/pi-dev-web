@@ -3,6 +3,9 @@
 {% block topbar_title %}Détail location{% endblock %}
 {% block admin_content %}
 
+{# ── Leaflet CSS ── #}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+
 <div class="page-header">
     <div class="page-header-left">
         <div class="page-header-icon"><i class="bi bi-calendar-check-fill"></i></div>
@@ -23,7 +26,9 @@
 
 <div class="row g-3">
 
-    {# ── Colonne gauche ── #}
+    {# ══════════════════════════════════
+       COLONNE GAUCHE
+    ══════════════════════════════════ #}
     <div class="col-lg-4">
 
         {# Client + statut #}
@@ -48,7 +53,6 @@
             </p>
             {% endif %}
 
-            {# Badge statut #}
             {% if location.statut == 'réservée' or location.statut == 'reservee' %}
                 <span class="badge-reservee">Réservée</span>
             {% elseif location.statut == 'en_cours' %}
@@ -87,7 +91,8 @@
                 <i class="bi bi-truck me-2" style="color:var(--color-primary);"></i>Véhicule
             </div>
             {% if location.vehicule.photo %}
-            <img src="{{ location.vehicule.photo }}" alt="{{ location.vehicule.immatriculation }}"
+            <img src="{{ location.vehicule.photo starts with 'http' ? location.vehicule.photo : asset('uploads/vehicules/' ~ location.vehicule.photo) }}"
+                 alt="{{ location.vehicule.immatriculation }}"
                  style="width:100%;height:120px;object-fit:cover;border-radius:10px;margin-bottom:12px;">
             {% endif %}
             <div class="d-flex justify-content-between mb-1" style="font-size:.9rem;">
@@ -107,9 +112,51 @@
                 </span>
             </div>
         </div>
+
+        {# ══════════════════════════════════
+           CARTE LEAFLET — Position client
+        ══════════════════════════════════ #}
+        <div class="dashboard-card mb-3">
+            <div style="font-weight:700;color:#1f2d3d;margin-bottom:12px;">
+                <i class="bi bi-geo-alt-fill me-2" style="color:#dc3545;"></i>Position client
+                {% if location.clientLatitude and location.clientLongitude %}
+                <span style="font-size:.75rem;color:#10b981;font-weight:500;margin-left:6px;">
+                    <i class="bi bi-check-circle-fill me-1"></i>Géolocalisé
+                </span>
+                {% else %}
+                <span style="font-size:.75rem;color:#f59e0b;font-weight:500;margin-left:6px;">
+                    <i class="bi bi-exclamation-circle me-1"></i>Position approximative
+                </span>
+                {% endif %}
+            </div>
+
+            {# Adresse texte #}
+            {% if location.clientAdresse or location.clientVille %}
+            <div style="font-size:.85rem;color:#64748b;margin-bottom:10px;padding:8px 10px;background:#f8fafc;border-radius:8px;">
+                <i class="bi bi-house me-1"></i>
+                {{ location.clientAdresse ?? '' }}{% if location.clientVille %}, {{ location.clientVille }}{% endif %}
+                {% if location.clientCodePostal %} {{ location.clientCodePostal }}{% endif %}
+            </div>
+            {% endif %}
+
+            {# Carte #}
+            <div id="map-client" style="height:240px;border-radius:10px;overflow:hidden;border:1px solid #e2e8f0;"></div>
+
+            {# Lien Google Maps #}
+            {% if location.clientLatitude and location.clientLongitude %}
+            <a href="https://www.google.com/maps?q={{ location.clientLatitude }},{{ location.clientLongitude }}"
+               target="_blank" rel="noopener"
+               class="btn btn-horozia-outline btn-sm w-100 mt-2">
+                <i class="bi bi-box-arrow-up-right me-1"></i>Ouvrir dans Google Maps
+            </a>
+            {% endif %}
+        </div>
+
     </div>
 
-    {# ── Colonne droite ── #}
+    {# ══════════════════════════════════
+       COLONNE DROITE
+    ══════════════════════════════════ #}
     <div class="col-lg-8">
 
         {# Période #}
@@ -149,20 +196,16 @@
             {% endif %}
         </div>
 
-        {# Détail financier + extras #}
+        {# Détail financier #}
         <div class="dashboard-card mb-3">
             <div style="font-weight:700;color:#1f2d3d;margin-bottom:16px;">
                 <i class="bi bi-receipt me-2" style="color:var(--color-primary);"></i>Détails financiers
             </div>
-
             {% set jours = ((location.dateFinPrevue|date('U') - location.dateDebut|date('U')) / 86400)|round %}
             <div class="d-flex justify-content-between py-2" style="border-bottom:1px solid #eef2f7;font-size:.92rem;">
                 <span style="color:#6c757d;">Prix/jour × {{ jours }} jour(s)</span>
-                <span style="font-weight:700;">
-                    {{ (location.prixParJour * jours)|number_format(3, ',', ' ') }} TND
-                </span>
+                <span style="font-weight:700;">{{ (location.prixParJour * jours)|number_format(3, ',', ' ') }} TND</span>
             </div>
-
             {% if location.extras %}
                 {% for cle, prix in location.extras %}
                 <div class="d-flex justify-content-between py-2" style="border-bottom:1px solid #eef2f7;font-size:.88rem;">
@@ -178,10 +221,9 @@
                     <span style="color:var(--color-primary);">{{ location.extrasTotal|number_format(3, ',', ' ') }} TND</span>
                 </div>
             {% endif %}
-
             {% if location.montantTotal %}
             <div class="d-flex justify-content-between py-2" style="border-bottom:1px solid #eef2f7;font-size:.92rem;">
-                <span style="color:#6c757d;font-weight:700;">Montant total</span>
+                <span style="font-weight:700;">Montant total</span>
                 <span style="font-weight:800;color:var(--color-primary);">{{ location.montantTotal|number_format(3, ',', ' ') }} TND</span>
             </div>
             {% endif %}
@@ -195,7 +237,6 @@
                 <span style="font-weight:800;color:#dc3545;">{{ location.resteAPayer|number_format(3, ',', ' ') }} TND</span>
             </div>
             {% endif %}
-
             {% if location.kilometrageDebut %}
             <div class="d-flex justify-content-between py-2 mt-2" style="border-top:1px solid #eef2f7;font-size:.9rem;">
                 <span style="color:#6c757d;">Km départ</span>
@@ -230,7 +271,6 @@
                 <a href="{{ path('admin_documents_qrcode', {id: location.idLocation}) }}" class="btn btn-horozia-secondary btn-sm">
                     <i class="bi bi-qr-code me-1"></i>QR Code
                 </a>
-                {# ✅ Contrat généré en PDF #}
                 <a href="{{ path('admin_documents_contrat', {id: location.idLocation}) }}" class="btn btn-horozia-accent btn-sm" target="_blank">
                     <i class="bi bi-file-earmark-pdf me-1"></i>Contrat PDF
                 </a>
@@ -245,4 +285,84 @@
         </div>
     </div>
 </div>
+
+{# ── Leaflet JS ── #}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    // Coordonnées du client (depuis Symfony) ou Tunis par défaut
+    const lat  = {{ location.clientLatitude  is not null ? location.clientLatitude  : 36.8065 }};
+    const lng  = {{ location.clientLongitude is not null ? location.clientLongitude : 10.1815 }};
+    const hasCoords = {{ (location.clientLatitude is not null and location.clientLongitude is not null) ? 'true' : 'false' }};
+
+    // Initialiser la carte
+    const map = L.map('map-client', { zoomControl: true, scrollWheelZoom: false }).setView([lat, lng], hasCoords ? 14 : 11);
+
+    // Tuile OpenStreetMap (gratuit, pas de clé API)
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        maxZoom: 19
+    }).addTo(map);
+
+    // Icône personnalisée rouge si coordonnées réelles, orange sinon
+    const markerColor = hasCoords ? '#dc3545' : '#f59e0b';
+    const markerIcon = L.divIcon({
+        html: `<div style="
+            width:32px;height:32px;border-radius:50% 50% 50% 0;
+            background:${markerColor};border:3px solid #fff;
+            transform:rotate(-45deg);box-shadow:0 2px 8px rgba(0,0,0,.3);
+            display:flex;align-items:center;justify-content:center;">
+        </div>`,
+        className: '',
+        iconSize: [32, 32],
+        iconAnchor: [16, 32],
+        popupAnchor: [0, -34]
+    });
+
+    // Contenu du popup
+    const adresse = `{{ (location.clientAdresse ?? '') ~ (location.clientVille ? ', ' ~ location.clientVille : '') }}`;
+    const popupContent = `
+        <div style="font-family:sans-serif;min-width:180px;">
+            <div style="font-weight:700;font-size:.95rem;color:#1e293b;margin-bottom:4px;">
+                <i class="bi bi-person-fill"></i> {{ location.clientNomComplet }}
+            </div>
+            ${adresse ? `<div style="font-size:.82rem;color:#64748b;margin-bottom:4px;">📍 ${adresse}</div>` : ''}
+            <div style="font-size:.82rem;color:#64748b;">📞 {{ location.clientTelephone ?? '—' }}</div>
+            ${!hasCoords ? '<div style="font-size:.78rem;color:#f59e0b;margin-top:6px;">⚠️ Position approximative (pas de géolocalisation)</div>' : ''}
+        </div>`;
+
+    const marker = L.marker([lat, lng], { icon: markerIcon })
+        .addTo(map)
+        .bindPopup(popupContent, { maxWidth: 260 })
+        .openPopup();
+
+    // Cercle de zone si position exacte
+    if (hasCoords) {
+        L.circle([lat, lng], {
+            color: '#dc3545',
+            fillColor: '#dc3545',
+            fillOpacity: 0.08,
+            radius: 300,
+            weight: 1.5
+        }).addTo(map);
+    }
+
+    // Agence Horizia — marqueur bleu fixe
+    const agenceIcon = L.divIcon({
+        html: `<div style="
+            background:#23779C;color:#fff;padding:4px 8px;
+            border-radius:8px;font-size:.7rem;font-weight:700;
+            white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.2);">
+            🏢 Horizia
+        </div>`,
+        className: '',
+        iconAnchor: [30, 16]
+    });
+    L.marker([36.8559, 10.1938], { icon: agenceIcon })
+        .addTo(map)
+        .bindPopup('<strong>Agence Horizia</strong><br>Tunis, Tunisie');
+});
+</script>
+
 {% endblock %}

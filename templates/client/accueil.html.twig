@@ -100,7 +100,7 @@
             <div class="col-md-4 mb-4">
                 <div class="card h-100">
                     <div style="position:relative; overflow:hidden;">
-                        <img src="{{ vehicule.image ? asset('uploads/vehicules/'~vehicule.image) : 'https://via.placeholder.com/400x220/23779C/fff?text='~vehicule.marque }}"
+                        <img src="{{ vehicule.image ? (vehicule.image starts with 'http' ? vehicule.image : asset('uploads/vehicules/'~vehicule.image)) : 'https://via.placeholder.com/400x220/23779C/fff?text='~vehicule.marque }}"
                              class="card-img-top" alt="{{ vehicule.marque }}"
                              onerror="this.src='https://via.placeholder.com/400x220/23779C/fff?text={{ vehicule.marque }}'"
                              style="height:200px; object-fit:cover;">

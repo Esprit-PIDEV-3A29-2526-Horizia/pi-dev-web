@@ -68,29 +68,46 @@ class LocationRepository extends ServiceEntityRepository
     public function mettreAJourStatutsAutomatique(\DateTime $now): int
     {
         $em = $this->getEntityManager();
-        
-        // Réservée → En cours
-        $qb1 = $em->createQueryBuilder()
+
+        $count1 = $em->createQueryBuilder()
             ->update('App\Entity\Location', 'l')
             ->set('l.statut', ':nouveauStatut')
             ->where('l.statut = :ancienStatut')
             ->andWhere('l.dateDebut <= :now')
             ->setParameter('nouveauStatut', 'en_cours')
             ->setParameter('ancienStatut', 'réservée')
-            ->setParameter('now', $now);
-        $count1 = $qb1->getQuery()->execute();
-        
-        // En cours → Terminée
-        $qb2 = $em->createQueryBuilder()
+            ->setParameter('now', $now)
+            ->getQuery()->execute();
+
+        $count2 = $em->createQueryBuilder()
             ->update('App\Entity\Location', 'l')
             ->set('l.statut', ':nouveauStatut')
             ->where('l.statut = :ancienStatut')
             ->andWhere('l.dateFinPrevue < :now')
             ->setParameter('nouveauStatut', 'terminée')
             ->setParameter('ancienStatut', 'en_cours')
-            ->setParameter('now', $now);
-        $count2 = $qb2->getQuery()->execute();
-        
+            ->setParameter('now', $now)
+            ->getQuery()->execute();
+
         return $count1 + $count2;
+    }
+
+    /**
+     * Récupère les locations pour la carte Leaflet du dashboard.
+     * - Exclut annulées et no_show
+     * - Charge le véhicule en eager loading (évite N+1 queries)
+     * - Limitée à 50 pour la performance
+     */
+    public function findPourCartographie(): array
+    {
+        return $this->createQueryBuilder('l')
+            ->leftJoin('l.vehicule', 'v')
+            ->addSelect('v')
+            ->where('l.statut NOT IN (:exclus)')
+            ->setParameter('exclus', ['annulée', 'annulee', 'no_show'])
+            ->orderBy('l.dateDebut', 'DESC')
+            ->setMaxResults(50)
+            ->getQuery()
+            ->getResult();
     }
 }
