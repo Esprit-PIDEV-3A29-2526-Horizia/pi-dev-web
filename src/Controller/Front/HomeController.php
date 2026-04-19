@@ -1,76 +1,52 @@
 <?php
 
 namespace App\Controller\Front;
-use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+
 use App\Entity\Reservation;
 use App\Entity\Events;
 use App\Entity\Voyage;
-use Doctrine\ORM\EntityManagerInterface;
-use Doctrine\Persistence\ManagerRegistry;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Attribute\Route;
-use Symfony\Component\Validator\Validator\ValidatorInterface;
-use Symfony\Component\Validator\Constraints as Assert;
 use App\Entity\Logement;
 use App\Entity\Reservationlog;
 use App\Entity\User;
-use App\Repository\VoyageRepository;
 use App\Service\GeminiService;
 use App\Service\LogementSearchService;
-
+use App\Service\OpenWeatherService;
+use App\Service\CurrencyService;
+use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\Persistence\ManagerRegistry;
+use Knp\Component\Pager\PaginatorInterface;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\ResponseHeaderBag;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Endroid\QrCode\Builder\Builder;
+use Endroid\QrCode\Encoding\Encoding;
+use Endroid\QrCode\ErrorCorrectionLevel\ErrorCorrectionLevel;
+use Endroid\QrCode\RoundBlockSizeMode\RoundBlockSizeMode;
+use Endroid\QrCode\Writer\PngWriter;
 
 class HomeController extends AbstractController
 {
     #[Route('/', name: 'app_front_home')]
-    public function index(Request $request, EntityManagerInterface $entityManager): Response
-    {
-        $destination = trim((string) $request->query->get('destination', ''));
-        $dateDepart = trim((string) $request->query->get('date_depart', ''));
-        $dateRetour = trim((string) $request->query->get('date_retour', ''));
-        $budgetMax = trim((string) $request->query->get('budget_max', ''));
+    public function index(
+        ManagerRegistry $doctrine,
+        OpenWeatherService $openWeatherService,
+        CurrencyService $currencyService,
+        Request $request
+    ): Response {
+        $entityManager = $doctrine->getManager();
 
-        $qb = $entityManager->getRepository(Voyage::class)->createQueryBuilder('v');
+        $currency = $currencyService->normalizeCurrency($request->query->get('currency', 'TND'));
 
-        if ($destination !== '') {
-            $qb->andWhere('LOWER(v.destination) LIKE :destination')
-                ->setParameter('destination', '%' . strtolower($destination) . '%');
-        }
-
-        if ($dateDepart !== '') {
-            try {
-                $dateDepartObj = new \DateTime($dateDepart);
-                $qb->andWhere('v.dateDepart >= :dateDepart')
-                    ->setParameter('dateDepart', $dateDepartObj);
-            } catch (\Exception $e) {
-            }
-        }
-
-        if ($dateRetour !== '') {
-            try {
-                $dateRetourObj = new \DateTime($dateRetour);
-                $qb->andWhere('v.dateRetour <= :dateRetour')
-                    ->setParameter('dateRetour', $dateRetourObj);
-            } catch (\Exception $e) {
-            }
-        }
-
-        if ($budgetMax !== '' && is_numeric($budgetMax)) {
-            $qb->andWhere('v.prix <= :budgetMax')
-                ->setParameter('budgetMax', (float) $budgetMax);
-        }
-
-        $voyagesFiltres = $qb
-            ->orderBy('v.id', 'DESC')
-            ->setMaxResults(12)
-            ->getQuery()
-            ->getResult();
-
-        $voyagesPopulaires = $entityManager->createQueryBuilder()
-            ->select('v, COUNT(r.id) AS HIDDEN nbReservations')
+        $voyages = $entityManager->createQueryBuilder()
+            ->select('v', 'COUNT(r.id) AS HIDDEN nbReservations')
             ->from(Voyage::class, 'v')
-            ->leftJoin(Reservation::class, 'r', 'WITH', 'r.voyage = v')
+            ->leftJoin(Reservation::class, 'r', 'WITH', 'r.voyage = v AND r.statut = :statut')
+            ->setParameter('statut', 'CONFIRMEE')
             ->groupBy('v.id')
             ->orderBy('nbReservations', 'DESC')
             ->addOrderBy('v.id', 'DESC')
@@ -78,19 +54,33 @@ class HomeController extends AbstractController
             ->getQuery()
             ->getResult();
 
-        return $this->render('front/home/index.html.twig', [
-            'voyages' => $voyagesFiltres,
-            'voyagesPopulaires' => $voyagesPopulaires,
-            'filters' => [
-                'destination' => $destination,
-                'date_depart' => $dateDepart,
-                'date_retour' => $dateRetour,
-                'budget_max' => $budgetMax,
-            ],
+        $weatherData = [];
+        $convertedPrices = [];
+
+        foreach ($voyages as $voyage) {
+            $destination = trim((string) $voyage->getDestination());
+
+            if ($destination !== '') {
+                $weatherData[$voyage->getId()] = $openWeatherService->getWeatherByCity($destination);
+            } else {
+                $weatherData[$voyage->getId()] = null;
+            }
+
+            $convertedPrices[$voyage->getId()] = $currencyService->convert(
+                (float) $voyage->getPrix(),
+                $currency
+            );
+        }
+
+        return $this->render('front/index.html.twig', [
+            'voyages' => $voyages,
+            'weatherData' => $weatherData,
+            'currency' => $currency,
+            'currencySymbol' => $currencyService->getSymbol($currency),
+            'convertedPrices' => $convertedPrices,
+            'allowedCurrencies' => $currencyService->getAllowedCurrencies(),
         ]);
     }
-
-    // src/Controller/Front/HomeController.php
 
     #[Route('/home', name: 'app_home')]
     public function home(): Response
@@ -98,27 +88,52 @@ class HomeController extends AbstractController
         return $this->redirectToRoute('app_front_home');
     }
 
-    #[Route('/voyage/{id}', name: 'app_front_voyage_detail', requirements: ['id' => '\d+'])]
-    public function detail(int $id, ManagerRegistry $doctrine): Response
-    {
+    #[Route('/voyage/{id}', name: 'app_front_voyage_detail', requirements: ['id' => '\d+'], methods: ['GET'])]
+    public function detail(
+        int $id,
+        ManagerRegistry $doctrine,
+        OpenWeatherService $openWeatherService,
+        CurrencyService $currencyService,
+        Request $request
+    ): Response {
         $voyage = $doctrine->getRepository(Voyage::class)->find($id);
 
         if (!$voyage) {
             throw $this->createNotFoundException('Voyage introuvable.');
         }
 
-        return $this->render('front/voyage/detail.html.twig', [
+        $weather = null;
+        $destination = trim((string) $voyage->getDestination());
+
+        if ($destination !== '') {
+            $weather = $openWeatherService->getWeatherByCity($destination);
+        }
+
+        $currency = $currencyService->normalizeCurrency($request->query->get('currency', 'TND'));
+
+        $convertedPrice = $currencyService->convert(
+            (float) $voyage->getPrix(),
+            $currency
+        );
+
+        return $this->render('front/voyages/detail.html.twig', [
             'voyage' => $voyage,
+            'weather' => $weather,
+            'currency' => $currency,
+            'currencySymbol' => $currencyService->getSymbol($currency),
+            'convertedPrice' => $convertedPrice,
+            'allowedCurrencies' => $currencyService->getAllowedCurrencies(),
         ]);
     }
 
-    #[Route('/voyage/{id}/reserver', name: 'app_front_reserver_voyage', requirements: ['id' => '\d+'])]
+    #[Route('/voyage/{id}/reserver', name: 'app_front_reserver_voyage', requirements: ['id' => '\d+'], methods: ['GET', 'POST'])]
     public function reserver(
         int $id,
         Request $request,
         ManagerRegistry $doctrine,
         EntityManagerInterface $entityManager,
-        ValidatorInterface $validator
+        CurrencyService $currencyService,
+        OpenWeatherService $openWeatherService
     ): Response {
         $voyage = $doctrine->getRepository(Voyage::class)->find($id);
 
@@ -128,197 +143,184 @@ class HomeController extends AbstractController
 
         if ($voyage->getPlacesRestantes() <= 0) {
             $this->addFlash('error', 'Désolé, ce voyage est complet.');
-            return $this->redirectToRoute('app_front_voyage_detail', ['id' => $voyage->getId()]);
+
+            return $this->redirectToRoute('app_front_voyage_detail', [
+                'id' => $voyage->getId(),
+                'currency' => $request->query->get('currency', 'TND'),
+            ]);
         }
 
-        $errors = [];
-        $formData = [
-            'nom' => '',
-            'prenom' => '',
-            'email' => '',
-            'nb_personnes' => 1,
-        ];
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            return $this->redirectToRoute('app_login');
+        }
+
+        $prixEnfantRatio = 0.5;
+        $currency = $currencyService->normalizeCurrency($request->query->get('currency', 'TND'));
+
+        $prixAdulteConverti = $currencyService->convert((float) $voyage->getPrix(), $currency);
+        $prixEnfantConverti = $currencyService->convert((float) ($voyage->getPrix() * $prixEnfantRatio), $currency);
+
+        $weather = null;
+        $destination = trim((string) $voyage->getDestination());
+
+        if ($destination !== '') {
+            $weather = $openWeatherService->getWeatherByCity($destination);
+        }
 
         if ($request->isMethod('POST')) {
-            $formData['nom'] = trim((string) $request->request->get('nom'));
-            $formData['prenom'] = trim((string) $request->request->get('prenom'));
-            $formData['email'] = trim((string) $request->request->get('email'));
-            $formData['nb_personnes'] = (int) $request->request->get('nb_personnes', 1);
+            $nbAdultes = max(0, (int) $request->request->get('nbAdultes', 0));
+            $nbEnfants = max(0, (int) $request->request->get('nbEnfants', 0));
+            $nbPersonnes = $nbAdultes + $nbEnfants;
 
-            $constraints = new Assert\Collection([
-                'nom' => [
-                    new Assert\NotBlank(['message' => 'Le nom est obligatoire.']),
-                    new Assert\Length([
-                        'min' => 2,
-                        'max' => 50,
-                        'minMessage' => 'Le nom doit contenir au moins 2 caractères.',
-                        'maxMessage' => 'Le nom ne doit pas dépasser 50 caractères.',
-                    ]),
-                    new Assert\Regex([
-                        'pattern' => '/^[\p{L}\s\'-]+$/u',
-                        'message' => 'Le nom ne doit contenir que des lettres.',
-                    ]),
-                ],
-                'prenom' => [
-                    new Assert\NotBlank(['message' => 'Le prénom est obligatoire.']),
-                    new Assert\Length([
-                        'min' => 2,
-                        'max' => 50,
-                        'minMessage' => 'Le prénom doit contenir au moins 2 caractères.',
-                        'maxMessage' => 'Le prénom ne doit pas dépasser 50 caractères.',
-                    ]),
-                    new Assert\Regex([
-                        'pattern' => '/^[\p{L}\s\'-]+$/u',
-                        'message' => 'Le prénom ne doit contenir que des lettres.',
-                    ]),
-                ],
-                'email' => [
-                    new Assert\NotBlank(['message' => 'L’email est obligatoire.']),
-                    new Assert\Length([
-                        'max' => 180,
-                        'maxMessage' => 'L’email ne doit pas dépasser 180 caractères.',
-                    ]),
-                    new Assert\Email([
-                        'message' => 'Veuillez saisir une adresse email valide.',
-                    ]),
-                ],
-                'nb_personnes' => [
-                    new Assert\NotBlank(['message' => 'Le nombre de personnes est obligatoire.']),
-                    new Assert\Positive(['message' => 'Le nombre de personnes doit être supérieur à 0.']),
-                ],
-            ]);
+            if ($nbPersonnes <= 0) {
+                $this->addFlash('error', 'Veuillez sélectionner au moins 1 personne.');
 
-            $violations = $validator->validate($formData, $constraints);
-
-            if ($formData['nb_personnes'] > $voyage->getPlacesRestantes()) {
-                $errors['nb_personnes'][] = 'Le nombre de places demandées dépasse les places restantes.';
-            }
-
-            foreach ($violations as $violation) {
-                $field = str_replace(['[', ']'], '', $violation->getPropertyPath());
-                $errors[$field][] = $violation->getMessage();
-            }
-
-            if (empty($errors)) {
-                $reservation = new Reservation();
-                $reservation->setVoyage($voyage);
-                $reservation->setNbrPersonnes($formData['nb_personnes']);
-                $reservation->setDateReservation(new \DateTime());
-                $reservation->setStatut('EN_ATTENTE');
-
-                if ($this->getUser()) {
-                    $reservation->setUser($this->getUser());
-                }
-
-                $prixTotal = $voyage->getPrix() * $formData['nb_personnes'];
-
-                if (method_exists($reservation, 'setPrixTotal')) {
-                    $reservation->setPrixTotal($prixTotal);
-                }
-
-                $voyage->setPlacesRestantes(
-                    $voyage->getPlacesRestantes() - $formData['nb_personnes']
-                );
-
-                $entityManager->persist($reservation);
-                $entityManager->persist($voyage);
-                $entityManager->flush();
-
-                $this->addFlash('success', 'Votre réservation a bien été enregistrée avec succès.');
-
-                return $this->redirectToRoute('app_front_voyage_detail', [
+                return $this->redirectToRoute('app_front_reserver_voyage', [
                     'id' => $voyage->getId(),
+                    'currency' => $currency,
                 ]);
             }
+
+            if ($nbPersonnes > $voyage->getPlacesRestantes()) {
+                $this->addFlash('error', 'Le nombre de places demandées dépasse les places restantes.');
+
+                return $this->redirectToRoute('app_front_reserver_voyage', [
+                    'id' => $voyage->getId(),
+                    'currency' => $currency,
+                ]);
+            }
+
+            $reservation = new Reservation();
+            $reservation->setVoyage($voyage);
+            $reservation->setUser($user);
+            $reservation->setDateReservation(new \DateTime());
+            $reservation->setStatut('EN_ATTENTE');
+
+            if (method_exists($reservation, 'setPaymentStatus')) {
+                $reservation->setPaymentStatus('NON_PAYEE');
+            }
+
+            if (method_exists($reservation, 'setNbAdultes')) {
+                $reservation->setNbAdultes($nbAdultes);
+            }
+
+            if (method_exists($reservation, 'setNbEnfants')) {
+                $reservation->setNbEnfants($nbEnfants);
+            }
+
+            if (method_exists($reservation, 'recalculerNbrPersonnes')) {
+                $reservation->recalculerNbrPersonnes();
+            } else {
+                $reservation->setNbrPersonnes($nbPersonnes);
+            }
+
+            $prixTotalDt = ($voyage->getPrix() * $nbAdultes) + (($voyage->getPrix() * $prixEnfantRatio) * $nbEnfants);
+
+            if (method_exists($reservation, 'setPrixTotal')) {
+                $reservation->setPrixTotal($prixTotalDt);
+            }
+
+            $entityManager->persist($reservation);
+            $entityManager->flush();
+
+            $this->addFlash('success', 'Votre demande de réservation a bien été enregistrée.');
+
+            return $this->redirectToRoute('app_front_mes_reservations', [
+                'currency' => $currency,
+            ]);
         }
 
-        return $this->render('front/voyage/reservation.html.twig', [
+        return $this->render('front/reservation/reservation.html.twig', [
             'voyage' => $voyage,
-            'errors' => $errors,
-            'formData' => $formData,
+            'prixEnfantRatio' => $prixEnfantRatio,
+            'currency' => $currency,
+            'currencySymbol' => $currencyService->getSymbol($currency),
+            'allowedCurrencies' => $currencyService->getAllowedCurrencies(),
+            'prixAdulteConverti' => $prixAdulteConverti,
+            'prixEnfantConverti' => $prixEnfantConverti,
+            'weather' => $weather,
         ]);
     }
 
-    #[Route('/mes-reservations', name: 'app_front_mes_reservations')]
-    public function mesReservations(Request $request, EntityManagerInterface $entityManager): Response
-    {
-        $statut = trim((string) $request->query->get('statut', ''));
-
-        $qb = $entityManager->getRepository(Reservation::class)->createQueryBuilder('r')
-            ->leftJoin('r.voyage', 'v')
-            ->addSelect('v')
-            ->orderBy('r.dateReservation', 'DESC');
-
-        if ($this->getUser()) {
-            $qb->andWhere('r.user = :user')
-                ->setParameter('user', $this->getUser());
-        }
-
-        if ($statut !== '') {
-            $qb->andWhere('r.statut = :statut')
-                ->setParameter('statut', $statut);
-        }
-
-        $reservations = $qb->getQuery()->getResult();
-
-        return $this->render('front/voyage/mes_reservations.html.twig', [
-            'reservations' => $reservations,
-            'selectedStatut' => $statut,
-        ]);
-    }
-
-    #[Route('/reservation/{id}/annuler', name: 'app_front_annuler_reservation', methods: ['POST'])]
-    public function annulerReservation(
-        int $id,
+    #[Route('/mes-reservations', name: 'app_front_mes_reservations', methods: ['GET'])]
+    public function mesReservations(
         Request $request,
         ManagerRegistry $doctrine,
-        EntityManagerInterface $entityManager
+        PaginatorInterface $paginator
     ): Response {
+        $user = $this->getUser();
+
+        if (!$user instanceof User) {
+            return $this->redirectToRoute('app_login');
+        }
+
+        $currency = $request->query->get('currency', 'TND');
+        $selectedStatut = trim((string) $request->query->get('statut', ''));
+        $page = $request->query->getInt('page', 1);
+
+        $qb = $doctrine->getRepository(Reservation::class)->createQueryBuilder('r')
+            ->leftJoin('r.voyage', 'v')
+            ->addSelect('v')
+            ->andWhere('r.user = :user')
+            ->setParameter('user', $user)
+            ->orderBy('r.dateReservation', 'DESC');
+
+        if ($selectedStatut !== '') {
+            if (strtoupper($selectedStatut) === 'PAYEE' && $this->reservationHasField($doctrine, 'paymentStatus')) {
+                $qb->andWhere('UPPER(r.paymentStatus) = :paymentStatus')
+                    ->setParameter('paymentStatus', 'PAYEE');
+            } else {
+                $qb->andWhere('UPPER(r.statut) = :statut')
+                    ->setParameter('statut', strtoupper($selectedStatut));
+            }
+        }
+
+        $reservations = $paginator->paginate($qb, $page, 6);
+
+        return $this->render('front/reservation/mes_reservations.html.twig', [
+            'reservations' => $reservations,
+            'selectedStatut' => $selectedStatut,
+            'currency' => $currency,
+        ]);
+    }
+
+    #[Route('/mes-reservations/{id}', name: 'app_front_reservation_detail', methods: ['GET'], requirements: ['id' => '\d+'])]
+    public function detailReservation(int $id, ManagerRegistry $doctrine): Response
+    {
         $reservation = $doctrine->getRepository(Reservation::class)->find($id);
 
         if (!$reservation) {
             throw $this->createNotFoundException('Réservation introuvable.');
         }
 
-        if (!$this->isCsrfTokenValid('annuler_reservation_' . $reservation->getId(), $request->request->get('_token'))) {
-            $this->addFlash('error', 'Jeton CSRF invalide.');
-            return $this->redirectToRoute('app_front_mes_reservations');
+        $user = $this->getUser();
+
+        if (!$user instanceof User) {
+            return $this->redirectToRoute('app_login');
         }
 
-        if ($reservation->getStatut() === 'CONFIRMEE') {
-            $this->addFlash('error', 'Une réservation confirmée ne peut pas être annulée.');
-            return $this->redirectToRoute('app_front_mes_reservations');
+        if (
+            method_exists($reservation, 'getUser') &&
+            $reservation->getUser() &&
+            $reservation->getUser()->getId() !== $user->getId() &&
+            !in_array('ROLE_ADMIN', $user->getRoles())
+        ) {
+            throw $this->createAccessDeniedException('Accès refusé.');
         }
 
-        if ($reservation->getStatut() === 'ANNULEE') {
-            $this->addFlash('error', 'Cette réservation est déjà annulée.');
-            return $this->redirectToRoute('app_front_mes_reservations');
-        }
-
-        $voyage = $reservation->getVoyage();
-
-        if ($voyage) {
-            $voyage->setPlacesRestantes(
-                $voyage->getPlacesRestantes() + $reservation->getNbrPersonnes()
-            );
-            $entityManager->persist($voyage);
-        }
-
-        $reservation->setStatut('ANNULEE');
-        $entityManager->persist($reservation);
-        $entityManager->flush();
-
-        $this->addFlash('success', 'La réservation a été annulée avec succès.');
-
-        return $this->redirectToRoute('app_front_mes_reservations');
+        return $this->render('front/reservation/reservation_detail.html.twig', [
+            'reservation' => $reservation,
+            'currency' => 'TND',
+        ]);
     }
 
-    #[Route('/reservation/{id}/modifier', name: 'app_front_modifier_reservation', requirements: ['id' => '\d+'])]
-    public function modifierReservation(
+    #[Route('/reservation/{id}/annuler', name: 'app_front_annuler_reservation', requirements: ['id' => '\d+'], methods: ['POST'])]
+    public function annulerReservation(
         int $id,
-        Request $request,
         ManagerRegistry $doctrine,
-        EntityManagerInterface $entityManager
+        EntityManagerInterface $entityManager,
+        Request $request
     ): Response {
         $reservation = $doctrine->getRepository(Reservation::class)->find($id);
 
@@ -327,220 +329,371 @@ class HomeController extends AbstractController
         }
 
         $user = $this->getUser();
-        if (!$user || $reservation->getUser() !== $user) {
-            $this->addFlash('error', 'Vous n’êtes pas autorisé à modifier cette réservation.');
+
+        if (!$user instanceof User) {
+            return $this->redirectToRoute('app_login');
+        }
+
+        if (
+            method_exists($reservation, 'getUser') &&
+            $reservation->getUser() &&
+            $reservation->getUser()->getId() !== $user->getId() &&
+            !in_array('ROLE_ADMIN', $user->getRoles())
+        ) {
+            throw $this->createAccessDeniedException('Accès refusé.');
+        }
+
+        if (
+            !$this->isCsrfTokenValid(
+                'annuler_reservation_' . $reservation->getId(),
+                (string) $request->request->get('_token')
+            )
+        ) {
+            throw $this->createAccessDeniedException('Token CSRF invalide.');
+        }
+
+        $paymentStatus = method_exists($reservation, 'getPaymentStatus')
+            ? strtoupper((string) $reservation->getPaymentStatus())
+            : 'NON_PAYEE';
+
+        if (strtoupper((string) $reservation->getStatut()) === 'ANNULEE') {
+            $this->addFlash('error', 'Cette réservation est déjà annulée.');
             return $this->redirectToRoute('app_front_mes_reservations');
         }
 
-        if ($reservation->getStatut() === 'ANNULEE') {
-            $this->addFlash('error', 'Impossible de modifier une réservation annulée.');
+        if (strtoupper((string) $reservation->getStatut()) === 'CONFIRMEE') {
+            $this->addFlash('error', 'Une réservation confirmée ne peut pas être annulée.');
             return $this->redirectToRoute('app_front_mes_reservations');
         }
 
-        if ($reservation->getStatut() === 'CONFIRMEE') {
-            $this->addFlash('error', 'Une réservation confirmée ne peut pas être modifiée.');
+        if ($paymentStatus === 'PAYEE') {
+            $this->addFlash('error', 'Une réservation payée ne peut pas être annulée.');
             return $this->redirectToRoute('app_front_mes_reservations');
         }
 
-        $voyage = $reservation->getVoyage();
+        $reservation->setStatut('ANNULEE');
+        $entityManager->flush();
 
-        if (!$voyage) {
-            throw $this->createNotFoundException('Voyage introuvable.');
+        $this->addFlash('success', 'La réservation a bien été annulée.');
+
+        return $this->redirectToRoute('app_front_mes_reservations');
+    }
+
+    #[Route('/voyages', name: 'app_front_voyages', methods: ['GET'])]
+    public function voyages(ManagerRegistry $doctrine, Request $request, OpenWeatherService $openWeatherService, CurrencyService $currencyService, PaginatorInterface $paginator ): Response {
+        $qb = $doctrine->getRepository(Voyage::class)->createQueryBuilder('v')
+            ->orderBy('v.id', 'DESC');
+
+        $filters = [
+            'budget_max' => trim((string) $request->query->get('budget_max', '')),
+            'destination' => trim((string) $request->query->get('destination', '')),
+            'search' => trim((string) $request->query->get('search', '')),
+            'currency' => $currencyService->normalizeCurrency($request->query->get('currency', 'TND')),
+        ];
+
+        if ($filters['budget_max'] !== '') {
+            $qb->andWhere('v.prix <= :budgetMax')
+                ->setParameter('budgetMax', (float) $filters['budget_max']);
+        }
+
+        if ($filters['destination'] !== '') {
+            $qb->andWhere('LOWER(v.destination) LIKE :destination')
+                ->setParameter('destination', '%' . mb_strtolower($filters['destination']) . '%');
+        }
+
+        if ($filters['search'] !== '') {
+            $qb->andWhere('LOWER(v.titre) LIKE :search OR LOWER(v.destination) LIKE :search')
+                ->setParameter('search', '%' . mb_strtolower($filters['search']) . '%');
+        }
+
+        $currency = $filters['currency'];
+
+        $voyages = $paginator->paginate(
+            $qb,
+            $request->query->getInt('page', 1),
+            6
+        );
+
+        $weatherData = [];
+        $convertedPrices = [];
+
+        foreach ($voyages as $voyage) {
+            $destination = trim((string) $voyage->getDestination());
+
+            if ($destination !== '') {
+                $weatherData[$voyage->getId()] = $openWeatherService->getWeatherByCity($destination);
+            } else {
+                $weatherData[$voyage->getId()] = null;
+            }
+
+            $convertedPrices[$voyage->getId()] = $currencyService->convert(
+                (float) $voyage->getPrix(),
+                $currency
+            );
+        }
+
+        return $this->render('front/voyages/voyages.html.twig', [
+            'voyages' => $voyages,
+            'weatherData' => $weatherData,
+            'convertedPrices' => $convertedPrices,
+            'currency' => $currency,
+            'currencySymbol' => $currencyService->getSymbol($currency),
+            'allowedCurrencies' => $currencyService->getAllowedCurrencies(),
+            'filters' => $filters,
+        ]);
+    }
+
+    #[Route('/reservation/{id}/qrcode', name: 'app_reservation_qrcode', methods: ['GET'])]
+    public function reservationQrCode(int $id, ManagerRegistry $doctrine): Response
+    {
+        $reservation = $doctrine->getRepository(Reservation::class)->find($id);
+
+        if (!$reservation) {
+            throw $this->createNotFoundException('Réservation introuvable.');
+        }
+
+        $result = $this->buildReservationQrCode($reservation);
+
+        return new Response(
+            $result->getString(),
+            200,
+            [
+                'Content-Type' => $result->getMimeType(),
+                'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
+            ]
+        );
+    }
+
+    #[Route('/reservation/{id}/qrcode/download', name: 'app_reservation_qrcode_download', methods: ['GET'])]
+    public function downloadReservationQrCode(int $id, ManagerRegistry $doctrine): Response
+    {
+        $reservation = $doctrine->getRepository(Reservation::class)->find($id);
+
+        if (!$reservation) {
+            throw $this->createNotFoundException('Réservation introuvable.');
+        }
+
+        $result = $this->buildReservationQrCode($reservation);
+
+        $response = new Response(
+            $result->getString(),
+            200,
+            [
+                'Content-Type' => $result->getMimeType(),
+            ]
+        );
+
+        $disposition = $response->headers->makeDisposition(
+            ResponseHeaderBag::DISPOSITION_ATTACHMENT,
+            'reservation-' . $reservation->getId() . '-qrcode.svg'
+        );
+
+        $response->headers->set('Content-Disposition', $disposition);
+
+        return $response;
+    }
+
+    private function buildReservationQrCode(Reservation $reservation)
+{
+    $detailPath = $this->generateUrl(
+        'app_front_reservation_detail',
+        ['id' => $reservation->getId()]
+    );
+
+    $baseUrl = rtrim((string) $this->getParameter('app.base_url'), '/');
+    $detailUrl = $baseUrl . $detailPath;
+
+    return Builder::create()
+        ->writer(new PngWriter())
+        ->data($detailUrl)
+        ->encoding(new Encoding('UTF-8'))
+        ->errorCorrectionLevel(ErrorCorrectionLevel::High)
+        ->size(420)
+        ->margin(16)
+        ->roundBlockSizeMode(RoundBlockSizeMode::Margin)
+        ->build();
+}
+
+
+    #[Route('/reservation/{id}/qrcode/view', name: 'app_reservation_qrcode_view', methods: ['GET'])]
+    public function viewReservationQrCode(int $id, ManagerRegistry $doctrine): Response
+    {
+        $reservation = $doctrine->getRepository(Reservation::class)->find($id);
+
+        if (!$reservation) {
+            throw $this->createNotFoundException('Réservation introuvable.');
+        }
+
+        return $this->render('front/reservation/qr_code_view.html.twig', [
+            'reservation' => $reservation,
+        ]);
+    }
+
+    #[Route('/profile', name: 'app_front_profile')]
+    public function profile(): Response
+    {
+        $user = $this->getUser();
+
+        if (!$user) {
+            return $this->redirectToRoute('app_login');
+        }
+
+        return $this->render('front/user/profile.html.twig', [
+            'user' => $user,
+        ]);
+    }
+
+    #[Route('/profile/edit', name: 'app_profile_edit')]
+    public function editProfile(Request $request, EntityManagerInterface $entityManager): Response
+    {
+            $user = $this->getUser();
+            if (!$user) 
+            {
+                return $this->redirectToRoute('app_login');
+            }
+
+            if ($request->isMethod('POST')) 
+            {
+                $nom = $request->request->get('nom');
+                $prenom = $request->request->get('prenom');
+                $telephone = $request->request->get('telephone');
+                $addresse = $request->request->get('addresse');
+
+                if ($nom) {
+                    $user->setNom($nom);
+                }
+                if ($prenom) {
+                    $user->setPrenom($prenom);
+                }
+                if ($telephone) {
+                    $user->setTelephone($telephone);
+                }
+                if ($addresse) {
+                    $user->setAddresse($addresse);
+                }
+
+                $entityManager->flush();
+
+                $this->addFlash('success', 'Profil modifié avec succès');
+                return $this->redirectToRoute('app_front_profile');
+            }
+
+            return $this->render('front/user/edit_profile.html.twig', [
+                'user' => $user,
+            ]);
+    }
+
+    #[Route('/change-password', name: 'app_front_change_password', methods: ['GET', 'POST'])]
+    public function changePassword(
+        Request $request,
+        UserPasswordHasherInterface $passwordHasher,
+        EntityManagerInterface $entityManager
+    ): Response {
+        $user = $this->getUser();
+
+        if (!$user) {
+            return $this->redirectToRoute('app_login');
         }
 
         if ($request->isMethod('POST')) {
-            $nouveauNbr = (int) $request->request->get('nb_personnes', 1);
-            $ancienNbr = $reservation->getNbrPersonnes();
+            $oldPassword = $request->request->get('old_password');
+            $newPassword = $request->request->get('new_password');
+            $confirmPassword = $request->request->get('confirm_password');
 
-            if ($nouveauNbr < 1) {
-                $this->addFlash('error', 'Le nombre de personnes doit être supérieur à 0.');
-                return $this->redirectToRoute('app_front_modifier_reservation', ['id' => $reservation->getId()]);
+            if (!$passwordHasher->isPasswordValid($user, $oldPassword)) {
+                $this->addFlash('error', 'Ancien mot de passe incorrect');
+                return $this->redirectToRoute('app_front_change_password');
             }
 
-            $difference = $nouveauNbr - $ancienNbr;
-
-            if ($difference > 0 && $difference > $voyage->getPlacesRestantes()) {
-                $this->addFlash('error', 'Le nombre demandé dépasse les places restantes disponibles.');
-                return $this->redirectToRoute('app_front_modifier_reservation', ['id' => $reservation->getId()]);
+            if ($newPassword !== $confirmPassword) {
+                $this->addFlash('error', 'Les nouveaux mots de passe ne correspondent pas');
+                return $this->redirectToRoute('app_front_change_password');
             }
 
-            $reservation->setNbrPersonnes($nouveauNbr);
-            $voyage->setPlacesRestantes($voyage->getPlacesRestantes() - $difference);
+            if (strlen((string) $newPassword) < 6) {
+                $this->addFlash('error', 'Le mot de passe doit contenir au moins 6 caractères');
+                return $this->redirectToRoute('app_front_change_password');
+            }
 
-            $entityManager->persist($reservation);
-            $entityManager->persist($voyage);
+            $hashedPassword = $passwordHasher->hashPassword($user, $newPassword);
+            $user->setPassword($hashedPassword);
             $entityManager->flush();
 
-            $this->addFlash('success', 'La réservation a bien été modifiée.');
-
-            return $this->redirectToRoute('app_front_mes_reservations');
+            $this->addFlash('success', 'Votre mot de passe a été modifié avec succès');
+            return $this->redirectToRoute('app_front_profile');
         }
 
-        return $this->render('front/voyage/modifier_reservation.html.twig', [
-            'reservation' => $reservation,
-            'voyage' => $voyage,
-        ]);
+        return $this->render('front/profile/change_password.html.twig');
     }
 
-    #[Route('/voyages', name: 'app_front_voyages')]
-    public function voyages(Request $request, EntityManagerInterface $entityManager): Response
+    #[Route('/events', name: 'app_front_events', methods: ['GET'])]
+    public function publicEvents(Request $request, EntityManagerInterface $entityManager): Response
     {
-        $destination = trim((string) $request->query->get('destination', ''));
-        $dateDepart = trim((string) $request->query->get('date_depart', ''));
-        $dateRetour = trim((string) $request->query->get('date_retour', ''));
-        $budgetMax = trim((string) $request->query->get('budget_max', ''));
+        $search = $request->query->get('search');
+        $priceLimit = $request->query->get('price_limit');
+        $page = $request->query->getInt('page', 1);
+        $limit = 6;
 
-        $qb = $entityManager->getRepository(Voyage::class)->createQueryBuilder('v');
+        $qb = $entityManager->getRepository(Events::class)
+            ->createQueryBuilder('e')
+            ->where('e.statut != :termine')
+            ->setParameter('termine', 'termine')
+            ->orderBy('e.date_debut', 'ASC');
 
-        if ($destination !== '') {
-            $qb->andWhere('LOWER(v.destination) LIKE :destination')
-                ->setParameter('destination', '%' . strtolower($destination) . '%');
+        if ($search) {
+            $qb->andWhere('e.titre LIKE :search OR e.location LIKE :search OR e.categorie LIKE :search')
+                ->setParameter('search', '%' . $search . '%');
         }
 
-        if ($dateDepart !== '') {
-            try {
-                $dateDepartObj = new \DateTime($dateDepart);
-                $qb->andWhere('v.dateDepart >= :dateDepart')
-                    ->setParameter('dateDepart', $dateDepartObj);
-            } catch (\Exception $e) {
-            }
+        if ($priceLimit && is_numeric($priceLimit)) {
+            $qb->andWhere('e.prix <= :priceLimit')
+                ->setParameter('priceLimit', $priceLimit);
         }
 
-        if ($dateRetour !== '') {
-            try {
-                $dateRetourObj = new \DateTime($dateRetour);
-                $qb->andWhere('v.dateRetour <= :dateRetour')
-                    ->setParameter('dateRetour', $dateRetourObj);
-            } catch (\Exception $e) {
-            }
+        $totalEvents = $qb->select('COUNT(e.id_event)')
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        $totalPages = ceil($totalEvents / $limit);
+
+        if ($page < 1) {
+            $page = 1;
+        }
+        if ($page > $totalPages && $totalPages > 0) {
+            $page = $totalPages;
         }
 
-        if ($budgetMax !== '' && is_numeric($budgetMax)) {
-            $qb->andWhere('v.prix <= :budgetMax')
-                ->setParameter('budgetMax', (float) $budgetMax);
-        }
+        $offset = ($page - 1) * $limit;
 
-        $voyages = $qb
-            ->orderBy('v.dateDepart', 'ASC')
+        $events = $qb->select('e')
+            ->setFirstResult($offset)
+            ->setMaxResults($limit)
             ->getQuery()
             ->getResult();
 
-        return $this->render('front/voyage/voyages.html.twig', [
-            'voyages' => $voyages,
-            'filters' => [
-                'destination' => $destination,
-                'date_depart' => $dateDepart,
-                'date_retour' => $dateRetour,
-                'budget_max' => $budgetMax,
-            ],
+        return $this->render('front/event/events.html.twig', [
+            'events' => $events,
+            'total_events' => $totalEvents,
+            'total_pages' => $totalPages,
+            'current_page' => $page,
+            'limit' => $limit,
+            'search' => $search,
+            'price_limit' => $priceLimit,
         ]);
     }
-    // Ajoutez ces use en haut du fichier
-
-// Ajoutez cette méthode pour la page profil
-#[Route('/profile', name: 'app_front_profile')]
-public function profile(): Response
-{
-    $user = $this->getUser();
-    
-    if (!$user) {
-        return $this->redirectToRoute('app_login');
-    }
-    
-    return $this->render('front/user/profile.html.twig', [
-        'user' => $user,
-    ]);
-}
-
-// Ajoutez cette méthode pour modifier le profil
-#[Route('/profile/edit', name: 'app_profile_edit')]
-public function editProfile(Request $request, EntityManagerInterface $entityManager): Response
-{
-    $user = $this->getUser();
-    
-    if (!$user) {
-        return $this->redirectToRoute('app_login');
-    }
-    
-    if ($request->isMethod('POST')) {
-        $nom = $request->request->get('nom');
-        $prenom = $request->request->get('prenom');
-        $telephone = $request->request->get('telephone');
-        $addresse = $request->request->get('addresse');
-        
-        if ($nom) $user->setNom($nom);
-        if ($prenom) $user->setPrenom($prenom);
-        if ($telephone) $user->setTelephone($telephone);
-        if ($addresse) $user->setAddresse($addresse);
-        
-        $entityManager->flush();
-        
-        $this->addFlash('success', 'Profil modifié avec succès');
-        return $this->redirectToRoute('app_front_profile');
-    }
-    
-    return $this->render('front/user/edit_profile.html.twig', [
-        'user' => $user,
-    ]);
-}
-
-// Ajoutez cette méthode pour changer le mot de passe
-#[Route('/change-password', name: 'app_front_change_password', methods: ['GET', 'POST'])]
-public function changePassword(Request $request, UserPasswordHasherInterface $passwordHasher, EntityManagerInterface $entityManager): Response
-{
-    $user = $this->getUser();
-    
-    if (!$user) {
-        return $this->redirectToRoute('app_login');
-    }
-    
-    if ($request->isMethod('POST')) {
-        $oldPassword = $request->request->get('old_password');
-        $newPassword = $request->request->get('new_password');
-        $confirmPassword = $request->request->get('confirm_password');
-        
-        // Vérifier l'ancien mot de passe
-        if (!$passwordHasher->isPasswordValid($user, $oldPassword)) {
-            $this->addFlash('error', 'Ancien mot de passe incorrect');
-            return $this->redirectToRoute('app_front_change_password');
-        }
-        
-        // Vérifier que les nouveaux mots de passe correspondent
-        if ($newPassword !== $confirmPassword) {
-            $this->addFlash('error', 'Les nouveaux mots de passe ne correspondent pas');
-            return $this->redirectToRoute('app_front_change_password');
-        }
-        
-        // Vérifier la longueur du nouveau mot de passe
-        if (strlen($newPassword) < 6) {
-            $this->addFlash('error', 'Le mot de passe doit contenir au moins 6 caractères');
-            return $this->redirectToRoute('app_front_change_password');
-        }
-        
-        // Changer le mot de passe
-        $hashedPassword = $passwordHasher->hashPassword($user, $newPassword);
-        $user->setPassword($hashedPassword);
-        $entityManager->flush();
-        
-        $this->addFlash('success', 'Votre mot de passe a été modifié avec succès');
-        return $this->redirectToRoute('app_front_profile');
-    }
-    
-    return $this->render('front/profile/change_password.html.twig');
-}
 
     #[Route('/logements', name: 'app_front_logement_index')]
     public function logements(
         Request $request,
         LogementSearchService $searchService,
         EntityManagerInterface $entityManager
-    ): Response {
+     ): Response {
         $search = $request->query->get('q');
-        $type   = $request->query->get('type');
-        $sort   = $request->query->get('sort');
+        $type = $request->query->get('type');
+        $sort = $request->query->get('sort');
 
         $allLogements = $searchService->searchAndSort($search, $type, $sort);
-        $logements = array_filter($allLogements, function($logement) {
+        $logements = array_filter($allLogements, function ($logement) {
             return $logement->isDisponibilite() === true;
         });
 
@@ -550,31 +703,32 @@ public function changePassword(Request $request, UserPasswordHasherInterface $pa
             ->select('DISTINCT l.type')
             ->getQuery()
             ->getScalarResult();
+
         $typesListe = array_column($typesDistincts, 'type');
 
         $user = $this->getUser();
         $userId = $user instanceof User ? $user->getId() : null;
 
         return $this->render('front/logement/index.html.twig', [
-            'logements'     => $logements,
+            'logements' => $logements,
             'currentSearch' => $search,
-            'currentType'   => $type,
-            'currentSort'   => $sort,
-            'allTypes'      => $typesListe,
-            'isConnected'   => $user !== null,
-            'userId'        => $userId,
+            'currentType' => $type,
+            'currentSort' => $sort,
+            'allTypes' => $typesListe,
+            'isConnected' => $user !== null,
+            'userId' => $userId,
         ]);
     }
 
     #[Route('/logements/recommendations', name: 'app_front_logement_recommendations', methods: ['GET'])]
     public function recommendations(GeminiService $geminiService, EntityManagerInterface $em): JsonResponse
     {
-        $user = $this->getUser();
-        if (!$user instanceof User) {
-            return $this->json(['redirect' => $this->generateUrl('app_login')], 401);
-        }
-
         try {
+            $user = $this->getUser();
+            if (!$user instanceof User) {
+                return $this->json(['success' => false, 'error' => 'Utilisateur non authentifié'], 401);
+            }
+
             $reservations = $em->getRepository(Reservationlog::class)
                 ->createQueryBuilder('r')
                 ->where('r.user = :user')
@@ -603,7 +757,7 @@ public function changePassword(Request $request, UserPasswordHasherInterface $pa
 
             try {
                 $responseText = $geminiService->generateRecommendations($prompt);
-                $jsonString = preg_replace('/```json\s*|\s*```/', '', $responseText);
+                $jsonString = preg_replace('/json\s*|\s*/', '', $responseText);
                 $recommendations = json_decode($jsonString, true);
                 $recommendedIds = $recommendations['recommended_ids'] ?? [];
 
@@ -636,6 +790,7 @@ public function changePassword(Request $request, UserPasswordHasherInterface $pa
                 $tarif = number_format($logement->getTarifNuit() ?? 0, 0, ',', ' ');
                 $equipement = $logement->getEquipement();
                 $equipementHtml = '';
+
                 if ($equipement) {
                     $equipements = explode(',', $equipement);
                     $equipementHtml = '<div>';
@@ -689,8 +844,8 @@ public function changePassword(Request $request, UserPasswordHasherInterface $pa
 
             return $this->json([
                 'status' => 'completed',
-                'html'   => $html,
-                'count'  => count($recommendedLogements)
+                'html' => $html,
+                'count' => count($recommendedLogements)
             ]);
         } catch (\Exception $e) {
             return $this->json(['error' => $e->getMessage()], 500);
@@ -727,23 +882,29 @@ public function changePassword(Request $request, UserPasswordHasherInterface $pa
 
         return sprintf(
             "Tu es un assistant expert en recommandation de logements de vacances.
-Analyse l'historique des réservations de l'utilisateur et sélectionne les logements les plus pertinents parmi ceux proposés.
+            Analyse l'historique des réservations de l'utilisateur et sélectionne les logements les plus pertinents parmi ceux proposés.
 
-## Historique des réservations de l'utilisateur
-%s
+            ## Historique des réservations de l'utilisateur
+            %s
 
-## Logements disponibles (parmi lesquels choisir)
-%s
+            ## Logements disponibles (parmi lesquels choisir)
+            %s
 
-Règles:
-- Retourne uniquement du JSON valide
-- Structure: {\"recommended_ids\": [id1, id2, ...], \"reason\": \"brève justification\"}
-- Sélectionne entre 3 et 6 logements
-- Base-toi sur le type, la capacité, le prix, les équipements et la diversité
+            Règles:
+            - Retourne uniquement du JSON valide
+            - Structure: {\"recommended_ids\": [id1, id2, ...], \"reason\": \"brève justification\"}
+            - Sélectionne entre 3 et 6 logements
+            - Base-toi sur le type, la capacité, le prix, les équipements et la diversité
 
-JSON:",
+            JSON:",
             $resumeReservations,
             $resumeCandidates
         );
+    }
+
+    private function reservationHasField(ManagerRegistry $doctrine, string $fieldName): bool
+    {
+        $metadata = $doctrine->getManager()->getClassMetadata(Reservation::class);
+        return $metadata->hasField($fieldName);
     }
 }

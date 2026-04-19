@@ -1,0 +1,66 @@
+{% extends 'base_front.html.twig' %}
+
+{% block title %}Paiement réussi{% endblock %}
+
+{% block body %}
+
+
+
+<section class="hero-wrap hero-wrap-2"
+         style="background-image: url('{{ asset('images/bg_payment_success.jpg') }}'); background-size: cover; background-position: center center; height: 420px;">
+            <div class="overlay"></div>
+            <div class="container">
+                <div class="row no-gutters slider-text js-fullheight align-items-end justify-content-center">
+                    <div class="col-md-9 ftco-animate pb-5 text-center">
+                        <p class="breadcrumbs">
+                            <span class="mr-2">
+                                <a href="{{ path('app_front_home', {currency: currency}) }}">Accueil <i class="fa fa-chevron-right"></i></a>
+                            </span>
+                            <span>Paiement <i class="fa fa-chevron-right"></i></span>
+                        </p>
+                        <h1 class="mb-0 bread">Paiement</h1>
+                    </div>
+                </div>
+            </div>
+</section>
+
+<section class="ftco-section" style="margin-top: -80px; position: relative; z-index: 10;">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div style="background:#ffffff;border-radius:22px;box-shadow:0 15px 40px rgba(0,0,0,0.12);padding:40px;text-align:center;">
+                    <div style="width:90px;height:90px;border-radius:50%;background:#dcfce7;color:#16a34a;display:flex;align-items:center;justify-content:center;font-size:42px;font-weight:bold;margin:0 auto 20px auto;">
+                        ✓
+                    </div>
+
+                    <h2 style="font-weight:800;color:#1f2937;margin-bottom:12px;">
+                        Paiement effectué avec succès
+                    </h2>
+
+                    <p style="color:#6b7280;font-size:16px;margin-bottom:25px;">
+                        Merci, votre paiement a bien été enregistré.
+                    </p>
+
+                    <div style="background:#f8fafc;border:1px solid #e5e7eb;border-radius:14px;padding:22px;text-align:left;max-width:520px;margin:0 auto 25px auto;">
+                        <p><strong>Voyage :</strong> {{ reservation.voyage.titre }}</p>
+                        <p><strong>Destination :</strong> {{ reservation.voyage.destination }}</p>
+                        <p><strong>Nombre de personnes :</strong> {{ reservation.nbrPersonnes }}</p>
+                        <p><strong>Statut :</strong> {{ reservation.statut }}</p>
+                    </div>
+
+                    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+                        <a href="{{ path('app_front_mes_reservations') }}" class="btn btn-primary">
+                            Voir mes réservations
+                        </a>
+
+                        <a href="{{ path('app_front_home', {'currency': 'TND'}) }}" class="btn btn-outline-secondary">
+                            Retour à l’accueil
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% endblock %}

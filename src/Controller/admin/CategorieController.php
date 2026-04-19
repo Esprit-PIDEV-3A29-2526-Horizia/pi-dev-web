@@ -1,29 +1,51 @@
 <?php
 
-namespace App\Controller\admin;
+namespace App\Controller\Admin;
 
 use App\Entity\Categorie;
 use App\Form\CategorieType;
 use Doctrine\ORM\EntityManagerInterface;
+use Knp\Component\Pager\PaginatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 
-#[Route('/admin/categorie')]
+#[Route('/admin/categorie', name: 'admin_categorie_')]
 class CategorieController extends AbstractController
 {
-    #[Route('/', name: 'app_categorie_index', methods: ['GET'])]
-    public function index(Request $request, EntityManagerInterface $entityManager): Response
+    /**
+     * Vérifie que l'utilisateur a les droits d'admin
+     */
+    private function checkAdminAccess(): void
     {
-        $search = $request->query->get('search');
-        $sort = $request->query->get('sort');
+        $user = $this->getUser();
+        if (!$user || !in_array('ROLE_ADMIN', $user->getRoles())) {
+            throw $this->createAccessDeniedException('Accès réservé aux administrateurs.');
+        }
+    }
+
+    /**
+     * Liste paginée des catégories avec recherche et tri
+     */
+    #[Route('/', name: 'index', methods: ['GET'])]
+    public function index(
+        Request $request,
+        EntityManagerInterface $entityManager,
+        PaginatorInterface $paginator
+    ): Response {
+        $this->checkAdminAccess();
+
+        $search = trim((string) $request->query->get('search', ''));
+        $sort = trim((string) $request->query->get('sort', ''));
+        $page = max(1, $request->query->getInt('page', 1));
+        $limit = 10;
 
         $qb = $entityManager->getRepository(Categorie::class)->createQueryBuilder('c');
 
-        if ($search) {
+        if ($search !== '') {
             $qb->andWhere('c.nom LIKE :search OR c.description LIKE :search')
-                ->setParameter('search', '%' . $search . '%');
+               ->setParameter('search', '%' . $search . '%');
         }
 
         switch ($sort) {
@@ -38,18 +60,48 @@ class CategorieController extends AbstractController
                 break;
         }
 
-        $categories = $qb->getQuery()->getResult();
+        $qb->setFirstResult(($page - 1) * $limit)
+           ->setMaxResults($limit);
+
+        try {
+            $categories = $qb->getQuery()->getResult();
+
+            $countQb = $entityManager->getRepository(Categorie::class)->createQueryBuilder('c')
+                ->select('COUNT(c.id)');
+
+            if ($search !== '') {
+                $countQb->andWhere('c.nom LIKE :search OR c.description LIKE :search')
+                    ->setParameter('search', '%' . $search . '%');
+            }
+
+            $total = (int) $countQb->getQuery()->getSingleScalarResult();
+        } catch (\Exception $e) {
+            $this->addFlash('error', 'Erreur lors du chargement des catégories.');
+            $categories = [];
+            $total = 0;
+        }
+
+        $totalCategories = $entityManager->getRepository(Categorie::class)->count([]);
 
         return $this->render('admin/categorie/index.html.twig', [
             'categories' => $categories,
+            'total' => $total,
+            'totalCategories' => $totalCategories,
+            'currentPage' => $page,
             'search' => $search,
             'sort' => $sort,
+            'limit' => $limit,
         ]);
     }
 
-    #[Route('/new', name: 'app_categorie_new', methods: ['GET', 'POST'])]
+    /**
+     * Créer une nouvelle catégorie
+     */
+    #[Route('/new', name: 'new', methods: ['GET', 'POST'])]
     public function new(Request $request, EntityManagerInterface $entityManager): Response
     {
+        $this->checkAdminAccess();
+
         $categorie = new Categorie();
         $form = $this->createForm(CategorieType::class, $categorie);
         $form->handleRequest($request);
@@ -58,9 +110,8 @@ class CategorieController extends AbstractController
             $entityManager->persist($categorie);
             $entityManager->flush();
 
-            $this->addFlash('success', 'Catégorie ajoutée avec succès.');
-
-            return $this->redirectToRoute('app_categorie_index');
+            $this->addFlash('success', 'Catégorie créée avec succès.');
+            return $this->redirectToRoute('admin_categorie_index');
         }
 
         return $this->render('admin/categorie/new.html.twig', [
@@ -68,9 +119,36 @@ class CategorieController extends AbstractController
         ]);
     }
 
-    #[Route('/edit/{id}', name: 'app_categorie_edit', methods: ['GET', 'POST'], requirements: ['id' => '\d+'])]
-    public function edit(int $id, Request $request, EntityManagerInterface $entityManager): Response
+    /**
+     * Afficher les détails d'une catégorie
+     */
+    #[Route('/{id}', name: 'show', methods: ['GET'], requirements: ['id' => '\d+'])]
+    public function show(int $id, EntityManagerInterface $entityManager): Response
     {
+        $this->checkAdminAccess();
+
+        $categorie = $entityManager->getRepository(Categorie::class)->find($id);
+
+        if (!$categorie) {
+            throw $this->createNotFoundException('Catégorie introuvable.');
+        }
+
+        return $this->render('admin/categorie/show.html.twig', [
+            'categorie' => $categorie,
+        ]);
+    }
+
+    /**
+     * Modifier une catégorie existante
+     */
+    #[Route('/{id}/edit', name: 'edit', methods: ['GET', 'POST'], requirements: ['id' => '\d+'])]
+    public function edit(
+        int $id,
+        Request $request,
+        EntityManagerInterface $entityManager
+    ): Response {
+        $this->checkAdminAccess();
+
         $categorie = $entityManager->getRepository(Categorie::class)->find($id);
 
         if (!$categorie) {
@@ -84,8 +162,7 @@ class CategorieController extends AbstractController
             $entityManager->flush();
 
             $this->addFlash('success', 'Catégorie modifiée avec succès.');
-
-            return $this->redirectToRoute('app_categorie_index');
+            return $this->redirectToRoute('admin_categorie_index');
         }
 
         return $this->render('admin/categorie/edit.html.twig', [
@@ -94,34 +171,43 @@ class CategorieController extends AbstractController
         ]);
     }
 
-    #[Route('/delete/{id}', name: 'app_categorie_delete', methods: ['GET'], requirements: ['id' => '\d+'])]
-    public function delete(int $id, EntityManagerInterface $entityManager): Response
-    {
+    /**
+     * Supprimer une catégorie
+     */
+    #[Route('/{id}/delete', name: 'delete', methods: ['POST'], requirements: ['id' => '\d+'])]
+    public function delete(
+        int $id,
+        Request $request,
+        EntityManagerInterface $entityManager
+    ): Response {
+        $this->checkAdminAccess();
+
         $categorie = $entityManager->getRepository(Categorie::class)->find($id);
 
         if (!$categorie) {
             throw $this->createNotFoundException('Catégorie introuvable.');
         }
 
-        $entityManager->remove($categorie);
-        $entityManager->flush();
+        if ($this->isCsrfTokenValid('delete' . $categorie->getId(), $request->request->get('_token'))) {
+            $voyagesCount = $entityManager->createQueryBuilder()
+                ->select('COUNT(v.id)')
+                ->from('App\Entity\Voyage', 'v')
+                ->where('v.categorie = :categorie')
+                ->setParameter('categorie', $categorie)
+                ->getQuery()
+                ->getSingleScalarResult();
 
-        $this->addFlash('success', 'Catégorie supprimée avec succès.');
-
-        return $this->redirectToRoute('app_categorie_index');
-    }
-
-    #[Route('/{id}', name: 'app_categorie_show', methods: ['GET'], requirements: ['id' => '\d+'])]
-    public function show(int $id, EntityManagerInterface $entityManager): Response
-    {
-        $categorie = $entityManager->getRepository(Categorie::class)->find($id);
-
-        if (!$categorie) {
-            throw $this->createNotFoundException('Catégorie introuvable.');
+            if ($voyagesCount > 0) {
+                $this->addFlash('error', 'Impossible de supprimer cette catégorie car elle contient ' . $voyagesCount . ' voyage(s).');
+            } else {
+                $entityManager->remove($categorie);
+                $entityManager->flush();
+                $this->addFlash('success', 'Catégorie supprimée avec succès.');
+            }
+        } else {
+            $this->addFlash('error', 'Token CSRF invalide.');
         }
 
-        return $this->render('admin/categorie/show.html.twig', [
-            'categorie' => $categorie,
-        ]);
+        return $this->redirectToRoute('admin_categorie_index');
     }
 }

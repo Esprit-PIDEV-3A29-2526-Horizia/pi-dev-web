@@ -3,20 +3,21 @@
 {% block title %}Modifier un voyage{% endblock %}
 
 {% block admin_content %}
-    <div class="container-fluid">
-        <div class="dashboard-card">
-            <div class="mb-4">
-                <h2 class="fw-bold mb-1">Modifier un voyage</h2>
-                <p class="text-muted mb-0">Mettez à jour les informations du voyage puis enregistrez.</p>
-            </div>
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="mb-1">Modifier le voyage</h1>
+            <p class="text-muted mb-0">Mettez à jour les informations du voyage.</p>
+        </div>
+        <a href="{{ path('app_voyage_index') }}" class="btn btn-horozia-neutral">
+            Retour
+        </a>
+    </div>
 
-            {{ form_start(form, {'attr': {'novalidate': 'novalidate'}}) }}
+    <div class="card shadow-sm border-0 rounded-4">
+        <div class="card-body p-4">
 
-            {% if form.vars.errors|length > 0 %}
-                <div class="validation-error mb-3">
-                    {{ form_errors(form) }}
-                </div>
-            {% endif %}
+            {{ form_start(form) }}
 
             <div class="row">
                 <div class="col-md-6 mb-3 {% if form.titre.vars.errors|length > 0 %}field-error{% endif %}">
@@ -36,12 +37,14 @@
                 </div>
             </div>
 
-            <div class="mb-3 {% if form.description.vars.errors|length > 0 %}field-error{% endif %}">
-                {{ form_label(form.description) }}
-                {{ form_widget(form.description, {'attr': {'class': 'form-control', 'rows': 4}}) }}
-                {% if form.description.vars.errors|length > 0 %}
-                    <div class="validation-error">{{ form_errors(form.description) }}</div>
-                {% endif %}
+            <div class="row">
+                <div class="col-12 mb-3 {% if form.description.vars.errors|length > 0 %}field-error{% endif %}">
+                    {{ form_label(form.description) }}
+                    {{ form_widget(form.description, {'attr': {'class': 'form-control', 'rows': 5}}) }}
+                    {% if form.description.vars.errors|length > 0 %}
+                        <div class="validation-error">{{ form_errors(form.description) }}</div>
+                    {% endif %}
+                </div>
             </div>
 
             <div class="row">
@@ -87,98 +90,88 @@
                     {% endif %}
                 </div>
 
-                <div class="col-md-4 mb-3 {% if form.placesRestantes.vars.errors|length > 0 %}field-error{% endif %}">
-                    {{ form_label(form.placesRestantes) }}
-                    {{ form_widget(form.placesRestantes, {'attr': {'class': 'form-control'}}) }}
-                    {% if form.placesRestantes.vars.errors|length > 0 %}
-                        <div class="validation-error">{{ form_errors(form.placesRestantes) }}</div>
-                    {% endif %}
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Places restantes</label>
+                    <input type="text" class="form-control bg-light" value="{{ voyage.placesRestantes }}" readonly>
                 </div>
             </div>
 
-            <div class="mb-3 {% if form.imageUrl.vars.errors|length > 0 %}field-error{% endif %}">
-                {{ form_label(form.imageUrl) }}
-                {{ form_widget(form.imageUrl, {'attr': {
-                    'class': 'form-control',
-                    'id': 'image-url-input',
-                    'placeholder': '/images/Grece.jpg ou https://...'
-                }}) }}
-
-                <div class="form-text">
-                    Utilisez une URL publique comme <strong>/images/Grece.jpg</strong> ou une URL complète.
+            <div class="row">
+                <div class="col-md-12 mb-3 {% if form.imageUrl.vars.errors|length > 0 %}field-error{% endif %}">
+                    {{ form_label(form.imageUrl) }}
+                    {{ form_widget(form.imageUrl, {'attr': {'class': 'form-control', 'id': 'image_url_input'}}) }}
+                    {% if form.imageUrl.vars.errors|length > 0 %}
+                        <div class="validation-error">{{ form_errors(form.imageUrl) }}</div>
+                    {% endif %}
+                    <small class="text-muted">
+                        Utilisez une URL publique comme /images/Grece.jpg ou une URL complète.
+                    </small>
                 </div>
+            </div>
 
-                {% if form.imageUrl.vars.errors|length > 0 %}
-                    <div class="validation-error">{{ form_errors(form.imageUrl) }}</div>
-                {% endif %}
-
-                {% set currentImage = form.vars.value.imageUrl %}
-
-                <div class="mt-3">
-                    <div class="small text-muted mb-2">Aperçu de l’image</div>
-                    <div class="image-preview-wrapper">
-                        <img
-                            id="image-preview"
-                            src="{% if currentImage %}
-                                    {% if currentImage starts with 'http://' or currentImage starts with 'https://' %}
-                                        {{ currentImage }}
-                                    {% else %}
-                                        {{ asset(currentImage starts with '/' ? currentImage|slice(1) : currentImage) }}
-                                    {% endif %}
-                                 {% else %}
-                                    https://via.placeholder.com/500x280?text=Apercu+Voyage
-                                 {% endif %}"
-                            alt="Aperçu de l'image"
-                            class="image-preview-element"
-                        >
+            <div class="row" id="image_preview_wrapper" style="display: {% if voyage.imageUrl %}block{% else %}none{% endif %};">
+                <div class="col-md-12 mb-4">
+                    <label class="form-label">Aperçu de l’image</label>
+                    <div>
+                        <img id="image_preview"
+                             src="{% if voyage.imageUrl %}{{ voyage.imageUrl starts with 'http' ? voyage.imageUrl : asset(voyage.imageUrl) }}{% endif %}"
+                             alt="Aperçu"
+                             style="max-width: 320px; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.12);">
                     </div>
                 </div>
             </div>
 
-            <div class="d-flex gap-2 mt-4">
-                <button type="submit" class="btn btn-horozia-warning">
-                    <i class="bi bi-pencil-square me-1"></i> Mettre à jour
-                </button>
-                <a href="{{ path('app_voyage_index') }}" class="btn btn-horozia-neutral">
-                    Retour
+            <div class="d-flex justify-content-end gap-2">
+                <a href="{{ path('app_voyage_index') }}" class="btn btn-light rounded-pill px-4">
+                    Annuler
                 </a>
+                <button type="submit" class="btn btn-horozia-secondary">
+                    Mettre à jour
+                </button>
             </div>
 
             {{ form_end(form) }}
         </div>
     </div>
-{% endblock %}
+</div>
 
-{% block javascripts %}
-    {{ parent() }}
+<style>
+.field-error .form-control,
+.field-error .form-select {
+    border-color: #dc3545;
+    box-shadow: none;
+}
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const input = document.getElementById('image-url-input');
-            const preview = document.getElementById('image-preview');
-            const placeholder = 'https://via.placeholder.com/500x280?text=Apercu+Voyage';
+.validation-error {
+    color: #dc3545;
+    font-size: 0.9rem;
+    margin-top: 6px;
+}
+</style>
 
-            if (input && preview) {
-                input.addEventListener('input', function () {
-                    const value = input.value.trim();
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const input = document.getElementById('image_url_input');
+    const preview = document.getElementById('image_preview');
+    const wrapper = document.getElementById('image_preview_wrapper');
 
-                    if (value === '') {
-                        preview.src = placeholder;
-                        return;
-                    }
+    if (!input || !preview || !wrapper) return;
 
-                    if (value.startsWith('http://') || value.startsWith('https://')) {
-                        preview.src = value;
-                    } else {
-                        const cleanPath = value.startsWith('/') ? value.substring(1) : value;
-                        preview.src = '/' + cleanPath;
-                    }
-                });
+    function updatePreview() {
+        const value = input.value.trim();
 
-                preview.addEventListener('error', function () {
-                    preview.src = placeholder;
-                });
-            }
-        });
-    </script>
+        if (!value) {
+            wrapper.style.display = 'none';
+            preview.src = '';
+            return;
+        }
+
+        const finalSrc = value.startsWith('http') ? value : value;
+        preview.src = finalSrc;
+        wrapper.style.display = 'block';
+    }
+
+    input.addEventListener('input', updatePreview);
+});
+</script>
 {% endblock %}

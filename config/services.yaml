@@ -1,13 +1,19 @@
 parameters:
+    brevo.api_key: '%env(BREVO_API_KEY)%'
+    openai.api_key: '%env(OPENAI_API_KEY)%'
+    openai.model: '%env(OPENAI_MODEL)%'
     stripe_secret_key: '%env(STRIPE_SECRET_KEY)%'
+    stripe.secret_key: '%env(STRIPE_SECRET_KEY)%'
+    stripe.public_key: '%env(STRIPE_PUBLIC_KEY)%'
+    app.base_url: '%env(APP_BASE_URL)%'
 
 services:
-    # configuration par défaut
     _defaults:
         autowire: true
         autoconfigure: true
+        bind:
+            $openWeatherApiKey: '%env(OPENWEATHER_API_KEY)%'
 
-    # déclaration explicite de tous les services du dossier src/
     App\:
         resource: '../src/'
         exclude:
@@ -15,26 +21,35 @@ services:
             - '../src/Entity/'
             - '../src/Kernel.php'
 
-    # contrôleurs
     App\Controller\:
         resource: '../src/Controller/'
         tags: ['controller.service_arguments']
 
-    # Service CompreFace (reconnaissance faciale)
     App\Service\CompreFaceService:
         arguments:
             $apiKey: '%env(COMPREFACE_API_KEY)%'
             $baseUrl: '%env(COMPREFACE_BASE_URL)%'
 
-    # Service Stripe (paiement)
+    App\Service\BrevoMailerService:
+        arguments:
+            $brevoApiKey: '%brevo.api_key%'
+
+    App\Service\OpenAiService:
+        arguments:
+            $openAiApiKey: '%openai.api_key%'
+            $openAiModel: '%openai.model%'
+
     App\Service\StripeService:
         arguments:
-            $stripeSecretKey: '%stripe_secret_key%'
+            $stripeSecretKey: '%stripe.secret_key%'
+
     App\Service\GeminiService:
         arguments:
             $apiKey: '%env(GEMINI_API_KEY)%'
             $logger: '@logger'
-    # Listeners
+
+    App\Service\AiChatbotService: ~
+
     App\EventListener\TwoFactorLoginListener:
         tags:
             - { name: kernel.event_subscriber }

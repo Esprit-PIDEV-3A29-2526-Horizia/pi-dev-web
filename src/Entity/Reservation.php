@@ -33,17 +33,31 @@ class Reservation
     #[ORM\JoinColumn(name: 'id_user', referencedColumnName: 'id', nullable: true, onDelete: 'SET NULL')]
     private ?User $user = null;
 
+    #[ORM\Column(name: 'nb_adultes', type: 'integer', nullable: false, options: ['default' => 1])]
+    #[Assert\NotBlank(message: "Le nombre d'adultes est obligatoire.")]
+    #[Assert\PositiveOrZero(message: "Le nombre d'adultes ne peut pas être négatif.")]
+    private ?int $nbAdultes = 1;
+
+    #[ORM\Column(name: 'nb_enfants', type: 'integer', nullable: false, options: ['default' => 0])]
+    #[Assert\NotBlank(message: "Le nombre d'enfants est obligatoire.")]
+    #[Assert\PositiveOrZero(message: "Le nombre d'enfants ne peut pas être négatif.")]
+    private ?int $nbEnfants = 0;
+
     #[ORM\Column(name: 'nbr_personnes', type: 'integer', nullable: true)]
     #[Assert\NotBlank(message: 'Le nombre de personnes est obligatoire.')]
     #[Assert\Positive(message: 'Le nombre de personnes doit être positif.')]
-    private ?int $nbrPersonnes = null;
+    private ?int $nbrPersonnes = 1;
 
-    #[Column(name: 'prix_total', type: 'decimal', precision: 10, scale: 2)]
+    #[Column(name: 'prix_total', type: 'float', nullable: true)]
     private ?float $prixTotal = null;
+
+    #[ORM\Column(name: 'payment_status', type: 'string', length: 20, nullable: false, options: ['default' => 'NON_PAYEE'])]
+    private ?string $paymentStatus = 'NON_PAYEE';
 
     public function __construct()
     {
         $this->dateReservation = new \DateTime();
+        $this->recalculerNbrPersonnes();
     }
 
     public function getId(): ?int
@@ -81,6 +95,7 @@ class Reservation
     public function setVoyage(?Voyage $voyage): self
     {
         $this->voyage = $voyage;
+        $this->recalculerPrixTotal();
         return $this;
     }
 
@@ -92,6 +107,32 @@ class Reservation
     public function setUser(?User $user): self
     {
         $this->user = $user;
+        return $this;
+    }
+
+    public function getNbAdultes(): ?int
+    {
+        return $this->nbAdultes;
+    }
+
+    public function setNbAdultes(?int $nbAdultes): self
+    {
+        $this->nbAdultes = $nbAdultes ?? 0;
+        $this->recalculerNbrPersonnes();
+
+        return $this;
+    }
+
+    public function getNbEnfants(): ?int
+    {
+        return $this->nbEnfants;
+    }
+
+    public function setNbEnfants(?int $nbEnfants): self
+    {
+        $this->nbEnfants = $nbEnfants ?? 0;
+        $this->recalculerNbrPersonnes();
+
         return $this;
     }
 
@@ -115,5 +156,51 @@ class Reservation
     {
         $this->prixTotal = $prixTotal;
         return $this;
+    }
+
+    public function getPaymentStatus(): ?string
+    {
+        return $this->paymentStatus;
+    }
+
+    public function setPaymentStatus(string $paymentStatus): self
+    {
+        $this->paymentStatus = $paymentStatus;
+        return $this;
+    }
+
+    public function recalculerNbrPersonnes(): void
+    {
+        $adultes = $this->nbAdultes ?? 0;
+        $enfants = $this->nbEnfants ?? 0;
+        $this->nbrPersonnes = $adultes + $enfants;
+        $this->recalculerPrixTotal();
+    }
+
+    /**
+     * @Assert\Callback
+     */
+    public function validateReservation(\Symfony\Component\Validator\Context\ExecutionContextInterface $context): void
+    {
+        if (($this->nbAdultes ?? 0) + ($this->nbEnfants ?? 0) <= 0) {
+            $context->buildViolation('La réservation doit contenir au moins 1 personne.')
+                ->atPath('nbAdultes')
+                ->addViolation();
+        }
+
+        if ($this->voyage && $this->nbrPersonnes > $this->voyage->getPlacesRestantes()) {
+            $context->buildViolation('Le nombre demandé dépasse les places restantes.')
+                ->atPath('nbAdultes')
+                ->addViolation();
+        }
+    }
+
+    public function recalculerPrixTotal(): void
+    {
+        if ($this->voyage) {
+            $this->prixTotal = ($this->voyage->getPrix() ?? 0) * ($this->nbrPersonnes ?? 0);
+        } else {
+            $this->prixTotal = 0;
+        }
     }
 }

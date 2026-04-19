@@ -6,7 +6,11 @@
 
 
 
+
 <section class="hero-wrap js-fullheight" style="background-image: url('{{ asset('assets/images/bg_5.jpg') }}');">
+
+<section class="hero-wrap js-fullheight" style="background-image: url('{{ asset('front/pacific/images/bg_5.jpg') }}');">
+
     <div class="overlay"></div>
 
     <div class="container">
@@ -30,12 +34,100 @@
     <div class="container">
         <div class="row justify-content-center pb-4">
             <div class="col-md-8 heading-section text-center ftco-animate">
-                <span class="subheading">Nos voyages</span>
-                <h2 class="mb-4">Voyages populaires</h2>
+                <span class="subheading">Top destinations</span>
+                <h2 class="mb-4">Top 3 voyages les plus réservés</h2>
             </div>
         </div>
 
+
         
+
+        <div class="row">
+            {% if voyages is not empty %}
+                {% for voyage in voyages %}
+                    {% set imagePath = voyage.imageUrl ?: 'front/pacific/images/destination-1.jpg' %}
+                    {% set weather = weatherData[voyage.id] ?? null %}
+                    {% set converted = convertedPrices[voyage.id] ?? null %}
+
+                    <div class="col-md-4 ftco-animate mb-4">
+                        <div class="project-wrap h-100 top-voyage-card">
+
+                            <div class="top-badge
+                                {% if loop.index == 1 %}
+                                    badge-gold
+                                {% elseif loop.index == 2 %}
+                                    badge-silver
+                                {% else %}
+                                    badge-bronze
+                                {% endif %}
+                            ">
+                            </div>
+
+                            <div class="front-image-box">
+                                <a href="{{ path('app_front_voyage_detail', {'id': voyage.id, 'currency': currency}) }}"
+                                   class="img"
+                                   style="background-image: url('{% if imagePath starts with 'http' %}{{ imagePath }}{% else %}{{ asset(imagePath) }}{% endif %}');">
+                                </a>
+
+                                <button
+                                    type="button"
+                                    class="favori-btn js-favori-toggle"
+                                    data-voyage-id="{{ voyage.id }}"
+                                    title="Ajouter aux favoris"
+                                >
+                                    <i class="fa fa-heart-o"></i>
+                                </button>
+
+                                {% if weather %}
+                                    <div class="floating-weather-pill-front">
+                                        <img src="https://openweathermap.org/img/wn/{{ weather.icon }}.png" alt="Météo">
+                                        <span>{{ weather.temperature|round }}°C</span>
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="text p-4">
+                                {% if currency == 'TND' %}
+                                    <span class="price">
+                                        {{ voyage.prix|number_format(0, ',', ' ') }} DT / personne
+                                    </span>
+                                {% elseif converted is not null %}
+                                    <span class="price">
+                                        {{ converted|number_format(2, ',', ' ') }} {{ currencySymbol }} / personne
+                                    </span>
+                                    <div class="converted-price-front">
+                                        Prix de base : {{ voyage.prix|number_format(0, ',', ' ') }} DT
+                                    </div>
+                                {% else %}
+                                    <span class="price">
+                                        {{ voyage.prix|number_format(0, ',', ' ') }} DT / personne
+                                    </span>
+                                {% endif %}
+
+                                <span class="days">
+                                    {{ voyage.dateDepart|date('d M') }} → {{ voyage.dateRetour|date('d M Y') }}
+                                </span>
+
+                                <h3>
+                                    <a href="{{ path('app_front_voyage_detail', {'id': voyage.id, 'currency': currency}) }}">{{ voyage.titre }}</a>
+                                </h3>
+
+                                <p class="location">
+                                    <span class="fa fa-map-marker"></span>
+                                    {{ voyage.destination }}
+                                </p>
+                            </div>
+
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="col-12 text-center">
+                    <p>Aucun voyage disponible pour le moment.</p>
+                </div>
+            {% endif %}
+        </div>
+
     </div>
 </section>
 
@@ -97,49 +189,736 @@
                 <p>
                     Explorez nos offres et trouvez la destination qui vous ressemble.
                 </p>
-                <a href="#voyages" class="btn btn-primary py-3 px-4 mt-3">Voir tous les voyages</a>
+                <a href="{{ path('app_front_voyages', {currency: currency}) }}" class="btn btn-primary py-3 px-4 mt-3">Voir tous les voyages</a>
             </div>
         </div>
     </div>
 </section>
 
-<footer class="ftco-footer bg-bottom" id="contact" style="background-color: #23779C;">
-    <div class="container py-5">
-        <div class="row">
-            <div class="col-md-4 mb-4">
-                <h2 class="ftco-heading-2 text-white">Horozia</h2>
-                <p class="text-white-50">
-                    Horozia est une plateforme dédiée à la gestion des voyages et des réservations,
-                    offrant une expérience élégante et moderne aux voyageurs.
-                </p>
-            </div>
+<div id="chatbot-widget" class="chatbot-closed">
+    <button type="button" id="chatbot-launcher" aria-label="Ouvrir le chatbot">
+        <i class="fa fa-comments"></i>
+    </button>
 
-            <div class="col-md-4 mb-4">
-                <h2 class="ftco-heading-2 text-white">Liens rapides</h2>
-                <ul class="list-unstyled">
-                    <li><a href="{{ path('app_front_home') }}" class="text-white-50">Accueil</a></li>
-                    <li><a href="#voyages" class="text-white-50">Voyages</a></li>
-                    <li><a href="#services" class="text-white-50">Services</a></li>
-                    <li><a href="#contact" class="text-white-50">Contact</a></li>
-                </ul>
+    <div id="chatbot-window">
+        <div id="chatbot-header">
+            <div class="chatbot-title">
+                <i class="fa fa-comments"></i>
+                <span>Assistant Horozia</span>
             </div>
-
-            <div class="col-md-4 mb-4">
-                <h2 class="ftco-heading-2 text-white">Contact</h2>
-                <p class="text-white-50 mb-1">Tunisie</p>
-                <p class="text-white-50 mb-1">contact@horozia.com</p>
-                <p class="text-white-50">+216 00 000 000</p>
-            </div>
+            <button type="button" id="chatbot-close" aria-label="Fermer le chatbot">×</button>
         </div>
 
-        <div class="row mt-4">
-            <div class="col-md-12 text-center">
-                <p class="text-white-50 mb-0">
-                    © {{ "now"|date("Y") }} Horozia. Tous droits réservés.
-                </p>
+        <div id="chatbot-body">
+            <div id="chatbot-messages">
+                <div class="bot-message">
+                    Bonjour 👋 Je suis l’assistant Horozia. Je peux vous aider à trouver des voyages disponibles, recommander des destinations et proposer des voyages selon votre budget.
+                </div>
+            </div>
+
+            <div id="chatbot-suggestions">
+                <button type="button" class="chatbot-suggestion">Voyages disponibles</button>
+                <button type="button" class="chatbot-suggestion">Petit budget</button>
+                <button type="button" class="chatbot-suggestion">Recommande-moi un voyage</button>
+            </div>
+
+            <div id="chatbot-input-area">
+                <input type="text" id="chatbot-input" placeholder="Écrivez votre message..." autocomplete="off">
+                <button type="button" id="chatbot-send" aria-label="Envoyer">
+                    <i class="fa fa-paper-plane"></i>
+                </button>
             </div>
         </div>
     </div>
-</footer>
+</div>
+
+<style>
+.front-image-box {
+    position: relative;
+}
+
+.floating-weather-pill-front {
+    position: absolute;
+    left: 16px;
+    bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(40, 40, 40, 0.45);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    color: #ffffff;
+    padding: 8px 14px;
+    border-radius: 999px;
+    font-weight: 800;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+    border: 1px solid rgba(255,255,255,0.15);
+    z-index: 3;
+}
+
+.floating-weather-pill-front img {
+    width: 26px;
+    height: 26px;
+}
+
+.converted-price-front {
+    margin-top: 8px;
+    margin-bottom: 6px;
+    color: #23779c;
+    font-weight: 700;
+    font-size: 0.95rem;
+}
+
+#chatbot-widget {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    z-index: 99999;
+    font-family: 'Poppins', sans-serif;
+}
+
+#chatbot-launcher {
+    width: 68px;
+    height: 68px;
+    border: none;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #23779c, #3d94ca);
+    color: #ffffff;
+    font-size: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 16px 35px rgba(35, 119, 156, 0.30);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+#chatbot-launcher:hover {
+    transform: translateY(-2px) scale(1.03);
+    box-shadow: 0 20px 40px rgba(35, 119, 156, 0.34);
+}
+
+#chatbot-window {
+    width: 390px;
+    max-width: calc(100vw - 24px);
+    height: min(560px, calc(100vh - 40px));
+    background: #ffffff;
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.22);
+    border: 1px solid rgba(35, 119, 156, 0.12);
+    animation: chatbotFadeIn 0.25s ease;
+}
+
+#chatbot-widget.chatbot-closed #chatbot-window {
+    display: none;
+}
+
+#chatbot-widget.chatbot-closed #chatbot-launcher {
+    display: flex;
+}
+
+#chatbot-widget.chatbot-open #chatbot-window {
+    display: flex;
+    flex-direction: column;
+}
+
+#chatbot-widget.chatbot-open #chatbot-launcher {
+    display: none;
+}
+
+#chatbot-header {
+    min-height: 72px;
+    background: linear-gradient(135deg, #23779c, #3d94ca);
+    color: #ffffff;
+    padding: 0 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    box-sizing: border-box;
+}
+
+.chatbot-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1rem;
+    font-weight: 800;
+    line-height: 1.2;
+}
+
+.chatbot-title i {
+    font-size: 20px;
+}
+
+#chatbot-close {
+    background: transparent;
+    border: none;
+    color: #ffffff;
+    font-size: 30px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0;
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#chatbot-body {
+    display: flex;
+    flex-direction: column;
+    height: calc(100% - 72px);
+    background: #f8fbfd;
+}
+
+#chatbot-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 16px 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    scroll-behavior: smooth;
+    box-sizing: border-box;
+}
+
+#chatbot-messages::-webkit-scrollbar {
+    width: 6px;
+}
+
+#chatbot-messages::-webkit-scrollbar-thumb {
+    background: rgba(35, 119, 156, 0.25);
+    border-radius: 999px;
+}
+
+.bot-message,
+.user-message {
+    max-width: 85%;
+    padding: 14px 16px;
+    border-radius: 18px;
+    line-height: 1.6;
+    font-size: 0.97rem;
+    word-break: break-word;
+    box-sizing: border-box;
+}
+
+.bot-message {
+    background: #eef4f8;
+    color: #253443;
+    align-self: flex-start;
+    border-bottom-left-radius: 8px;
+}
+
+.user-message {
+    background: linear-gradient(135deg, #23779c, #3d94ca);
+    color: #ffffff;
+    align-self: flex-end;
+    border-bottom-right-radius: 8px;
+}
+
+#chatbot-suggestions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 0 16px 12px;
+    background: #f8fbfd;
+}
+
+.chatbot-suggestion {
+    border: none;
+    background: #eef4f8;
+    color: #23779c;
+    padding: 9px 12px;
+    border-radius: 999px;
+    font-size: 0.86rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.2s ease;
+}
+
+.chatbot-suggestion:hover {
+    background: #dfeef7;
+}
+
+.chatbot-typing {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    width: fit-content;
+    padding: 12px 15px;
+    border-radius: 18px;
+    border-bottom-left-radius: 8px;
+    background: #eef4f8;
+}
+
+.chatbot-typing span {
+    width: 7px;
+    height: 7px;
+    background: #7a8b9d;
+    border-radius: 50%;
+    animation: chatbotBlink 1.2s infinite ease-in-out;
+}
+
+.chatbot-typing span:nth-child(2) {
+    animation-delay: 0.15s;
+}
+
+.chatbot-typing span:nth-child(3) {
+    animation-delay: 0.30s;
+}
+
+.chatbot-response-block {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.chatbot-response-intro {
+    font-weight: 700;
+    color: #253443;
+    margin-bottom: 2px;
+    line-height: 1.5;
+}
+
+.chatbot-voyage-card {
+    background: #ffffff;
+    border: 1px solid #dfeaf1;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 6px 14px rgba(15, 23, 42, 0.05);
+}
+
+.chatbot-voyage-image-wrapper {
+    width: 100%;
+    height: 140px;
+    background: #eef4f8;
+    overflow: hidden;
+}
+
+.chatbot-voyage-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.chatbot-voyage-content {
+    padding: 12px 13px 14px;
+}
+
+.chatbot-voyage-title {
+    font-size: 0.96rem;
+    font-weight: 800;
+    color: #23779c;
+    margin-bottom: 8px;
+    line-height: 1.4;
+}
+
+.chatbot-voyage-line {
+    font-size: 0.90rem;
+    color: #3a4a58;
+    margin-bottom: 5px;
+    line-height: 1.45;
+}
+
+.chatbot-link {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 8px 12px;
+    background: #23779c;
+    color: #ffffff !important;
+    border-radius: 999px;
+    text-decoration: none;
+    font-size: 0.84rem;
+    font-weight: 700;
+    transition: 0.2s ease;
+}
+
+.chatbot-link:hover {
+    background: #1d6482;
+    color: #ffffff !important;
+    text-decoration: none;
+}
+
+@keyframes chatbotBlink {
+    0%, 80%, 100% {
+        opacity: 0.35;
+        transform: scale(0.9);
+    }
+    40% {
+        opacity: 1;
+        transform: scale(1.1);
+    }
+}
+
+@keyframes chatbotFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(16px) scale(0.96);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+#chatbot-input-area {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px;
+    background: #ffffff;
+    border-top: 1px solid #e6edf3;
+    box-sizing: border-box;
+}
+
+#chatbot-input {
+    flex: 1;
+    border: 1px solid #d9e4ec;
+    border-radius: 999px;
+    padding: 14px 18px;
+    font-size: 0.96rem;
+    outline: none;
+    min-width: 0;
+}
+
+#chatbot-input:focus {
+    border-color: #3d94ca;
+    box-shadow: 0 0 0 3px rgba(61, 148, 202, 0.12);
+}
+
+#chatbot-send {
+    width: 50px;
+    height: 50px;
+    flex: 0 0 50px;
+    border: none;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #23779c, #3d94ca);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+@media (max-width: 768px) {
+    #chatbot-widget {
+        right: 12px;
+        bottom: 12px;
+    }
+
+    #chatbot-window {
+        width: calc(100vw - 24px);
+        height: min(470px, calc(100vh - 24px));
+    }
+
+    #chatbot-launcher {
+        width: 62px;
+        height: 62px;
+        font-size: 24px;
+    }
+
+    #chatbot-header {
+        min-height: 66px;
+    }
+
+    #chatbot-body {
+        height: calc(100% - 66px);
+    }
+}
+
+.favori-btn {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 42px;
+    height: 42px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.92);
+    color: #dc3545;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 18px rgba(0,0,0,0.15);
+    cursor: pointer;
+    transition: 0.2s ease;
+    z-index: 5;
+}
+
+.favori-btn:hover {
+    transform: scale(1.06);
+    background: #ffffff;
+}
+
+.favori-btn.is-favorite {
+    background: #dc3545;
+    color: #ffffff;
+}
+
+.favori-btn i {
+    font-size: 18px;
+}
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const widget = document.getElementById('chatbot-widget');
+    const launcher = document.getElementById('chatbot-launcher');
+    const closeBtn = document.getElementById('chatbot-close');
+    const sendBtn = document.getElementById('chatbot-send');
+    const input = document.getElementById('chatbot-input');
+    const messages = document.getElementById('chatbot-messages');
+    const suggestionButtons = document.querySelectorAll('.chatbot-suggestion');
+    const favoriButtons = document.querySelectorAll('.js-favori-toggle');
+
+    function openChatbot() {
+        if (!widget) return;
+        widget.classList.remove('chatbot-closed');
+        widget.classList.add('chatbot-open');
+
+        setTimeout(() => {
+            if (input) input.focus();
+        }, 100);
+    }
+
+    function closeChatbot() {
+        if (!widget) return;
+        widget.classList.remove('chatbot-open');
+        widget.classList.add('chatbot-closed');
+    }
+
+    function addMessage(text, type) {
+        if (!messages) return;
+
+        const div = document.createElement('div');
+        div.className = type === 'user' ? 'user-message' : 'bot-message';
+
+        if (type === 'bot') {
+            div.innerHTML = String(text);
+        } else {
+            div.textContent = String(text);
+        }
+
+        messages.appendChild(div);
+        messages.scrollTop = messages.scrollHeight;
+    }
+
+    function addTyping() {
+        removeTyping();
+
+        const typing = document.createElement('div');
+        typing.className = 'chatbot-typing';
+        typing.id = 'chatbot-typing';
+        typing.innerHTML = '<span></span><span></span><span></span>';
+        messages.appendChild(typing);
+        messages.scrollTop = messages.scrollHeight;
+    }
+
+    function removeTyping() {
+        const typing = document.getElementById('chatbot-typing');
+        if (typing) typing.remove();
+    }
+
+    async function sendMessage(customMessage = null) {
+    if (!input) return;
+
+    const message = customMessage !== null ? customMessage : input.value.trim();
+    if (!message) return;
+
+    addMessage(message, 'user');
+    input.value = '';
+    addTyping();
+
+    try {
+        const response = await fetch('/chatbot/message', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ message: message })
+        });
+
+        const rawText = await response.text();
+        removeTyping();
+
+        let data = {};
+        try {
+            data = JSON.parse(rawText);
+        } catch (e) {
+            addMessage('Réponse serveur invalide.', 'bot');
+            return;
+        }
+
+        if (!response.ok) {
+            addMessage(data.reply || 'Erreur serveur.', 'bot');
+            return;
+        }
+
+        if (data.reply_html) {
+            addMessage(
+                (data.reply ? `<div class="chatbot-response-intro">${data.reply}</div>` : '') + data.reply_html,
+                'bot'
+            );
+        } else {
+            addMessage(data.reply || 'Aucune réponse reçue.', 'bot');
+        }
+    } catch (error) {
+        removeTyping();
+        addMessage('Impossible de contacter le serveur.', 'bot');
+    }
+}
+
+    async function checkFavoriState(button) {
+        const voyageId = button.dataset.voyageId;
+
+        try {
+            const response = await fetch(`/api/favoris/check/${voyageId}`, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+
+            const rawText = await response.text();
+
+            let data = {};
+            try {
+                data = JSON.parse(rawText);
+            } catch (e) {
+                console.error('Réponse check non JSON:', rawText);
+                return;
+            }
+
+            if (data.success && data.isFavorite) {
+                button.classList.add('is-favorite');
+                button.innerHTML = '<i class="fa fa-heart"></i>';
+                button.title = 'Retirer des favoris';
+            } else {
+                button.classList.remove('is-favorite');
+                button.innerHTML = '<i class="fa fa-heart-o"></i>';
+                button.title = 'Ajouter aux favoris';
+            }
+        } catch (error) {
+            console.error('Erreur check favori', error);
+        }
+    }
+
+    async function toggleFavori(button) {
+        const voyageId = button.dataset.voyageId;
+
+        try {
+            const response = await fetch(`/api/favoris/toggle/${voyageId}`, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+
+            const rawText = await response.text();
+
+            let data = {};
+            try {
+                data = JSON.parse(rawText);
+            } catch (e) {
+                console.error('Réponse toggle non JSON:', rawText);
+                await Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur',
+                    text: 'Le serveur a retourné une réponse invalide.',
+                    confirmButtonColor: '#23779c'
+                });
+                return;
+            }
+
+            if (!response.ok || !data.success) {
+                await Swal.fire({
+                    icon: 'error',
+                    title: 'Erreur',
+                    text: data.message || 'Impossible de mettre à jour les favoris.',
+                    confirmButtonColor: '#23779c'
+                });
+                return;
+            }
+
+            if (data.isFavorite) {
+                button.classList.add('is-favorite');
+                button.innerHTML = '<i class="fa fa-heart"></i>';
+                button.title = 'Retirer des favoris';
+
+                await Swal.fire({
+                    icon: 'success',
+                    title: 'Ajouté',
+                    text: 'Le voyage a été ajouté à vos favoris.',
+                    timer: 1200,
+                    showConfirmButton: false
+                });
+            } else {
+                button.classList.remove('is-favorite');
+                button.innerHTML = '<i class="fa fa-heart-o"></i>';
+                button.title = 'Ajouter aux favoris';
+
+                await Swal.fire({
+                    icon: 'success',
+                    title: 'Retiré',
+                    text: 'Le voyage a été retiré de vos favoris.',
+                    timer: 1200,
+                    showConfirmButton: false
+                });
+            }
+        } catch (error) {
+            console.error('Erreur toggle favori', error);
+            await Swal.fire({
+                icon: 'error',
+                title: 'Erreur',
+                text: 'Impossible de mettre à jour les favoris.',
+                confirmButtonColor: '#23779c'
+            });
+        }
+    }
+
+    if (launcher) {
+        launcher.addEventListener('click', openChatbot);
+    }
+
+    if (closeBtn) {
+        closeBtn.addEventListener('click', closeChatbot);
+    }
+
+    if (sendBtn) {
+        sendBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            sendMessage();
+        });
+    }
+
+    if (input) {
+        input.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+    }
+
+    suggestionButtons.forEach(button => {
+        button.addEventListener('click', function () {
+            openChatbot();
+            sendMessage(this.textContent.trim());
+        });
+    });
+
+    favoriButtons.forEach(button => {
+        checkFavoriState(button);
+
+        button.addEventListener('click', function () {
+            toggleFavori(this);
+        });
+    });
+});
+</script>
 
 {% endblock %}

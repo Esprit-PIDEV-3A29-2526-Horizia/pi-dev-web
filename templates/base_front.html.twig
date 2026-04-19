@@ -37,7 +37,9 @@
                         <a href="{{ path('app_front_home') }}" class="nav-link">Accueil</a>
                     </li>
                     <li class="nav-item {% if app.request.attributes.get('_route') == 'app_front_voyages' %}active{% endif %}">
-                        <a href="{{ path('app_front_voyages') }}" class="nav-link">Voyages</a>
+                        <a href="{{ path('app_front_voyages', {'currency': currency|default('TND')}) }}" class="nav-link">
+                            Voyages
+                        </a>
                     </li>
                     <!-- Logement : visible tout le temps -->
                     <li class="nav-item {% if app.request.attributes.get('_route') == 'app_front_logement_index' %}active{% endif %}">
@@ -49,8 +51,14 @@
                     <li class="nav-item {% if app.request.attributes.get('_route') == 'app_front_mes_participations' %}active{% endif %}">
                         <a href="{{ path('app_front_mes_participations') }}" class="nav-link">Mes Inscriptions</a>
                     </li>
+                    {% if app.user %}
+                        <li class="nav-item {% if app.request.attributes.get('_route') == 'app_front_mes_favoris' %}active{% endif %}">
+                            <a href="{{ path('app_front_mes_favoris') }}" class="nav-link">
+                                Mes favoris
+                            </a>
+                        </li>
+                    {% endif %}
 
-                    <!-- Mes réservations : dropdown avec deux options (visible seulement si connecté) -->
                     {% if app.user %}
                         <li class="nav-item dropdown {% if app.request.attributes.get('_route') starts with 'app_front_reservation' %}active{% endif %}">
                             <a class="nav-link dropdown-toggle" href="#" id="reservationsDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">

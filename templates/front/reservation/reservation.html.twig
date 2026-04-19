@@ -1,0 +1,625 @@
+{% extends 'base_front.html.twig' %}
+
+{% block title %}Réserver - {{ voyage.titre }}{% endblock %}
+
+{% block body %}
+
+
+
+{% set imagePath = voyage.imageUrl ?: 'front/pacific/images/back.jpg' %}
+
+<section class="hero-wrap hero-wrap-2"
+         style="background-image: url('{% if imagePath starts with 'http' %}{{ imagePath }}{% else %}{{ asset(imagePath) }}{% endif %}'); min-height: 46vh;">
+    <div class="overlay"></div>
+    <div class="container">
+        <div class="row no-gutters slider-text align-items-end justify-content-start" style="min-height: 46vh;">
+            <div class="col-md-9 ftco-animate pb-5">
+                <p class="breadcrumbs">
+                    <span class="mr-2">
+                        <a href="{{ path('app_front_home', {currency: currency|default('TND')}) }}">Accueil <i class="fa fa-chevron-right"></i></a>
+                    </span>
+                    <span class="mr-2">
+                        <a href="{{ path('app_front_voyages', {currency: currency|default('TND')}) }}">Voyages <i class="fa fa-chevron-right"></i></a>
+                    </span>
+                    <span>Réserver <i class="fa fa-chevron-right"></i></span>
+                </p>
+                <h1 class="mb-0 bread">Réserver votre {{ voyage.titre }}</h1>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="ftco-section reservation-premium-section">
+    <div class="container">
+
+        {% for message in app.flashes('success') %}
+            <div class="alert alert-success mb-4">{{ message }}</div>
+        {% endfor %}
+
+        {% for message in app.flashes('error') %}
+            <div class="alert alert-danger mb-4">{{ message }}</div>
+        {% endfor %}
+
+        <div class="row">
+            <div class="col-lg-7 mb-4">
+                <div class="premium-reservation-card">
+
+                    <div class="reservation-header-row">
+                        <div>
+                            <h2 class="reservation-title">{{ voyage.titre }}</h2>
+                            <p class="reservation-subtitle mb-0">Complétez votre réservation en quelques étapes.</p>
+                        </div>
+
+                        <form method="get" action="{{ path('app_front_reserver_voyage', {id: voyage.id}) }}">
+                            <label for="currency" class="font-weight-bold mr-2">Afficher en :</label>
+                            <select name="currency" id="currency" class="form-control d-inline-block currency-select-front" onchange="this.form.submit()">
+                                {% for c in allowedCurrencies %}
+                                    <option value="{{ c }}" {{ currency == c ? 'selected' : '' }}>{{ c }}</option>
+                                {% endfor %}
+                            </select>
+                        </form>
+                    </div>
+
+                    {% if weather %}
+                        <div class="reservation-weather-card">
+                            <div class="reservation-weather-top">
+                                <div class="reservation-weather-left">
+                                    <div class="reservation-weather-icon">
+                                        <img src="https://openweathermap.org/img/wn/{{ weather.icon }}@2x.png" alt="Icône météo">
+                                    </div>
+
+                                    <div>
+                                        <div class="reservation-weather-label">Météo actuelle</div>
+                                        <div class="reservation-weather-city">
+                                            {{ weather.city }}{% if weather.country %}, {{ weather.country }}{% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="reservation-weather-temp">
+                                    {{ weather.temperature|round }}°C
+                                </div>
+                            </div>
+
+                            <div class="reservation-weather-desc">
+                                {{ weather.description|capitalize }}
+                            </div>
+
+                            <div class="reservation-weather-stats">
+                                <div class="reservation-weather-stat">
+                                    <span class="stat-icon-box"><i class="fa fa-tint"></i></span>
+                                    <div>
+                                        <small>Humidité</small>
+                                        <strong>{{ weather.humidity }}%</strong>
+                                    </div>
+                                </div>
+
+                                <div class="reservation-weather-stat">
+                                    <span class="stat-icon-box"><i class="fa fa-flag-o"></i></span>
+                                    <div>
+                                        <small>Vent</small>
+                                        <strong>{{ weather.wind }} m/s</strong>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="reservation-weather-advice">
+                                {{ weather.advice }}
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <form method="post" id="reservation-form">
+                        <div class="reservation-form-grid">
+                            <div class="form-group">
+                                <label for="nbAdultes">Nombre d’adultes</label>
+                                <input
+                                    id="nbAdultes"
+                                    type="number"
+                                    name="nbAdultes"
+                                    class="form-control"
+                                    min="0"
+                                    value="1"
+                                    required
+                                >
+                            </div>
+
+                            <div class="form-group">
+                                <label for="nbEnfants">Nombre d’enfants</label>
+                                <input
+                                    id="nbEnfants"
+                                    type="number"
+                                    name="nbEnfants"
+                                    class="form-control"
+                                    min="0"
+                                    value="0"
+                                >
+                            </div>
+                        </div>
+
+                        <div class="reservation-form-grid">
+                            <div class="form-group">
+                                <label for="totalPersonnes">Total personnes</label>
+                                <input
+                                    id="totalPersonnes"
+                                    type="text"
+                                    class="form-control"
+                                    readonly
+                                >
+                            </div>
+
+                            <div class="form-group">
+                                <label for="prixTotal">Prix total estimé</label>
+                                <input
+                                    id="prixTotal"
+                                    type="text"
+                                    class="form-control"
+                                    readonly
+                                >
+                            </div>
+                        </div>
+
+                        <div id="alertBox" class="alert alert-danger d-none"></div>
+
+                        <div class="reservation-actions mt-4">
+                            <a href="{{ path('app_front_voyage_detail', {'id': voyage.id, 'currency': currency}) }}" class="btn btn-outline-secondary">
+                                Retour
+                            </a>
+                            <button type="submit" id="btnSubmit" class="btn btn-primary">
+                                Confirmer la réservation
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="col-lg-5 mb-4">
+                <div class="premium-summary-card">
+                    <div class="summary-image-box">
+                        <img
+                            src="{% if imagePath starts with 'http' %}{{ imagePath }}{% else %}{{ asset(imagePath) }}{% endif %}"
+                            alt="{{ voyage.titre }}"
+                            class="summary-image"
+                        >
+                    </div>
+
+                    <div class="summary-content">
+                        <h3 class="summary-title">{{ voyage.titre }}</h3>
+
+                        <div class="summary-info-list">
+                            <div class="summary-info-item">
+                                <i class="fa fa-map-marker"></i>
+                                <div>
+                                    <strong>Destination</strong><br>
+                                    <span>{{ voyage.destination }}</span>
+                                </div>
+                            </div>
+
+                            <div class="summary-info-item">
+                                <i class="fa fa-calendar"></i>
+                                <div>
+                                    <strong>Départ</strong><br>
+                                    <span>{{ voyage.dateDepart|date('d/m/Y') }}</span>
+                                </div>
+                            </div>
+
+                            <div class="summary-info-item">
+                                <i class="fa fa-calendar-check-o"></i>
+                                <div>
+                                    <strong>Retour</strong><br>
+                                    <span>{{ voyage.dateRetour|date('d/m/Y') }}</span>
+                                </div>
+                            </div>
+
+                            <div class="summary-info-item">
+                                <i class="fa fa-users"></i>
+                                <div>
+                                    <strong>Places restantes</strong><br>
+                                    <span id="placesRestantesText">{{ voyage.placesRestantes }}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="summary-price-box">
+                            {% if currency == 'TND' %}
+                                <div class="summary-price-line">
+                                    <span>Prix adulte</span>
+                                    <strong>{{ voyage.prix|number_format(2, '.', ' ') }} DT</strong>
+                                </div>
+                                <div class="summary-price-line">
+                                    <span>Prix enfant</span>
+                                    <strong>{{ (voyage.prix * 0.5)|number_format(2, '.', ' ') }} DT</strong>
+                                </div>
+                            {% else %}
+                                <div class="summary-price-line">
+                                    <span>Prix adulte</span>
+                                    <strong>
+                                        {% if prixAdulteConverti is not null %}
+                                            {{ prixAdulteConverti|number_format(2, '.', ' ') }} {{ currencySymbol }}
+                                        {% else %}
+                                            Conversion indisponible
+                                        {% endif %}
+                                    </strong>
+                                </div>
+                                <div class="summary-price-line">
+                                    <span>Prix enfant</span>
+                                    <strong>
+                                        {% if prixEnfantConverti is not null %}
+                                            {{ prixEnfantConverti|number_format(2, '.', ' ') }} {{ currencySymbol }}
+                                        {% else %}
+                                            Conversion indisponible
+                                        {% endif %}
+                                    </strong>
+                                </div>
+                                <div class="summary-price-base">
+                                    Prix de base : {{ voyage.prix|number_format(2, '.', ' ') }} DT
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <hr>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+.reservation-premium-section {
+    background: #f7f9fc;
+}
+
+.premium-reservation-card,
+.premium-summary-card {
+    background: #fff;
+    border-radius: 26px;
+    padding: 24px;
+    box-shadow: 0 14px 34px rgba(15, 23, 42, 0.08);
+    border: 1px solid #edf1f5;
+    height: 100%;
+}
+
+.reservation-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 22px;
+}
+
+.reservation-title {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #1f2d3d;
+    margin-bottom: 6px;
+}
+
+.reservation-subtitle {
+    color: #6b7b8c;
+}
+
+.currency-select-front {
+    width: 140px;
+    max-width: 100%;
+}
+
+.reservation-weather-card {
+    background: linear-gradient(145deg, #f8fbff 0%, #eef5ff 100%);
+    border: 1px solid #dbe9fb;
+    border-radius: 24px;
+    padding: 18px;
+    margin-bottom: 22px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.9);
+}
+
+.reservation-weather-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 14px;
+}
+
+.reservation-weather-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.reservation-weather-icon {
+    width: 66px;
+    height: 66px;
+    border-radius: 20px;
+    background: rgba(255,255,255,0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 10px 20px rgba(46, 104, 173, 0.08);
+}
+
+.reservation-weather-icon img {
+    width: 54px;
+    height: 54px;
+}
+
+.reservation-weather-label {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #5f7691;
+}
+
+.reservation-weather-city {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #173a60;
+}
+
+.reservation-weather-temp {
+    font-size: 2rem;
+    font-weight: 900;
+    color: #1c5c92;
+    line-height: 1;
+}
+
+.reservation-weather-desc {
+    margin-top: 10px;
+    color: #546c86;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.reservation-weather-stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.reservation-weather-stat {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(255,255,255,0.88);
+    border: 1px solid #e4eefb;
+    border-radius: 18px;
+    padding: 14px;
+}
+
+.stat-icon-box {
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+    background: #e8f1ff;
+    color: #1f5e94;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.reservation-weather-stat small {
+    display: block;
+    color: #6c8198;
+    margin-bottom: 2px;
+}
+
+.reservation-weather-stat strong {
+    color: #173a60;
+    font-size: 1rem;
+}
+
+.reservation-weather-advice {
+    margin-top: 16px;
+    padding: 14px 16px;
+    background: rgba(225, 239, 255, 0.9);
+    border-radius: 18px;
+    color: #1f4f77;
+    font-weight: 800;
+    border-left: 4px solid #3b82f6;
+}
+
+.reservation-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 18px;
+}
+
+.reservation-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.summary-image-box {
+    margin: -24px -24px 22px -24px;
+}
+
+.summary-image {
+    width: 100%;
+    height: 240px;
+    object-fit: cover;
+    border-top-left-radius: 26px;
+    border-top-right-radius: 26px;
+    display: block;
+}
+
+.summary-title {
+    font-size: 1.7rem;
+    font-weight: 800;
+    color: #1f2d3d;
+    margin-bottom: 20px;
+}
+
+.summary-info-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-bottom: 18px;
+}
+
+.summary-info-item {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    padding: 14px 16px;
+    border-radius: 18px;
+    background: #f8fafc;
+    border: 1px solid #edf1f5;
+}
+
+.summary-info-item i {
+    color: #23779c;
+    margin-top: 3px;
+    font-size: 1rem;
+}
+
+.summary-info-item strong {
+    color: #1f2d3d;
+}
+
+.summary-info-item span {
+    color: #5f6f82;
+}
+
+.summary-price-box {
+    background: #f7fafc;
+    border: 1px solid #edf1f5;
+    border-radius: 20px;
+    padding: 18px;
+    margin-bottom: 18px;
+}
+
+.summary-price-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.summary-price-line span {
+    color: #6b7b8c;
+    font-weight: 600;
+}
+
+.summary-price-line strong {
+    color: #1f2d3d;
+    font-size: 1rem;
+}
+
+.summary-price-base {
+    margin-top: 10px;
+    color: #23779c;
+    font-weight: 700;
+    font-size: 0.95rem;
+}
+
+.summary-description {
+    color: #5f6f82;
+    line-height: 1.9;
+}
+
+@media (max-width: 991px) {
+    .reservation-form-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .reservation-weather-top {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .reservation-weather-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .reservation-title {
+        font-size: 1.6rem;
+    }
+
+    .summary-title {
+        font-size: 1.4rem;
+    }
+
+    .reservation-header-row {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+</style>
+
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const nbAdultes = document.getElementById('nbAdultes');
+            const nbEnfants = document.getElementById('nbEnfants');
+            const totalInput = document.getElementById('totalPersonnes');
+            const prixInput = document.getElementById('prixTotal');
+            const btn = document.getElementById('btnSubmit');
+            const alertBox = document.getElementById('alertBox');
+
+            const prixAdulteDt = {{ voyage.prix|default(0) }};
+            const ratioEnfant = 0.5;
+            const placesRestantes = {{ voyage.placesRestantes|default(0) }};
+
+            const currency = '{{ currency|default("TND") }}';
+            const currencySymbol = '{{ currencySymbol|default("DT") }}';
+            const prixAdulteConverti = {{ prixAdulteConverti is not null ? prixAdulteConverti : 'null' }};
+            const prixEnfantConverti = {{ prixEnfantConverti is not null ? prixEnfantConverti : 'null' }};
+
+            function updateReservation() {
+                const adultes = parseInt(nbAdultes.value || 0, 10) || 0;
+                const enfants = parseInt(nbEnfants.value || 0, 10) || 0;
+
+                const total = adultes + enfants;
+                totalInput.value = total;
+
+                let prixTotal = 0;
+                let affichagePrix = '';
+
+                if (currency === 'TND') {
+                    prixTotal = (adultes * prixAdulteDt) + (enfants * prixAdulteDt * ratioEnfant);
+                    affichagePrix = prixTotal.toFixed(2) + ' DT';
+                } else if (prixAdulteConverti !== null && prixEnfantConverti !== null) {
+                    prixTotal = (adultes * prixAdulteConverti) + (enfants * prixEnfantConverti);
+                    affichagePrix = prixTotal.toFixed(2) + ' ' + currencySymbol;
+                } else {
+                    affichagePrix = 'Conversion indisponible';
+                }
+
+                prixInput.value = affichagePrix;
+
+                let error = '';
+
+                if (total <= 0) {
+                    error = 'Veuillez saisir au moins 1 personne.';
+                } else if (total > placesRestantes) {
+                    error = 'Le nombre demandé dépasse les places restantes.';
+                }
+
+                if (error !== '') {
+                    alertBox.classList.remove('d-none');
+                    alertBox.innerText = error;
+                    btn.disabled = true;
+                } else {
+                    alertBox.classList.add('d-none');
+                    alertBox.innerText = '';
+                    btn.disabled = false;
+                }
+            }
+
+            nbAdultes.addEventListener('input', updateReservation);
+            nbEnfants.addEventListener('input', updateReservation);
+
+            updateReservation();
+        });
+    </script>
+{% endblock %}

@@ -223,7 +223,8 @@ button,
 [type="button"],
 [type="reset"],
 [type="submit"] {
-  -webkit-appearance: button; }
+  -webkit-appearance: button;
+appearance: button;}
 
 button:not(:disabled),
 [type="button"]:not(:disabled),
@@ -274,7 +275,8 @@ progress {
 
 [type="search"] {
   outline-offset: -2px;
-  -webkit-appearance: none; }
+  -webkit-appearance: none;
+  appearance: none;  }
 
 [type="search"]::-webkit-search-decoration {
   -webkit-appearance: none; }
@@ -9552,6 +9554,7 @@ textarea.form-control {
 .mfp-with-zoom.mfp-bg {
   opacity: 0;
   -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
   -webkit-transition: all 0.3s ease-out;
   -moz-transition: all 0.3s ease-out;
   -o-transition: all 0.3s ease-out;
@@ -9624,6 +9627,7 @@ textarea.form-control {
     background: linear-gradient(45deg, #207ce5 0%, #13d42a 100%);
     filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#207ce5', endColorstr='#13d42a', GradientType=1 );
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent; }
 
 @media (max-width: 767.98px) {
@@ -10297,6 +10301,7 @@ textarea.form-control {
 }
 .btn-danger {
   border-radius: 8px !important;
+
 }
 /* BADGES STATUT RESERVATION */
 .status-badge {
@@ -10366,6 +10371,7 @@ textarea.form-control {
   font-size: 14px;
   font-weight: 700;
   color: #3D94CA;
+  color: #f15d30;
   text-transform: uppercase;
 }
 

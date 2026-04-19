@@ -2,13 +2,13 @@
 
 namespace App\Form;
 
-use App\Entity\Voyage;
 use App\Entity\Categorie;
-use Symfony\Component\Form\AbstractType;
+use App\Entity\Voyage;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
+use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\DateType;
 use Symfony\Component\Form\Extension\Core\Type\IntegerType;
-use Symfony\Component\Form\Extension\Core\Type\MoneyType;
+use Symfony\Component\Form\Extension\Core\Type\NumberType;
 use Symfony\Component\Form\Extension\Core\Type\TextareaType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
@@ -26,23 +26,21 @@ class VoyageType extends AbstractType
                 'label' => 'Destination'
             ])
             ->add('description', TextareaType::class, [
-                'label' => 'Description'
+                'label' => 'Description',
+                'required' => false
             ])
-            ->add('prix', MoneyType::class, [
-                'label' => 'Prix',
-                'currency' => 'TND'
+            ->add('prix', NumberType::class, [
+                'label' => 'Prix TND'
             ])
             ->add('dateDepart', DateType::class, [
                 'label' => 'Date de départ',
-                'widget' => 'single_text'
+                'widget' => 'single_text',
+                'html5' => true
             ])
             ->add('dateRetour', DateType::class, [
                 'label' => 'Date de retour',
-                'widget' => 'single_text'
-            ])
-            ->add('imageUrl', TextType::class, [
-                'label' => 'Image URL',
-                'required' => false
+                'widget' => 'single_text',
+                'html5' => true
             ])
             ->add('categorie', EntityType::class, [
                 'class' => Categorie::class,
@@ -53,8 +51,9 @@ class VoyageType extends AbstractType
             ->add('placesTotal', IntegerType::class, [
                 'label' => 'Places totales'
             ])
-            ->add('placesRestantes', IntegerType::class, [
-                'label' => 'Places restantes'
+            ->add('imageUrl', TextType::class, [
+                'label' => 'Image URL',
+                'required' => false
             ]);
     }
 

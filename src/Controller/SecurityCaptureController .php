@@ -1,4 +1,3 @@
-// src/Controller/SecurityCaptureController.php
 <?php
 
 namespace App\Controller;

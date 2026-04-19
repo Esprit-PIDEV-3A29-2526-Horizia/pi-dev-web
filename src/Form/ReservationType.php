@@ -60,23 +60,43 @@ class ReservationType extends AbstractType
                 'required' => false,
                 'attr' => ['class' => 'form-select']
             ])
-            ->add('nbrPersonnes', IntegerType::class, [
-                'label' => 'Nombre de personnes',
+            ->add('nbAdultes', IntegerType::class, [
+                'label' => 'Nombre d’adultes',
                 'attr' => [
                     'class' => 'form-control',
-                    'min' => 1,
+                    'min' => 0,
                     'max' => $placesRestantes,
                 ],
                 'constraints' => [
                     new Assert\NotBlank([
-                        'message' => 'Veuillez saisir le nombre de personnes.'
+                        'message' => 'Veuillez saisir le nombre d’adultes.'
                     ]),
-                    new Assert\Positive([
-                        'message' => 'Le nombre de personnes doit être supérieur à 0.'
+                    new Assert\PositiveOrZero([
+                        'message' => 'Le nombre d’adultes doit être positif ou nul.'
                     ]),
                     new Assert\LessThanOrEqual([
                         'value' => $placesRestantes,
-                        'message' => 'Le nombre de personnes ne peut pas dépasser les places disponibles.'
+                        'message' => 'Le nombre d’adultes ne peut pas dépasser les places disponibles.'
+                    ]),
+                ]
+            ])
+            ->add('nbEnfants', IntegerType::class, [
+                'label' => 'Nombre d’enfants',
+                'attr' => [
+                    'class' => 'form-control',
+                    'min' => 0,
+                    'max' => $placesRestantes,
+                ],
+                'constraints' => [
+                    new Assert\NotBlank([
+                        'message' => 'Veuillez saisir le nombre d’enfants.'
+                    ]),
+                    new Assert\PositiveOrZero([
+                        'message' => 'Le nombre d’enfants doit être positif ou nul.'
+                    ]),
+                    new Assert\LessThanOrEqual([
+                        'value' => $placesRestantes,
+                        'message' => 'Le nombre d’enfants ne peut pas dépasser les places disponibles.'
                     ]),
                 ]
             ]);
@@ -93,9 +113,11 @@ class ReservationType extends AbstractType
             $nbrPersonnes = $reservation->getNbrPersonnes();
 
             if ($voyage && $nbrPersonnes && $nbrPersonnes > $voyage->getPlacesRestantes()) {
-                $form->get('nbrPersonnes')->addError(
-                    new FormError('Le nombre de personnes ne peut pas dépasser les places disponibles.')
-                );
+                if ($form->has('nbAdultes')) {
+                    $form->get('nbAdultes')->addError(
+                        new FormError('Le nombre total de personnes ne peut pas dépasser les places disponibles.')
+                    );
+                }
             }
         });
     }

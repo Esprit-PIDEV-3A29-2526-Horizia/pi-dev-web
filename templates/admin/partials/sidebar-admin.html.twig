@@ -52,9 +52,9 @@
             </a>
         </li>
 
-        <!-- Gestion Réservations (logements) -->
         <li>
-            <a class="sidebar-link {{ app.request.attributes.get('_route') == 'admin_reservation_index' ? 'active' : '' }}" href="{{ path('admin_reservation_index') }}">
+            <a class="sidebar-link {{ app.request.attributes.get('_route') starts with 'app_reservation_' ? 'active' : '' }}"
+            href="{{ path('app_reservation_index') }}">
                 <i class="bi bi-calendar-check-fill"></i>
                 <span>Gestion Réservations</span>
             </a>

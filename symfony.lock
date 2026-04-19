@@ -196,20 +196,8 @@
             "./config/packages/notifier.yaml"
         ]
     },
-    "symfony/property-info": {
-        "version": "7.4",
-        "recipe": {
-            "repo": "github.com/symfony/recipes",
-            "branch": "main",
-            "version": "7.3",
-            "ref": "dae70df71978ae9226ae915ffd5fad817f5ca1f7"
-        },
-        "files": [
-            "./config/packages/property_info.yaml"
-        ]
-    },
     "symfony/routing": {
-        "version": "7.4",
+        "version": "6.4",
         "recipe": {
             "repo": "github.com/symfony/recipes",
             "branch": "main",
@@ -259,6 +247,9 @@
             "./config/packages/twig.yaml",
             "./templates/base.html.twig"
         ]
+    },
+    "symfony/ux-dropzone": {
+        "version": "v2.35.0"
     },
     "symfony/validator": {
         "version": "6.4",
@@ -311,6 +302,21 @@
         },
         "files": [
             "./config/routes/calendar.yaml"
+        ]
+    },
+    "twig/extra-bundle": {
+        "version": "v3.24.0"
+    },
+    "vich/uploader-bundle": {
+        "version": "2.9",
+        "recipe": {
+            "repo": "github.com/symfony/recipes-contrib",
+            "branch": "main",
+            "version": "1.13",
+            "ref": "1b3064c2f6b255c2bc2f56461aaeb76b11e07e36"
+        },
+        "files": [
+            "./config/packages/vich_uploader.yaml"
         ]
     }
 }

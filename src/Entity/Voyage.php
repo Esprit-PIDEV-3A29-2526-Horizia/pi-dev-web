@@ -47,8 +47,8 @@ class Voyage
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $imageUrl = null;
 
-#[ORM\ManyToOne(targetEntity: Categorie::class, inversedBy: 'voyages')]
-#[ORM\JoinColumn(name: "id_categorie", referencedColumnName: "id", nullable: true)]
+    #[ORM\ManyToOne(targetEntity: Categorie::class, inversedBy: 'voyages')]
+    #[ORM\JoinColumn(name: "id_categorie", referencedColumnName: "id", nullable: true)]
     #[Assert\NotNull(message: "La catégorie est obligatoire.")]
     private ?Categorie $categorie = null;
 
@@ -62,39 +62,125 @@ class Voyage
     #[Assert\PositiveOrZero(message: "Le nombre de places restantes doit être positif ou nul.")]
     private ?int $placesRestantes = null;
 
-    // ===== GETTERS / SETTERS =====
+    public function getId(): ?int
+    {
+        return $this->id;
+    }
 
-    public function getId(): ?int { return $this->id; }
+    public function getTitre(): ?string
+    {
+        return $this->titre;
+    }
 
-    public function getTitre(): ?string { return $this->titre; }
-    public function setTitre(?string $titre): self { $this->titre = $titre; return $this; }
+    public function setTitre(?string $titre): self
+    {
+        $this->titre = $titre;
+        return $this;
+    }
 
-    public function getDestination(): ?string { return $this->destination; }
-    public function setDestination(?string $destination): self { $this->destination = $destination; return $this; }
+    public function getDestination(): ?string
+    {
+        return $this->destination;
+    }
 
-    public function getDescription(): ?string { return $this->description; }
-    public function setDescription(?string $description): self { $this->description = $description; return $this; }
+    public function setDestination(?string $destination): self
+    {
+        $this->destination = $destination;
+        return $this;
+    }
 
-    public function getPrix(): ?float { return $this->prix; }
-    public function setPrix(?float $prix): self { $this->prix = $prix; return $this; }
+    public function getDescription(): ?string
+    {
+        return $this->description;
+    }
 
-    public function getDateDepart(): ?\DateTimeInterface { return $this->dateDepart; }
-    public function setDateDepart(?\DateTimeInterface $dateDepart): self { $this->dateDepart = $dateDepart; return $this; }
+    public function setDescription(?string $description): self
+    {
+        $this->description = $description;
+        return $this;
+    }
 
-    public function getDateRetour(): ?\DateTimeInterface { return $this->dateRetour; }
-    public function setDateRetour(?\DateTimeInterface $dateRetour): self { $this->dateRetour = $dateRetour; return $this; }
+    public function getPrix(): ?float
+    {
+        return $this->prix;
+    }
 
-    public function getImageUrl(): ?string { return $this->imageUrl; }
-    public function setImageUrl(?string $imageUrl): self { $this->imageUrl = $imageUrl; return $this; }
+    public function setPrix(?float $prix): self
+    {
+        $this->prix = $prix;
+        return $this;
+    }
 
-    public function getCategorie(): ?Categorie { return $this->categorie; }
-    public function setCategorie(?Categorie $categorie): self { $this->categorie = $categorie; return $this; }
+    public function getDateDepart(): ?\DateTimeInterface
+    {
+        return $this->dateDepart;
+    }
 
-    public function getPlacesTotal(): ?int { return $this->placesTotal; }
-    public function setPlacesTotal(?int $placesTotal): self { $this->placesTotal = $placesTotal; return $this; }
+    public function setDateDepart(?\DateTimeInterface $dateDepart): self
+    {
+        $this->dateDepart = $dateDepart;
+        return $this;
+    }
 
-    public function getPlacesRestantes(): ?int { return $this->placesRestantes; }
-    public function setPlacesRestantes(?int $placesRestantes): self { $this->placesRestantes = $placesRestantes; return $this; }
+    public function getDateRetour(): ?\DateTimeInterface
+    {
+        return $this->dateRetour;
+    }
+
+    public function setDateRetour(?\DateTimeInterface $dateRetour): self
+    {
+        $this->dateRetour = $dateRetour;
+        return $this;
+    }
+
+    public function getImageUrl(): ?string
+    {
+        return $this->imageUrl;
+    }
+
+    public function setImageUrl(?string $imageUrl): self
+    {
+        $this->imageUrl = $imageUrl;
+        return $this;
+    }
+
+    public function getCategorie(): ?Categorie
+    {
+        return $this->categorie;
+    }
+
+    public function setCategorie(?Categorie $categorie): self
+    {
+        $this->categorie = $categorie;
+        return $this;
+    }
+
+    public function getPlacesTotal(): ?int
+    {
+        return $this->placesTotal;
+    }
+
+    public function setPlacesTotal(?int $placesTotal): self
+    {
+        $this->placesTotal = $placesTotal;
+
+        if ($placesTotal !== null && $this->placesRestantes === null) {
+            $this->placesRestantes = $placesTotal;
+        }
+
+        return $this;
+    }
+
+    public function getPlacesRestantes(): ?int
+    {
+        return $this->placesRestantes;
+    }
+
+    public function setPlacesRestantes(?int $placesRestantes): self
+    {
+        $this->placesRestantes = $placesRestantes;
+        return $this;
+    }
 
     #[Assert\Callback]
     public function validateDatesAndPlaces(ExecutionContextInterface $context): void
@@ -107,6 +193,12 @@ class Voyage
 
         if ($this->placesRestantes !== null && $this->placesTotal !== null && $this->placesRestantes > $this->placesTotal) {
             $context->buildViolation('Les places restantes ne peuvent pas dépasser les places totales.')
+                ->atPath('placesRestantes')
+                ->addViolation();
+        }
+
+        if ($this->placesRestantes !== null && $this->placesRestantes < 0) {
+            $context->buildViolation('Les places restantes ne peuvent pas être négatives.')
                 ->atPath('placesRestantes')
                 ->addViolation();
         }

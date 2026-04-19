@@ -2,31 +2,41 @@
 
 namespace App\Service;
 
-use Stripe\Stripe;
-use Stripe\Checkout\Session;
+use Stripe\StripeClient;
 
 class StripeService
 {
-    public function __construct(private string $stripeSecretKey)
+    private StripeClient $stripe;
+
+    public function __construct(string $stripeSecretKey)
     {
-        Stripe::setApiKey($stripeSecretKey);
+        $this->stripe = new StripeClient($stripeSecretKey);
     }
 
-    public function createCheckoutSession(float $amount, string $currency, string $successUrl, string $cancelUrl): Session
-    {
-        return Session::create([
-            'payment_method_types' => ['card'],
+    public function createCheckoutSession(
+        string $productName,
+        int $amountInMinorUnit,
+        string $successUrl,
+        string $cancelUrl,
+        array $metadata = []
+    ): string {
+        $session = $this->stripe->checkout->sessions->create([
+            'mode' => 'payment',
             'line_items' => [[
                 'price_data' => [
-                    'currency' => $currency,
-                    'product_data' => ['name' => 'Réservation de logement'],
-                    'unit_amount' => (int)($amount * 100),
+                    'currency' => 'usd',
+                    'product_data' => [
+                        'name' => $productName,
+                    ],
+                    'unit_amount' => $amountInMinorUnit,
                 ],
                 'quantity' => 1,
             ]],
-            'mode' => 'payment',
             'success_url' => $successUrl,
             'cancel_url' => $cancelUrl,
+            'metadata' => $metadata,
         ]);
+
+        return $session->url;
     }
 }

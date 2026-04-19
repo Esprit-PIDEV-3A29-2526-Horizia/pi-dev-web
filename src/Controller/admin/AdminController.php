@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Controller\admin;
+namespace App\Controller\Admin;
 
 use App\Entity\Categorie;
 use App\Entity\Reservation;
@@ -39,8 +39,6 @@ class AdminController extends AbstractController
     #[Route('/admin', name: 'app_admin')]
     public function index(EntityManagerInterface $entityManager): Response
     {
-        $this->checkAdminAccess();
-
         $voyageRepository = $entityManager->getRepository(Voyage::class);
         $reservationRepository = $entityManager->getRepository(Reservation::class);
         $userRepository = $entityManager->getRepository(User::class);
@@ -55,17 +53,11 @@ class AdminController extends AbstractController
         $nbReservationsEnAttente = $reservationRepository->count(['statut' => 'EN_ATTENTE']);
         $nbReservationsAnnulees = $reservationRepository->count(['statut' => 'ANNULEE']);
 
-        $nbVoyagesPlacesFaibles = $entityManager->createQueryBuilder()
-            ->select('COUNT(v.id)')
-            ->from(Voyage::class, 'v')
-            ->where('v.placesRestantes <= :seuil')
-            ->setParameter('seuil', 10)
-            ->getQuery()
-            ->getSingleScalarResult();
-
         $recentReservations = $entityManager->createQueryBuilder()
-            ->select('r')
+            ->select('r', 'v', 'u')
             ->from(Reservation::class, 'r')
+            ->leftJoin('r.voyage', 'v')
+            ->leftJoin('r.user', 'u')
             ->orderBy('r.dateReservation', 'DESC')
             ->setMaxResults(5)
             ->getQuery()
@@ -94,13 +86,104 @@ class AdminController extends AbstractController
             }
         }
 
-        $pendingCancelRequests = $entityManager->getRepository(Reservationlog::class)
-            ->createQueryBuilder('r')
-            ->select('COUNT(r.idreslog)')
-            ->where('r.status = :status')
-            ->setParameter('status', 'demande_annulation')
+        $confirmedReservationsForChart = $entityManager->createQueryBuilder()
+            ->select('r.dateReservation')
+            ->from(Reservation::class, 'r')
+            ->where('r.statut = :statut')
+            ->setParameter('statut', 'CONFIRMEE')
             ->getQuery()
-            ->getSingleScalarResult();
+            ->getResult();
+
+        $monthlyConfirmedReservations = array_fill(1, 12, 0);
+
+        foreach ($confirmedReservationsForChart as $row) {
+            if (!empty($row['dateReservation']) && $row['dateReservation'] instanceof \DateTimeInterface) {
+                $monthNumber = (int) $row['dateReservation']->format('n');
+                $monthlyConfirmedReservations[$monthNumber]++;
+            }
+        }
+
+        $topVoyagesRaw = $entityManager->createQueryBuilder()
+            ->select('v.titre AS titre', 'COUNT(r.id) AS nbReservations')
+            ->from(Reservation::class, 'r')
+            ->leftJoin('r.voyage', 'v')
+            ->groupBy('v.id')
+            ->orderBy('nbReservations', 'DESC')
+            ->setMaxResults(5)
+            ->getQuery()
+            ->getResult();
+
+        $topVoyagesLabels = [];
+        $topVoyagesData = [];
+
+        foreach ($topVoyagesRaw as $row) {
+            $topVoyagesLabels[] = $row['titre'] ?? 'Voyage';
+            $topVoyagesData[] = (int) $row['nbReservations'];
+        }
+
+        $topClientsRaw = $entityManager->createQueryBuilder()
+            ->select(
+                "CONCAT(COALESCE(u.nom, ''), ' ', COALESCE(u.prenom, '')) AS clientNom",
+                'COUNT(r.id) AS nbReservations'
+            )
+            ->from(Reservation::class, 'r')
+            ->leftJoin('r.user', 'u')
+            ->where('u.id IS NOT NULL')
+            ->groupBy('u.id')
+            ->orderBy('nbReservations', 'DESC')
+            ->setMaxResults(5)
+            ->getQuery()
+            ->getResult();
+
+        $topClientsLabels = [];
+        $topClientsData = [];
+
+        foreach ($topClientsRaw as $row) {
+            $nom = trim((string) ($row['clientNom'] ?? ''));
+            $topClientsLabels[] = $nom !== '' ? $nom : 'Utilisateur';
+            $topClientsData[] = (int) $row['nbReservations'];
+        }
+
+        $categoriesStatsRaw = $entityManager->createQueryBuilder()
+            ->select('c.nom AS categorieNom', 'COUNT(r.id) AS nbReservations')
+            ->from(Reservation::class, 'r')
+            ->leftJoin('r.voyage', 'v')
+            ->leftJoin('v.categorie', 'c')
+            ->groupBy('c.id')
+            ->orderBy('nbReservations', 'DESC')
+            ->getQuery()
+            ->getResult();
+
+        $categoriesLabels = [];
+        $categoriesData = [];
+
+        foreach ($categoriesStatsRaw as $row) {
+            $categoriesLabels[] = $row['categorieNom'] ?? 'Sans catégorie';
+            $categoriesData[] = (int) $row['nbReservations'];
+        }
+
+        $confirmedRevenueRows = $entityManager->createQueryBuilder()
+            ->select('r', 'v')
+            ->from(Reservation::class, 'r')
+            ->leftJoin('r.voyage', 'v')
+            ->where('r.statut = :statut')
+            ->setParameter('statut', 'CONFIRMEE')
+            ->getQuery()
+            ->getResult();
+
+        $revenuTotalEstime = 0.0;
+
+        foreach ($confirmedRevenueRows as $reservation) {
+            $voyage = $reservation->getVoyage();
+
+            if ($voyage) {
+                $prixAdulte = (float) $voyage->getPrix();
+                $nbAdultes = (int) ($reservation->getNbAdultes() ?? 0);
+                $nbEnfants = (int) ($reservation->getNbEnfants() ?? 0);
+
+                $revenuTotalEstime += ($prixAdulte * $nbAdultes) + (($prixAdulte * 0.5) * $nbEnfants);
+            }
+        }
 
         return $this->render('admin/dashboard.html.twig', [
             'nbVoyages' => $nbVoyages,
@@ -110,14 +193,27 @@ class AdminController extends AbstractController
             'nbReservationsConfirmees' => $nbReservationsConfirmees,
             'nbReservationsEnAttente' => $nbReservationsEnAttente,
             'nbReservationsAnnulees' => $nbReservationsAnnulees,
-            'nbVoyagesPlacesFaibles' => $nbVoyagesPlacesFaibles,
             'recentReservations' => $recentReservations,
             'recentVoyages' => $recentVoyages,
+            'revenuTotalEstime' => $revenuTotalEstime,
+
             'chartLabels' => ['Voyages', 'Réservations', 'Utilisateurs', 'Catégories'],
             'chartData' => [$nbVoyages, $nbReservations, $nbUsers, $nbCategories],
+
             'lineChartLabels' => ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'],
             'lineChartData' => array_values($monthlyReservations),
-            'pendingCancelRequests' => $pendingCancelRequests,
+
+            'confirmedLineChartLabels' => ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'],
+            'confirmedLineChartData' => array_values($monthlyConfirmedReservations),
+
+            'topVoyagesLabels' => $topVoyagesLabels,
+            'topVoyagesData' => $topVoyagesData,
+
+            'topClientsLabels' => $topClientsLabels,
+            'topClientsData' => $topClientsData,
+
+            'categoriesLabels' => $categoriesLabels,
+            'categoriesData' => $categoriesData,
         ]);
     }
 

@@ -4,249 +4,697 @@
 
 {% block admin_content %}
 <div class="container-fluid">
+
     <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
         <div>
-            <h2 class="fw-bold mb-1">Liste des voyages</h2>
+            <h1 class="mb-1">Liste des voyages</h1>
             <p class="text-muted mb-0">Consultez et gérez les voyages disponibles.</p>
         </div>
 
-        <a href="{{ path('app_voyage_new') }}" class="btn btn-horozia-secondary">
-            <i class="bi bi-plus-circle me-1"></i> Ajouter un voyage
-        </a>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <div class="view-switcher">
+                <button type="button" class="view-btn active" id="btn-list-view">
+                    <i class="fa fa-th-large me-1"></i> Liste
+                </button>
+                <button type="button" class="view-btn" id="btn-calendar-view">
+                    <i class="fa fa-calendar me-1"></i> Calendrier
+                </button>
+            </div>
+
+            <a href="{{ path('app_voyage_new') }}" class="btn btn-horozia-secondary">
+                <i class="fa fa-plus-circle me-2"></i> Ajouter un voyage
+            </a>
+        </div>
     </div>
 
-    <div class="dashboard-card mb-4">
-        <div class="row g-3 align-items-end">
-            <div class="col-md-6">
-                <label class="form-label fw-semibold">Recherche</label>
-                <input
-                    type="text"
-                    id="voyageSearch"
-                    class="form-control"
-                    placeholder="Rechercher par titre ou destination"
-                >
-            </div>
+    <div class="card shadow-sm border-0 rounded-4 mb-4 admin-filter-card">
+        <div class="card-body p-4">
+            <form method="get" action="{{ path('app_voyage_index') }}" id="voyageFilterForm">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Recherche</label>
+                        <input
+                            type="text"
+                            name="search"
+                            id="searchInput"
+                            value="{{ search|default('') }}"
+                            class="form-control"
+                            placeholder="Rechercher par titre ou destination"
+                        >
+                    </div>
 
-            <div class="col-md-4">
-                <label class="form-label fw-semibold">Filtrer par</label>
-                <select id="voyageFilter" class="form-select">
-                    <option value="">Voulez-vous choisir ?</option>
-                    <option value="disponible">Disponible</option>
-                    <option value="bientot">Bientôt complet</option>
-                    <option value="complet">Complet</option>
-                </select>
-            </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">Filtrer par</label>
+                        <select name="sort" class="form-select" id="sortSelect">
+                            <option value="">Voulez-vous choisir ?</option>
+                            <option value="date_asc" {{ sort == 'date_asc' ? 'selected' : '' }}>Date départ croissante</option>
+                            <option value="date_desc" {{ sort == 'date_desc' ? 'selected' : '' }}>Date départ décroissante</option>
+                            <option value="prix_asc" {{ sort == 'prix_asc' ? 'selected' : '' }}>Prix croissant</option>
+                            <option value="prix_desc" {{ sort == 'prix_desc' ? 'selected' : '' }}>Prix décroissant</option>
+                            <option value="titre_asc" {{ sort == 'titre_asc' ? 'selected' : '' }}>Titre A-Z</option>
+                            <option value="titre_desc" {{ sort == 'titre_desc' ? 'selected' : '' }}>Titre Z-A</option>
+                        </select>
+                    </div>
 
-            <div class="col-md-2">
-                <button type="button" id="resetVoyageFilter" class="btn btn-horozia-neutral w-100">
-                    Réinitialiser
-                </button>
+                    <div class="col-md-2">
+                        <a href="{{ path('app_voyage_index') }}" class="btn btn-light w-100 rounded-pill">
+                            Réinitialiser
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="voyages-list-view">
+        <div class="row">
+            {% if voyages is not empty %}
+                {% for voyage in voyages %}
+                    {% set imagePath = voyage.imageUrl ?: 'images/default-voyage.jpg' %}
+                    {% set total = voyage.placesTotal ?: 0 %}
+                    {% set restantes = voyage.placesRestantes ?: 0 %}
+                    {% set reservees = total - restantes %}
+                    {% set progress = total > 0 ? ((reservees / total) * 100) : 0 %}
+                    {% set weather = weatherData[voyage.id] ?? null %}
+
+                    <div class="col-md-6 col-xl-4 mb-4">
+                        <div class="voyage-admin-card h-100">
+                            <div class="voyage-image-wrapper">
+                                <img
+                                    src="{% if imagePath starts with 'http' %}{{ imagePath }}{% else %}{{ asset(imagePath) }}{% endif %}"
+                                    alt="{{ voyage.titre }}"
+                                    class="voyage-image"
+                                >
+
+                                <div class="image-top-overlay">
+                                    {% if restantes == 0 %}
+                                        <span class="status-chip status-full">Complet</span>
+                                    {% elseif restantes <= 10 %}
+                                        <span class="status-chip status-warning">Bientôt complet</span>
+                                    {% else %}
+                                        <span class="status-chip status-available">Disponible</span>
+                                    {% endif %}
+
+                                    <span class="price-chip">{{ voyage.prix|number_format(0, ',', ' ') }} DT</span>
+                                </div>
+
+                                {% if weather %}
+                                    <div class="floating-weather-pill">
+                                        <img src="https://openweathermap.org/img/wn/{{ weather.icon }}.png" alt="Météo">
+                                        <span>{{ weather.temperature|round }}°C</span>
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="voyage-card-content">
+                                <div class="mb-3">
+                                    <h3 class="voyage-title">{{ voyage.titre }}</h3>
+
+                                    <p class="voyage-location mb-0">
+                                        <i class="fa fa-map-marker-alt me-2"></i>{{ voyage.destination }}
+                                    </p>
+                                </div>
+
+                                <div class="availability-box">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span class="fw-semibold">Places disponibles</span>
+                                        <span class="availability-count">{{ restantes }}/{{ total }}</span>
+                                    </div>
+
+                                    <div class="progress custom-progress">
+                                        <div
+                                            class="progress-bar {% if restantes == 0 %}bg-danger{% elseif restantes <= 10 %}bg-warning{% else %}bg-success{% endif %}"
+                                            role="progressbar"
+                                            style="width: {{ progress }}%;"
+                                            aria-valuenow="{{ progress|round }}"
+                                            aria-valuemin="0"
+                                            aria-valuemax="100"
+                                        ></div>
+                                    </div>
+                                </div>
+
+                                <div class="voyage-actions mt-4">
+                                    <a href="{{ path('app_voyage_show', {'id': voyage.id}) }}"
+                                       class="icon-action icon-view"
+                                       title="Voir">
+                                        <i class="fa fa-eye"></i>
+                                    </a>
+
+                                    <a href="{{ path('app_voyage_edit', {'id': voyage.id}) }}"
+                                       class="icon-action icon-edit"
+                                       title="Modifier">
+                                        <i class="fa fa-pen"></i>
+                                    </a>
+
+                                    <form method="post"
+                                          action="{{ path('app_voyage_delete', {'id': voyage.id}) }}"
+                                          class="delete-form"
+                                          data-title="{{ voyage.titre }}">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ voyage.id) }}">
+                                        <button type="submit"
+                                                class="icon-action icon-delete"
+                                                title="Supprimer">
+                                            <i class="fa fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+
+                {% if voyages.paginationData is defined and voyages.pageCount > 1 %}
+                    <div class="col-12 mt-4">
+                        <div class="pagination-wrapper">
+                            {{ knp_pagination_render(voyages, 'front/pagination.html.twig') }}
+                        </div>
+                    </div>
+                {% endif %}
+            {% else %}
+                <div class="col-12">
+                    <div class="alert alert-light border text-center py-4 rounded-4">
+                        Aucun voyage trouvé.
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div id="voyages-calendar-view" style="display: none;">
+        <div class="card shadow-sm border-0 rounded-4">
+            <div class="card-body p-4">
+                <div id="voyages-calendar"></div>
             </div>
         </div>
     </div>
 
-    <div class="row g-4" id="voyagesCardsContainer">
-        {% for voyage in voyages %}
-            {% set statut = 'disponible' %}
-            {% if voyage.placesRestantes == 0 %}
-                {% set statut = 'complet' %}
-            {% elseif voyage.placesRestantes <= 10 %}
-                {% set statut = 'bientot' %}
-            {% endif %}
-
-            {% set imagePath = '' %}
-            {% if voyage.imageUrl %}
-                {% if voyage.imageUrl starts with 'http://' or voyage.imageUrl starts with 'https://' %}
-                    {% set imagePath = voyage.imageUrl %}
-                {% else %}
-                    {% set imagePath = asset(voyage.imageUrl starts with '/' ? voyage.imageUrl|slice(1) : voyage.imageUrl) %}
-                {% endif %}
-            {% endif %}
-
-            <div
-                class="col-md-6 col-xl-4 voyage-card-item"
-                data-search="{{ (voyage.titre ~ ' ' ~ voyage.destination)|lower }}"
-                data-status="{{ statut }}"
-            >
-                <div class="voyage-card h-100">
-                    <a href="{{ path('app_voyage_show', {'id': voyage.id}) }}" class="voyage-card-link">
-                        <div class="voyage-card-image-wrapper">
-                            {% if imagePath %}
-                                <img
-                                    src="{{ imagePath }}"
-                                    alt="{{ voyage.titre }}"
-                                    class="voyage-card-image"
-                                >
-                            {% else %}
-                                <div class="voyage-card-no-image">Pas d'image</div>
-                            {% endif %}
-
-                            <div class="voyage-card-overlay"></div>
-
-                            <div class="voyage-card-topbar">
-    <div class="voyage-card-badge-wrapper">
-        {% if statut == 'complet' %}
-            <span class="badge voyage-badge-complet">Complet</span>
-        {% elseif statut == 'bientot' %}
-            <span class="badge voyage-badge-bientot">Bientôt complet</span>
-        {% else %}
-            <span class="badge voyage-badge-disponible">Disponible</span>
-        {% endif %}
-    </div>
-
-    <span class="voyage-price">{{ voyage.prix }} DT</span>
-</div>
-                        </div>
-
-                        <div class="p-4">
-                            <h5 class="voyage-card-title">{{ voyage.titre }}</h5>
-
-                            {% set totalPlaces = voyage.placesTotal ?: 0 %}
-{% set restantes = voyage.placesRestantes ?: 0 %}
-{% set pourcentage = totalPlaces > 0 ? ((restantes / totalPlaces) * 100)|round(0, 'floor') : 0 %}
-
-<div class="voyage-card-destination mb-3">
-    <i class="bi bi-geo-alt"></i>
-    <span>{{ voyage.destination }}</span>
 </div>
 
-<div class="voyage-places-section mb-4">
-    <div class="d-flex justify-content-between align-items-center mb-2">
-        <span class="voyage-places-label">Places disponibles</span>
-        <span class="voyage-places-value">{{ restantes }}/{{ totalPlaces }}</span>
-    </div>
+<style>
+.admin-filter-card {
+    border: 1px solid #edf2f7;
+    box-shadow: 0 14px 28px rgba(15, 23, 42, 0.05);
+}
 
-    <div class="voyage-progress">
-        <div
-            class="voyage-progress-bar
-                {% if restantes == 0 %}
-                    progress-complet
-                {% elseif pourcentage <= 20 %}
-                    progress-low
-                {% elseif pourcentage <= 50 %}
-                    progress-medium
-                {% else %}
-                    progress-good
-                {% endif %}"
-            style="width: {{ pourcentage }}%;"
-        ></div>
-    </div>
-</div>
-                        </div>
-                    </a>
+.view-switcher {
+    display: flex;
+    background: #f3f5f7;
+    border-radius: 999px;
+    padding: 4px;
+    gap: 4px;
+}
 
-                    <div class="px-4 pb-4 pt-0 mt-auto d-flex gap-2">
-                        <a href="{{ path('app_voyage_edit', {'id': voyage.id}) }}"
-                           class="btn btn-voyage-edit flex-fill"
-                           onclick="event.stopPropagation();">
-                            <i class="bi bi-pencil-square me-1"></i> Modifier
-                        </a>
+.view-btn {
+    border: none;
+    background: transparent;
+    padding: 10px 18px;
+    border-radius: 999px;
+    font-weight: 600;
+    color: #5b6574;
+    transition: all 0.25s ease;
+}
 
-                       <a href="{{ path('app_voyage_delete', {'id': voyage.id}) }}"
-   class="btn btn-voyage-delete flex-fill btn-delete-voyage"
-   data-voyage-title="{{ voyage.titre }}"
-   onclick="event.stopPropagation();">
-    <i class="bi bi-trash me-1"></i> Supprimer
-</a>
-                    </div>
-                </div>
-            </div>
-        {% else %}
-            <div class="col-12">
-                <div class="dashboard-card text-center text-muted py-5">
-                    Aucun voyage trouvé.
-                </div>
-            </div>
-        {% endfor %}
-    </div>
+.view-btn.active {
+    background: #1f2d3d;
+    color: #fff;
+    box-shadow: 0 6px 16px rgba(31, 45, 61, 0.18);
+}
 
-    <div id="voyageNoResult" class="dashboard-card text-center text-muted py-5 mt-4 d-none">
-        Aucun voyage ne correspond à votre recherche.
-    </div>
-</div>
+.view-btn:hover {
+    background: #e8edf2;
+}
+
+.voyage-admin-card {
+    background: #fff;
+    border-radius: 26px;
+    overflow: hidden;
+    box-shadow: 0 14px 32px rgba(15, 23, 42, 0.08);
+    border: 1px solid #edf1f5;
+    transition: 0.35s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+.voyage-admin-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 22px 38px rgba(15, 23, 42, 0.13);
+}
+
+.voyage-image-wrapper {
+    position: relative;
+    height: 270px;
+    overflow: hidden;
+}
+
+.voyage-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.image-top-overlay {
+    position: absolute;
+    top: 18px;
+    left: 18px;
+    right: 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.status-chip,
+.price-chip {
+    padding: 10px 16px;
+    border-radius: 999px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+    backdrop-filter: blur(10px);
+}
+
+.price-chip {
+    background: rgba(255,255,255,0.94);
+    color: #23779c;
+}
+
+.status-available {
+    background: #9fc18b;
+    color: #fff;
+}
+
+.status-warning {
+    background: #e0aa42;
+    color: #fff;
+}
+
+.status-full {
+    background: #e94254;
+    color: #fff;
+}
+
+.floating-weather-pill {
+    position: absolute;
+    left: 18px;
+    bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(40, 40, 40, 0.45);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    color: #ffffff;
+    padding: 8px 14px;
+    border-radius: 999px;
+    font-weight: 800;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+    border: 1px solid rgba(255,255,255,0.15);
+}
+
+.floating-weather-pill img {
+    width: 26px;
+    height: 26px;
+}
+
+.voyage-card-content {
+    padding: 22px;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+
+.voyage-title {
+    font-size: 1.34rem;
+    font-weight: 800;
+    color: #1f2d3d;
+    margin-bottom: 8px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.voyage-location {
+    color: #6b7b8c;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.availability-box {
+    background: #f8fafc;
+    border: 1px solid #edf1f5;
+    border-radius: 20px;
+    padding: 16px;
+}
+
+.availability-count {
+    font-size: 1rem;
+    font-weight: 800;
+    color: #23779c;
+}
+
+.custom-progress {
+    height: 12px;
+    border-radius: 999px;
+    overflow: hidden;
+    background: #e9eef3;
+}
+
+.voyage-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.icon-action {
+    width: 48px;
+    height: 48px;
+    border-radius: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none !important;
+    font-size: 17px;
+    transition: all 0.25s ease;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    box-shadow: 0 8px 18px rgba(0,0,0,0.08);
+}
+
+.icon-action:hover {
+    transform: translateY(-3px);
+    text-decoration: none !important;
+}
+
+.icon-view {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+.icon-view:hover {
+    background: #e5e7eb;
+    color: #111827;
+}
+
+.icon-edit {
+    background: #e8b156;
+    color: #1f2937;
+}
+
+.icon-edit:hover {
+    background: #d89d36;
+    color: #ffffff;
+}
+
+.icon-delete {
+    background: #ef4444;
+    color: #ffffff;
+}
+
+.icon-delete:hover {
+    background: #dc2626;
+    color: #ffffff;
+}
+
+.delete-form {
+    display: inline-block;
+    margin: 0;
+}
+
+.pagination-wrapper {
+    margin-top: 30px;
+    display: flex;
+    justify-content: center;
+}
+
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding-left: 0;
+    list-style: none;
+    margin: 0;
+}
+
+.page-item {
+    list-style: none;
+}
+
+.page-item .page-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 52px;
+    height: 52px;
+    padding: 0 22px;
+    border-radius: 999px;
+    background: #f1f3f5;
+    color: #7a8a99;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 1rem;
+    border: none;
+    box-shadow: none;
+    transition: all 0.25s ease;
+}
+
+.page-item .page-link:hover {
+    background: #e7ebef;
+    color: #23779C;
+    text-decoration: none;
+}
+
+.page-item.active .page-link {
+    background: #23779C;
+    color: #ffffff;
+    box-shadow: 0 6px 14px rgba(35, 119, 156, 0.25);
+}
+
+.page-item.disabled .page-link {
+    background: #f1f3f5;
+    color: #b8c0c8;
+    pointer-events: none;
+    opacity: 1;
+}
+
+.page-item:first-child .page-link,
+.page-item:last-child .page-link {
+    padding: 0 24px;
+}
+
+#voyages-calendar .fc-toolbar-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+#voyages-calendar .fc-button {
+    background: #23779C !important;
+    border: none !important;
+    box-shadow: none !important;
+}
+
+#voyages-calendar .fc-button:hover {
+    background: #1b5f7d !important;
+}
+
+#voyages-calendar .fc-event {
+    border: none !important;
+    padding: 3px 6px;
+    border-radius: 8px;
+    font-weight: 600;
+}
+
+@media (max-width: 768px) {
+    .voyage-title {
+        font-size: 1.15rem;
+    }
+
+    .voyage-image-wrapper {
+        height: 220px;
+    }
+
+    .floating-weather-pill {
+        padding: 6px 12px;
+    }
+
+    .page-item .page-link {
+        min-width: 46px;
+        height: 46px;
+        padding: 0 18px;
+        font-size: 0.95rem;
+    }
+}
+</style>
 {% endblock %}
 
 {% block javascripts %}
     {{ parent() }}
 
     <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const searchInput = document.getElementById('voyageSearch');
-            const filterSelect = document.getElementById('voyageFilter');
-            const resetBtn = document.getElementById('resetVoyageFilter');
-            const cards = document.querySelectorAll('.voyage-card-item');
-            const noResult = document.getElementById('voyageNoResult');
+    document.addEventListener('DOMContentLoaded', function () {
+        const form = document.getElementById('voyageFilterForm');
+        const searchInput = document.getElementById('searchInput');
+        const sortSelect = document.getElementById('sortSelect');
 
-            function applyFilters() {
-                const searchValue = (searchInput?.value || '').trim().toLowerCase();
-                const filterValue = filterSelect?.value || '';
-                let visibleCount = 0;
+        const listView = document.getElementById('voyages-list-view');
+        const calendarView = document.getElementById('voyages-calendar-view');
+        const btnList = document.getElementById('btn-list-view');
+        const btnCalendar = document.getElementById('btn-calendar-view');
 
-                cards.forEach(card => {
-                    const searchData = card.dataset.search || '';
-                    const statusData = card.dataset.status || '';
+        let searchTimeout = null;
 
-                    const matchesSearch = searchData.includes(searchValue);
-                    const matchesFilter = filterValue === '' || statusData === filterValue;
+        function activateButton(activeBtn, inactiveBtn) {
+            activeBtn.classList.add('active');
+            inactiveBtn.classList.remove('active');
+        }
 
-                    if (matchesSearch && matchesFilter) {
-                        card.classList.remove('d-none');
-                        visibleCount++;
-                    } else {
-                        card.classList.add('d-none');
+        if (searchInput && form) {
+            searchInput.addEventListener('input', function () {
+                clearTimeout(searchTimeout);
+                const value = this.value.trim();
+
+                searchTimeout = setTimeout(function () {
+                    if (value.length >= 1 || value.length === 0) {
+                        form.submit();
                     }
-                });
+                }, 500);
+            });
+        }
 
-                if (noResult) {
-                    noResult.classList.toggle('d-none', visibleCount !== 0);
+        if (sortSelect && form) {
+            sortSelect.addEventListener('change', function () {
+                form.submit();
+            });
+        }
+
+        if (btnList && btnCalendar && listView && calendarView) {
+            btnList.addEventListener('click', function () {
+                listView.style.display = 'block';
+                calendarView.style.display = 'none';
+                activateButton(btnList, btnCalendar);
+                localStorage.setItem('voyageAdminView', 'list');
+            });
+
+            btnCalendar.addEventListener('click', function () {
+                listView.style.display = 'none';
+                calendarView.style.display = 'block';
+                activateButton(btnCalendar, btnList);
+                localStorage.setItem('voyageAdminView', 'calendar');
+
+                if (!window.voyagesCalendarInitialized && typeof FullCalendar !== 'undefined') {
+                    initVoyagesCalendar();
+                    window.voyagesCalendarInitialized = true;
                 }
+            });
+
+            const savedView = localStorage.getItem('voyageAdminView');
+            if (savedView === 'calendar') {
+                btnCalendar.click();
             }
+        }
 
-            if (searchInput) {
-                searchInput.addEventListener('input', applyFilters);
-            }
+        function initVoyagesCalendar() {
+            const calendarEl = document.getElementById('voyages-calendar');
+            if (!calendarEl) return;
 
-            if (filterSelect) {
-                filterSelect.addEventListener('change', applyFilters);
-            }
+            const events = [
+                {% for voyage in voyages %}
+                {
+                    title: {{ voyage.titre|json_encode|raw }},
+                    start: '{{ voyage.dateDepart ? voyage.dateDepart|date("Y-m-d") : "" }}',
+                    end: '{{ voyage.dateRetour ? voyage.dateRetour|date("Y-m-d") : "" }}',
+                    color: '{% if voyage.placesRestantes == 0 %}#e94254{% elseif voyage.placesRestantes <= 10 %}#e0aa42{% else %}#4caf50{% endif %}',
+                    extendedProps: {
+                        destination: {{ voyage.destination|json_encode|raw }},
+                        prix: '{{ voyage.prix }}',
+                        placesRestantes: '{{ voyage.placesRestantes }}',
+                        placesTotal: '{{ voyage.placesTotal }}',
+                        editUrl: '{{ path("app_voyage_edit", {"id": voyage.id}) }}',
+                        showUrl: '{{ path("app_voyage_show", {"id": voyage.id}) }}'
+                    }
+                }{% if not loop.last %},{% endif %}
+                {% endfor %}
+            ];
 
-            if (resetBtn) {
-                resetBtn.addEventListener('click', function () {
-                    if (searchInput) searchInput.value = '';
-                    if (filterSelect) filterSelect.value = '';
-                    applyFilters();
-                });
-            }
-
-            const deleteButtons = document.querySelectorAll('.btn-delete-voyage');
-
-            deleteButtons.forEach(button => {
-                button.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    e.stopPropagation();
-
-                    const deleteUrl = this.getAttribute('href');
-                    const voyageTitle = this.dataset.voyageTitle || 'ce voyage';
+            const calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                locale: 'fr',
+                height: 720,
+                firstDay: 1,
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,listWeek'
+                },
+                buttonText: {
+                    today: 'Aujourd’hui',
+                    month: 'Mois',
+                    list: 'Liste'
+                },
+                events: events,
+                eventClick: function(info) {
+                    const props = info.event.extendedProps;
 
                     Swal.fire({
-                        title: 'Supprimer ce voyage ?',
-                        html: `Vous êtes sur le point de supprimer <strong>${voyageTitle}</strong>.`,
-                        icon: 'warning',
+                        title: info.event.title,
+                        html: `
+                            <div style="text-align:left">
+                                <p><strong>Destination :</strong> ${props.destination}</p>
+                                <p><strong>Prix :</strong> ${props.prix} DT</p>
+                                <p><strong>Places restantes :</strong> ${props.placesRestantes}/${props.placesTotal}</p>
+                                <p><strong>Date départ :</strong> ${info.event.startStr}</p>
+                                <p><strong>Date retour :</strong> ${info.event.endStr ?? '-'}</p>
+                            </div>
+                        `,
+                        icon: 'info',
+                        showDenyButton: true,
                         showCancelButton: true,
-                        confirmButtonColor: '#dc3545',
-                        cancelButtonColor: '#6c757d',
-                        confirmButtonText: 'Oui, supprimer',
-                        cancelButtonText: 'Annuler',
-                        reverseButtons: true,
-                        background: '#ffffff',
-                        borderRadius: '18px'
+                        confirmButtonText: 'Voir',
+                        denyButtonText: 'Modifier',
+                        cancelButtonText: 'Fermer'
                     }).then((result) => {
-                        if (result.isConfirmed) {
-                            window.location.href = deleteUrl;
+                        if (result.isConfirmed && props.showUrl) {
+                            window.location.href = props.showUrl;
+                        } else if (result.isDenied && props.editUrl) {
+                            window.location.href = props.editUrl;
                         }
                     });
+                }
+            });
+
+            calendar.render();
+        }
+
+        const deleteForms = document.querySelectorAll('.delete-form');
+
+        deleteForms.forEach(function (deleteForm) {
+            deleteForm.addEventListener('submit', function (e) {
+                e.preventDefault();
+
+                const title = this.dataset.title;
+
+                Swal.fire({
+                    title: 'Supprimer ce voyage ?',
+                    html: `Le voyage <strong>${title}</strong> sera supprimé définitivement.`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#ef4444',
+                    cancelButtonColor: '#6b7280',
+                    confirmButtonText: 'Oui, supprimer',
+                    cancelButtonText: 'Annuler',
+                    reverseButtons: true
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        this.submit();
+                    }
                 });
             });
         });
+    });
     </script>
 {% endblock %}
