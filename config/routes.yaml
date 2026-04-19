@@ -44,13 +44,13 @@ app_front_profile:
     controller: App\Controller\Front\UserProfileController::profile
 
 # Routes publiques pour les événements (front)
-app_front_events:
-    path: /events
-    controller: App\Controller\Admin\EventController::publicEvents
+#app_front_events:
+#    path: /events
+#    controller: App\Controller\Admin\EventController::publicEvents
 
-app_front_event_show:
-    path: /event/{id}
-    controller: App\Controller\Admin\EventController::publicShow
+#app_front_event_show:
+#    path: /event/{id}
+#    controller: App\Controller\Admin\EventController::publicShow
 
 app_front_mes_participations:
     path: /mes-participations

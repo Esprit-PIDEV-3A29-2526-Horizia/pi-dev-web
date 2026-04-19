@@ -6,6 +6,7 @@ namespace App\Controller;
 use App\Entity\Logement;
 use App\Entity\Reservationlog;
 use App\Entity\User;
+use App\Entity\Events;
 use App\Repository\VoyageRepository;
 use App\Service\GeminiService;
 use App\Service\LogementSearchService;
@@ -18,6 +19,62 @@ use Symfony\Component\Routing\Annotation\Route;
 
 class FrontController extends AbstractController
 {
+
+    #[Route('/events', name: 'app_front_events', methods: ['GET'])]
+    public function publicEvents(Request $request, EntityManagerInterface $entityManager): Response
+    {
+        $search = $request->query->get('search');
+        $priceLimit = $request->query->get('price_limit');
+        $page = $request->query->getInt('page', 1);
+        $limit = 6; // Items per page (3 per row * 2 rows = 6)
+
+        $qb = $entityManager->getRepository(Events::class)
+            ->createQueryBuilder('e')
+            ->where('e.statut != :termine')
+            ->setParameter('termine', 'termine')
+            ->orderBy('e.date_debut', 'ASC');
+
+        if ($search) {
+            $qb->andWhere('e.titre LIKE :search OR e.location LIKE :search OR e.categorie LIKE :search')
+            ->setParameter('search', '%' . $search . '%');
+        }
+
+        if ($priceLimit && is_numeric($priceLimit)) {
+            $qb->andWhere('e.prix <= :priceLimit')
+            ->setParameter('priceLimit', $priceLimit);
+        }
+
+        // Get total count for pagination
+        $totalEvents = $qb->select('COUNT(e.id_event)')
+                        ->getQuery()
+                        ->getSingleScalarResult();
+
+        $totalPages = ceil($totalEvents / $limit);
+        
+        // Ensure page is valid
+        if ($page < 1) $page = 1;
+        if ($page > $totalPages && $totalPages > 0) $page = $totalPages;
+        
+        $offset = ($page - 1) * $limit;
+        
+        // Get paginated results
+        $events = $qb->select('e')
+                    ->setFirstResult($offset)
+                    ->setMaxResults($limit)
+                    ->getQuery()
+                    ->getResult();
+
+        return $this->render('front/event/events.html.twig', [
+            'events' => $events,
+            'total_events' => $totalEvents,
+            'total_pages' => $totalPages,
+            'current_page' => $page,
+            'limit' => $limit,
+            'search' => $search,
+            'price_limit' => $priceLimit,
+        ]);
+    }
+
     #[Route('/', name: 'app_front_home')]
     public function home(VoyageRepository $voyageRepository): Response
     {

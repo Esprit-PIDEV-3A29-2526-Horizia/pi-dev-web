@@ -6,6 +6,8 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Validator\Constraints as Assert;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 
 #[ORM\Entity]
 #[ORM\Table(name: 'user')]
@@ -46,6 +48,14 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\ManyToOne(targetEntity: Profil::class, inversedBy: 'users')]
     #[ORM\JoinColumn(name: 'profil_id', referencedColumnName: 'id', nullable: true)]
     private ?Profil $profil = null;
+
+        #[ORM\OneToMany(mappedBy:"user", targetEntity: Participation::class)]
+    private Collection $participations;
+
+    public function __construct()
+    {
+        $this->participations = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -151,4 +161,30 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setResetToken(?string $resetToken): self { $this->resetToken = $resetToken; return $this; }
     public function getResetTokenExpiresAt(): ?\DateTimeInterface { return $this->resetTokenExpiresAt; }
     public function setResetTokenExpiresAt(?\DateTimeInterface $resetTokenExpiresAt): self { $this->resetTokenExpiresAt = $resetTokenExpiresAt; return $this; }
+
+    public function getParticipations(): Collection
+    {
+        return $this->participations;
+    }
+
+    public function addParticipation(Participation $participation): self
+    {
+        if (!$this->participations->contains($participation)) {
+            $this->participations[] = $participation;
+            $participation->setUser($this);
+        }
+
+        return $this;
+    }
+
+    public function removeParticipation(Participation $participation): self
+    {
+        if ($this->participations->removeElement($participation)) {
+            if ($participation->getUser() === $this) {
+                $participation->setUser(null);
+            }
+        }
+
+        return $this;
+    }
 }

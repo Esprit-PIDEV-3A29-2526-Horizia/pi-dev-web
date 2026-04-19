@@ -1,6 +1,23 @@
 {% extends 'admin/base_admin.html.twig' %}
 
-{% block title %}Gestion des Participations - Horozia{% endblock %}
+{% block title %}Gestion des Evenement - Horozia{% endblock %}
+
+{% block stylesheets %}
+{{ parent() }}
+<style>
+    /* Force sidebar to be full width */
+    .admin-sidebar {
+        width: 280px !important;
+        min-width: 280px !important;
+    }
+    
+    body.sidebar-collapsed .admin-sidebar,
+    .admin-sidebar.collapsed {
+        width: 90px !important;
+        min-width: 90px !important;
+    }
+</style>
+{% endblock %}
 
 {% block admin_content %}
 <div class="d-flex align-items-center justify-content-between mb-4">
@@ -84,3 +101,4 @@
 </div>
 {% endif %}
 {% endblock %}
+

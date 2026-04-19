@@ -2,6 +2,234 @@
 
 {% block title %}{{ event.getTitre() }} - Horozia{% endblock %}
 
+{% block stylesheets %}
+{{ parent() }}
+<style>
+        /* Force sidebar to be full width */
+    .admin-sidebar {
+        width: 280px !important;
+        min-width: 280px !important;
+    }
+    
+    body.sidebar-collapsed .admin-sidebar,
+    .admin-sidebar.collapsed {
+        width: 90px !important;
+        min-width: 90px !important;
+    }
+
+    .participations-section {
+        margin-top: 2rem;
+    }
+    
+    .participations-card {
+        background: var(--color-white);
+        border-radius: 20px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        overflow: hidden;
+        border: 1px solid var(--color-border);
+    }
+    
+    .participations-header {
+        padding: 1.25rem 1.5rem;
+        background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+        color: white;
+    }
+    
+    .participations-header h4 {
+        margin: 0;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .participations-header .badge {
+        background: rgba(255, 255, 255, 0.2);
+        padding: 0.25rem 0.75rem;
+        border-radius: 50px;
+        font-size: 0.85rem;
+    }
+    
+    .modern-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .modern-table thead tr {
+        background: #f8fafc;
+        border-bottom: 2px solid #e2e8f0;
+    }
+    
+    .modern-table th {
+        padding: 1rem 1.25rem;
+        text-align: left;
+        font-weight: 600;
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #64748b;
+    }
+    
+    .modern-table td {
+        padding: 1rem 1.25rem;
+        vertical-align: middle;
+        border-bottom: 1px solid #e2e8f0;
+        color: #334155;
+    }
+    
+    .modern-table tbody tr {
+        transition: all 0.2s ease;
+    }
+    
+    .modern-table tbody tr:hover {
+        background: #f1f5f9;
+        transform: scale(1.01);
+    }
+    
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.375rem;
+        padding: 0.375rem 0.75rem;
+        border-radius: 50px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+    
+    .status-confirmed {
+        background: #dcfce7;
+        color: #166534;
+    }
+    
+    .status-confirmed::before {
+        content: "●";
+        color: #22c55e;
+        font-size: 0.5rem;
+    }
+    
+    .status-pending {
+        background: #fef3c7;
+        color: #92400e;
+    }
+    
+    .status-pending::before {
+        content: "●";
+        color: #f59e0b;
+        font-size: 0.5rem;
+    }
+    
+    .status-cancelled {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+    
+    .status-cancelled::before {
+        content: "●";
+        color: #ef4444;
+        font-size: 0.5rem;
+    }
+    
+    .btn-icon {
+        padding: 0.375rem 0.75rem;
+        border-radius: 8px;
+        font-size: 0.75rem;
+        transition: all 0.2s ease;
+    }
+    
+    .btn-icon:hover {
+        transform: translateY(-1px);
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+    }
+    
+    .empty-state i {
+        font-size: 3rem;
+        color: #cbd5e1;
+        margin-bottom: 1rem;
+    }
+    
+    .empty-state p {
+        color: #64748b;
+        margin: 0;
+    }
+    
+    .participant-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: 600;
+        font-size: 0.875rem;
+    }
+
+    /* Map Card Styles */
+    .map-card {
+        background: var(--color-white);
+        border-radius: 20px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        overflow: hidden;
+        border: 1px solid var(--color-border);
+        margin-top: 2rem;
+    }
+    
+    .map-header {
+        padding: 1.25rem 1.5rem;
+        background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+        color: white;
+    }
+    
+    .map-header h4 {
+        margin: 0;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .map-container {
+        padding: 20px;
+    }
+    
+    #admin-event-map {
+        height: 350px;
+        width: 100%;
+        border-radius: 12px;
+        z-index: 1;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    
+    .map-address {
+        background: #f8fafc;
+        padding: 12px 20px;
+        border-radius: 8px;
+        margin-top: 15px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        border: 1px solid #e2e8f0;
+    }
+    
+    .map-address i {
+        color: var(--color-primary);
+        font-size: 1.2rem;
+    }
+    
+    .map-address span {
+        color: #334155;
+        font-size: 0.95rem;
+    }
+</style>
+{% endblock %}
+
 {% block admin_content %}
 <div class="d-flex align-items-center justify-content-between mb-4">
     <div>
@@ -101,7 +329,56 @@
     </div>
 </div>
 
-{# ── Delete button at bottom ── #}
+{# ── MAP SECTION (Admin View) ── #}
+{% if event.latitude and event.longitude %}
+<div class="map-card">
+    <div class="map-header">
+        <h4><i class="bi bi-map me-2"></i> Localisation sur la carte</h4>
+    </div>
+    <div class="map-container">
+        <div id="admin-event-map"></div>
+        <div class="map-address">
+            <i class="bi bi-geo-alt-fill"></i>
+            <span>{{ event.getLocation() }}</span>
+        </div>
+    </div>
+</div>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const map = L.map('admin-event-map').setView([{{ event.latitude }}, {{ event.longitude }}], 15);
+        
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+            maxZoom: 19
+        }).addTo(map);
+        
+        const marker = L.marker([{{ event.latitude }}, {{ event.longitude }}]).addTo(map);
+        marker.bindPopup('<strong>{{ event.getTitre() }}</strong><br>{{ event.getLocation() }}').openPopup();
+        
+        // Fix map display after container is fully visible
+        setTimeout(function() {
+            map.invalidateSize();
+        }, 100);
+    });
+</script>
+{% else %}
+<div class="map-card">
+    <div class="map-header">
+        <h4><i class="bi bi-map me-2"></i> Localisation sur la carte</h4>
+    </div>
+    <div class="map-container text-center py-5">
+        <i class="bi bi-geo-alt-slash fs-1 text-muted"></i>
+        <p class="text-muted mt-2 mb-0">Aucune coordonnée disponible pour cet événement.</p>
+        <p class="text-muted small">Modifiez l'événement pour ajouter sa position sur la carte.</p>
+    </div>
+</div>
+{% endif %}
+
+{# ── Delete button ── #}
 <div class="mt-4">
     <form method="POST" action="{{ path('app_event_delete', {id: event.getId_event()}) }}"
           onsubmit="return confirm('Supprimer définitivement cet événement ?')">
@@ -110,5 +387,90 @@
             <i class="bi bi-trash me-1"></i> Supprimer cet événement
         </button>
     </form>
+</div>
+
+{# ── Modern Participations Table ── #}
+<div class="participations-section">
+    <div class="participations-card">
+        <div class="participations-header">
+            <h4>
+                <i class="bi bi-people-fill"></i>
+                Participations
+                <span class="badge">{{ event.getParticipations()|length }}</span>
+            </h4>
+        </div>
+        
+        {% if event.getParticipations()|length > 0 %}
+            <div style="overflow-x: auto;">
+                <table class="modern-table">
+                    <thead>
+                        <tr>
+                            <th>Participant</th>
+                            <th>Places</th>
+                            <th>Montant</th>
+                            <th>Statut</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for participation in event.getParticipations() %}
+                        <tr>
+                            <td>
+                                <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                    <div class="participant-avatar">
+                                        <i class="bi bi-person-fill" style="font-size: 0.875rem;"></i>
+                                    </div>
+                                    <div>
+                                        <div style="font-weight: 500;">Participation #{{ participation.getId_participation() }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span style="font-weight: 600;">{{ participation.getNombre_places() }}</span>
+                                <span style="color: #64748b; font-size: 0.75rem;">place(s)</span>
+                            </td>
+                            <td>
+                                <span style="font-weight: 700; color: var(--color-primary);">
+                                    {{ participation.getMontant_total() }} TND
+                                </span>
+                            </td>
+                            <td>
+                                <span class="status-badge 
+                                    {% if participation.getStatut() == 'confirmée' %}status-confirmed
+                                    {% elseif participation.getStatut() == 'en_attente' %}status-pending
+                                    {% elseif participation.getStatut() == 'annulée' %}status-cancelled
+                                    {% else %}status-pending{% endif %}">
+                                    {{ participation.getStatut() }}
+                                </span>
+                            </td>
+                            <td>
+                                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                    <i class="bi bi-calendar3" style="color: #94a3b8;"></i>
+                                    <span style="font-size: 0.875rem;">{{ participation.getDate_participation()|date('d/m/Y H:i') }}</span>
+                                </div>
+                            </td>
+                            <td>
+                                <form method="POST" action="{{ path('app_participation_delete', {id: participation.getId_participation()}) }}"
+                                      onsubmit="return confirm('Supprimer cette participation ?')"
+                                      style="display: inline-block;">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ participation.getId_participation()) }}">
+                                    <button type="submit" class="btn btn-icon btn-danger" style="background: #fee2e2; color: #dc2626; border: none;">
+                                        <i class="bi bi-trash"></i> Supprimer
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <i class="bi bi-calendar-x"></i>
+                <p>Aucune participation pour cet événement</p>
+            </div>
+        {% endif %}
+    </div>
 </div>
 {% endblock %}
