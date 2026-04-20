@@ -95,5 +95,14 @@
                 <span>Gestion Événements</span>
             </a>
         </li>
+        <!--gestion publications-->
+        <li><a class="sidebar-link {{ app.request.attributes.get('_route') starts with 'admin_publication' ? 'active' : '' }}" href="{{ path('admin_publication_index') }}"><i class="bi bi-file-text-fill"></i><span>Publications</span></a></li>
+
+        <li>
+            <a class="sidebar-link {{ app.request.attributes.get('_route') starts with 'admin_commentaire' ? 'active' : '' }}" href="{{ path('admin_commentaire_index') }}">
+                <i class="bi bi-chat-dots-fill"></i>
+                <span>Commentaires</span>
+            </a>
+        </li>
     </ul>
 </div>

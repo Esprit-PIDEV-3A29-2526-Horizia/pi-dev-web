@@ -1,0 +1,127 @@
+{% extends 'base_front.html.twig' %}
+
+{% block title %}Mes favoris - Horozia{% endblock %}
+
+{% block hero %}{% endblock %}
+
+{% block body %}
+<section class="ftco-section" id="favorites">
+    <div class="container">
+        <div class="row justify-content-center pb-4">
+            <div class="col-md-8 heading-section text-center ftco-animate">
+                <span class="subheading">Vos coups de cœur</span>
+                <h2 class="mb-4">Mes publications favorites</h2>
+            </div>
+        </div>
+
+        <div class="row">
+            {% if publications is empty %}
+                <div class="col-12 text-center">
+                    <div class="alert alert-info">
+                        <i class="fa fa-star-o"></i> Vous n'avez aucune publication favorite.
+                        <a href="{{ path('front_publication_index') }}" class="alert-link">Découvrir des publications</a>
+                    </div>
+                </div>
+            {% else %}
+                {% for publication in publications %}
+                <div class="col-md-4 ftco-animate">
+                    <div class="card h-100 shadow-sm">
+                        <img src="{{ asset(publication.image ?? 'https://placehold.co/600x400') }}" class="card-img-top" style="height: 200px; object-fit: cover;">
+                        <div class="card-body">
+                            <span class="badge bg-secondary">{{ publication.categorie }}</span>
+                            <h5 class="mt-2">{{ publication.titre }}</h5>
+                            <p>{{ publication.description|slice(0, 100) }}...</p>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small>{{ publication.auteur }} • {{ publication.dateCreation|date('d/m/Y') }}</small>
+                                <div>
+                                    {% set liked = publication.id in likedIds|default([]) %}
+                                    <button class="btn btn-sm like-btn {% if liked %}btn-danger{% else %}btn-outline-danger{% endif %}" data-id="{{ publication.id }}">
+                                        ❤️ <span class="likes-count">{{ publication.likes }}</span>
+                                    </button>
+                                    <button class="btn btn-sm favorite-btn btn-warning" data-id="{{ publication.id }}">
+                                        <i class="fa fa-star"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <a href="{{ path('front_publication_show', {'id': publication.id}) }}" class="btn btn-primary btn-sm w-100">
+                                    Voir détails
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% endif %}
+        </div>
+
+        {# Bouton pour retourner aux publications #}
+        {% if publications is not empty %}
+        <div class="row mt-5">
+            <div class="col-12 text-center">
+                <a href="{{ path('front_publication_index') }}" class="btn btn-outline-secondary">
+                    <i class="fa fa-arrow-left"></i> Voir toutes les publications
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Gestion des likes (AJAX) – identique à la page index
+            document.querySelectorAll('.like-btn').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const publicationId = this.dataset.id;
+                    fetch(`/publication/${publicationId}/like`, {
+                        method: 'POST',
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        const likesSpan = this.querySelector('.likes-count');
+                        likesSpan.textContent = data.likesCount;
+                        if (data.liked) {
+                            this.classList.remove('btn-outline-danger');
+                            this.classList.add('btn-danger');
+                        } else {
+                            this.classList.remove('btn-danger');
+                            this.classList.add('btn-outline-danger');
+                        }
+                    })
+                    .catch(error => console.error('Erreur like:', error));
+                });
+            });
+
+            // Gestion des favoris (AJAX) – pour retirer des favoris directement depuis cette page
+            document.querySelectorAll('.favorite-btn').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const publicationId = this.dataset.id;
+                    fetch(`/favorite/${publicationId}/toggle`, {
+                        method: 'POST',
+                        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (!data.isFavorite) {
+                            // Si le favori a été retiré, on supprime la carte de la page
+                            const card = this.closest('.col-md-4');
+                            card.remove();
+                            // Si plus aucune publication, afficher le message "aucun favori"
+                            if (document.querySelectorAll('.col-md-4').length === 0) {
+                                location.reload(); // recharge pour afficher le message
+                            }
+                        }
+                    })
+                    .catch(error => console.error('Erreur favori:', error));
+                });
+            });
+        });
+    </script>
+{% endblock %}

@@ -1,0 +1,349 @@
+{% extends 'base_front.html.twig' %}
+
+{% block title %}Nouvelle publication - Horozia{% endblock %}
+
+{% block hero %}{% endblock %}
+
+{% block body %}
+<section class="ftco-section">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-10 col-lg-8 ftco-animate">
+                <div class="card shadow-lg border-0 rounded-4">
+                    <div class="card-header bg-gradient-primary text-white rounded-top-4">
+                        <h2 class="h4 mb-0"><i class="bi bi-pencil-square"></i> Publier un article</h2>
+                    </div>
+                    <div class="card-body p-4">
+                        {{ form_start(form, {'attr': {'novalidate': 'novalidate', 'enctype': 'multipart/form-data', 'class': 'needs-validation'}}) }}
+                            {{ form_errors(form) }}
+
+                            <div class="row g-4">
+                                {# COLONNE GAUCHE #}
+                                <div class="col-md-6">
+                                    <div class="card h-100 border-0 bg-light rounded-3">
+                                        <div class="card-body">
+                                            <h5 class="card-title mb-3"><i class="bi bi-info-circle-fill text-primary"></i> Informations principales</h5>
+                                            
+                                            <div class="mb-3">
+                                                {{ form_label(form.titre, 'Titre *', {'label_attr': {'class': 'form-label fw-semibold'}}) }}
+                                                <div class="input-group">
+                                                    <span class="input-group-text"><i class="bi bi-pencil"></i></span>
+                                                    {{ form_widget(form.titre, {'attr': {'class': 'form-control', 'placeholder': 'Ex: Belle plage à Hammamet, Randonnée en montagne...'}}) }}
+                                                </div>
+                                                {{ form_errors(form.titre) }}
+                                            </div>
+
+                                            <div class="mb-3">
+                                                {{ form_label(form.categorie, 'Catégorie *', {'label_attr': {'class': 'form-label fw-semibold'}}) }}
+                                                <div class="input-group">
+                                                    <span class="input-group-text"><i class="bi bi-tags"></i></span>
+                                                    {{ form_widget(form.categorie, {'attr': {'class': 'form-select'}}) }}
+                                                </div>
+                                                {{ form_errors(form.categorie) }}
+                                            </div>
+
+                                            <div class="row mb-3">
+                                                <div class="col-md-6">
+                                                    {{ form_label(form.ville, 'Ville', {'label_attr': {'class': 'form-label fw-semibold'}}) }}
+                                                    <div class="input-group">
+                                                        <span class="input-group-text"><i class="bi bi-building"></i></span>
+                                                        {{ form_widget(form.ville, {'attr': {'class': 'form-control', 'placeholder': 'Tunis, Sousse...'}}) }}
+                                                    </div>
+                                                    {{ form_errors(form.ville) }}
+                                                </div>
+                                                <div class="col-md-6">
+                                                    {{ form_label(form.pays, 'Pays', {'label_attr': {'class': 'form-label fw-semibold'}}) }}
+                                                    <div class="input-group">
+                                                        <span class="input-group-text"><i class="bi bi-flag"></i></span>
+                                                        {{ form_widget(form.pays, {'attr': {'class': 'form-control', 'placeholder': 'Tunisie, France...'}}) }}
+                                                    </div>
+                                                    {{ form_errors(form.pays) }}
+                                                </div>
+                                            </div>
+
+                                            <div class="mb-3">
+                                                {{ form_label(form.tags, 'Tags (séparés par des virgules)', {'label_attr': {'class': 'form-label fw-semibold'}}) }}
+                                                <div class="input-group">
+                                                    <span class="input-group-text"><i class="bi bi-hash"></i></span>
+                                                    {{ form_widget(form.tags, {'attr': {'class': 'form-control', 'placeholder': 'plage, soleil, famille, budget, été, voyage...'}}) }}
+                                                </div>
+                                                <div class="form-text">Séparez chaque tag par une virgule.</div>
+                                                {{ form_errors(form.tags) }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {# COLONNE DROITE #}
+                                <div class="col-md-6">
+                                    <div class="card h-100 border-0 bg-light rounded-3">
+                                        <div class="card-body">
+                                            <h5 class="card-title mb-3"><i class="bi bi-stars text-warning"></i> Contenu & IA</h5>
+                                            
+                                            <div class="mb-3">
+                                                {{ form_label(form.description, 'Description *', {'label_attr': {'class': 'form-label fw-semibold'}}) }}
+                                                {{ form_widget(form.description, {'attr': {'class': 'form-control', 'rows': 4, 'placeholder': 'Décrivez votre expérience, vos recommandations...'}}) }}
+                                                <div class="mt-2 d-flex gap-2 flex-wrap">
+                                                    <button type="button" id="generate-description-btn" class="btn btn-sm btn-outline-info">
+                                                        <i class="bi bi-magic"></i> Générer description par IA
+                                                    </button>
+                                                    <button type="button" id="translate-description-btn" class="btn btn-sm btn-outline-secondary" style="display: none;">
+                                                        <i class="bi bi-translate"></i> Traduire en anglais
+                                                    </button>
+                                                </div>
+                                                {{ form_errors(form.description) }}
+                                            </div>
+
+                                            <div class="mb-3">
+                                                {{ form_label(form.sujet, 'Sujet (mot-clé) pour génération automatique', {'label_attr': {'class': 'form-label fw-semibold'}}) }}
+                                                <div class="input-group">
+                                                    <span class="input-group-text"><i class="bi bi-lightbulb"></i></span>
+                                                    {{ form_widget(form.sujet, {'attr': {'class': 'form-control', 'placeholder': 'Ex: Voyage à Dubaï, Randonnée dans les Alpes...'}}) }}
+                                                </div>
+                                                <div class="form-text">Entrez un thème, puis utilisez le bouton ci-dessous pour tout générer.</div>
+                                            </div>
+
+                                            <div class="mb-3">
+                                                {{ form_label(form.imagePrompt, 'Décrire l’image à générer (optionnel)', {'label_attr': {'class': 'form-label fw-semibold'}}) }}
+                                                {{ form_widget(form.imagePrompt, {'attr': {'class': 'form-control', 'rows': 2, 'placeholder': 'Ex: un coucher de soleil sur une plage tropicale'}}) }}
+                                                <div class="mt-2">
+                                                    <button type="button" id="generate-image-btn" class="btn btn-sm btn-outline-info">
+                                                        <i class="bi bi-image"></i> Générer l’image
+                                                    </button>
+                                                </div>
+                                                <div id="image-preview" class="mt-2"></div>
+                                                {{ form_errors(form.imagePrompt) }}
+                                            </div>
+
+                                            <div class="mb-3">
+                                                {{ form_label(form.pseudo, 'Votre pseudo (pour vos publications)', {'label_attr': {'class': 'form-label fw-semibold'}}) }}
+                                                <div class="input-group">
+                                                    <span class="input-group-text"><i class="bi bi-person"></i></span>
+                                                    {{ form_widget(form.pseudo, {'attr': {'class': 'form-control', 'placeholder': 'Ex: JeanDupont, Marie123...'}}) }}
+                                                </div>
+                                                {{ form_errors(form.pseudo) }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {# SECTION PLEINE LARGEUR : PHOTO #}
+                                <div class="col-12">
+                                    <div class="card border-0 bg-light rounded-3">
+                                        <div class="card-body">
+                                            <h5 class="card-title mb-3"><i class="bi bi-camera-fill text-success"></i> Photo</h5>
+                                            <div class="mb-3">
+                                                {{ form_label(form.imageFile, 'Choisir une photo', {'label_attr': {'class': 'form-label fw-semibold'}}) }}
+                                                {{ form_widget(form.imageFile, {'attr': {'class': 'form-control', 'accept': 'image/*'}}) }}
+                                                <div class="form-text">Glissez une photo ou cliquez pour parcourir (JPEG, PNG, WebP).</div>
+                                                {{ form_errors(form.imageFile) }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {# BOUTONS D'ACTION #}
+                            <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                                <button type="button" id="generate-all-btn" class="btn btn-success">
+                                    <i class="bi bi-stars"></i> Générer tout par IA
+                                </button>
+                                <a href="{{ path('front_publication_index') }}" class="btn btn-secondary">
+                                    <i class="bi bi-x-circle"></i> Annuler
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-check-circle"></i> Publier
+                                </button>
+                            </div>
+                        {{ form_end(form) }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // ---- Sélecteurs des champs (IDs Symfony) ----
+            const titreField = document.getElementById('publication_titre');
+            const categorieField = document.getElementById('publication_categorie');
+            const villeField = document.getElementById('publication_ville');
+            const paysField = document.getElementById('publication_pays');
+            const descriptionField = document.getElementById('publication_description');
+            const tagsField = document.getElementById('publication_tags');
+            const sujetField = document.getElementById('publication_sujet');
+            const imagePromptField = document.getElementById('publication_imagePrompt');
+            const pseudoField = document.getElementById('publication_pseudo'); // si présent
+            
+            const generateDescBtn = document.getElementById('generate-description-btn');
+            const translateBtn = document.getElementById('translate-description-btn');
+            const generateImageBtn = document.getElementById('generate-image-btn');
+            const generateAllBtn = document.getElementById('generate-all-btn');
+            const imagePreview = document.getElementById('image-preview');
+
+            function showError(message, btn) {
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'alert alert-danger mt-2';
+                errorDiv.textContent = message;
+                btn.parentNode.appendChild(errorDiv);
+                setTimeout(() => errorDiv.remove(), 5000);
+            }
+
+            // 1. Générer description
+            if (generateDescBtn) {
+                generateDescBtn.addEventListener('click', async function(e) {
+                    const btn = e.currentTarget;
+                    const titre = titreField?.value || '';
+                    const categorie = categorieField?.value || '';
+                    const ville = villeField?.value || '';
+                    const pays = paysField?.value || '';
+
+                    btn.disabled = true;
+                    const originalHtml = btn.innerHTML;
+                    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Génération...';
+
+                    try {
+                        const response = await fetch('/api/generate-description', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ titre, categorie, ville, pays })
+                        });
+                        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                        const data = await response.json();
+                        if (data.error) {
+                            showError(data.error, btn);
+                            if (translateBtn) translateBtn.style.display = 'none';
+                        } else if (data.description) {
+                            descriptionField.value = data.description;
+                            if (translateBtn) translateBtn.style.display = 'inline-block';
+                        }
+                    } catch (err) {
+                        showError('Erreur : ' + err.message, btn);
+                    } finally {
+                        btn.disabled = false;
+                        btn.innerHTML = originalHtml;
+                    }
+                });
+            }
+
+            // 2. Traduction
+            if (translateBtn) {
+                translateBtn.addEventListener('click', async function(e) {
+                    const btn = e.currentTarget;
+                    const description = descriptionField?.value || '';
+                    if (!description.trim()) {
+                        showError('Aucune description à traduire.', btn);
+                        return;
+                    }
+                    btn.disabled = true;
+                    const originalHtml = btn.innerHTML;
+                    btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Traduction...';
+                    try {
+                        const response = await fetch('/api/translate-description', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ description, lang: 'en' })
+                        });
+                        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                        const data = await response.json();
+                        if (data.error) {
+                            showError(data.error, btn);
+                        } else if (data.description) {
+                            descriptionField.value = data.description;
+                        }
+                    } catch (err) {
+                        showError('Erreur : ' + err.message, btn);
+                    } finally {
+                        btn.disabled = false;
+                        btn.innerHTML = originalHtml;
+                    }
+                });
+            }
+
+            // 3. Générer image
+            if (generateImageBtn) {
+                generateImageBtn.addEventListener('click', async () => {
+                    const prompt = imagePromptField?.value.trim();
+                    if (!prompt) {
+                        showError('Décrivez l’image à générer.', generateImageBtn);
+                        return;
+                    }
+                    generateImageBtn.disabled = true;
+                    const originalText = generateImageBtn.innerHTML;
+                    generateImageBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Génération...';
+                    try {
+                        const response = await fetch('/api/generate-image', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ prompt: prompt })
+                        });
+                        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                        const data = await response.json();
+                        if (data.error) {
+                            showError(data.error, generateImageBtn);
+                        } else if (data.imageUrl) {
+                            imagePreview.innerHTML = `<img src="${data.imageUrl}" style="max-width: 100%; max-height: 200px;" class="img-thumbnail" alt="Aperçu">`;
+                            showError('Image générée ! Vous pouvez la télécharger (clic droit).', generateImageBtn);
+                        }
+                    } catch (err) {
+                        showError('Erreur : ' + err.message, generateImageBtn);
+                    } finally {
+                        generateImageBtn.disabled = false;
+                        generateImageBtn.innerHTML = originalText;
+                    }
+                });
+            }
+
+            // 4. Générer tout par IA
+            if (generateAllBtn) {
+                generateAllBtn.addEventListener('click', async () => {
+                    const sujet = sujetField?.value.trim();
+                    if (!sujet) {
+                        showError('Veuillez saisir un sujet (mot-clé).', generateAllBtn);
+                        return;
+                    }
+                    generateAllBtn.disabled = true;
+                    const originalText = generateAllBtn.innerHTML;
+                    generateAllBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Génération...';
+                    try {
+                        const response = await fetch('/api/generate-all', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ sujet: sujet })
+                        });
+                        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                        const data = await response.json();
+                        if (data.error) {
+                            showError(data.error, generateAllBtn);
+                        } else {
+                            if (data.titre) titreField.value = data.titre;
+                            if (data.categorie) categorieField.value = data.categorie;
+                            if (data.description) descriptionField.value = data.description;
+                            if (data.tags) tagsField.value = data.tags;
+                            if (data.imagePrompt) {
+                                imagePromptField.value = data.imagePrompt;
+                                if (confirm('Générer l’image correspondante maintenant ?')) {
+                                    generateImageBtn.click();
+                                }
+                            }
+                            const msg = document.createElement('div');
+                            msg.className = 'alert alert-success mt-2';
+                            msg.innerHTML = '<i class="bi bi-check-circle"></i> Contenu généré avec succès !';
+                            generateAllBtn.parentNode.appendChild(msg);
+                            setTimeout(() => msg.remove(), 3000);
+                        }
+                    } catch (err) {
+                        showError('Erreur réseau : ' + err.message, generateAllBtn);
+                    } finally {
+                        generateAllBtn.disabled = false;
+                        generateAllBtn.innerHTML = originalText;
+                    }
+                });
+            }
+        });
+    </script>
+{% endblock %}
