@@ -73,4 +73,26 @@ class MarqueController extends AbstractController
             'marque' => $marque,
         ]);
     }
+    #[Route('/{id}/delete', name: 'admin_marque_delete', methods: ['POST'])]
+public function delete(Request $request, Marque $marque, EntityManagerInterface $em): Response
+{
+    // Vérifier le token CSRF
+    if ($this->isCsrfTokenValid('delete' . $marque->getIdMarque(), $request->request->get('_token'))) {
+        
+        // Vérifier si la marque a des modèles associés
+        $modelesCount = $marque->getModeles()->count();
+        
+        if ($modelesCount > 0) {
+            $this->addFlash('warning', 'Impossible de supprimer cette marque car elle contient ' . $modelesCount . ' modèle(s) associé(s).');
+        } else {
+            $em->remove($marque);
+            $em->flush();
+            $this->addFlash('success', 'Marque supprimée avec succès !');
+        }
+    } else {
+        $this->addFlash('error', 'Token CSRF invalide.');
+    }
+    
+    return $this->redirectToRoute('admin_marque_index');
+}
 }

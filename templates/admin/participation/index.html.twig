@@ -1,0 +1,104 @@
+{% extends 'admin/base_admin.html.twig' %}
+
+{% block title %}Gestion des Evenement - Horozia{% endblock %}
+
+{% block stylesheets %}
+{{ parent() }}
+<style>
+    /* Force sidebar to be full width */
+    .admin-sidebar {
+        width: 280px !important;
+        min-width: 280px !important;
+    }
+    
+    body.sidebar-collapsed .admin-sidebar,
+    .admin-sidebar.collapsed {
+        width: 90px !important;
+        min-width: 90px !important;
+    }
+</style>
+{% endblock %}
+
+{% block admin_content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h1 class="fw-bold mb-1" style="color:#1f2d3d;">Gestion des Participations</h1>
+        <p class="text-muted mb-0">{{ participations|length }} participation(s) enregistrée(s)</p>
+    </div>
+</div>
+
+{% if participations is empty %}
+    <div class="text-center py-5 text-muted">
+        <i class="bi bi-people fs-1 d-block mb-3"></i>
+        <p class="fw-semibold">Aucune participation enregistrée pour le moment.</p>
+    </div>
+{% else %}
+<div class="row g-4">
+    {% for p in participations %}
+    <div class="col-md-6 col-xl-4">
+        <div class="card-horozia h-100 p-4 d-flex flex-column" style="border-radius:18px;">
+
+            {# ── Header: event name + statut ── #}
+            <div class="d-flex align-items-start justify-content-between mb-3">
+                <div>
+                    <span class="badge rounded-pill bg-horozia-secondary mb-1">
+                        {{ p.getId_event().getCategorie() }}
+                    </span>
+                    <h5 class="fw-bold mb-0" style="color:#1f2d3d;">
+                        {{ p.getId_event().getTitre() }}
+                    </h5>
+                </div>
+                <span class="badge rounded-pill px-3 py-2
+                    {{ p.getStatut() == 'confirmée' ? 'bg-success' :
+                       p.getStatut() == 'annulée'   ? 'bg-danger'  : 'bg-warning text-dark' }}">
+                    {{ p.getStatut() }}
+                </span>
+            </div>
+
+            <hr class="my-2">
+
+            {# ── Participation details ── #}
+            <div class="d-flex flex-column gap-2 mb-3">
+                <div class="d-flex align-items-center gap-2 small text-muted">
+                    <i class="bi bi-hash" style="color:#23779C;"></i>
+                    <span>ID participation : <strong>#{{ p.getId_participation() }}</strong></span>
+                </div>
+                <div class="d-flex align-items-center gap-2 small text-muted">
+                    <i class="bi bi-ticket-perforated" style="color:#23779C;"></i>
+                    <span>{{ p.getNombre_places() }} place(s) réservée(s)</span>
+                </div>
+                <div class="d-flex align-items-center gap-2 small text-muted">
+                    <i class="bi bi-cash" style="color:#23779C;"></i>
+                    <span>Montant total : <strong style="color:#23779C;">{{ p.getMontant_total() }} TND</strong></span>
+                </div>
+                <div class="d-flex align-items-center gap-2 small text-muted">
+                    <i class="bi bi-calendar-check" style="color:#23779C;"></i>
+                    <span>{{ p.getDate_participation()|date('d/m/Y à H:i') }}</span>
+                </div>
+                <div class="d-flex align-items-center gap-2 small text-muted">
+                    <i class="bi bi-geo-alt" style="color:#23779C;"></i>
+                    <span>{{ p.getId_event().getLocation() }}</span>
+                </div>
+            </div>
+
+            {# ── Delete ── #}
+            <div class="mt-auto">
+                <form method="POST"
+                      action="{{ path('app_participation_delete', {id: p.getId_participation()}) }}">
+                    <input type="hidden" name="_token"
+                           value="{{ csrf_token('delete' ~ p.getId_participation()) }}">
+                    <button type="submit"
+                            class="btn btn-sm btn-horozia-danger w-100"
+                            onclick="return confirm('Supprimer cette participation ?')">
+                        <i class="bi bi-trash me-1"></i> Supprimer
+                    </button>
+                </form>
+            </div>
+
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+{% endblock %}
+

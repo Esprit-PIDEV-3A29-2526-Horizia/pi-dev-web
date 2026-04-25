@@ -1,0 +1,251 @@
+{% extends 'admin/base_admin.html.twig' %}
+
+{% block title %}Gestion des commentaires{% endblock %}
+{% block stylesheets %}
+{{ parent() }}
+<style>
+    /* Force sidebar to be full width */
+    .admin-sidebar {
+        width: 280px !important;
+        min-width: 280px !important;
+    }
+    
+    body.sidebar-collapsed .admin-sidebar,
+    .admin-sidebar.collapsed {
+        width: 90px !important;
+        min-width: 90px !important;
+    }
+
+    /* Pagination custom styles */
+    .pagination-custom {
+        gap: 0.25rem;
+    }
+
+    .pagination-custom .page-link {
+        border: none;
+        color: #23779C;
+        background-color: transparent;
+        padding: 0.5rem 0.9rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+
+    .pagination-custom .page-link:hover {
+        background-color: #23779C;
+        color: white;
+        transform: translateY(-2px);
+    }
+
+    .pagination-custom .page-item.active .page-link {
+        background-color: #23779C;
+        color: white;
+        box-shadow: 0 4px 10px rgba(35, 119, 156, 0.3);
+    }
+
+    .pagination-custom .page-item.disabled .page-link {
+        color: #adb5bd;
+        cursor: not-allowed;
+    }
+
+    .pagination-custom .page-link.rounded-circle {
+        width: 38px;
+        height: 38px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .pagination-custom .page-link.rounded-pill {
+        padding-left: 1.2rem;
+        padding-right: 1.2rem;
+    }
+
+    /* Responsive pagination */
+    @media (max-width: 768px) {
+        .pagination-custom .page-link {
+            padding: 0.35rem 0.7rem;
+            font-size: 0.85rem;
+        }
+        
+        .pagination-custom .page-link.rounded-circle {
+            width: 32px;
+            height: 32px;
+        }
+    }
+</style>
+{% endblock %}
+{% block admin_content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Gestion des commentaires</h1>
+    {% if publication %}
+        <a href="{{ path('admin_publication_index') }}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Retour aux publications
+        </a>
+    {% endif %}
+</div>
+
+{% if publication %}
+    <div class="card mb-4">
+        <div class="card-header bg-white">
+            <h5 class="mb-0">Ajouter un commentaire pour : {{ publication.titre }}</h5>
+        </div>
+        <div class="card-body">
+            {{ form_start(form, {attr: {novalidate: 'novalidate'}}) }}
+            <div class="mb-3">
+                {{ form_label(form.auteur, 'Nom *') }}
+                {{ form_widget(form.auteur, {attr: {class: 'form-control'}}) }}
+                {{ form_errors(form.auteur) }}
+            </div>
+            <div class="mb-3">
+                {{ form_label(form.contenu, 'Commentaire *') }}
+                <div class="input-group">
+                    {{ form_widget(form.contenu, {attr: {class: 'form-control', rows: 4, id: 'newCommentText'}}) }}
+                    <button type="button" id="startDictationNew" class="btn btn-outline-secondary" title="Dictée vocale">
+                        <i class="bi bi-mic"></i>
+                    </button>
+                    <button type="button" id="readNewComment" class="btn btn-outline-secondary" title="Lire le commentaire">
+                        <i class="bi bi-volume-up"></i>
+                    </button>
+                </div>
+                {{ form_errors(form.contenu) }}
+            </div>
+            <button type="submit" class="btn btn-horozia-primary">Ajouter le commentaire</button>
+            {{ form_end(form) }}
+        </div>
+    </div>
+
+    <h4>Commentaires existants ({{ commentaires|length }})</h4>
+{% else %}
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-6">
+                    <input type="number" name="publication" class="form-control" placeholder="ID de la publication" value="{{ filtre_publication }}">
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-secondary w-100">Filtrer</button>
+                </div>
+                <div class="col-md-4">
+                    <a href="{{ path('admin_commentaire_index') }}" class="btn btn-outline-secondary w-100">Réinitialiser</a>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endif %}
+
+<div class="table-responsive">
+    <table class="table table-striped table-hover">
+        <thead>
+            <tr>
+                
+                <th>Publication</th>
+                <th>Auteur</th>
+                <th>Commentaire</th>
+                <th>Date</th>
+                <th>Modifié</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for commentaire in commentaires %}
+            <tr>
+                
+                <td>
+                    <a href="{{ path('admin_publication_edit', {'id': commentaire.publication.id}) }}" target="_blank">
+                        {{ commentaire.publication.titre }} 
+                    </a>
+                </td>
+                <td>{{ commentaire.auteur }}</td>
+                <td>{{ commentaire.contenu|slice(0, 80) }}...{% if commentaire.contenu|length > 80 %}{% endif %}</td>
+                <td>{{ commentaire.dateCreation|date('d/m/Y H:i') }}</td>
+                <td>{{ commentaire.modifie ? 'Oui' : 'Non' }}</td>
+                <td>
+                    {# Le lien "Voir" peut être commenté si la route n'existe pas #}
+                    <a href="{{ path('admin_commentaire_edit', {'id': commentaire.id}) }}" class="btn btn-sm btn-outline-warning">Modifier</a>
+                    <form method="post" action="{{ path('admin_commentaire_delete', {'id': commentaire.id}) }}" style="display: inline-block;">
+                        <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ commentaire.id) }}">
+                        <button class="btn btn-sm btn-outline-danger" onclick="return confirm('Supprimer ce commentaire ?')">Supprimer</button>
+                    </form>
+                </td>
+            </tr>
+        {% else %}
+            <tr><td colspan="7">Aucun commentaire trouvé.{% if publication %} Utilisez le formulaire ci-dessus pour en ajouter.{% endif %}↩
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const newTextarea = document.getElementById('newCommentText');
+            if (newTextarea) {
+                const micNewBtn = document.getElementById('startDictationNew');
+                if (micNewBtn) {
+                    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                    if (!SpeechRecognition) {
+                        micNewBtn.disabled = true;
+                        micNewBtn.title = 'Reconnaissance vocale non supportée';
+                    } else {
+                        const recognition = new SpeechRecognition();
+                        recognition.lang = 'fr-FR';
+                        recognition.interimResults = false;
+                        recognition.continuous = false;
+
+                        micNewBtn.addEventListener('click', () => {
+                            try {
+                                recognition.start();
+                                micNewBtn.innerHTML = '<i class="bi bi-mic-mute"></i> Écoute...';
+                                micNewBtn.disabled = true;
+                            } catch(e) {
+                                alert('Erreur micro. Vérifiez les autorisations.');
+                                micNewBtn.innerHTML = '<i class="bi bi-mic"></i>';
+                                micNewBtn.disabled = false;
+                            }
+                        });
+
+                        recognition.onresult = (event) => {
+                            const transcript = event.results[0][0].transcript;
+                            const current = newTextarea.value;
+                            newTextarea.value = current ? current + ' ' + transcript : transcript;
+                        };
+
+                        recognition.onerror = (event) => {
+                            let msg = '';
+                            if (event.error === 'not-allowed') msg = 'Microphone non autorisé. Cliquez sur le cadenas.';
+                            else msg = 'Erreur : ' + event.error;
+                            alert(msg);
+                        };
+
+                        recognition.onend = () => {
+                            micNewBtn.innerHTML = '<i class="bi bi-mic"></i>';
+                            micNewBtn.disabled = false;
+                        };
+                    }
+                }
+
+                const readNewBtn = document.getElementById('readNewComment');
+                if (readNewBtn) {
+                    readNewBtn.addEventListener('click', () => {
+                        const text = newTextarea.value.trim();
+                        if (!text) {
+                            alert('Aucun texte à lire.');
+                            return;
+                        }
+                        if (!window.speechSynthesis) {
+                            alert('Synthèse vocale non supportée.');
+                            return;
+                        }
+                        window.speechSynthesis.cancel();
+                        const utterance = new SpeechSynthesisUtterance(text);
+                        utterance.lang = 'fr-FR';
+                        utterance.rate = 0.9;
+                        window.speechSynthesis.speak(utterance);
+                    });
+                }
+            }
+        });
+    </script>
+{% endblock %}

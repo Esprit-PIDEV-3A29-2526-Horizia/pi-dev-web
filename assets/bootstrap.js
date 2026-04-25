@@ -1,5 +1,13 @@
-import { startStimulusApp } from '@symfony/stimulus-bundle';
+// assets/bootstrap.js
 
-const app = startStimulusApp();
-// register any custom, 3rd party controllers here
-// app.register('some_controller_name', SomeImportedController);
+// Ce fichier est le point d'entrée principal pour Stimulus
+// Il importe le fichier de démarrage Stimulus
+
+import { startStimulusApp } from '@symfony/stimulus-bridge';
+
+// Enregistre les contrôleurs Stimulus depuis controllers.json et le dossier controllers/
+export const app = startStimulusApp(require.context(
+    '@symfony/stimulus-bridge/lazy-controller-loader!./controllers',
+    true,
+    /\.[jt]sx?$/
+));

@@ -1,0 +1,145 @@
+<div class="row g-3">
+    <div class="col-md-5">
+        <img src="{{ logement.image ? logement.image : asset('front/pacific/images/destination-1.jpg') }}" class="img-fluid rounded-4 w-100" alt="{{ logement.nom }}" style="height: 180px; object-fit: cover; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+    </div>
+    <div class="col-md-7">
+        <h4 class="fw-bold mb-2" style="color: #1f2d3d;">{{ logement.nom }}</h4>
+        <div class="d-flex flex-wrap gap-3 mb-2">
+            <span class="badge bg-light text-dark px-3 py-2 rounded-pill"><i class="fa fa-map-marker me-1"></i> {{ logement.adresse }}</span>
+            <span class="badge bg-light text-dark px-3 py-2 rounded-pill"><i class="fa fa-users me-1"></i> Capacité : {{ logement.capacite }} pers.</span>
+            <span class="badge bg-light text-dark px-3 py-2 rounded-pill"><i class="fa fa-tag me-1"></i> {{ logement.type }}</span>
+        </div>
+        <p class="mb-0 fs-5 fw-semibold" style="color: #23779C;"><i class="fa fa-money me-1"></i> {{ logement.tarifNuit|number_format(0, ',', ' ') }} DT / nuit</p>
+    </div>
+</div>
+
+<input type="hidden" id="prix_par_nuit_data_edit" value="{{ logement.tarifNuit }}">
+<input type="hidden" id="logement_type_edit" value="{{ logement.type|lower }}">
+
+<form id="editReservationForm" class="mt-4" novalidate>
+    <div id="formErrors" class="alert alert-danger d-none mb-3 rounded-3"></div>
+
+    <!-- Dates -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-6">
+            <label for="date_arrivee_edit" class="form-label fw-semibold small text-secondary">Date d'arrivée</label>
+            <input type="date" id="date_arrivee_edit" name="date_arrivee" class="form-control form-control-lg rounded-3 border-0 bg-light shadow-sm" value="{{ reservation.dateDebut|date('Y-m-d') }}">
+            <div class="invalid-feedback">Veuillez choisir une date valide (aujourd'hui ou dans le futur).</div>
+        </div>
+        <div class="col-md-6">
+            <label for="date_depart_edit" class="form-label fw-semibold small text-secondary">Date de départ</label>
+            <input type="date" id="date_depart_edit" name="date_depart" class="form-control form-control-lg rounded-3 border-0 bg-light shadow-sm" value="{{ reservation.dateFin|date('Y-m-d') }}">
+            <div class="invalid-feedback">La date de départ doit être postérieure à la date d'arrivée.</div>
+        </div>
+    </div>
+
+    <!-- Modalité de paiement -->
+    <div class="mb-4">
+        <label class="form-label fw-semibold small text-secondary mb-2">Modalité de paiement</label>
+        <div class="d-flex gap-4 p-3 bg-light rounded-3">
+            <div class="form-check">
+                <input class="form-check-input" type="radio" name="modalite" id="enLigne_edit" value="En ligne" {{ reservation.modalites == 'En ligne' ? 'checked' : '' }}>
+                <label class="form-check-label fw-medium" for="enLigne_edit">💳 En ligne</label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input" type="radio" name="modalite" id="surPlace_edit" value="Sur place" {{ reservation.modalites == 'Sur place' ? 'checked' : '' }}>
+                <label class="form-check-label fw-medium" for="surPlace_edit">🏨 Sur place</label>
+            </div>
+        </div>
+        <div id="modaliteError" class="invalid-feedback" style="display: none;">Veuillez choisir une modalité de paiement.</div>
+    </div>
+
+    <!-- Ligne 1 : Adultes / Enfants / Nombre de chambres -->
+    <div class="row g-3 mb-3 align-items-end">
+        <div class="col-md-4">
+            <label for="adultes_edit" class="form-label small fw-semibold text-secondary">Adultes</label>
+            <input type="number" id="adultes_edit" name="adultes" class="form-control form-control-lg rounded-3 border-0 bg-light shadow-sm" value="{{ reservation.adultes }}" min="1">
+        </div>
+        <div class="col-md-4">
+            <label for="enfants_edit" class="form-label small fw-semibold text-secondary">Enfants</label>
+            <input type="number" id="enfants_edit" name="enfants" class="form-control form-control-lg rounded-3 border-0 bg-light shadow-sm" value="{{ reservation.enfants }}" min="0">
+        </div>
+        <div class="col-md-4" id="chambresColEdit" style="display: none;">
+            <label for="nombre_chambres_edit" class="form-label small fw-semibold text-secondary">Nombre de chambres</label>
+            <input type="number" id="nombre_chambres_edit" name="nombre_chambres" class="form-control form-control-lg rounded-3 border-0 bg-light shadow-sm" value="{{ reservation.nombreChambres }}" min="1">
+        </div>
+    </div>
+
+    <!-- Ligne 2 : Formule de pension + Répartition -->
+    <div class="row g-3 mb-4 align-items-end">
+        <div class="col-md-6">
+            <label for="mode_reservation_edit" class="form-label small fw-semibold text-secondary">Formule de pension</label>
+            <select id="mode_reservation_edit" name="mode_reservation" class="form-select form-select-lg rounded-3 border-0 bg-light shadow-sm" style="cursor: pointer; background-image: url('data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" fill=\"%2323779C\" class=\"bi bi-chevron-down\" viewBox=\"0 0 16 16\"><path fill-rule=\"evenodd\" d=\"M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z\"/></svg>'); background-repeat: no-repeat; background-position: right 1rem center; background-size: 1rem;">
+                <option value="" disabled>Choisir une formule</option>
+                <option value="all_inclusive" {{ reservation.modeReservation == 'all_inclusive' ? 'selected' : '' }}>All Inclusive</option>
+                <option value="all_inclusive_soft(sans_alcool)" {{ reservation.modeReservation == 'all_inclusive_soft(sans_alcool)' ? 'selected' : '' }}>All Inclusive Soft (sans alcool)</option>
+                <option value="demi_pension" {{ reservation.modeReservation == 'demi_pension' ? 'selected' : '' }}>Demi‑pension</option>
+                <option value="logement_petit_dejeuner" {{ reservation.modeReservation == 'logement_petit_dejeuner' ? 'selected' : '' }}>Petit déjeuner</option>
+            </select>
+            <div id="pensionError" class="invalid-feedback" style="display: none;">Veuillez choisir une formule de pension.</div>
+        </div>
+        <div class="col-md-6" id="repartitionContainerEdit" style="display: none;">
+            <label for="repartition_chambres_edit" class="form-label small fw-semibold text-secondary">Répartition des chambres</label>
+            <select id="repartition_chambres_edit" name="repartition_chambres" class="form-select rounded-3 border-0 bg-light shadow-sm">
+                <option value="">Choisir une répartition</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Détails du paiement -->
+    <div class="card border-0 rounded-4 shadow-sm p-3 mb-4" style="background: linear-gradient(145deg, #f8f9fa, #e9ecef);">
+        <h6 class="fw-bold mb-3" style="color: #1f2d3d;"><i class="fa fa-credit-card me-2"></i>Détails du paiement</h6>
+        <div class="d-flex justify-content-between mb-2">
+            <span class="text-secondary">Nombre de nuits :</span>
+            <span class="fw-semibold"><span id="nuits_edit">0</span> nuit(s)</span>
+        </div>
+        <div class="d-flex justify-content-between mb-2">
+            <span class="text-secondary" id="pensionLabelEdit">Prix par personne / nuit :</span>
+            <span class="fw-semibold"><span id="prix_pension_nuit_edit">0</span> DT</span>
+        </div>
+        <div class="d-flex justify-content-between mb-2">
+            <span class="text-secondary">Nombre de personnes :</span>
+            <span class="fw-semibold"><span id="personnes_edit">0</span></span>
+        </div>
+        <div class="d-flex justify-content-between pt-2 border-top border-2 border-white mt-2 fw-bold fs-5" style="color: #23779C;">
+            <span>Total :</span>
+            <span id="total_edit">0 DT</span>
+        </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary w-100 py-3 rounded-pill fw-semibold shadow-sm" style="background-color: #23779C; border: none; transition: all 0.2s;">
+        <i class="fa fa-save me-2"></i>Enregistrer les modifications
+    </button>
+</form>
+
+<style>
+    #editReservationForm .form-control:focus, 
+    #editReservationForm .form-select:focus {
+        box-shadow: 0 0 0 3px rgba(35, 119, 156, 0.25);
+        border-color: #23779C;
+        background-color: white;
+    }
+    #editReservationForm .form-check-input:checked {
+        background-color: #23779C;
+        border-color: #23779C;
+    }
+    #editReservationForm .btn-primary:hover {
+        background-color: #1a5c7a !important;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 14px rgba(0,0,0,0.1);
+    }
+    #editReservationForm .badge.bg-light {
+        background-color: #f1f3f5 !important;
+        font-weight: 500;
+    }
+    #editReservationForm .form-control,
+    #editReservationForm .form-select {
+        height: 52px;
+        line-height: 1.5;
+    }
+    @media (max-width: 768px) {
+        #repartitionContainerEdit {
+            margin-top: 0.5rem;
+        }
+    }
+</style>

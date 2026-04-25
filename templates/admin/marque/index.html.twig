@@ -1,42 +1,47 @@
-{% extends 'admin/layout.html.twig' %}
-{% block title %}Marques â€“ Horizia{% endblock %}
-{% block topbar_title %}Marques{% endblock %}
+{% extends 'admin/base_admin.html.twig' %}
+
+{% block title %}Marques – Horizia{% endblock %}
+
 {% block admin_content %}
-<div class="page-header">
-    <div class="page-header-left">
-        <div class="page-header-icon"><i class="bi bi-tags-fill"></i></div>
-        <div>
-            <h2>Marques <span class="badge-count">{{ marques|length }}</span></h2>
-            <p class="text-muted mb-0" style="font-size:.92rem;">Marques de vehicules disponibles</p>
-        </div>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 fw-bold mb-1">Marques</h1>
+        <p class="text-muted mb-0">Gestion des marques de véhicules</p>
     </div>
-    <a href="{{ path('admin_marque_new') }}" class="btn btn-horozia-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>Nouvelle marque</a>
+    <a href="{{ path('admin_marque_new') }}" class="btn btn-primary btn-sm">
+        <i class="bi bi-plus-lg me-1"></i>Nouvelle marque
+    </a>
 </div>
+
 <div class="row g-3">
     {% for marque in marques %}
     <div class="col-6 col-md-4 col-lg-3">
-        <div class="dashboard-card text-center" style="transition:.2s;" onmouseover="this.style.transform='translateY(-4px)'" onmouseout="this.style.transform='translateY(0)'">
+        <div class="card h-100 shadow-sm text-center p-3">
             {% if marque.logo %}
-            <img src="{{ marque.logo }}" alt="{{ marque.nomMarque }}" style="width:70px;height:70px;object-fit:contain;margin-bottom:12px;">
+            <img src="{{ marque.logo }}" alt="{{ marque.nomMarque }}" class="mx-auto mb-3" style="width:70px;height:70px;object-fit:contain;">
             {% else %}
-            <div style="width:70px;height:70px;border-radius:50%;background:linear-gradient(135deg,rgba(61,148,202,.15),rgba(35,119,156,.2));display:flex;align-items:center;justify-content:center;margin:0 auto 12px;font-size:1.8rem;color:var(--color-primary);"><i class="bi bi-truck"></i></div>
+            <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width:70px;height:70px;">
+                <i class="bi bi-truck fs-1 text-primary"></i>
+            </div>
             {% endif %}
-            <h6 style="font-weight:800;color:#1f2d3d;margin-bottom:4px;">{{ marque.nomMarque }}</h6>
-            <div style="font-size:.8rem;color:#6c757d;margin-bottom:14px;">{{ marque.modeles|length }} modele(s)</div>
+            <h6 class="fw-bold mb-1">{{ marque.nomMarque }}</h6>
+            <div class="small text-muted mb-3">{{ marque.modeles|length }} modèle(s)</div>
             <div class="d-flex gap-2 justify-content-center">
-                <a href="{{ path('admin_marque_show', {id: marque.idMarque}) }}" class="action-btn action-btn-view"><i class="bi bi-eye"></i></a>
-                <a href="{{ path('admin_marque_new') }}" class="action-btn action-btn-edit" title="Ajouter modele"><i class="bi bi-plus"></i></a>
+                <a href="{{ path('admin_marque_show', {id: marque.idMarque}) }}" class="btn btn-sm btn-outline-info" title="Voir"><i class="bi bi-eye"></i></a>
+                <a href="{{ path('admin_marque_edit', {id: marque.idMarque}) }}" class="btn btn-sm btn-outline-warning" title="Modifier"><i class="bi bi-pencil"></i></a>
             </div>
         </div>
     </div>
     {% else %}
     <div class="col-12">
-        <div class="dashboard-card text-center py-5" style="color:#6c757d;">
-            <i class="bi bi-tags" style="font-size:3rem;opacity:.3;display:block;margin-bottom:12px;"></i>
-            <p class="mb-3">Aucune marque trouvee.</p>
-            <a href="{{ path('admin_marque_new') }}" class="btn btn-horozia-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>Ajouter une marque</a>
+        <div class="card text-center py-5">
+            <i class="bi bi-tags fs-1 text-muted opacity-50 mb-3"></i>
+            <p class="text-muted">Aucune marque trouvée.</p>
+            <a href="{{ path('admin_marque_new') }}" class="btn btn-primary btn-sm">Ajouter une marque</a>
         </div>
     </div>
     {% endfor %}
 </div>
+
 {% endblock %}

@@ -1,0 +1,134 @@
+{% extends 'base_front.html.twig' %}
+
+{% block title %}Mes Participations - Pacific Travel Agency{% endblock %}
+
+{% block stylesheets %}
+{{ parent() }}
+
+{% endblock %}
+
+{% block body %}
+
+{# ── Hero ── #}
+<section class="hero-wrap hero-wrap-2 js-fullheight" style="background-image: url('{{ asset('assets/images/bg_1.jpg') }}');">
+    <div class="overlay"></div>
+    <div class="container">
+        <div class="row no-gutters slider-text js-fullheight align-items-end justify-content-center">
+            <div class="col-md-9 ftco-animate pb-5 text-center">
+                <p class="breadcrumbs">
+                    <span class="mr-2"><a href="{{ path('app_front_home') }}">Home <i class="fa fa-chevron-right"></i></a></span>
+                    <span class="mr-2"><a href="{{ path('app_front_events') }}">Events <i class="fa fa-chevron-right"></i></a></span>
+                    <span>Mes Participations <i class="fa fa-chevron-right"></i></span>
+                </p>
+                <h1 class="mb-0 bread">Mes Participations</h1>
+            </div>
+        </div>
+    </div>
+</section>
+
+{# ── Participations list ── #}
+<section class="ftco-section">
+    <div class="container">
+        {% if participations is empty %}
+            <div class="row justify-content-center">
+                <div class="col-md-6 text-center ftco-animate">
+                    <span class="fa fa-calendar-times-o fa-4x mb-4" style="color:#F96D00;"></span>
+                    <h3>Aucune participation trouvée</h3>
+                    <p class="text-muted mb-4">Vous n'êtes inscrit à aucun événement pour le moment.</p>
+                    <a href="{{ path('app_front_events') }}" class="btn btn-primary py-3 px-5">
+                        <span class="fa fa-search mr-2"></span> Découvrir les événements
+                    </a>
+                </div>
+            </div>
+        {% else %}
+        <div class="row">
+            {% for p in participations %}
+            <div class="col-md-4 ftco-animate">
+                <div class="project-wrap hotel">
+
+                    {# Event image #}
+                    <a href="{{ path('app_front_event_show', {id: p.getId_event().getId_event()}) }}"
+                       class="img"
+                       style="background-image: url({{ p.getId_event().getImage_url() ? p.getId_event().getImage_url() : asset('assets/images/hotel-resto-1.jpg') }});">
+                        <span class="price">{{ p.getMontant_total() }} TND</span>
+                    </a>
+
+                    <div class="text p-4">
+                        {# Statut badge #}
+                        <p class="star mb-2">
+                            <span style="background: {{ p.getStatut() == 'confirmée' ? '#28a745' : '#ffc107' }};
+                                         color:#fff; padding:4px 12px; border-radius:20px;
+                                         font-size:0.8rem; font-weight:600;">
+                                <span class="fa fa-{{ p.getStatut() == 'confirmée' ? 'check' : 'clock-o' }} mr-1"></span>
+                                {{ p.getStatut() }}
+                            </span>
+                        </p>
+
+                        <span class="days">
+                            {{ p.getId_event().getDate_debut()|date('d M Y') }} -
+                            {{ p.getId_event().getDate_fin()|date('d M Y') }}
+                        </span>
+
+                        <h3>
+                            <a href="{{ path('app_front_event_show', {id: p.getId_event().getId_event()}) }}">
+                                {{ p.getId_event().getTitre() }}
+                            </a>
+                        </h3>
+
+                        <p class="location">
+                            <span class="fa fa-map-marker"></span>
+                            {{ p.getId_event().getLocation() }}
+                        </p>
+
+                        <ul>
+                            <li>
+                                <span class="flaticon-ticket"></span>
+                                {{ p.getNombre_places() }} place(s)
+                            </li>
+                            <li>
+                                <span class="flaticon-price-tag"></span>
+                                {{ p.getId_event().getCategorie() }}
+                            </li>
+                            <li>
+                                <span class="fa fa-calendar"></span>
+                                {{ p.getDate_participation()|date('d/m/Y') }}
+                            </li>
+                        </ul>
+
+                        <div class="mt-3">
+                            <a href="{{ path('app_front_event_show', {id: p.getId_event().getId_event()}) }}"
+                               class="btn btn-primary py-2 px-4 w-100">
+                                <span class="fa fa-eye mr-1"></span> Voir l'événement
+                            </a>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+{# ── CTA ── #}
+<section class="ftco-intro ftco-section ftco-no-pt">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-12 text-center">
+                <div class="img" style="background-image: url({{ asset('assets/images/bg_2.jpg') }});">
+                    <div class="overlay"></div>
+                    <h2>Découvrez plus d'événements</h2>
+                    <p>Rejoignez nos événements et créez des souvenirs inoubliables</p>
+                    <p class="mb-0">
+                        <a href="{{ path('app_front_events') }}" class="btn btn-primary px-4 py-3">
+                            Voir tous les événements
+                        </a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% endblock %}

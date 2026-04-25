@@ -1,0 +1,83 @@
+{% extends 'admin/base_admin.html.twig' %}
+
+{% block title %}Nouvel Utilisateur - Horozia{% endblock %}
+
+{% block admin_content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 fw-bold mb-1">Nouvel Utilisateur</h1>
+        <p class="text-muted mb-0">Créez un nouvel utilisateur</p>
+    </div>
+    <a href="{{ path('app_user_index') }}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Retour
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-header bg-white fw-bold">
+        <i class="bi bi-person-plus-fill me-2 text-primary"></i>Informations utilisateur
+    </div>
+    <div class="card-body">
+        {{ form_start(form, {'attr': {'novalidate': 'novalidate'}}) }}
+        
+        <div class="row g-3">
+            <div class="col-md-6">
+                {{ form_label(form.nom) }}
+                {{ form_widget(form.nom, {'attr': {'class': 'form-control'}}) }}
+                {{ form_errors(form.nom) }}
+            </div>
+            <div class="col-md-6">
+                {{ form_label(form.prenom) }}
+                {{ form_widget(form.prenom, {'attr': {'class': 'form-control'}}) }}
+                {{ form_errors(form.prenom) }}
+            </div>
+            <div class="col-md-6">
+                {{ form_label(form.email) }}
+                {{ form_widget(form.email, {'attr': {'class': 'form-control'}}) }}
+                {{ form_errors(form.email) }}
+            </div>
+            <div class="col-md-6">
+                {{ form_label(form.password) }}
+                {{ form_widget(form.password, {'attr': {'class': 'form-control'}}) }}
+                {{ form_errors(form.password) }}
+                <div class="small text-muted mt-1">Minimum 6 caractères</div>
+            </div>
+            <div class="col-md-6">
+                {{ form_label(form.telephone) }}
+                {{ form_widget(form.telephone, {'attr': {'class': 'form-control'}}) }}
+                {{ form_errors(form.telephone) }}
+            </div>
+            <div class="col-md-6">
+                {{ form_label(form.addresse) }}
+                {{ form_widget(form.addresse, {'attr': {'class': 'form-control'}}) }}
+                {{ form_errors(form.addresse) }}
+            </div>
+            <div class="col-md-12">
+                {{ form_label(form.profil) }}
+                {{ form_widget(form.profil, {'attr': {'class': 'form-select'}}) }}
+                {{ form_errors(form.profil) }}
+            </div>
+        </div>
+
+        <hr class="my-4">
+
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-save me-1"></i> Enregistrer
+            </button>
+            <a href="{{ path('app_user_index') }}" class="btn btn-outline-secondary">Annuler</a>
+        </div>
+
+        {{ form_end(form) }}
+    </div>
+</div>
+
+<div class="card mt-3">
+    <div class="card-body">
+        <i class="bi bi-info-circle me-1 text-primary"></i>
+        <small class="text-muted">Les champs marqués <span class="text-danger fw-bold">*</span> sont obligatoires.</small>
+    </div>
+</div>
+
+{% endblock %}

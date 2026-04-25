@@ -1,0 +1,80 @@
+{% extends 'admin/base_admin.html.twig' %}
+
+{% block title %}Nouveau profil - Horozia{% endblock %}
+
+{% block admin_content %}
+
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h1 class="fw-bold mb-1" style="color:#1f2d3d;">Nouveau Profil</h1>
+        <p class="text-muted mb-0">Créez un nouveau profil</p>
+    </div>
+    <a href="{{ path('app_profil_index') }}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Retour
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-header bg-white fw-bold">
+        <i class="bi bi-person-plus-fill me-2 text-primary"></i>Informations du profil
+    </div>
+    <div class="card-body">
+        <form method="POST">
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Type de profil <span class="text-danger">*</span></label>
+                    <select name="type" class="form-select" required>
+                        <option value="">Sélectionner un type</option>
+                        <option value="ADMIN">ADMIN</option>
+                        <option value="AGENT">AGENT</option>
+                        <option value="CLIENT">CLIENT</option>
+                    </select>
+                    <div class="small text-muted mt-1">
+                        <i class="bi bi-info-circle me-1"></i>
+                        ADMIN = accès complet, AGENT = gestion limitée, CLIENT = accès standard
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Statut <span class="text-danger">*</span></label>
+                    <select name="statut" class="form-select" required>
+                        <option value="">Sélectionner un statut</option>
+                        <option value="ACTIF">ACTIF</option>
+                        <option value="INACTIF">INACTIF</option>
+                        <option value="EN_ATTENTE">EN ATTENTE</option>
+                        <option value="BLOQUE">BLOQUÉ</option>
+                    </select>
+                </div>
+            </div>
+            
+            <hr class="my-4">
+            
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-save me-1"></i> Enregistrer
+                </button>
+                <a href="{{ path('app_profil_index') }}" class="btn btn-outline-secondary">
+                    Annuler
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card mt-3">
+    <div class="card-body">
+        <div class="d-flex gap-3 align-items-start">
+            <i class="bi bi-info-circle-fill fs-4 text-primary"></i>
+            <div>
+                <h6 class="fw-bold mb-1">À propos des profils</h6>
+                <p class="text-muted small mb-0">
+                    <strong>ADMIN</strong> : Accès complet à l'administration.<br>
+                    <strong>AGENT</strong> : Accès limité (gestion des réservations).<br>
+                    <strong>CLIENT</strong> : Accès utilisateur standard.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

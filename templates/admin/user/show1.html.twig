@@ -1,0 +1,136 @@
+{% extends 'admin/base_admin.html.twig' %}
+
+{% block title %}Détail de l'utilisateur - {{ user.email }}{% endblock %}
+
+{% block admin_content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 fw-bold mb-1">{{ user.prenom }} {{ user.nom }}</h1>
+        <p class="text-muted mb-0">ID: #{{ user.id }} · {{ user.email }}</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{ path('app_user_edit', {id: user.id}) }}" class="btn btn-warning">
+            <i class="bi bi-pencil me-1"></i> Modifier
+        </a>
+        <a href="{{ path('app_user_index') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Retour
+        </a>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style="width:100px;height:100px;">
+                    <i class="bi bi-person-fill text-primary fs-1"></i>
+                </div>
+                <h4 class="fw-bold">{{ user.nom }} {{ user.prenom }}</h4>
+                <p class="text-muted mb-2">{{ user.email }}</p>
+                <p class="text-muted mb-3">{{ user.telephone ?? 'Téléphone non renseigné' }}</p>
+                {% if user.profil %}
+                <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill">
+                    {{ user.profil.type }}
+                </span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="card mb-3">
+            <div class="card-header bg-white fw-bold">
+                <i class="bi bi-info-circle me-2 text-primary"></i>Informations détaillées
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="text-muted small fw-bold mb-1">ID</label>
+                        <div class="fw-bold">#{{ user.id }}</div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="text-muted small fw-bold mb-1">Statut du profil</label>
+                        <div>
+                            {% if user.profil %}
+                                <span class="badge bg-success">{{ user.profil.statut ?? 'ACTIF' }}</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Non défini</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="text-muted small fw-bold mb-1">Adresse</label>
+                        <div>{{ user.addresse ?? 'Non renseignée' }}</div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="text-muted small fw-bold mb-1">Rôles</label>
+                        <div>
+                            {% for role in user.roles %}
+                                <span class="badge bg-secondary">{{ role }}</span>
+                            {% else %}
+                                <span class="badge bg-secondary">ROLE_USER</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header bg-white fw-bold">
+                <i class="bi bi-calendar-check me-2 text-primary"></i>Réservations ({{ reservations|length }})
+            </div>
+            <div class="card-body">
+                {% if reservations %}
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Logement</th>
+                                <th>Période</th>
+                                <th>Montant</th>
+                                <th>Statut</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for r in reservations %}
+                            <tr>
+                                <td>
+                                    <div class="fw-bold">{{ r.logement.nom }}</div>
+                                    <small class="text-muted">{{ r.logement.type }}</small>
+                                <\/td>
+                                <td>{{ r.dateDebut|date('d/m/Y') }} → {{ r.dateFin|date('d/m/Y') }}<\/td>
+                                <td>{{ r.montant|number_format(2, ',', ' ') }} DT<\/td>
+                                <td>
+                                    <span class="badge 
+                                        {% if r.status == 'confirmée' %}bg-success
+                                        {% elseif r.status == 'en_attente' %}bg-warning text-dark
+                                        {% elseif r.status == 'annulée' %}bg-danger
+                                        {% else %}bg-secondary{% endif %}">
+                                        {{ r.status }}
+                                    </span>
+                                <\/td>
+                                <td>
+                                    <a href="{{ path('admin_logement_show', {'id': r.logement.id}) }}" class="btn btn-sm btn-outline-info">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                <\/td>
+                            \)[
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4 text-muted">
+                    <i class="bi bi-calendar-x fs-1 opacity-50 mb-2 d-block"></i>
+                    Aucune réservation trouvée.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

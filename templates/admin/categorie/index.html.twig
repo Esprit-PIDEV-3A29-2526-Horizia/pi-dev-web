@@ -1,0 +1,289 @@
+{% extends 'admin/base_admin.html.twig' %}
+
+{% block title %}Liste des catégories{% endblock %}
+
+{% block admin_content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+        <div>
+            <h2 class="fw-bold mb-1">Liste des catégories</h2>
+            <p class="text-muted mb-0">Consultez et gérez les catégories disponibles.</p>
+        </div>
+
+        <a href="{{ path('admin_categorie_new') }}" class="btn btn-horozia-secondary">
+            <i class="bi bi-plus-circle me-1"></i> Ajouter une catégorie
+        </a>
+    </div>
+
+    <div class="dashboard-card mb-4">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-6">
+                <label class="form-label fw-semibold">Recherche</label>
+                <input
+                    type="text"
+                    id="categorieSearch"
+                    class="form-control"
+                    placeholder="Rechercher par nom ou description"
+                >
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label fw-semibold">Filtrer par</label>
+                <select id="categorieFilter" class="form-select">
+                    <option value="">Voulez-vous choisir ?</option>
+                    <option value="avec-voyages">Avec voyages</option>
+                    <option value="sans-voyages">Sans voyages</option>
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <button type="button" id="resetCategorieFilter" class="btn btn-horozia-neutral w-100">
+                    Réinitialiser
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-4" id="categoriesCardsContainer">
+        {% for categorie in categories %}
+            {% set nbVoyages = categorie.voyages|length %}
+            {% set imagePath = '' %}
+
+            {% if categorie.imageUrl %}
+                {% if categorie.imageUrl starts with 'http://' or categorie.imageUrl starts with 'https://' %}
+                    {% set imagePath = categorie.imageUrl %}
+                {% else %}
+                    {% set imagePath = asset(categorie.imageUrl starts with '/' ? categorie.imageUrl|slice(1) : categorie.imageUrl) %}
+                {% endif %}
+            {% endif %}
+
+            <div
+                class="col-md-6 col-xl-4 categorie-card-item"
+                data-search="{{ (categorie.nom ~ ' ' ~ (categorie.description ?: ''))|lower }}"
+                data-type="{{ nbVoyages > 0 ? 'avec-voyages' : 'sans-voyages' }}"
+            >
+                <section class="categorie-flip-card">
+                    <div class="categorie-flip-front">
+                        {% if imagePath %}
+                            <img src="{{ imagePath }}" alt="{{ categorie.nom }}" class="categorie-flip-image">
+                        {% else %}
+                            <i class="bi bi-image categorie-flip-icon"></i>
+                        {% endif %}
+                    </div>
+
+                    <div class="categorie-flip-content">
+                        <div>
+                            <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                                <p class="categorie-flip-title">{{ categorie.nom }}</p>
+                                <span class="categorie-flip-badge">
+                                    {{ nbVoyages }} voyage{{ nbVoyages > 1 ? 's' : '' }}
+                                </span>
+                            </div>
+
+                            <p class="categorie-flip-description">
+                                {{ categorie.description ?: 'Aucune description disponible.' }}
+                            </p>
+                        </div>
+
+                        <div class="d-flex gap-2 mt-3">
+                            <a href="{{ path('admin_categorie_edit', {'id': categorie.id}) }}"
+                               class="btn btn-voyage-edit flex-fill">
+                                <i class="bi bi-pencil-square me-1"></i>
+                            </a>
+
+                            <form method="post"
+                                  action="{{ path('admin_categorie_delete', {'id': categorie.id}) }}"
+                                  class="delete-categorie-form flex-fill m-0"
+                                  data-categorie-name="{{ categorie.nom }}">
+                                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ categorie.id) }}">
+                                <button type="submit" class="btn btn-voyage-delete w-100">
+                                    <i class="bi bi-trash me-1"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        {% else %}
+            <div class="col-12">
+                <div class="dashboard-card text-center text-muted py-5">
+                    Aucune catégorie trouvée.
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <div id="categorieNoResult" class="dashboard-card text-center text-muted py-5 mt-4 d-none">
+        Aucune catégorie ne correspond à votre recherche.
+    </div>
+
+    {% if categories.paginationData is defined and categories.pageCount > 1 %}
+        <div class="col-12 mt-4">
+            <div class="pagination-wrapper">
+                {{ knp_pagination_render(categories, 'front/pagination.html.twig') }}
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<style>
+.pagination-wrapper {
+    margin-top: 30px;
+    display: flex;
+    justify-content: center;
+}
+
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding-left: 0;
+    list-style: none;
+    margin: 0;
+}
+
+.page-item {
+    list-style: none;
+}
+
+.page-item .page-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 52px;
+    height: 52px;
+    padding: 0 22px;
+    border-radius: 999px;
+    background: #f1f3f5;
+    color: #7a8a99;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 1rem;
+    border: none;
+    box-shadow: none;
+    transition: all 0.25s ease;
+}
+
+.page-item .page-link:hover {
+    background: #e7ebef;
+    color: #23779C;
+    text-decoration: none;
+}
+
+.page-item.active .page-link {
+    background: #23779C;
+    color: #ffffff;
+    box-shadow: 0 6px 14px rgba(35, 119, 156, 0.25);
+}
+
+.page-item.disabled .page-link {
+    background: #f1f3f5;
+    color: #b8c0c8;
+    pointer-events: none;
+    opacity: 1;
+}
+
+.page-item:first-child .page-link,
+.page-item:last-child .page-link {
+    padding: 0 24px;
+}
+
+.delete-categorie-form {
+    display: inline-block;
+}
+
+@media (max-width: 768px) {
+    .page-item .page-link {
+        min-width: 46px;
+        height: 46px;
+        padding: 0 18px;
+        font-size: 0.95rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const searchInput = document.getElementById('categorieSearch');
+            const filterSelect = document.getElementById('categorieFilter');
+            const resetBtn = document.getElementById('resetCategorieFilter');
+            const cards = document.querySelectorAll('.categorie-card-item');
+            const noResult = document.getElementById('categorieNoResult');
+
+            function applyFilters() {
+                const searchValue = (searchInput?.value || '').trim().toLowerCase();
+                const filterValue = filterSelect?.value || '';
+                let visibleCount = 0;
+
+                cards.forEach(card => {
+                    const searchData = card.dataset.search || '';
+                    const typeData = card.dataset.type || '';
+
+                    const matchesSearch = searchData.includes(searchValue);
+                    const matchesFilter = filterValue === '' || typeData === filterValue;
+
+                    if (matchesSearch && matchesFilter) {
+                        card.classList.remove('d-none');
+                        visibleCount++;
+                    } else {
+                        card.classList.add('d-none');
+                    }
+                });
+
+                if (noResult) {
+                    noResult.classList.toggle('d-none', visibleCount !== 0);
+                }
+            }
+
+            if (searchInput) {
+                searchInput.addEventListener('input', applyFilters);
+            }
+
+            if (filterSelect) {
+                filterSelect.addEventListener('change', applyFilters);
+            }
+
+            if (resetBtn) {
+                resetBtn.addEventListener('click', function () {
+                    if (searchInput) searchInput.value = '';
+                    if (filterSelect) filterSelect.value = '';
+                    applyFilters();
+                });
+            }
+
+            const deleteForms = document.querySelectorAll('.delete-categorie-form');
+
+            deleteForms.forEach(form => {
+                form.addEventListener('submit', function (e) {
+                    e.preventDefault();
+
+                    const categorieName = this.dataset.categorieName || 'cette catégorie';
+
+                    Swal.fire({
+                        title: 'Supprimer cette catégorie ?',
+                        html: `Vous êtes sur le point de supprimer <strong>${categorieName}</strong>.`,
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#dc3545',
+                        cancelButtonColor: '#6c757d',
+                        confirmButtonText: 'Oui, supprimer',
+                        cancelButtonText: 'Annuler',
+                        reverseButtons: true,
+                        background: '#ffffff',
+                        borderRadius: '18px'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            this.submit();
+                        }
+                    });
+                });
+            });
+        });
+    </script>
+{% endblock %}

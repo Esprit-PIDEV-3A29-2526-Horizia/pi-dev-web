@@ -23,4 +23,5 @@ class MarqueType extends AbstractType
             'data_class' => Marque::class,
         ]);
     }
+    
 }

@@ -1,6 +1,7 @@
-{% extends 'admin/layout.html.twig' %}
+{% extends 'admin/base_admin.html.twig' %}
+
 {% block title %}Locations – Horizia{% endblock %}
-{% block topbar_title %}Locations{% endblock %}
+
 {% block admin_content %}
 
 <style>
@@ -36,14 +37,10 @@
 .pg-dots { min-width:34px; height:34px; display:inline-flex; align-items:center; justify-content:center; color:#94a3b8; font-weight:700; font-size:.9rem; }
 </style>
 
-{# ── En-tête ── #}
-<div class="page-header">
-    <div class="page-header-left">
-        <div class="page-header-icon"><i class="bi bi-calendar-check-fill"></i></div>
-        <div>
-            <h2>Locations <span class="badge-count">{{ total }}</span></h2>
-            <p class="text-muted mb-0" style="font-size:.92rem;">Gestion des locations de véhicules</p>
-        </div>
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <h1 class="h3 fw-bold mb-1">Locations</h1>
+        <p class="text-muted mb-0">Gestion des locations de véhicules</p>
     </div>
     <div class="d-flex gap-2 flex-wrap align-items-center">
         <div class="d-flex gap-1">
@@ -58,66 +55,68 @@
         </div>
         <form method="post" action="{{ path('admin_location_update_statuts') }}" style="display:inline;">
             <input type="hidden" name="_token" value="{{ csrf_token('update_statuts') }}">
-            <button type="submit" class="btn btn-horozia-outline btn-sm"><i class="bi bi-arrow-clockwise me-1"></i>Maj statuts</button>
+            <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-arrow-clockwise me-1"></i>Maj statuts</button>
         </form>
-        <a href="{{ path('admin_location_new') }}" class="btn btn-horozia-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>Nouvelle location</a>
+        <a href="{{ path('admin_location_new') }}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>Nouvelle location</a>
     </div>
 </div>
 
 {# ── Recherche ── #}
-<div class="card-horozia p-3 mb-3">
+<div class="card p-3 mb-3">
     <form method="get" class="d-flex flex-wrap gap-2 align-items-end">
         <input type="hidden" name="vue" value="{{ vue }}">
         <input type="hidden" name="page" value="1">
-        <div>
+        <div class="flex-grow-1">
             <label class="form-label mb-1">Rechercher</label>
             <input type="text" name="search" class="form-control form-control-sm"
                    placeholder="Nom client, téléphone..." value="{{ recherche }}" style="min-width:220px;">
         </div>
-        <button type="submit" class="btn btn-horozia-primary btn-sm"><i class="bi bi-search me-1"></i>Rechercher</button>
+        <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-search me-1"></i>Rechercher</button>
         {% if recherche %}
-        <a href="{{ path('admin_location_index', {vue: vue}) }}" class="btn btn-horozia-outline btn-sm"><i class="bi bi-x-lg me-1"></i>Effacer</a>
+        <a href="{{ path('admin_location_index', {vue: vue}) }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-x-lg me-1"></i>Effacer</a>
         {% endif %}
     </form>
 </div>
 
 {% if total > 0 %}
 
-{# ════════════════════════════
-   VUE TABLEAU — 10 par page
-════════════════════════════ #}
+{# VUE TABLEAU #}
 {% if vue == 'table' %}
-<div class="card-horozia">
+<div class="card">
     <div class="table-responsive">
-        <table class="table dashboard-table mb-0">
-            <thead><tr class="table-horozia">
-                <th>#</th><th>Client</th><th>Véhicule</th><th>Début</th><th>Fin prévue</th><th>Montant</th><th>Statut</th><th>Actions</th>
-            </tr></thead>
+        <table class="table table-hover mb-0">
+            <thead class="table-dark">
+                <tr>
+                    <th>#</th><th>Client</th><th>Véhicule</th><th>Début</th><th>Fin prévue</th><th>Montant</th><th>Statut</th><th>Actions</th>
+                </tr>
+            </thead>
             <tbody>
             {% for location in locations %}
             <tr>
-                <td><span style="font-weight:700;color:var(--color-primary);">#{{ location.idLocation }}</span></td>
+                <td><span class="fw-bold text-primary">#{{ location.idLocation }}</span></td>
                 <td>
                     <div class="d-flex align-items-center gap-2">
-                        <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#23779C,#3D94CA);display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px;flex-shrink:0;"><i class="bi bi-person-fill"></i></div>
+                        <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style="width:36px;height:36px;">
+                            <i class="bi bi-person-fill text-primary"></i>
+                        </div>
                         <div>
-                            <strong style="font-size:.92rem;">{{ location.clientNomComplet }}</strong>
-                            <div style="font-size:.82rem;color:#6c757d;">{{ location.clientTelephone }}</div>
+                            <strong>{{ location.clientNomComplet }}</strong>
+                            <div class="small text-muted">{{ location.clientTelephone }}</div>
                         </div>
                     </div>
                 </td>
-                <td><span style="background:rgba(61,148,202,.12);color:#174f6a;padding:4px 10px;border-radius:20px;font-size:.82rem;font-weight:700;"><i class="bi bi-truck me-1"></i>{{ location.vehicule.immatriculation }}</span></td>
-                <td style="font-size:.9rem;">{{ location.dateDebut|date('d/m/Y') }}</td>
-                <td style="font-size:.9rem;">{{ location.dateFinPrevue|date('d/m/Y') }}</td>
-                <td style="font-weight:700;color:var(--color-primary);">{% if location.montantTotal %}{{ location.montantTotal|number_format(3, ',', ' ') }} TND{% endif %}</td>
+                <td><span class="badge bg-info bg-opacity-10 text-info">{{ location.vehicule.immatriculation }}</span></td>
+                <td>{{ location.dateDebut|date('d/m/Y') }}</td>
+                <td>{{ location.dateFinPrevue|date('d/m/Y') }}</td>
+                <td class="fw-bold text-primary">{{ location.montantTotal|number_format(3, ',', ' ') }} TND</td>
                 <td>{% include 'admin/location/_badge_statut.html.twig' with {statut: location.statut} %}</td>
                 <td>
                     <div class="d-flex gap-1">
-                        <a href="{{ path('admin_location_show', {id: location.idLocation}) }}" class="action-btn action-btn-view" title="Voir"><i class="bi bi-eye"></i></a>
-                        <a href="{{ path('admin_location_edit', {id: location.idLocation}) }}" class="action-btn action-btn-edit" title="Modifier"><i class="bi bi-pencil"></i></a>
+                        <a href="{{ path('admin_location_show', {id: location.idLocation}) }}" class="btn btn-sm btn-outline-info" title="Voir"><i class="bi bi-eye"></i></a>
+                        <a href="{{ path('admin_location_edit', {id: location.idLocation}) }}" class="btn btn-sm btn-outline-warning" title="Modifier"><i class="bi bi-pencil"></i></a>
                         <form method="post" action="{{ path('admin_location_delete', {id: location.idLocation}) }}" onsubmit="return confirm('Supprimer cette location ?')">
                             <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ location.idLocation) }}">
-                            <button type="submit" class="action-btn action-btn-delete" title="Supprimer"><i class="bi bi-trash"></i></button>
+                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Supprimer"><i class="bi bi-trash"></i></button>
                         </form>
                     </div>
                 </td>
@@ -129,9 +128,7 @@
     {% include 'admin/location/_pagination.html.twig' %}
 </div>
 
-{# ════════════════════════════
-   VUE CARTES — 6 par page
-════════════════════════════ #}
+{# VUE CARTES #}
 {% else %}
 <div class="row g-3">
     {% for location in locations %}
@@ -144,51 +141,42 @@
     } %}
     {% set color = colorMap[location.statut] ?? '#6b7280' %}
     <div class="col-12 col-sm-6 col-xl-4">
-        <div style="border-radius:14px;border:1px solid #e2e8f0;background:#fff;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.06);transition:box-shadow .2s;"
-             onmouseover="this.style.boxShadow='0 6px 20px rgba(35,119,156,.15)'"
-             onmouseout="this.style.boxShadow='0 2px 8px rgba(0,0,0,.06)'">
-            <div style="background:{{ color }};padding:10px 16px;display:flex;justify-content:space-between;align-items:center;">
-                <span style="color:#fff;">{% include 'admin/location/_badge_statut.html.twig' with {statut: location.statut} %}</span>
-                <span style="color:rgba(255,255,255,.85);font-size:.82rem;font-weight:700;">#{{ location.idLocation }}</span>
+        <div class="card h-100 shadow-sm">
+            <div class="card-header py-2 px-3 d-flex justify-content-between align-items-center" style="background:{{ color }}; color:#fff;">
+                <span>{% include 'admin/location/_badge_statut.html.twig' with {statut: location.statut} %}</span>
+                <span class="fw-bold">#{{ location.idLocation }}</span>
             </div>
-            <div style="padding:16px;">
-                <div class="d-flex align-items-center gap-2 mb-3">
-                    <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#23779C,#3D94CA);display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0;"><i class="bi bi-person-fill" style="font-size:16px;"></i></div>
+            <div class="card-body">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style="width:48px;height:48px;">
+                        <i class="bi bi-person-fill text-primary fs-5"></i>
+                    </div>
                     <div>
-                        <div style="font-weight:700;font-size:.95rem;color:#1e293b;">{{ location.clientNomComplet }}</div>
-                        <div style="font-size:.82rem;color:#64748b;"><i class="bi bi-telephone me-1"></i>{{ location.clientTelephone }}</div>
+                        <div class="fw-bold">{{ location.clientNomComplet }}</div>
+                        <div class="small text-muted"><i class="bi bi-telephone me-1"></i>{{ location.clientTelephone }}</div>
                     </div>
                 </div>
-                <div style="background:#f0f7fb;border-radius:8px;padding:8px 12px;margin-bottom:12px;display:flex;align-items:center;gap:8px;">
-                    <i class="bi bi-truck" style="color:#23779C;font-size:1.1rem;"></i>
-                    <span style="font-weight:700;color:#174f6a;font-size:.9rem;">{{ location.vehicule.immatriculation }}</span>
-                    {% if location.vehicule.modele %}
-                    <span style="color:#64748b;font-size:.82rem;">– {{ location.vehicule.modele }}</span>
-                    {% endif %}
+                <div class="bg-light rounded p-2 mb-3">
+                    <i class="bi bi-truck text-primary me-1"></i>
+                    <span class="fw-bold">{{ location.vehicule.immatriculation }}</span>
                 </div>
-                <div class="d-flex gap-3 mb-3">
+                <div class="d-flex justify-content-between mb-3">
                     <div>
-                        <div style="font-size:.75rem;color:#94a3b8;text-transform:uppercase;font-weight:600;">Début</div>
-                        <div style="font-size:.9rem;font-weight:600;color:#1e293b;">{{ location.dateDebut|date('d/m/Y') }}</div>
+                        <div class="small text-muted text-uppercase">Début</div>
+                        <div class="fw-bold">{{ location.dateDebut|date('d/m/Y') }}</div>
                     </div>
-                    <div style="color:#cbd5e1;align-self:center;"><i class="bi bi-arrow-right"></i></div>
+                    <div class="text-muted align-self-center"><i class="bi bi-arrow-right"></i></div>
                     <div>
-                        <div style="font-size:.75rem;color:#94a3b8;text-transform:uppercase;font-weight:600;">Fin prévue</div>
-                        <div style="font-size:.9rem;font-weight:600;color:#1e293b;">{{ location.dateFinPrevue|date('d/m/Y') }}</div>
+                        <div class="small text-muted text-uppercase">Fin prévue</div>
+                        <div class="fw-bold">{{ location.dateFinPrevue|date('d/m/Y') }}</div>
                     </div>
                 </div>
-                {% if location.montantTotal %}
-                <div style="text-align:right;margin-bottom:14px;">
-                    <span style="font-size:1.1rem;font-weight:800;color:#23779C;">{{ location.montantTotal|number_format(3, ',', ' ') }} TND</span>
+                <div class="text-end mb-3">
+                    <span class="fs-5 fw-bold text-primary">{{ location.montantTotal|number_format(3, ',', ' ') }} TND</span>
                 </div>
-                {% endif %}
-                <div class="d-flex gap-2 justify-content-end border-top pt-3" style="border-color:#f1f5f9!important;">
-                    <a href="{{ path('admin_location_show', {id: location.idLocation}) }}" class="action-btn action-btn-view" title="Voir"><i class="bi bi-eye"></i></a>
-                    <a href="{{ path('admin_location_edit', {id: location.idLocation}) }}" class="action-btn action-btn-edit" title="Modifier"><i class="bi bi-pencil"></i></a>
-                    <form method="post" action="{{ path('admin_location_delete', {id: location.idLocation}) }}" onsubmit="return confirm('Supprimer cette location ?')">
-                        <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ location.idLocation) }}">
-                        <button type="submit" class="action-btn action-btn-delete" title="Supprimer"><i class="bi bi-trash"></i></button>
-                    </form>
+                <div class="d-flex gap-2 justify-content-end border-top pt-2">
+                    <a href="{{ path('admin_location_show', {id: location.idLocation}) }}" class="btn btn-sm btn-outline-info"><i class="bi bi-eye"></i> Voir</a>
+                    <a href="{{ path('admin_location_edit', {id: location.idLocation}) }}" class="btn btn-sm btn-outline-warning"><i class="bi bi-pencil"></i> Modifier</a>
                 </div>
             </div>
         </div>
@@ -199,11 +187,11 @@
 {% endif %}
 
 {% else %}
-<div class="card-horozia">
-    <div class="text-center py-5" style="color:#6c757d;">
-        <i class="bi bi-calendar-x" style="font-size:3rem;opacity:.3;display:block;margin-bottom:12px;"></i>
-        <p class="mb-3">Aucune location trouvée.</p>
-        <a href="{{ path('admin_location_new') }}" class="btn btn-horozia-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>Créer une location</a>
+<div class="card">
+    <div class="text-center py-5">
+        <i class="bi bi-calendar-x fs-1 text-muted opacity-50"></i>
+        <p class="text-muted mt-3">Aucune location trouvée.</p>
+        <a href="{{ path('admin_location_new') }}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>Créer une location</a>
     </div>
 </div>
 {% endif %}

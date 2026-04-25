@@ -18,6 +18,11 @@ class Location
     #[ORM\JoinColumn(name: 'id_vehicule', referencedColumnName: 'id_vehicule', nullable: false)]
     private ?Vehicule $vehicule = null;
 
+    // ✅ NOUVEAU : Relation avec l'utilisateur connecté
+    #[ORM\ManyToOne(targetEntity: User::class)]
+    #[ORM\JoinColumn(name: 'id_user', referencedColumnName: 'id', nullable: true)]
+    private ?User $user = null;
+
     #[ORM\Column(name: 'client_nom_complet', type: 'string', length: 100)]
     private ?string $clientNomComplet = null;
 
@@ -75,7 +80,7 @@ class Location
     #[ORM\Column(name: 'notes', type: 'text', nullable: true)]
     private ?string $notes = null;
 
-    // ✅ Nouveau champ extras JSON
+    // Champ extras JSON
     #[ORM\Column(name: 'extras', type: 'json', nullable: true)]
     private ?array $extras = null;
 
@@ -96,6 +101,18 @@ class Location
     public function setVehicule(?Vehicule $vehicule): static
     {
         $this->vehicule = $vehicule;
+        return $this;
+    }
+
+    // ✅ NOUVEAU : Getter/Setter pour User
+    public function getUser(): ?User
+    {
+        return $this->user;
+    }
+
+    public function setUser(?User $user): static
+    {
+        $this->user = $user;
         return $this;
     }
 
@@ -345,8 +362,8 @@ class Location
         if (!$debut || !$fin) {
             return;
         }
-        $jours        = max(1, (int) $debut->diff($fin)->days);
-        $base         = (float) $this->prixParJour * $jours;
+        $jours = max(1, (int) $debut->diff($fin)->days);
+        $base = (float) $this->prixParJour * $jours;
         $this->montantTotal = (string) round($base + $this->getExtrasTotal(), 3);
     }
 
@@ -356,5 +373,16 @@ class Location
     public function getResteAPayer(): float
     {
         return max(0, (float) $this->montantTotal - (float) $this->avance);
+    }
+
+    /**
+     * Remplit automatiquement les informations client à partir de l'utilisateur
+     */
+    public function fillFromUser(User $user): void
+    {
+        $this->setUser($user);
+        $this->setClientNomComplet($user->getNom() . ' ' . $user->getPrenom());
+        $this->setClientTelephone($user->getTelephone() ?? '');
+        $this->setClientAdresse($user->getAddresse() ?? '');
     }
 }

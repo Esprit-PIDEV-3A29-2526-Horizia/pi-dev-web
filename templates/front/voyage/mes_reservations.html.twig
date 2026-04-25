@@ -1,0 +1,298 @@
+{% extends 'front/base_front.html.twig' %}
+
+{% block title %}Mes réservations - Horozia{% endblock %}
+
+{% block body %}
+
+{% for message in app.flashes('success') %}
+    <script>
+        Swal.fire({
+            icon: 'success',
+            title: 'Succès',
+            text: "{{ message|e('js') }}",
+            confirmButtonText: 'OK'
+        });
+    </script>
+{% endfor %}
+
+{% for message in app.flashes('error') %}
+    <script>
+        Swal.fire({
+            icon: 'error',
+            title: 'Erreur',
+            text: "{{ message|e('js') }}",
+            confirmButtonText: 'OK'
+        });
+    </script>
+{% endfor %}
+
+
+<section class="hero-wrap hero-wrap-2 js-fullheight" style="background-image: url('{{ asset('front/pacific/images/back.jpg') }}');">
+    <div class="overlay"></div>
+    <div class="container">
+        <div class="row no-gutters slider-text js-fullheight align-items-end justify-content-center">
+            <div class="col-md-9 ftco-animate pb-5 text-center">
+                <p class="breadcrumbs">
+                    <span class="mr-2">
+                        <a href="{{ path('app_front_home') }}">Accueil <i class="fa fa-chevron-right"></i></a>
+                    </span>
+                    <span>Mes réservations <i class="fa fa-chevron-right"></i></span>
+                </p>
+                <h1 class="mb-0 bread">Mes réservations</h1>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="ftco-section reservation-page">
+    <div class="container">
+        <div class="row justify-content-center mb-4">
+            <div class="col-md-8 text-center heading-section">
+                <span class="subheading">Horozia</span>
+                <h2>Mes réservations</h2>
+            </div>
+        </div>
+
+<div class="row justify-content-center mb-4">
+    <div class="col-md-6">
+        <form method="get" action="{{ path('app_front_mes_reservations') }}" class="bg-white rounded shadow-sm p-3">
+            <div class="form-row align-items-end">
+                <div class="col-md-8">
+                    <label for="statut" class="font-weight-bold">Filtrer par statut</label>
+                    <select name="statut" id="statut" class="form-control">
+                        <option value="">Tous les statuts</option>
+                        <option value="EN_ATTENTE" {{ selectedStatut == 'EN_ATTENTE' ? 'selected' : '' }}>En attente</option>
+                        <option value="CONFIRMEE" {{ selectedStatut == 'CONFIRMEE' ? 'selected' : '' }}>Confirmée</option>
+                        <option value="ANNULEE" {{ selectedStatut == 'ANNULEE' ? 'selected' : '' }}>Annulée</option>
+                    </select>
+                </div>
+
+                <div class="col-md-4 mt-3 mt-md-0">
+                    <button type="submit" class="btn btn-primary btn-block">
+                        Filtrer
+                    </button>
+                </div>
+            </div>
+
+            {% if selectedStatut is not empty %}
+                <div class="mt-3 text-right">
+                    <a href="{{ path('app_front_mes_reservations') }}" class="btn btn-sm btn-light">
+                        Réinitialiser
+                    </a>
+                </div>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+        {% if reservations is not empty %}
+        
+            <div class="table-responsive bg-white rounded shadow-sm p-3">
+                <table class="table table-hover mb-0 reservation-table">
+                    <thead>
+                        <tr>
+                            <th>Voyage</th>
+                            <th>Destination</th>
+                            <th>Date réservation</th>
+                            <th>Personnes</th>
+                            <th>Prix total</th>
+                            <th>Statut</th>
+                            <th class="text-center">Détail</th>
+                            <th class="text-center">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for reservation in reservations %}
+                            {% set statut = reservation.statut|upper %}
+
+                            <tr>
+                                <td>{{ reservation.voyage.titre }}</td>
+                                <td>{{ reservation.voyage.destination }}</td>
+                                <td>{{ reservation.dateReservation|date('d/m/Y H:i') }}</td>
+                                <td>{{ reservation.nbrPersonnes }}</td>
+                                <td>
+                                    {% if reservation.prixTotal is not null %}
+                                        {{ reservation.prixTotal|number_format(0, ',', ' ') }} DT
+                                    {% else %}
+                                        0 DT
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    <span class="status-badge
+                                        {% if statut == 'CONFIRMEE' %}
+                                            status-confirmed
+                                        {% elseif statut == 'ANNULEE' %}
+                                            status-cancelled
+                                        {% else %}
+                                            status-pending
+                                        {% endif %}
+                                    ">
+                                        {% if statut == 'CONFIRMEE' %}
+                                            <i class="fa fa-check-circle"></i> Confirmée
+                                        {% elseif statut == 'ANNULEE' %}
+                                            <i class="fa fa-times-circle"></i> Annulée
+                                        {% else %}
+                                            <i class="fa fa-clock-o"></i> En attente
+                                        {% endif %}
+                                    </span>
+                                </td>
+
+                                <td class="text-center">
+                                    <a href="{{ path('app_front_voyage_detail', {'id': reservation.voyage.id}) }}"
+                                       class="action-icon detail-icon"
+                                       title="Voir le voyage">
+                                        <i class="fa fa-eye"></i>
+                                    </a>
+                                </td>
+
+                                <td class="text-center">
+                                    {% if statut == 'ANNULEE' %}
+                                        <span class="action-icon disabled-icon" title="Déjà annulée">
+                                            <i class="fa fa-ban"></i>
+                                        </span>
+
+                                    {% elseif statut == 'CONFIRMEE' %}
+                                        <span class="action-icon confirmed-icon" title="Réservation confirmée">
+                                            <i class="fa fa-check"></i>
+                                        </span>
+
+                                    {% else %}
+                                        <div class="action-icons-group">
+                                            <a href="{{ path('app_front_modifier_reservation', {'id': reservation.id}) }}"
+                                               class="action-icon edit-icon"
+                                               title="Modifier">
+                                                <i class="fa fa-pencil"></i>
+                                            </a>
+                                            <form method="post"
+                                                action="{{ path('app_front_annuler_reservation', {'id': reservation.id}) }}"
+                                                class="cancel-reservation-form d-inline">
+                                                <input type="hidden" name="_token" value="{{ csrf_token('annuler_reservation_' ~ reservation.id) }}">
+                                                <button type="submit"
+                                                        class="action-icon delete-icon border-0"
+                                                        title="Annuler">
+                                                    <i class="fa fa-times"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="bg-white rounded shadow-sm p-5 text-center">
+                <h4 class="mb-3">Aucune réservation trouvée</h4>
+                <p class="mb-4">Il n’y a pas encore de réservation dans la base de données.</p>
+                <a href="{{ path('app_front_voyages') }}" class="btn btn-primary">
+                    Découvrir les voyages
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</section>
+
+<style>
+.reservation-table th,
+.reservation-table td {
+    vertical-align: middle;
+}
+
+.action-icons-group {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+}
+
+.action-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none !important;
+    font-size: 15px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.detail-icon {
+    background: #f15d30;
+    color: #fff !important;
+}
+
+.detail-icon:hover {
+    background: #d94f26;
+    color: #fff !important;
+}
+
+.edit-icon {
+    background: #fff;
+    color: #0d6efd !important;
+    border: 1px solid #0d6efd;
+}
+
+.edit-icon:hover {
+    background: #0d6efd;
+    color: #fff !important;
+}
+
+.delete-icon {
+    background: #dc3545;
+    color: #fff !important;
+}
+
+.delete-icon:hover {
+    background: #bb2d3b;
+    color: #fff !important;
+}
+
+.confirmed-icon {
+    background: #6c757d;
+    color: #fff !important;
+    cursor: default;
+}
+
+.disabled-icon {
+    background: #e9ecef;
+    color: #6c757d !important;
+    cursor: default;
+}
+</style>
+
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const forms = document.querySelectorAll('.cancel-reservation-form');
+
+            forms.forEach(function (form) {
+                form.addEventListener('submit', function (e) {
+                    e.preventDefault();
+
+                    Swal.fire({
+                        title: 'Annuler la réservation ?',
+                        text: "Cette action remettra les places au voyage.",
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#dc3545',
+                        cancelButtonColor: '#6c757d',
+                        confirmButtonText: 'Oui, annuler',
+                        cancelButtonText: 'Non'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            form.submit();
+                        }
+                    });
+                });
+            });
+        });
+    </script>
+{% endblock %}

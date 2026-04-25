@@ -1,0 +1,485 @@
+{% extends 'admin/base_admin.html.twig' %}
+
+{% block title %}Détail voyage{% endblock %}
+
+{% block admin_content %}
+<div class="container-fluid">
+    <div class="mb-4 d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div>
+            <h2 class="fw-bold mb-1">Détail du voyage</h2>
+            <p class="text-muted mb-0">Consultez toutes les informations du voyage.</p>
+        </div>
+
+        <div class="d-flex gap-2">
+            <a href="{{ path('app_voyage_edit', {'id': voyage.id}) }}" class="btn btn-horozia-warning">
+                <i class="bi bi-pencil-square me-1"></i> Modifier
+            </a>
+            <a href="{{ path('app_voyage_index') }}" class="btn btn-horozia-neutral">
+                Retour
+            </a>
+        </div>
+    </div>
+
+    <div class="dashboard-card">
+        {% set imagePath = '' %}
+        {% if voyage.imageUrl %}
+            {% if voyage.imageUrl starts with 'http://' or voyage.imageUrl starts with 'https://' %}
+                {% set imagePath = voyage.imageUrl %}
+            {% else %}
+                {% set imagePath = asset(voyage.imageUrl starts with '/' ? voyage.imageUrl|slice(1) : voyage.imageUrl) %}
+            {% endif %}
+        {% endif %}
+
+        <div class="row g-4">
+            <div class="col-lg-7">
+                {% if imagePath %}
+                    <div class="detail-image-wrapper">
+                        <img src="{{ imagePath }}" alt="{{ voyage.titre }}" class="voyage-show-image">
+
+                        {% if weather %}
+                            <div class="detail-weather-overlay">
+                                <img src="https://openweathermap.org/img/wn/{{ weather.icon }}.png" alt="Météo">
+                                <div>
+                                    <span class="overlay-temp">{{ weather.temperature|round }}°C</span>
+                                    <small>{{ weather.city }}</small>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                {% else %}
+                    <div class="voyage-show-placeholder">Pas d'image</div>
+                {% endif %}
+
+                <div class="voyage-description-card mt-4">
+                    <h5 class="voyage-section-title mb-3">
+                        <i class="bi bi-card-text me-2"></i>Description
+                    </h5>
+                    <p class="voyage-description-text mb-0">
+                        {{ voyage.description ?: 'Aucune description disponible.' }}
+                    </p>
+                    
+                </div>
+            </div>
+
+            <div class="col-lg-5">
+                <div class="voyage-show-side-card">
+                    <h3 class="voyage-show-title mb-4">{{ voyage.titre }}</h3>
+                    {% set statut = 'Disponible' %}
+                    {% set badgeClass = 'voyage-detail-badge-disponible' %}
+
+                    {% if voyage.placesRestantes == 0 %}
+                        {% set statut = 'Complet' %}
+                        {% set badgeClass = 'voyage-detail-badge-complet' %}
+                    {% elseif voyage.placesRestantes <= 10 %}
+                        {% set statut = 'Bientôt complet' %}
+                        {% set badgeClass = 'voyage-detail-badge-bientot' %}
+                    {% endif %}
+
+                    <div class="mt-4">
+                        <span class="voyage-detail-status-badge {{ badgeClass }}">{{ statut }}</span>
+                    </div>
+                    
+                    <div class="voyage-show-info-list">
+                        <div class="voyage-show-info-item">
+                            <i class="bi bi-geo-alt"></i>
+                            <div>
+                                <strong>Destination</strong><br>
+                                <span>{{ voyage.destination }}</span>
+                            </div>
+                        </div>
+
+                        <div class="voyage-show-info-item">
+                            <i class="bi bi-tags"></i>
+                            <div>
+                                <strong>Catégorie</strong><br>
+                                <span>{{ voyage.categorie ? voyage.categorie.nom : 'Non définie' }}</span>
+                            </div>
+                        </div>
+
+                        <div class="voyage-show-info-item">
+                            <i class="bi bi-cash-stack"></i>
+                            <div>
+                                <strong>Prix</strong><br>
+                                <span>{{ voyage.prix }} DT</span>
+                            </div>
+                        </div>
+
+                        <div class="voyage-show-info-item">
+                            <i class="bi bi-calendar-event"></i>
+                            <div>
+                                <strong>Date de départ</strong><br>
+                                <span>{{ voyage.dateDepart ? voyage.dateDepart|date('d/m/Y') : '' }}</span>
+                            </div>
+                        </div>
+
+                        <div class="voyage-show-info-item">
+                            <i class="bi bi-calendar-check"></i>
+                            <div>
+                                <strong>Date de retour</strong><br>
+                                <span>{{ voyage.dateRetour ? voyage.dateRetour|date('d/m/Y') : '' }}</span>
+                            </div>
+                        </div>
+
+                        <div class="voyage-show-info-item">
+                            <i class="bi bi-people"></i>
+                            <div>
+                                <strong>Places</strong><br>
+                                <span>{{ voyage.placesRestantes }}/{{ voyage.placesTotal }}</span>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    {% if weather %}
+                        <div class="premium-weather-card mt-4">
+                            <div class="premium-weather-top">
+                                <div class="premium-weather-left">
+                                    <div class="premium-weather-icon">
+                                        <img src="https://openweathermap.org/img/wn/{{ weather.icon }}@2x.png" alt="Icône météo">
+                                    </div>
+
+                                    <div>
+                                        <div class="premium-weather-label">Météo actuelle</div>
+                                        <div class="premium-weather-city">
+                                            {{ weather.city }}{% if weather.country %}, {{ weather.country }}{% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="premium-weather-temp">
+                                    {{ weather.temperature|round }}°C
+                                </div>
+                            </div>
+
+                            <div class="premium-weather-desc">
+                                {{ weather.description|capitalize }}
+                            </div>
+
+                            <div class="premium-weather-stats">
+                                <div class="premium-stat-card">
+                                    <span class="stat-icon"><i class="bi bi-droplet-half"></i></span>
+                                    <div>
+                                        <small>Humidité</small>
+                                        <strong>{{ weather.humidity }}%</strong>
+                                    </div>
+                                </div>
+
+                                <div class="premium-stat-card">
+                                    <span class="stat-icon"><i class="bi bi-wind"></i></span>
+                                    <div>
+                                        <small>Vent</small>
+                                        <strong>{{ weather.wind }} m/s</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="premium-weather-card mt-4 no-weather-card">
+                            <div class="premium-weather-advice no-weather">
+                                Météo indisponible pour cette destination.
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.dashboard-card {
+    background: #fff;
+    border-radius: 28px;
+    padding: 24px;
+    box-shadow: 0 14px 34px rgba(15, 23, 42, 0.08);
+    border: 1px solid #edf1f5;
+}
+
+.detail-image-wrapper {
+    position: relative;
+}
+
+.voyage-show-image {
+    width: 100%;
+    max-height: 470px;
+    object-fit: cover;
+    border-radius: 24px;
+    display: block;
+    box-shadow: 0 16px 32px rgba(15, 23, 42, 0.08);
+}
+
+.voyage-show-placeholder {
+    min-height: 320px;
+    border-radius: 24px;
+    background: #f4f6f8;
+    color: #7b8794;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    border: 1px dashed #cdd6df;
+}
+
+.detail-weather-overlay {
+    position: absolute;
+    left: 18px;
+    bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: rgba(255,255,255,0.9);
+    backdrop-filter: blur(14px);
+    color: #1f2d3d;
+    padding: 10px 16px;
+    border-radius: 20px;
+    box-shadow: 0 10px 24px rgba(0,0,0,0.16);
+}
+
+.detail-weather-overlay img {
+    width: 32px;
+    height: 32px;
+}
+
+.detail-weather-overlay .overlay-temp {
+    display: block;
+    font-weight: 800;
+    font-size: 1rem;
+    line-height: 1.1;
+}
+
+.detail-weather-overlay small {
+    color: #60758d;
+    font-weight: 600;
+}
+
+.voyage-description-card {
+    background: #fff;
+    border-radius: 22px;
+    padding: 24px;
+    border: 1px solid #edf1f5;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
+}
+
+.voyage-section-title {
+    font-weight: 800;
+    color: #1f2d3d;
+}
+
+.voyage-description-text {
+    color: #5f6f82;
+    line-height: 1.9;
+    font-size: 1rem;
+}
+
+.voyage-show-side-card {
+    background: #fff;
+    border-radius: 24px;
+    padding: 24px;
+    border: 1px solid #edf1f5;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
+}
+
+.voyage-show-title {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: #1f2d3d;
+}
+
+.voyage-show-info-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.voyage-show-info-item {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    padding: 15px 16px;
+    border-radius: 18px;
+    background: #f8fafc;
+    border: 1px solid #edf1f5;
+}
+
+.voyage-show-info-item i {
+    font-size: 1.15rem;
+    color: #23779c;
+    margin-top: 3px;
+}
+
+.voyage-show-info-item strong {
+    color: #1f2d3d;
+}
+
+.voyage-show-info-item span {
+    color: #5f6f82;
+}
+
+.voyage-detail-status-badge {
+    display: inline-block;
+    padding: 10px 16px;
+    border-radius: 999px;
+    font-size: 0.95rem;
+    font-weight: 800;
+}
+
+.voyage-detail-badge-disponible {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.voyage-detail-badge-bientot {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.voyage-detail-badge-complet {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+.premium-weather-card {
+    background: linear-gradient(145deg, #f8fbff 0%, #eef5ff 100%);
+    border: 1px solid #dbe9fb;
+    border-radius: 24px;
+    padding: 18px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.9);
+}
+
+.premium-weather-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+.premium-weather-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.premium-weather-icon {
+    width: 66px;
+    height: 66px;
+    border-radius: 20px;
+    background: rgba(255,255,255,0.9);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 10px 20px rgba(46, 104, 173, 0.08);
+}
+
+.premium-weather-icon img {
+    width: 54px;
+    height: 54px;
+}
+
+.premium-weather-label {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #5f7691;
+}
+
+.premium-weather-city {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #173a60;
+}
+
+.premium-weather-temp {
+    font-size: 2rem;
+    font-weight: 900;
+    color: #1c5c92;
+    line-height: 1;
+}
+
+.premium-weather-desc {
+    margin-top: 10px;
+    color: #546c86;
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.premium-weather-stats {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.premium-stat-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(255,255,255,0.88);
+    border: 1px solid #e4eefb;
+    border-radius: 18px;
+    padding: 14px;
+}
+
+.premium-stat-card .stat-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+    background: #e8f1ff;
+    color: #1f5e94;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.premium-stat-card small {
+    display: block;
+    color: #6c8198;
+    margin-bottom: 2px;
+}
+
+.premium-stat-card strong {
+    color: #173a60;
+    font-size: 1rem;
+}
+
+.premium-weather-advice {
+    margin-top: 16px;
+    padding: 14px 16px;
+    background: rgba(225, 239, 255, 0.9);
+    border-radius: 18px;
+    color: #1f4f77;
+    font-weight: 800;
+    border-left: 4px solid #3b82f6;
+}
+
+.no-weather-card {
+    background: linear-gradient(145deg, #fffaf5 0%, #fff4e8 100%);
+    border-color: #fde4bf;
+}
+
+.premium-weather-advice.no-weather {
+    background: rgba(255,255,255,0.72);
+    color: #9a3412;
+    border-left-color: #f97316;
+}
+
+@media (max-width: 768px) {
+    .premium-weather-top {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .premium-weather-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .voyage-show-title {
+        font-size: 1.3rem;
+    }
+
+    .premium-weather-temp {
+        font-size: 1.6rem;
+    }
+}
+</style>
+{% endblock %}

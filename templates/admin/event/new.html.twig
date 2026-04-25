@@ -1,0 +1,421 @@
+{% extends 'admin/base_admin.html.twig' %}
+
+{% block title %}Nouvel Événement - Horozia{% endblock %}
+
+{% block stylesheets %}
+{{ parent() }}
+<style>
+    /* Force sidebar to be full width */
+    .admin-sidebar {
+        width: 280px !important;
+        min-width: 280px !important;
+    }
+    
+    body.sidebar-collapsed .admin-sidebar,
+    .admin-sidebar.collapsed {
+        width: 90px !important;
+        min-width: 90px !important;
+    }
+</style>
+{% endblock %}
+{% block admin_content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h1 class="fw-bold mb-1" style="color:#1f2d3d;">Nouvel Événement</h1>
+        <p class="text-muted mb-0">Remplissez les informations ci-dessous</p>
+    </div>
+    <a href="{{ path('app_event_index') }}" class="btn btn-outline-secondary d-flex align-items-center gap-2">
+        <i class="bi bi-arrow-left"></i> Retour
+    </a>
+</div>
+
+<div class="card-horozia p-4" style="max-width:800px;">
+    {{ form_start(form, {attr: {novalidate: 'novalidate', onsubmit: 'return validateFormOnSubmit();'}}) }}
+
+    <div class="row g-3">
+        <div class="col-md-8">
+            <label class="form-label fw-semibold">Titre <span class="text-danger">*</span></label>
+            {{ form_widget(form.titre, {attr: {
+                'class': 'form-control',
+                'minlength': '3',
+                'maxlength': '150',
+                'required': 'required'
+            }}) }}
+            <small class="text-muted">Minimum 3 caractères, maximum 150</small>
+            {{ form_errors(form.titre) }}
+        </div>
+        <div class="col-md-4">
+            <label class="form-label fw-semibold">Catégorie <span class="text-danger">*</span></label>
+            {{ form_widget(form.categorie, {attr: {'class': 'form-control', 'required': 'required'}}) }}
+            {{ form_errors(form.categorie) }}
+        </div>
+        <div class="col-12">
+            <label class="form-label fw-semibold">Description <span class="text-danger">*</span></label>
+            {{ form_widget(form.description, {attr: {
+                'class': 'form-control',
+                'rows': 4,
+                'minlength': '10',
+                'required': 'required'
+            }}) }}
+            <small class="text-muted">Minimum 10 caractères</small>
+            {{ form_errors(form.description) }}
+        </div>
+        <div class="col-md-6">
+            <label class="form-label fw-semibold">Lieu <span class="text-danger">*</span></label>
+            {{ form_widget(form.location, {attr: {'class': 'form-control', 'required': 'required'}}) }}
+            {{ form_errors(form.location) }}
+        </div>
+        {# Location picker with map #}
+        <div class="col-12 mb-3">
+            <label class="form-label fw-semibold">Sélectionner l'emplacement sur la carte</label>
+            <div id="location-picker-map" style="height: 400px; width: 100%; border-radius: 8px; border: 1px solid #ddd;"></div>
+            <small class="text-muted">Cliquez sur la carte pour sélectionner l'emplacement exact</small>
+            
+            {# Hidden fields for coordinates #}
+            {{ form_widget(form.latitude) }}
+            {{ form_widget(form.longitude) }}
+            
+            <div class="mt-2" id="selected-location-info" style="display: none;">
+                <div class="alert alert-info">
+                    <i class="bi bi-geo-alt-fill"></i>
+                    <strong>Emplacement sélectionné:</strong>
+                    <span id="selected-lat"></span>, <span id="selected-lng"></span>
+                </div>
+            </div>
+        </div>
+                <!-- Image upload section -->
+        <div class="col-12">
+            <label class="form-label fw-semibold">Image</label>
+            <div class="card p-3">
+                <div class="row">
+                    <div class="col-md-6">
+                        <label class="form-label">Choisir un fichier</label>
+                        {{ form_widget(form.image_file, {attr: {'class': 'form-control', 'onchange': 'previewImage(this)'}}) }}
+                        <small class="text-muted">Formats acceptés: JPG, PNG, GIF, WEBP (Max 5 Mo)</small>
+                        {{ form_errors(form.image_file) }}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">OU URL de l'image</label>
+                        {{ form_widget(form.image_url, {attr: {'class': 'form-control', 'placeholder': 'https://example.com/image.jpg', 'onchange': 'previewUrl(this)'}}) }}
+                        {{ form_errors(form.image_url) }}
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <div id="image-preview-container" style="display: none;">
+                        <label class="form-label">Aperçu:</label>
+                        <div class="text-center">
+                            <img id="image-preview" src="" alt="Aperçu" style="max-width: 100%; max-height: 200px; border-radius: 8px;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <label class="form-label fw-semibold">Date de début <span class="text-danger">*</span></label>
+            {{ form_widget(form.date_debut, {attr: {
+                'class': 'form-control',
+                'required': 'required',
+                'id': 'date_debut'
+            }}) }}
+            <small class="text-muted" id="date_debut_error" style="color:#dc3545; display:none;"></small>
+            {{ form_errors(form.date_debut) }}
+        </div>
+        <div class="col-md-6">
+            <label class="form-label fw-semibold">Date de fin <span class="text-danger">*</span></label>
+            {{ form_widget(form.date_fin, {attr: {
+                'class': 'form-control',
+                'required': 'required',
+                'id': 'date_fin'
+            }}) }}
+            <small class="text-muted" id="date_fin_error" style="color:#dc3545; display:none;"></small>
+            {{ form_errors(form.date_fin) }}
+        </div>
+        <div class="col-md-4">
+            <label class="form-label fw-semibold">Prix (TND) <span class="text-danger">*</span></label>
+            {{ form_widget(form.prix, {attr: {
+                'class': 'form-control',
+                'type': 'number',
+                'step': '0.01',
+                'min': '0',
+                'required': 'required'
+            }}) }}
+            {{ form_errors(form.prix) }}
+        </div>
+        <div class="col-md-4">
+            <label class="form-label fw-semibold">Capacité max <span class="text-danger">*</span></label>
+            {{ form_widget(form.capacite_max, {attr: {
+                'class': 'form-control',
+                'type': 'number',
+                'min': '1',
+                'required': 'required'
+            }}) }}
+            {{ form_errors(form.capacite_max) }}
+        </div>
+        <div class="col-md-4">
+            <label class="form-label fw-semibold">Statut <span class="text-danger">*</span></label>
+            {{ form_widget(form.statut, {attr: {'class': 'form-control', 'required': 'required'}}) }}
+            {{ form_errors(form.statut) }}
+        </div>
+    </div>
+
+    <div class="d-flex gap-2 mt-4">
+        <button type="submit" id="submitBtn" class="btn btn-horozia-primary px-4">
+            <i class="bi bi-check-lg me-1"></i> Enregistrer
+        </button>
+        <a href="{{ path('app_event_index') }}" class="btn btn-outline-secondary px-4">Annuler</a>
+    </div>
+
+    {{ form_end(form) }}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const dateDebut = document.getElementById('date_debut');
+    const dateFin = document.getElementById('date_fin');
+    const dateDebutError = document.getElementById('date_debut_error');
+    const dateFinError = document.getElementById('date_fin_error');
+    const submitBtn = document.getElementById('submitBtn');
+    
+    function getTodayDateTime() {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        return `${year}-${month}-${day}T${hours}:${minutes}`;
+    }
+    
+    function validateDates() {
+        let isValid = true;
+        
+        if (dateDebut) {
+            dateDebut.min = getTodayDateTime();
+        }
+        
+        if (dateDebut && dateDebut.value) {
+            const selectedDate = new Date(dateDebut.value);
+            const now = new Date();
+            
+            if (selectedDate < now) {
+                dateDebutError.textContent = 'La date de début doit être dans le futur.';
+                dateDebutError.style.display = 'block';
+                dateDebut.classList.add('is-invalid');
+                isValid = false;
+            } else {
+                dateDebutError.style.display = 'none';
+                dateDebut.classList.remove('is-invalid');
+                dateDebut.classList.add('is-valid');
+            }
+        }
+        
+        if (dateDebut && dateDebut.value && dateFin && dateFin.value) {
+            const debut = new Date(dateDebut.value);
+            const fin = new Date(dateFin.value);
+            
+            if (fin <= debut) {
+                dateFinError.textContent = 'La date de fin doit être postérieure à la date de début.';
+                dateFinError.style.display = 'block';
+                dateFin.classList.add('is-invalid');
+                isValid = false;
+            } else {
+                dateFinError.style.display = 'none';
+                dateFin.classList.remove('is-invalid');
+                dateFin.classList.add('is-valid');
+            }
+        }
+        
+        if (submitBtn) {
+            submitBtn.disabled = !isValid;
+        }
+        
+        return isValid;
+    }
+    
+    if (dateDebut) {
+        dateDebut.addEventListener('change', validateDates);
+        dateDebut.addEventListener('input', validateDates);
+    }
+    if (dateFin) {
+        dateFin.addEventListener('change', validateDates);
+        dateFin.addEventListener('input', validateDates);
+    }
+    
+    validateDates();
+});
+
+function previewImage(input) {
+    const previewContainer = document.getElementById('image-preview-container');
+    const preview = document.getElementById('image-preview');
+    const urlField = document.getElementById('event_image_url');
+    
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            preview.src = e.target.result;
+            previewContainer.style.display = 'block';
+        }
+        reader.readAsDataURL(input.files[0]);
+        urlField.value = '';
+    } else {
+        previewContainer.style.display = 'none';
+        preview.src = '';
+    }
+}
+
+function previewUrl(input) {
+    const previewContainer = document.getElementById('image-preview-container');
+    const preview = document.getElementById('image-preview');
+    const fileField = document.getElementById('event_image_file');
+    
+    if (input.value && input.value.trim() !== '') {
+        preview.src = input.value;
+        previewContainer.style.display = 'block';
+        fileField.value = '';
+    } else {
+        previewContainer.style.display = 'none';
+        preview.src = '';
+    }
+}
+
+function validateFormOnSubmit() {
+    const dateDebut = document.getElementById('date_debut');
+    const dateFin = document.getElementById('date_fin');
+    const dateDebutError = document.getElementById('date_debut_error');
+    const dateFinError = document.getElementById('date_fin_error');
+    let isValid = true;
+    
+    if (dateDebut && dateDebut.value) {
+        const selectedDate = new Date(dateDebut.value);
+        const now = new Date();
+        
+        if (selectedDate < now) {
+            dateDebutError.textContent = 'La date de début doit être dans le futur.';
+            dateDebutError.style.display = 'block';
+            dateDebut.classList.add('is-invalid');
+            dateDebut.focus();
+            isValid = false;
+        }
+    }
+    
+    if (dateDebut && dateDebut.value && dateFin && dateFin.value) {
+        const debut = new Date(dateDebut.value);
+        const fin = new Date(dateFin.value);
+        
+        if (fin <= debut) {
+            dateFinError.textContent = 'La date de fin doit être postérieure à la date de début.';
+            dateFinError.style.display = 'block';
+            dateFin.classList.add('is-invalid');
+            dateFin.focus();
+            isValid = false;
+        }
+    }
+    
+    return isValid;
+}
+</script>
+
+<style>
+.form-control.is-invalid {
+    border-color: #dc3545 !important;
+}
+.form-control.is-valid {
+    border-color: #198754 !important;
+}
+</style>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Get existing coordinates if editing
+    let currentLat = document.getElementById('event_latitude').value;
+    let currentLng = document.getElementById('event_longitude').value;
+    
+    let defaultLat = currentLat ? parseFloat(currentLat) : 36.8065;
+    let defaultLng = currentLng ? parseFloat(currentLng) : 10.1815;
+    
+    // Initialize map
+    const map = L.map('location-picker-map').setView([defaultLat, defaultLng], 13);
+    
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+    
+    let marker;
+    
+    // Add marker if coordinates exist
+    if (currentLat && currentLng) {
+        marker = L.marker([currentLat, currentLng]).addTo(map);
+        document.getElementById('selected-location-info').style.display = 'block';
+        document.getElementById('selected-lat').innerText = currentLat;
+        document.getElementById('selected-lng').innerText = currentLng;
+    }
+    
+    // Handle map click
+    map.on('click', function(e) {
+        const lat = e.latlng.lat;
+        const lng = e.latlng.lng;
+        
+        // Remove existing marker
+        if (marker) {
+            map.removeLayer(marker);
+        }
+        
+        // Add new marker
+        marker = L.marker([lat, lng]).addTo(map);
+        
+        // Update hidden fields
+        document.getElementById('event_latitude').value = lat;
+        document.getElementById('event_longitude').value = lng;
+        
+        // Update location name field (reverse geocoding)
+        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data && data.display_name) {
+                    document.getElementById('event_location').value = data.display_name;
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        
+        // Show selected location info
+        document.getElementById('selected-location-info').style.display = 'block';
+        document.getElementById('selected-lat').innerText = lat.toFixed(6);
+        document.getElementById('selected-lng').innerText = lng.toFixed(6);
+    });
+    
+    // Also allow searching by address
+    const searchContainer = document.createElement('div');
+    searchContainer.innerHTML = `
+        <div class="input-group mb-2" style="position: absolute; top: 10px; right: 10px; z-index: 1000; width: 250px;">
+            <input type="text" id="address-search" class="form-control" placeholder="Rechercher une adresse...">
+            <button class="btn btn-primary" type="button" id="search-btn">🔍</button>
+        </div>
+    `;
+    map.getContainer().appendChild(searchContainer);
+    
+    document.getElementById('search-btn').addEventListener('click', function() {
+        const address = document.getElementById('address-search').value;
+        if (address) {
+            fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data && data.length > 0) {
+                        const lat = data[0].lat;
+                        const lng = data[0].lon;
+                        map.setView([lat, lng], 15);
+                        
+                        if (marker) map.removeLayer(marker);
+                        marker = L.marker([lat, lng]).addTo(map);
+                        
+                        document.getElementById('event_latitude').value = lat;
+                        document.getElementById('event_longitude').value = lng;
+                        document.getElementById('event_location').value = data[0].display_name;
+                    }
+                });
+        }
+    });
+});
+</script>
+{% endblock %}

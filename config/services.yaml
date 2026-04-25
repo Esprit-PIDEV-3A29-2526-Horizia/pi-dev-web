@@ -1,9 +1,28 @@
 parameters:
+    brevo.api_key: '%env(BREVO_API_KEY)%'
+    openai.api_key: '%env(OPENAI_API_KEY)%'
+    openai.model: '%env(OPENAI_MODEL)%'
+    stripe_secret_key: '%env(STRIPE_SECRET_KEY)%'
+    stripe.secret_key: '%env(STRIPE_SECRET_KEY)%'
+    stripe.public_key: '%env(STRIPE_PUBLIC_KEY)%'
+    app.base_url: '%env(APP_BASE_URL)%'
+    
+    # Twilio WhatsApp Configuration
+    twilio_account_sid: '%env(TWILIO_ACCOUNT_SID)%'
+    twilio_auth_token: '%env(TWILIO_AUTH_TOKEN)%'
+    twilio_whatsapp_from: '%env(TWILIO_WHATSAPP_FROM)%'
 
 services:
     _defaults:
         autowire: true
         autoconfigure: true
+
+        bind:
+            $openWeatherApiKey: '%env(OPENWEATHER_API_KEY)%'
+            $accountSid: '%twilio_account_sid%'
+            $authToken: '%twilio_auth_token%'
+            $whatsappFromNumber: '%twilio_whatsapp_from%'
+            $brevoApiKey: '%brevo.api_key%'
 
     App\:
         resource: '../src/'
@@ -12,13 +31,100 @@ services:
             - '../src/Entity/'
             - '../src/Kernel.php'
 
-    # add more service definitions when explicit configuration is needed
-    # please note that last definitions always *replace* previous ones
+    # Controllers
+    App\Controller\:
+        resource: '../src/Controller/'
+        tags: ['controller.service_arguments']
+
+    # ──────────────────────────────────────────────────────────────
+    # SERVICES SPÉCIFIQUES
+    # ──────────────────────────────────────────────────────────────
+
+    # Weather Service
     App\Service\WeatherService:
         arguments:
             $apiKey: '%env(OPENWEATHER_API_KEY)%'
 
+    # WhatsApp Service
     App\Service\WhatsAppService:
         arguments:
-            $accountSid: '%env(TWILIO_ACCOUNT_SID)%'
-            $authToken:  '%env(TWILIO_AUTH_TOKEN)%'
+            $accountSid: '%twilio_account_sid%'
+            $authToken: '%twilio_auth_token%'
+            $whatsappFromNumber: '%twilio_whatsapp_from%'
+
+    # OCR Service (CIN Scanner)
+    App\Service\OCRService:
+        arguments:
+            $httpClient: '@http_client'
+            $logger: '@logger'
+
+    # Geolocation Service
+    App\Service\GeolocationService:
+        arguments:
+            $httpClient: '@http_client'
+            $logger: '@logger'
+
+    # CompreFace Service (Facial Recognition)
+    App\Service\CompreFaceService:
+        arguments:
+            $apiKey: '%env(COMPREFACE_API_KEY)%'
+            $baseUrl: '%env(COMPREFACE_BASE_URL)%'
+
+    # Brevo Mailer Service
+    App\Service\BrevoMailerService:
+        arguments:
+            $brevoApiKey: '%brevo.api_key%'
+
+    # Email Service - sans arguments explicites car utilise bind
+    App\Service\EmailService: ~
+
+    # Open AI Service
+    App\Service\OpenAiService:
+        arguments:
+            $openAiApiKey: '%openai.api_key%'
+            $openAiModel: '%openai.model%'
+
+    # Stripe Service
+    App\Service\StripeService:
+        arguments:
+            $stripeSecretKey: '%stripe.secret_key%'
+
+    # Gemini Service
+    App\Service\GeminiService:
+        arguments:
+            $apiKey: '%env(GEMINI_API_KEY)%'
+            $logger: '@logger'
+
+    # AI Chatbot Service
+    App\Service\AiChatbotService: ~
+
+    # Contract Service
+    App\Service\ContratService: ~
+
+    # ──────────────────────────────────────────────────────────────
+    # EVENT LISTENERS
+    # ──────────────────────────────────────────────────────────────
+
+    App\EventListener\TwoFactorLoginListener:
+        tags:
+            - { name: kernel.event_subscriber }
+
+    App\EventListener\LoginFailureListener:
+        tags:
+            - { name: kernel.event_subscriber }
+
+    # ──────────────────────────────────────────────────────────────
+    # REPOSITORIES (si besoin de les injecter explicitement)
+    # ──────────────────────────────────────────────────────────────
+
+    App\Repository\VehiculeRepository:
+        arguments:
+            - '@Doctrine\Persistence\ManagerRegistry'
+
+    App\Repository\LocationRepository:
+        arguments:
+            - '@Doctrine\Persistence\ManagerRegistry'
+
+    App\Repository\UserRepository:
+        arguments:
+            - '@Doctrine\Persistence\ManagerRegistry'

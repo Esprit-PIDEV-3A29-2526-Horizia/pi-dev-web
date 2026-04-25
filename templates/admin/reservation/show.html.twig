@@ -1,0 +1,387 @@
+{% extends 'admin/base_admin.html.twig' %}
+
+{% block title %}Détail réservation{% endblock %}
+
+{% block admin_content %}
+<div class="container-fluid py-4 reservation-detail-page">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="detail-title mb-1">Détail de la réservation </h1>
+            <p class="detail-subtitle mb-0">Consultez les informations complètes de la réservation.</p>
+        </div>
+
+        <a href="{{ path('app_reservation_index') }}" class="btn btn-palette-back">
+            Retour
+        </a>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card detail-card mb-4">
+                <div class="card-body p-4">
+                    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+                        <div>
+                            <div class="section-label">Réservation</div>
+                            <div class="detail-date">
+                                {{ reservation.dateReservation ? reservation.dateReservation|date('Y-m-d H:i') : '' }}
+                            </div>
+                        </div>
+
+                        <div class="d-flex flex-column gap-2 align-items-end">
+                            {% if reservation.statut == 'CONFIRMEE' %}
+                                <span class="hz-badge badge-confirmed">Confirmée</span>
+                            {% elseif reservation.statut == 'EN_ATTENTE' %}
+                                <span class="hz-badge badge-pending">En attente</span>
+                            {% else %}
+                                <span class="hz-badge badge-cancelled">Annulée</span>
+                            {% endif %}
+
+                            {% if reservation.paymentStatus is defined %}
+                                {% if reservation.paymentStatus == 'PAYEE' %}
+                                    <span class="hz-badge badge-paid">Payée</span>
+                                {% elseif reservation.paymentStatus == 'ANNULEE' %}
+                                    <span class="hz-badge badge-payment-cancelled">Paiement annulé</span>
+                                {% else %}
+                                    <span class="hz-badge badge-unpaid">Non payée</span>
+                                {% endif %}
+                            {% else %}
+                                <span class="hz-badge badge-unknown">Paiement inconnu</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="detail-box">
+                                <span class="detail-label">Total personnes</span>
+                                <strong class="detail-value">{{ reservation.nbrPersonnes }}</strong>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="detail-box">
+                                <span class="detail-label">Adultes</span>
+                                <strong class="detail-value">{{ reservation.nbAdultes }}</strong>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="detail-box">
+                                <span class="detail-label">Enfants</span>
+                                <strong class="detail-value">{{ reservation.nbEnfants }}</strong>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="detail-box">
+                                <span class="detail-label">Statut paiement</span>
+                                <strong class="detail-value">{{ reservation.paymentStatus ?? 'NON_PAYEE' }}</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card detail-card">
+                <div class="card-body p-4">
+                    <div class="section-label">Voyage</div>
+                    <h3 class="section-title mb-4">
+                        {{ reservation.voyage ? reservation.voyage.titre : 'Voyage inconnu' }}
+                    </h3>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="detail-box">
+                                <span class="detail-label">Destination</span>
+                                <strong class="detail-value">
+                                    {{ reservation.voyage ? reservation.voyage.destination : '-' }}
+                                </strong>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="detail-box">
+                                <span class="detail-label">Prix</span>
+                                <strong class="detail-value">
+                                    {{ reservation.voyage ? reservation.voyage.prix : '-' }}
+                                </strong>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="detail-box">
+                                <span class="detail-label">Date départ</span>
+                                <strong class="detail-value">
+                                    {{ reservation.voyage and reservation.voyage.dateDepart ? reservation.voyage.dateDepart|date('Y-m-d') : '-' }}
+                                </strong>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="detail-box">
+                                <span class="detail-label">Date retour</span>
+                                <strong class="detail-value">
+                                    {{ reservation.voyage and reservation.voyage.dateRetour ? reservation.voyage.dateRetour|date('Y-m-d') : '-' }}
+                                </strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2 flex-wrap mt-4">
+                        {% if reservation.statut == 'EN_ATTENTE' %}
+                            <form method="post"
+                                  action="{{ path('app_reservation_confirmer', {'id': reservation.id}) }}"
+                                  class="reservation-confirm-form"
+                                  data-reservation-id="{{ reservation.id }}">
+                                <button type="submit" class="btn btn-palette-confirm">
+                                     Confirmer
+                                </button>
+                            </form>
+
+                            <a href="{{ path('app_reservation_edit', {'id': reservation.id}) }}"
+                               class="btn btn-palette-report">
+                                 Reporter
+                            </a>
+
+                        {% elseif reservation.statut == 'CONFIRMEE' %}
+                            <a href="{{ path('app_reservation_edit', {'id': reservation.id}) }}"
+                               class="btn btn-palette-report">
+                                 Reporter
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card detail-card">
+                <div class="card-body p-4">
+                    <div class="section-label">Client</div>
+                    <h3 class="section-title mb-4">Informations client</h3>
+
+                    <div class="detail-box mb-3">
+                        <span class="detail-label">Nom complet</span>
+                        <strong class="detail-value">
+                            {% if reservation.user %}
+                                {{ reservation.user.nom ?? '' }} {{ reservation.user.prenom ?? '' }}
+                            {% else %}
+                                Utilisateur inconnu
+                            {% endif %}
+                        </strong>
+                    </div>
+
+                    <div class="detail-box mb-3">
+                        <span class="detail-label">Email</span>
+                        <strong class="detail-value">
+                            {% if reservation.user and reservation.user.email is defined %}
+                                {{ reservation.user.email }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+:root {
+    --hz-blue-dark: #23779C;
+    --hz-blue-light: #3D94CA;
+    --hz-green: #81AE8D;
+    --hz-gold: #E8B156;
+    --hz-beige: #DACEB6;
+    --hz-bg: #F8F7F3;
+    --hz-card: #FFFFFF;
+    --hz-border: #E8E3D8;
+    --hz-text: #1F2937;
+    --hz-muted: #6B7280;
+}
+
+.reservation-detail-page {
+    padding-bottom: 24px;
+}
+
+.detail-title {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--hz-text);
+}
+
+.detail-subtitle {
+    color: var(--hz-muted);
+}
+
+.detail-card {
+    border: 1px solid var(--hz-border);
+    border-radius: 22px;
+    background: var(--hz-card);
+    box-shadow: 0 8px 24px rgba(35, 119, 156, 0.05);
+}
+
+.section-label {
+    font-size: 0.9rem;
+    color: var(--hz-muted);
+    margin-bottom: 6px;
+}
+
+.section-title {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: var(--hz-text);
+}
+
+.detail-date {
+    color: var(--hz-muted);
+    font-size: 0.95rem;
+}
+
+.detail-box {
+    background: #fbfaf7;
+    border: 1px solid var(--hz-border);
+    border-radius: 16px;
+    padding: 14px 16px;
+    height: 100%;
+}
+
+.detail-label {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--hz-muted);
+    margin-bottom: 6px;
+}
+
+.detail-value {
+    color: var(--hz-text);
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.hz-badge {
+    display: inline-block;
+    padding: 8px 14px;
+    border-radius: 999px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.badge-confirmed {
+    background: rgba(129, 174, 141, 0.22);
+    color: #4f7c59;
+}
+
+.badge-pending {
+    background: rgba(232, 177, 86, 0.24);
+    color: #9a6a18;
+}
+
+.badge-cancelled {
+    background: rgba(232, 177, 86, 0.18);
+    color: #8b5e16;
+}
+
+.badge-paid {
+    background: rgba(129, 174, 141, 0.22);
+    color: #4f7c59;
+}
+
+.badge-unpaid {
+    background: rgba(232, 177, 86, 0.20);
+    color: #9a6a18;
+}
+
+.badge-payment-cancelled {
+    background: rgba(218, 206, 182, 0.65);
+    color: #7d6f54;
+}
+
+.badge-unknown {
+    background: rgba(218, 206, 182, 0.5);
+    color: #6b7280;
+}
+
+.btn-palette-back,
+.btn-palette-confirm,
+.btn-palette-report {
+    border: none;
+    border-radius: 12px;
+    padding: 10px 16px;
+    font-weight: 700;
+    transition: 0.2s ease;
+    box-shadow: none;
+    text-decoration: none;
+}
+
+.btn-palette-back {
+    background: var(--hz-beige);
+    color: var(--hz-text);
+}
+
+.btn-palette-back:hover {
+    background: #cfc1a4;
+    color: var(--hz-text);
+}
+
+.btn-palette-confirm {
+    background: var(--hz-green);
+    color: #fff;
+}
+
+.btn-palette-confirm:hover {
+    background: #709b7b;
+    color: #fff;
+}
+
+.btn-palette-report {
+    background: var(--hz-blue-light);
+    color: #fff;
+}
+
+.btn-palette-report:hover {
+    background: #2f86bc;
+    color: #fff;
+}
+</style>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const confirmForms = document.querySelectorAll('.reservation-confirm-form');
+
+            confirmForms.forEach(form => {
+                form.addEventListener('submit', function (e) {
+                    e.preventDefault();
+
+                    const reservationId = this.dataset.reservationId || '';
+
+                    Swal.fire({
+                        title: 'Confirmer cette réservation ?',
+                        html: `Vous êtes sur le point de confirmer la réservation.`,
+                        icon: 'question',
+                        showCancelButton: true,
+                        confirmButtonColor: '#81AE8D',
+                        cancelButtonColor: '#DACEB6',
+                        confirmButtonText: 'Oui, confirmer',
+                        cancelButtonText: 'Annuler',
+                        reverseButtons: true,
+                        background: '#ffffff',
+                        borderRadius: '18px'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            form.submit();
+                        }
+                    });
+                });
+            });
+        });
+    </script>
+{% endblock %}

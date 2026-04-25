@@ -6,7 +6,7 @@ use App\Entity\Location;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
 use Psr\Log\LoggerInterface;
-use DateTime;
+use Exception;
 
 class EmailService
 {
@@ -238,6 +238,56 @@ class EmailService
     }
 
     /**
+     * Envoie un email d'approbation d'annulation
+     */
+    public function sendCancellationApprovedEmail(Location $location, string $emailClient): array
+    {
+        if (empty($emailClient)) {
+            return ['succes' => false, 'message' => 'Adresse email du client manquante'];
+        }
+
+        $sujet = '✅ Votre demande d\'annulation a été approuvée - Horizia #' . $location->getIdLocation();
+        $clientNom = $location->getClientNomComplet() ?? 'Client';
+
+        $corpsHtml = $this->getEmailLayout(
+            '✅ Annulation Approuvée',
+            '#27ae60',
+            "<p style='font-size:16px; color:#2c3e50;'>Bonjour <strong>{$clientNom}</strong>,</p>
+             <p>Votre demande d'annulation pour la location <strong>#{$location->getIdLocation()}</strong> a été <strong>approuvée</strong>.</p>",
+            $this->buildTableDetails($location),
+            "<p style='color:#7f8c8d;'>Si vous avez des questions, n'hésitez pas à nous contacter.</p>
+             <p>Merci pour votre compréhension.</p>"
+        );
+
+        return $this->envoyerEmail($emailClient, $sujet, $corpsHtml);
+    }
+
+    /**
+     * Envoie un email de refus d'annulation
+     */
+    public function sendCancellationRejectedEmail(Location $location, string $emailClient): array
+    {
+        if (empty($emailClient)) {
+            return ['succes' => false, 'message' => 'Adresse email du client manquante'];
+        }
+
+        $sujet = '❌ Votre demande d\'annulation a été refusée - Horizia #' . $location->getIdLocation();
+        $clientNom = $location->getClientNomComplet() ?? 'Client';
+
+        $corpsHtml = $this->getEmailLayout(
+            '❌ Annulation Refusée',
+            '#e74c3c',
+            "<p style='font-size:16px; color:#2c3e50;'>Bonjour <strong>{$clientNom}</strong>,</p>
+             <p>Votre demande d'annulation pour la location <strong>#{$location->getIdLocation()}</strong> a été <strong>refusée</strong>.</p>",
+            $this->buildTableDetails($location),
+            "<p style='color:#7f8c8d;'>Votre location reste confirmée aux dates prévues.</p>
+             <p>Pour toute question, contactez-nous directement en agence.</p>"
+        );
+
+        return $this->envoyerEmail($emailClient, $sujet, $corpsHtml);
+    }
+
+    /**
      * Layout principal des emails
      */
     private function getEmailLayout(string $titre, string $couleur, string $intro, string $contenu, string $footer): string
@@ -276,4 +326,5 @@ class EmailService
             </html>
         ";
     }
+    
 }

@@ -1,0 +1,178 @@
+{% extends 'admin/base_admin.html.twig' %}
+
+{% block title %}{{ publication.titre }} - Détail{% endblock %}
+{% block stylesheets %}
+{{ parent() }}
+<style>
+    /* Force sidebar to be full width */
+    .admin-sidebar {
+        width: 280px !important;
+        min-width: 280px !important;
+    }
+    
+    body.sidebar-collapsed .admin-sidebar,
+    .admin-sidebar.collapsed {
+        width: 90px !important;
+        min-width: 90px !important;
+    }
+
+    /* Pagination custom styles */
+    .pagination-custom {
+        gap: 0.25rem;
+    }
+
+    .pagination-custom .page-link {
+        border: none;
+        color: #23779C;
+        background-color: transparent;
+        padding: 0.5rem 0.9rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+
+    .pagination-custom .page-link:hover {
+        background-color: #23779C;
+        color: white;
+        transform: translateY(-2px);
+    }
+
+    .pagination-custom .page-item.active .page-link {
+        background-color: #23779C;
+        color: white;
+        box-shadow: 0 4px 10px rgba(35, 119, 156, 0.3);
+    }
+
+    .pagination-custom .page-item.disabled .page-link {
+        color: #adb5bd;
+        cursor: not-allowed;
+    }
+
+    .pagination-custom .page-link.rounded-circle {
+        width: 38px;
+        height: 38px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .pagination-custom .page-link.rounded-pill {
+        padding-left: 1.2rem;
+        padding-right: 1.2rem;
+    }
+
+    /* Responsive pagination */
+    @media (max-width: 768px) {
+        .pagination-custom .page-link {
+            padding: 0.35rem 0.7rem;
+            font-size: 0.85rem;
+        }
+        
+        .pagination-custom .page-link.rounded-circle {
+            width: 32px;
+            height: 32px;
+        }
+    }
+</style>
+{% endblock %}
+{% block admin_content %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center flex-wrap">
+        <h2 class="mb-0">{{ publication.titre }}</h2>
+        <div class="mt-2 mt-sm-0">
+            <a href="{{ path('admin_publication_edit', {'id': publication.id}) }}" class="btn btn-warning">
+                <i class="bi bi-pencil"></i> Modifier
+            </a>
+            {{ include('admin/publication/_delete_form.html.twig') }}
+            <a href="{{ path('admin_commentaire_index', {'publication': publication.id}) }}" class="btn btn-info">
+                <i class="bi bi-chat-dots-fill"></i> Voir les commentaires
+            </a>
+            <a href="{{ path('admin_publication_index') }}" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Retour
+            </a>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-8">
+                <dl class="row">
+                    <dt class="col-sm-3">Catégorie</dt>
+                    <dd class="col-sm-9">{{ publication.categorie }}</dd>
+
+                    <dt class="col-sm-3">Auteur</dt>
+                    <dd class="col-sm-9">{{ publication.auteur }}</dd>
+
+                    <dt class="col-sm-3">Date</dt>
+                    <dd class="col-sm-9">{{ publication.dateCreation|date('d/m/Y H:i') }}</dd>
+
+                    {% if publication.ville or publication.pays %}
+                        <dt class="col-sm-3">Localisation</dt>
+                        <dd class="col-sm-9">{{ publication.ville }}{{ publication.ville and publication.pays ? ', ' : '' }}{{ publication.pays }}</dd>
+                    {% endif %}
+
+                    {% if publication.tags %}
+                        <dt class="col-sm-3">Tags</dt>
+                        <dd class="col-sm-9">{{ publication.tags|join(', ') }}</dd>
+                    {% endif %}
+
+                    <dt class="col-sm-3">Likes</dt>
+                    <dd class="col-sm-9">{{ publication.likes }}</dd>
+                </dl>
+                <hr>
+                <h5>Description</h5>
+                <p>{{ publication.description|nl2br }}</p>
+            </div>
+            {% if publication.image %}
+            <div class="col-md-4 text-center">
+                <img src="{{ asset(publication.image) }}" class="img-fluid rounded shadow" alt="{{ publication.titre }}">
+            </div>
+            {% endif %}
+        </div>
+
+        <hr>
+        <h4>Commentaires ({{ publication.commentaires }})</h4>
+        {% if commentaires is defined and commentaires|length > 0 %}
+            <div class="table-responsive">
+                <table class="table table-sm table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Auteur</th>
+                            <th>Commentaire</th>
+                            <th>Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for com in commentaires|slice(0, 5) %}
+                        <tr>
+                            <td>{{ com.auteur }}</td>
+                            <td>{{ com.contenu|length > 80 ? com.contenu|slice(0, 80) ~ '...' : com.contenu }}</td>
+                            <td>{{ com.dateCreation|date('d/m/Y H:i') }}</td>
+                            <td>
+                                <a href="{{ path('admin_commentaire_edit', {'id': com.id}) }}" class="btn btn-sm btn-warning">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <form method="post" action="{{ path('admin_commentaire_delete', {'id': com.id}) }}" style="display:inline">
+                                    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ com.id) }}">
+                                    <button class="btn btn-sm btn-danger" onclick="return confirm('Supprimer ce commentaire ?')">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+                {% if publication.commentaires > 5 %}
+                    <div class="mt-2">
+                        <a href="{{ path('admin_commentaire_index', {'publication': publication.id}) }}" class="btn btn-outline-info btn-sm">
+                            Voir tous les {{ publication.commentaires }} commentaires
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        {% else %}
+            <div class="alert alert-info">Aucun commentaire pour cette publication.</div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,240 @@
+{% extends 'base_front.html.twig' %}
+
+{% block title %}Paiement - {{ event.getTitre() }}{% endblock %}
+
+{% block stylesheets %}
+{{ parent() }}
+<style>
+    #ftco-navbar {
+        background: #000 !important;
+        position: relative !important;
+    }
+    
+    .payment-container {
+        background: white;
+        border-radius: 20px;
+        padding: 40px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        margin-top: 50px;
+        margin-bottom: 50px;
+    }
+    
+    .card-element {
+        padding: 12px;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        background: white;
+    }
+    
+    .StripeElement {
+        padding: 12px;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        background: white;
+    }
+    
+    .StripeElement--focus {
+        border-color: #F96D00;
+        box-shadow: 0 0 0 2px rgba(249, 109, 0, 0.1);
+    }
+    
+    .StripeElement--invalid {
+        border-color: #dc2626;
+    }
+    
+    .btn-pay {
+        background: linear-gradient(135deg, #F96D00 0%, #e05d00 100%);
+        color: white;
+        border: none;
+        padding: 14px 30px;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 1.1rem;
+        width: 100%;
+        transition: transform 0.2s;
+    }
+    
+    .btn-pay:hover:not(:disabled) {
+        transform: translateY(-2px);
+        background: linear-gradient(135deg, #e05d00 0%, #c94d00 100%);
+    }
+    
+    .btn-pay:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+    
+    .loader {
+        display: inline-block;
+        width: 20px;
+        height: 20px;
+        border: 2px solid white;
+        border-radius: 50%;
+        border-top-color: transparent;
+        animation: spin 0.6s linear infinite;
+    }
+    
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    
+    .alert-success {
+        background-color: #d4edda;
+        border-color: #c3e6cb;
+        color: #155724;
+        padding: 12px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<section class="ftco-section" style="padding-top: 80px;">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="payment-container">
+                    <div class="text-center mb-4">
+                        <h2 class="fw-bold" style="color: #F96D00;">Paiement sécurisé</h2>
+                        <p class="text-muted">Complétez votre réservation en toute sécurité</p>
+                    </div>
+                    
+                    <div id="payment-status" style="display: none;" class="alert-success"></div>
+                    
+                    <!-- Order Summary -->
+                    <div class="bg-light p-4 rounded mb-4">
+                        <h5 class="mb-3">Récapitulatif de votre commande</h5>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>{{ event.getTitre() }}</span>
+                            <span><strong>{{ pending_data.nombre_places }} place(s)</strong></span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Prix par place</span>
+                            <span>{{ event.getPrix() }} TND</span>
+                        </div>
+                        <hr>
+                        <div class="d-flex justify-content-between">
+                            <strong>Total à payer</strong>
+                            <strong style="color: #F96D00; font-size: 1.3rem;">
+                                {{ pending_data.montant_total|number_format(3, '.', ',') }} TND
+                            </strong>
+                        </div>
+                        <small class="text-muted">*Payé en Euros (€) selon taux de change actuel</small>
+                    </div>
+                    
+                    <!-- Card Payment Form -->
+                    <form id="payment-form">
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">Informations de carte bancaire</label>
+                            <div id="card-element" class="card-element"></div>
+                            <div id="card-errors" class="text-danger mt-2" style="font-size: 0.9rem;"></div>
+                        </div>
+                        
+                        <button type="submit" id="submit-btn" class="btn-pay">
+                            <span id="button-text">Payer {{ pending_data.montant_total|number_format(3, '.', ',') }} TND</span>
+                            <span id="spinner" style="display: none;" class="loader"></span>
+                        </button>
+                    </form>
+                    
+                    <div class="text-center mt-4">
+                        <small class="text-muted">
+                            <i class="fa fa-lock"></i> Paiement 100% sécurisé par Stripe
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+<script src="https://js.stripe.com/v3/"></script>
+<script>
+    const stripe = Stripe('{{ stripe_public_key }}');
+    const elements = stripe.elements();
+    const cardElement = elements.create('card', {
+        style: {
+            base: {
+                fontSize: '16px',
+                color: '#32325d',
+                fontFamily: '"Helvetica Neue", Helvetica, sans-serif',
+                '::placeholder': {
+                    color: '#aab7c4'
+                }
+            }
+        }
+    });
+    cardElement.mount('#card-element');
+    
+    const form = document.getElementById('payment-form');
+    const submitBtn = document.getElementById('submit-btn');
+    const buttonText = document.getElementById('button-text');
+    const spinner = document.getElementById('spinner');
+    const cardErrors = document.getElementById('card-errors');
+    const paymentStatus = document.getElementById('payment-status');
+    
+    cardElement.addEventListener('change', function(event) {
+        if (event.error) {
+            cardErrors.textContent = event.error.message;
+        } else {
+            cardErrors.textContent = '';
+        }
+    });
+    
+    form.addEventListener('submit', async function(event) {
+        event.preventDefault();
+        
+        submitBtn.disabled = true;
+        buttonText.style.display = 'none';
+        spinner.style.display = 'inline-block';
+        cardErrors.textContent = '';
+        
+        const { paymentIntent, error } = await stripe.confirmCardPayment('{{ client_secret }}', {
+            payment_method: {
+                card: cardElement,
+                billing_details: {
+                    name: '{{ pending_data.prenom }} {{ pending_data.nom }}',
+                    email: '{{ pending_data.email }}'
+                }
+            }
+        });
+        
+        if (error) {
+            cardErrors.textContent = error.message;
+            submitBtn.disabled = false;
+            buttonText.style.display = 'inline';
+            spinner.style.display = 'none';
+        } else if (paymentIntent.status === 'succeeded') {
+            paymentStatus.style.display = 'block';
+            paymentStatus.innerHTML = '✅ Paiement confirmé ! Redirection en cours...';
+            
+            const response = await fetch('{{ path('app_participation_confirm_payment') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    payment_intent_id: paymentIntent.id
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                window.location.href = '{{ path('app_front_event_show', {id: event.getId_event()}) }}?payment_success=1';
+            } else {
+                paymentStatus.style.display = 'block';
+                paymentStatus.style.backgroundColor = '#f8d7da';
+                paymentStatus.style.color = '#721c24';
+                paymentStatus.innerHTML = '❌ Erreur: ' + result.error;
+                submitBtn.disabled = false;
+                buttonText.style.display = 'inline';
+                spinner.style.display = 'none';
+            }
+        }
+    });
+</script>
+{% endblock %}

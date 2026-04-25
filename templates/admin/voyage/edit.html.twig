@@ -1,0 +1,177 @@
+{% extends 'admin/base_admin.html.twig' %}
+
+{% block title %}Modifier un voyage{% endblock %}
+
+{% block admin_content %}
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="mb-1">Modifier le voyage</h1>
+            <p class="text-muted mb-0">Mettez à jour les informations du voyage.</p>
+        </div>
+        <a href="{{ path('app_voyage_index') }}" class="btn btn-horozia-neutral">
+            Retour
+        </a>
+    </div>
+
+    <div class="card shadow-sm border-0 rounded-4">
+        <div class="card-body p-4">
+
+            {{ form_start(form) }}
+
+            <div class="row">
+                <div class="col-md-6 mb-3 {% if form.titre.vars.errors|length > 0 %}field-error{% endif %}">
+                    {{ form_label(form.titre) }}
+                    {{ form_widget(form.titre, {'attr': {'class': 'form-control'}}) }}
+                    {% if form.titre.vars.errors|length > 0 %}
+                        <div class="validation-error">{{ form_errors(form.titre) }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="col-md-6 mb-3 {% if form.destination.vars.errors|length > 0 %}field-error{% endif %}">
+                    {{ form_label(form.destination) }}
+                    {{ form_widget(form.destination, {'attr': {'class': 'form-control'}}) }}
+                    {% if form.destination.vars.errors|length > 0 %}
+                        <div class="validation-error">{{ form_errors(form.destination) }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-12 mb-3 {% if form.description.vars.errors|length > 0 %}field-error{% endif %}">
+                    {{ form_label(form.description) }}
+                    {{ form_widget(form.description, {'attr': {'class': 'form-control', 'rows': 5}}) }}
+                    {% if form.description.vars.errors|length > 0 %}
+                        <div class="validation-error">{{ form_errors(form.description) }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-4 mb-3 {% if form.prix.vars.errors|length > 0 %}field-error{% endif %}">
+                    {{ form_label(form.prix) }}
+                    {{ form_widget(form.prix, {'attr': {'class': 'form-control'}}) }}
+                    {% if form.prix.vars.errors|length > 0 %}
+                        <div class="validation-error">{{ form_errors(form.prix) }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="col-md-4 mb-3 {% if form.dateDepart.vars.errors|length > 0 %}field-error{% endif %}">
+                    {{ form_label(form.dateDepart) }}
+                    {{ form_widget(form.dateDepart, {'attr': {'class': 'form-control'}}) }}
+                    {% if form.dateDepart.vars.errors|length > 0 %}
+                        <div class="validation-error">{{ form_errors(form.dateDepart) }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="col-md-4 mb-3 {% if form.dateRetour.vars.errors|length > 0 %}field-error{% endif %}">
+                    {{ form_label(form.dateRetour) }}
+                    {{ form_widget(form.dateRetour, {'attr': {'class': 'form-control'}}) }}
+                    {% if form.dateRetour.vars.errors|length > 0 %}
+                        <div class="validation-error">{{ form_errors(form.dateRetour) }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-4 mb-3 {% if form.categorie.vars.errors|length > 0 %}field-error{% endif %}">
+                    {{ form_label(form.categorie) }}
+                    {{ form_widget(form.categorie, {'attr': {'class': 'form-select'}}) }}
+                    {% if form.categorie.vars.errors|length > 0 %}
+                        <div class="validation-error">{{ form_errors(form.categorie) }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="col-md-4 mb-3 {% if form.placesTotal.vars.errors|length > 0 %}field-error{% endif %}">
+                    {{ form_label(form.placesTotal) }}
+                    {{ form_widget(form.placesTotal, {'attr': {'class': 'form-control'}}) }}
+                    {% if form.placesTotal.vars.errors|length > 0 %}
+                        <div class="validation-error">{{ form_errors(form.placesTotal) }}</div>
+                    {% endif %}
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label class="form-label">Places restantes</label>
+                    <input type="text" class="form-control bg-light" value="{{ voyage.placesRestantes }}" readonly>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-12 mb-3 {% if form.imageUrl.vars.errors|length > 0 %}field-error{% endif %}">
+                    {{ form_label(form.imageUrl) }}
+                    {{ form_widget(form.imageUrl, {'attr': {'class': 'form-control', 'id': 'image_url_input'}}) }}
+                    {% if form.imageUrl.vars.errors|length > 0 %}
+                        <div class="validation-error">{{ form_errors(form.imageUrl) }}</div>
+                    {% endif %}
+                    <small class="text-muted">
+                        Utilisez une URL publique comme /images/Grece.jpg ou une URL complète.
+                    </small>
+                </div>
+            </div>
+
+            <div class="row" id="image_preview_wrapper" style="display: {% if voyage.imageUrl %}block{% else %}none{% endif %};">
+                <div class="col-md-12 mb-4">
+                    <label class="form-label">Aperçu de l’image</label>
+                    <div>
+                        <img id="image_preview"
+                             src="{% if voyage.imageUrl %}{{ voyage.imageUrl starts with 'http' ? voyage.imageUrl : asset(voyage.imageUrl) }}{% endif %}"
+                             alt="Aperçu"
+                             style="max-width: 320px; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.12);">
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-end gap-2">
+                <a href="{{ path('app_voyage_index') }}" class="btn btn-light rounded-pill px-4">
+                    Annuler
+                </a>
+                <button type="submit" class="btn btn-horozia-secondary">
+                    Mettre à jour
+                </button>
+            </div>
+
+            {{ form_end(form) }}
+        </div>
+    </div>
+</div>
+
+<style>
+.field-error .form-control,
+.field-error .form-select {
+    border-color: #dc3545;
+    box-shadow: none;
+}
+
+.validation-error {
+    color: #dc3545;
+    font-size: 0.9rem;
+    margin-top: 6px;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const input = document.getElementById('image_url_input');
+    const preview = document.getElementById('image_preview');
+    const wrapper = document.getElementById('image_preview_wrapper');
+
+    if (!input || !preview || !wrapper) return;
+
+    function updatePreview() {
+        const value = input.value.trim();
+
+        if (!value) {
+            wrapper.style.display = 'none';
+            preview.src = '';
+            return;
+        }
+
+        const finalSrc = value.startsWith('http') ? value : value;
+        preview.src = finalSrc;
+        wrapper.style.display = 'block';
+    }
+
+    input.addEventListener('input', updatePreview);
+});
+</script>
+{% endblock %}

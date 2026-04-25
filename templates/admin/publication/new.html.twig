@@ -1,0 +1,84 @@
+{% extends 'admin/base_admin.html.twig' %}
+
+{% block title %}Nouvelle publication{% endblock %}
+{% block stylesheets %}
+{{ parent() }}
+<style>
+    /* Force sidebar to be full width */
+    .admin-sidebar {
+        width: 280px !important;
+        min-width: 280px !important;
+    }
+    
+    body.sidebar-collapsed .admin-sidebar,
+    .admin-sidebar.collapsed {
+        width: 90px !important;
+        min-width: 90px !important;
+    }
+
+    /* Pagination custom styles */
+    .pagination-custom {
+        gap: 0.25rem;
+    }
+
+    .pagination-custom .page-link {
+        border: none;
+        color: #23779C;
+        background-color: transparent;
+        padding: 0.5rem 0.9rem;
+        font-weight: 500;
+        transition: all 0.2s ease;
+    }
+
+    .pagination-custom .page-link:hover {
+        background-color: #23779C;
+        color: white;
+        transform: translateY(-2px);
+    }
+
+    .pagination-custom .page-item.active .page-link {
+        background-color: #23779C;
+        color: white;
+        box-shadow: 0 4px 10px rgba(35, 119, 156, 0.3);
+    }
+
+    .pagination-custom .page-item.disabled .page-link {
+        color: #adb5bd;
+        cursor: not-allowed;
+    }
+
+    .pagination-custom .page-link.rounded-circle {
+        width: 38px;
+        height: 38px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .pagination-custom .page-link.rounded-pill {
+        padding-left: 1.2rem;
+        padding-right: 1.2rem;
+    }
+
+    /* Responsive pagination */
+    @media (max-width: 768px) {
+        .pagination-custom .page-link {
+            padding: 0.35rem 0.7rem;
+            font-size: 0.85rem;
+        }
+        
+        .pagination-custom .page-link.rounded-circle {
+            width: 32px;
+            height: 32px;
+        }
+    }
+</style>
+{% endblock %}
+{% block admin_content %}
+<div class="card">
+    <div class="card-header bg-white"><h2>Nouvelle publication</h2></div>
+    <div class="card-body">
+        {{ include('admin/publication/_form.html.twig') }}
+    </div>
+</div>
+{% endblock %}

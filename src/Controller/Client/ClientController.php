@@ -3,17 +3,21 @@
 namespace App\Controller\Client;
 
 use App\Entity\Location;
+use App\Entity\User;
 use App\Repository\LocationRepository;
 use App\Repository\VehiculeRepository;
 use App\Service\EmailService;
 use App\Service\WeatherService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use DateTime;
+use Exception;
+use function strlen;
+use function preg_match;
 
 #[Route('/client')]
 class ClientController extends AbstractController
@@ -22,14 +26,23 @@ class ClientController extends AbstractController
     // ACCUEIL CLIENT
     // ══════════════════════════════════════════
     #[Route('/', name: 'client_accueil', methods: ['GET'])]
+    #[IsGranted('ROLE_USER', message: 'Vous devez être connecté pour accéder à cette page.')]
     public function accueil(VehiculeRepository $vehiculeRepo, LocationRepository $locationRepo): Response
     {
+        /** @var User $user */
+        $user = $this->getUser();
+        
         $nbDisponibles = count($vehiculeRepo->findBy(['etat' => 'disponible']));
         $nbActives     = count($locationRepo->findBy(['statut' => 'en_cours']));
+        
+        // Récupérer les locations de l'utilisateur connecté
+        $mesLocations = $locationRepo->findBy(['user' => $user], ['dateDebut' => 'DESC']);
 
         return $this->render('client/accueil.html.twig', [
             'nb_disponibles' => $nbDisponibles,
             'nb_actives'     => $nbActives,
+            'mes_locations'  => $mesLocations,
+            'user'           => $user,
         ]);
     }
 
@@ -58,217 +71,271 @@ class ClientController extends AbstractController
     // ══════════════════════════════════════════
     // RÉSERVATION
     // ══════════════════════════════════════════
-    #[Route('/reservation/{id}', name: 'client_reservation', methods: ['GET', 'POST'])]
-    public function reservation(
-        int $id,
-        Request $request,
-        VehiculeRepository $vehiculeRepo,
-        LocationRepository $locationRepo,
-        EntityManagerInterface $em,
-        EmailService $emailService
-    ): Response {
-        $vehicule = $vehiculeRepo->find($id);
-        if (!$vehicule) {
-            throw $this->createNotFoundException('Véhicule introuvable.');
-        }
-
-        if ($request->isMethod('POST')) {
-            $data   = $request->request->all();
-            $errors = [];
-
-            // ── Nom complet ──────────────────────────────
-            $nomComplet = trim($data['nom_complet'] ?? '');
-            if ($nomComplet === '') {
-                $errors['nom_complet'] = 'Le nom complet est obligatoire.';
-            } elseif (strlen($nomComplet) < 3) {
-                $errors['nom_complet'] = 'Le nom complet doit contenir au moins 3 caractères.';
-            } elseif (!preg_match('/^[\p{L}\s\-\'\.]+$/u', $nomComplet)) {
-                $errors['nom_complet'] = 'Le nom complet ne doit contenir que des lettres.';
-            }
-
-            // ── Téléphone ────────────────────────────────
-            $telephone = trim($data['telephone'] ?? '');
-            if ($telephone === '') {
-                $errors['telephone'] = 'Le téléphone est obligatoire.';
-            } elseif (!preg_match('/^[\+\d\s]{8,15}$/', $telephone)) {
-                $errors['telephone'] = 'Le téléphone doit contenir entre 8 et 15 chiffres.';
-            }
-
-            // ── CIN / Passeport ──────────────────────────
-            $cin = trim($data['cin'] ?? '');
-            if ($cin === '') {
-                $errors['cin'] = 'Le CIN ou numéro de passeport est obligatoire.';
-            } elseif (!preg_match('/^[A-Z0-9]{6,20}$/i', $cin)) {
-                $errors['cin'] = 'Format invalide (6 à 20 caractères alphanumériques).';
-            }
-
-            // ── Email (facultatif mais validé si renseigné) ──
-            $email = trim($data['email'] ?? '');
-            if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                $errors['email'] = 'L\'adresse email n\'est pas valide.';
-            }
-
-            // ── Dates ────────────────────────────────────
-            $dateDebutStr = trim($data['date_debut'] ?? '');
-            $dateFinStr   = trim($data['date_fin']   ?? '');
-            $debut        = null;
-            $fin          = null;
-
-            if ($dateDebutStr === '') {
-                $errors['date_debut'] = 'La date de début est obligatoire.';
-            } else {
-                try {
-                    $debut = new DateTime($dateDebutStr);
-                    $aujourd_hui = new DateTime('today');
-                    if ($debut < $aujourd_hui) {
-                        $errors['date_debut'] = 'La date de début ne peut pas être dans le passé.';
-                    }
-                } catch (\Exception) {
-                    $errors['date_debut'] = 'Date de début invalide.';
-                }
-            }
-
-            if ($dateFinStr === '') {
-                $errors['date_fin'] = 'La date de fin est obligatoire.';
-            } else {
-                try {
-                    $fin = new DateTime($dateFinStr);
-                    if ($debut && $fin <= $debut) {
-                        $errors['date_fin'] = 'La date de fin doit être après la date de début.';
-                    }
-                } catch (\Exception) {
-                    $errors['date_fin'] = 'Date de fin invalide.';
-                }
-            }
-
-            // ── Conditions générales ─────────────────────
-            if (empty($data['conditions'])) {
-                $errors['conditions'] = 'Vous devez accepter les conditions générales.';
-            }
-
-            // ── Si erreurs → retourner le formulaire ─────
-            if (!empty($errors)) {
-                return $this->render('client/reservation.html.twig', [
-                    'vehicule'   => $vehicule,
-                    'errors'     => $errors,
-                    'data'       => $data,
-                    'date_debut' => $dateDebutStr,
-                    'date_fin'   => $dateFinStr,
-                ]);
-            }
-
-            // ── Création de la location ──────────────────
-            $location = new Location();
-            $location->setVehicule($vehicule);
-            $location->setClientNomComplet($nomComplet);
-            $location->setClientTelephone($telephone);
-            $location->setClientCin($cin);
-            $location->setClientAdresse($data['adresse'] ?? '');
-            $location->setNotes($data['notes'] ?? '');
-            $location->setDateDebut($debut);
-            $location->setDateFinPrevue($fin);
-
-            $jours  = max(1, (int) $debut->diff($fin)->days);
-            $extras = [];
-            if (!empty($data['gps']))        $extras['gps']                       = 10.0;
-            if (!empty($data['siege_bebe'])) $extras['siege_bebe']                = 15.0;
-            if (!empty($data['assurance']))  $extras['assurance_complementaire']  = 25.0;
-
-            $montantExtras = array_sum($extras);
-            $montantBase   = $jours * (float) $vehicule->getPrixParJour();
-            $montantTotal  = round($montantBase + $montantExtras, 3);
-            $avance        = round($montantTotal * 0.30, 3);
-
-            $location->setExtras(empty($extras) ? null : $extras);
-            $location->setMontantTotal((string) $montantTotal);
-            $location->setAvance((string) $avance);
-            $location->setKilometrageDebut($vehicule->getKilometrage() ?? 0);
-            $location->setStatut('réservée');
-            $location->setPrixParJour((string) $vehicule->getPrixParJour());
-
-            // Marquer le véhicule comme loué
-            $vehicule->setEtat('louee');
-            $em->persist($vehicule);
-            $em->persist($location);
-            $em->flush();
-
-            // Email de confirmation (silencieux si échec)
-            if (!empty($email)) {
-                try {
-                    $emailService->envoyerConfirmationLocation($location, $email);
-                } catch (\Exception) {
-                    // ne pas bloquer la confirmation
-                }
-            }
-
-            return $this->redirectToRoute('client_confirmation', ['id' => $location->getIdLocation()]);
-        }
-
-        // ── GET : afficher le formulaire vide ────────────
-        return $this->render('client/reservation.html.twig', [
-            'vehicule'   => $vehicule,
-            'date_debut' => $request->query->get('date_debut'),
-            'date_fin'   => $request->query->get('date_fin'),
-            'errors'     => [],
-            'data'       => [],
-        ]);
+  // ══════════════════════════════════════════
+// RÉSERVATION (avec infos utilisateur verrouillées)
+// ══════════════════════════════════════════
+#[Route('/reservation/{id}', name: 'client_reservation', methods: ['GET', 'POST'])]
+#[IsGranted('ROLE_USER', message: 'Vous devez être connecté pour effectuer une réservation.')]
+public function reservation(
+    int $id,
+    Request $request,
+    VehiculeRepository $vehiculeRepo,
+    LocationRepository $locationRepo,
+    EntityManagerInterface $em,
+    EmailService $emailService
+): Response {
+    /** @var User $user */
+    $user = $this->getUser();
+    
+    $vehicule = $vehiculeRepo->find($id);
+    if (!$vehicule) {
+        throw $this->createNotFoundException('Véhicule introuvable.');
     }
+
+    if ($request->isMethod('POST')) {
+        $data   = $request->request->all();
+        $errors = [];
+
+        // ── Les informations utilisateur sont récupérées de l'entité User, pas du formulaire ──
+        $nomComplet = $user->getNom() . ' ' . $user->getPrenom();
+        $telephone = $user->getTelephone() ?? '';
+        $email = $user->getEmail();
+        $adresse = $user->getAddresse() ?? '';
+
+        // ── CIN / Passeport (seul champ que l'utilisateur doit remplir) ──
+        $cin = trim($data['cin'] ?? '');
+        if ($cin === '') {
+            $errors['cin'] = 'Le CIN ou numéro de passeport est obligatoire.';
+        } elseif (!preg_match('/^[A-Z0-9]{6,20}$/i', $cin)) {
+            $errors['cin'] = 'Format invalide (6 à 20 caractères alphanumériques).';
+        }
+
+        // ── Dates ────────────────────────────────────
+        $dateDebutStr = trim($data['date_debut'] ?? '');
+        $dateFinStr   = trim($data['date_fin']   ?? '');
+        $debut        = null;
+        $fin          = null;
+
+        if ($dateDebutStr === '') {
+            $errors['date_debut'] = 'La date de début est obligatoire.';
+        } else {
+            try {
+                $debut = new DateTime($dateDebutStr);
+                $aujourd_hui = new DateTime('today');
+                if ($debut < $aujourd_hui) {
+                    $errors['date_debut'] = 'La date de début ne peut pas être dans le passé.';
+                }
+            } catch (\Exception) {
+                $errors['date_debut'] = 'Date de début invalide.';
+            }
+        }
+
+        if ($dateFinStr === '') {
+            $errors['date_fin'] = 'La date de fin est obligatoire.';
+        } else {
+            try {
+                $fin = new DateTime($dateFinStr);
+                if ($debut && $fin <= $debut) {
+                    $errors['date_fin'] = 'La date de fin doit être après la date de début.';
+                }
+            } catch (\Exception) {
+                $errors['date_fin'] = 'Date de fin invalide.';
+            }
+        }
+
+        // ── Conditions générales ─────────────────────
+        if (empty($data['conditions'])) {
+            $errors['conditions'] = 'Vous devez accepter les conditions générales.';
+        }
+
+        // ── Si erreurs → retourner le formulaire ─────
+        if (!empty($errors)) {
+            return $this->render('client/reservation.html.twig', [
+                'vehicule'   => $vehicule,
+                'errors'     => $errors,
+                'data'       => $data,
+                'date_debut' => $dateDebutStr,
+                'date_fin'   => $dateFinStr,
+                'user'       => $user,
+            ]);
+        }
+
+        // ── Création de la location ──────────────────
+        $location = new Location();
+        $location->setVehicule($vehicule);
+        $location->setUser($user);
+        $location->setClientNomComplet($nomComplet);
+        $location->setClientTelephone($telephone);
+        $location->setClientCin($cin);
+        $location->setClientAdresse($adresse);
+        $location->setNotes($data['notes'] ?? '');
+        $location->setDateDebut($debut);
+        $location->setDateFinPrevue($fin);
+
+        $jours  = max(1, (int) $debut->diff($fin)->days);
+        $extras = [];
+        if (!empty($data['gps']))        $extras['gps']                       = 10.0;
+        if (!empty($data['siege_bebe'])) $extras['siege_bebe']                = 15.0;
+        if (!empty($data['assurance']))  $extras['assurance_complementaire']  = 25.0;
+
+        $montantExtras = array_sum($extras);
+        $montantBase   = $jours * (float) $vehicule->getPrixParJour();
+        $montantTotal  = round($montantBase + $montantExtras, 3);
+        $avance        = round($montantTotal * 0.30, 3);
+
+        $location->setExtras(empty($extras) ? null : $extras);
+        $location->setMontantTotal((string) $montantTotal);
+        $location->setAvance((string) $avance);
+        $location->setKilometrageDebut($vehicule->getKilometrage() ?? 0);
+        $location->setStatut('réservée');
+        $location->setPrixParJour((string) $vehicule->getPrixParJour());
+
+        // Marquer le véhicule comme loué
+        $vehicule->setEtat('louee');
+        $em->persist($vehicule);
+        $em->persist($location);
+        $em->flush();
+
+        // Email de confirmation
+        if (!empty($email)) {
+            try {
+                $emailService->envoyerConfirmationLocation($location, $email);
+            } catch (\Exception) {
+                // ne pas bloquer la confirmation
+            }
+        }
+
+        return $this->redirectToRoute('client_confirmation', ['id' => $location->getIdLocation()]);
+    }
+
+    // ── GET : afficher le formulaire avec les infos utilisateur verrouillées ────
+    return $this->render('client/reservation.html.twig', [
+        'vehicule'   => $vehicule,
+        'date_debut' => $request->query->get('date_debut'),
+        'date_fin'   => $request->query->get('date_fin'),
+        'errors'     => [],
+        'user'       => $user,  // On passe l'utilisateur au template
+    ]);
+}
 
     // ══════════════════════════════════════════
     // CONFIRMATION
     // ══════════════════════════════════════════
-    #[Route('/confirmation/{id}', name: 'client_confirmation', methods: ['GET', 'POST'])]
-    public function confirmation(
-        int $id,
-        Request $request,
-        LocationRepository $locationRepo,
-        EmailService $emailService
-    ): Response {
+   // ══════════════════════════════════════════
+// CONFIRMATION
+// ══════════════════════════════════════════
+#[Route('/confirmation/{id}', name: 'client_confirmation', methods: ['GET', 'POST'])]
+#[IsGranted('ROLE_USER', message: 'Vous devez être connecté pour accéder à cette page.')]
+public function confirmation(
+    int $id,
+    Request $request,
+    LocationRepository $locationRepo,
+    EmailService $emailService
+): Response {
+    /** @var User $user */
+    $user = $this->getUser();
+    
+    $location = $locationRepo->find($id);
+    if (!$location) {
+        throw $this->createNotFoundException('Réservation introuvable.');
+    }
+    
+    // Vérifier que la réservation appartient à l'utilisateur
+    if ($location->getUser() && $location->getUser()->getId() !== $user->getId()) {
+        throw $this->createAccessDeniedException('Vous n\'avez pas accès à cette réservation.');
+    }
+
+    $emailEnvoye = null;
+    
+    if ($request->isMethod('POST')) {
+        // Utiliser l'email de l'utilisateur connecté par défaut
+        $email = trim($request->request->get('email', $user->getEmail()));
+        
+        if (!empty($email) && filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            try {
+                $result      = $emailService->envoyerConfirmationLocation($location, $email);
+                $emailEnvoye = $result['succes'] ?? false;
+            } catch (\Exception $e) {
+                $emailEnvoye = false;
+            }
+        } else {
+            $emailEnvoye = false;
+        }
+    }
+
+    return $this->render('client/confirmation.html.twig', [
+        'location'     => $location,
+        'email_envoye' => $emailEnvoye,
+        'user'         => $user,
+    ]);
+}
+
+   // ══════════════════════════════════════════
+// MES RÉSERVATIONS (pour utilisateur connecté)
+// ══════════════════════════════════════════
+#[Route('/mes-reservations', name: 'client_mes_reservations', methods: ['GET'])]
+#[IsGranted('ROLE_USER', message: 'Vous devez être connecté pour voir vos réservations.')]
+public function mesReservations(
+    Request $request,
+    LocationRepository $locationRepo,
+    VehiculeRepository $vehiculeRepo
+): Response {
+    /** @var User $user */
+    $user = $this->getUser();
+    
+    // Récupérer le filtre de véhicule
+    $vehiculeFiltre = $request->query->get('vehicule', '');
+    
+    // Construire la requête pour les locations de l'utilisateur
+    $qb = $locationRepo->createQueryBuilder('l')
+        ->leftJoin('l.vehicule', 'v')
+        ->addSelect('v')
+        ->where('l.user = :user')
+        ->setParameter('user', $user)
+        ->orderBy('l.dateDebut', 'DESC');
+    
+    // Appliquer le filtre par véhicule si spécifié
+    if (!empty($vehiculeFiltre)) {
+        $qb->andWhere('v.immatriculation LIKE :vehicule OR v.modele LIKE :vehicule')
+           ->setParameter('vehicule', '%' . $vehiculeFiltre . '%');
+    }
+    
+    $locations = $qb->getQuery()->getResult();
+    
+    // Récupérer tous les véhicules pour le filtre
+    $vehicules = $vehiculeRepo->findAll();
+    
+    return $this->render('client/mes_reservations.html.twig', [
+        'locations' => $locations,
+        'vehicules' => $vehicules,
+        'vehiculeFiltre' => $vehiculeFiltre,
+        'user' => $user,
+    ]);
+}
+    // ══════════════════════════════════════════
+    // DETAIL D'UNE RESERVATION
+    // ══════════════════════════════════════════
+    #[Route('/reservation-detail/{id}', name: 'client_reservation_detail', methods: ['GET'])]
+    #[IsGranted('ROLE_USER')]
+    public function reservationDetail(int $id, LocationRepository $locationRepo): Response
+    {
+        /** @var User $user */
+        $user = $this->getUser();
+        
         $location = $locationRepo->find($id);
+        
         if (!$location) {
             throw $this->createNotFoundException('Réservation introuvable.');
         }
-
-        $emailEnvoye = null;
-        if ($request->isMethod('POST')) {
-            $email = trim($request->request->get('email', ''));
-            if (!empty($email) && filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                try {
-                    $result      = $emailService->envoyerConfirmationLocation($location, $email);
-                    $emailEnvoye = $result['succes'] ?? false;
-                } catch (\Exception) {
-                    $emailEnvoye = false;
-                }
-            }
+        
+        // Vérifier que la réservation appartient à l'utilisateur
+        if ($location->getUser() && $location->getUser()->getId() !== $user->getId()) {
+            throw $this->createAccessDeniedException('Vous n\'avez pas accès à cette réservation.');
         }
-
-        return $this->render('client/confirmation.html.twig', [
-            'location'     => $location,
-            'email_envoye' => $emailEnvoye,
-        ]);
-    }
-
-    // ══════════════════════════════════════════
-    // MES RÉSERVATIONS (recherche par CIN)
-    // ══════════════════════════════════════════
-    #[Route('/mes-reservations', name: 'client_mes_reservations', methods: ['GET'])]
-    public function mesReservations(
-        Request $request,
-        LocationRepository $locationRepo
-    ): Response {
-        $cin       = trim($request->query->get('cin', ''));
-        $locations = [];
-        $recherche = false;
-
-        if (!empty($cin)) {
-            $recherche = true;
-            $locations = $locationRepo->findBy(['clientCin' => $cin], ['dateDebut' => 'DESC']);
-        }
-
-        return $this->render('client/mes_reservations.html.twig', [
-            'locations' => $locations,
-            'cin'       => $cin,
-            'recherche' => $recherche,
+        
+        return $this->render('client/reservation_detail.html.twig', [
+            'location' => $location,
+            'user'     => $user,
         ]);
     }
 
@@ -283,7 +350,8 @@ class ClientController extends AbstractController
         WeatherService $weatherService
     ): Response {
         $vehicules  = $vehiculeRepo->findAll();
-        $vehiculeId = $request->query->get('vehicule_id', $vehicules[0]?->getIdVehicule());
+        $defaultVehiculeId = isset($vehicules[0]) ? $vehicules[0]->getIdVehicule() : null;
+        $vehiculeId = $request->query->get('vehicule_id', $defaultVehiculeId);
         $mois       = (int) $request->query->get('mois', date('n'));
         $annee      = (int) $request->query->get('annee', date('Y'));
 
@@ -370,13 +438,13 @@ class ClientController extends AbstractController
             'mois'                   => $mois,
             'annee'                  => $annee,
             'jours_occupes'          => array_unique($joursOccupes),
-            'occupation_par_vehicule' => $occupationParVehicule, // ✅ vue cartes + gantt
+            'occupation_par_vehicule' => $occupationParVehicule,
             'meteo'                  => $meteo,
             'previsions'             => $previsions,
             'nb_disponibles'         => $nbDisponibles,
             'nb_loues'               => $nbLoues,
-            'taux_occupation'        => $tauxOccupation,         // ✅ ajouté
-            'nb_jours_mois'          => $nbJoursMois,            // ✅ ajouté
+            'taux_occupation'        => $tauxOccupation,
+            'nb_jours_mois'          => $nbJoursMois,
         ]);
     }
 }

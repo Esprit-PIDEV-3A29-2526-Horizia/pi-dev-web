@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Horozia - Réservation</title>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 20px; background: #f4f7fc; }
+        .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .header { background: #23779C; padding: 24px; text-align: center; }
+        .header h1 { margin: 0; color: white; font-size: 24px; }
+        .content { padding: 24px; }
+        .message { background: #e8f4f8; padding: 12px; border-radius: 8px; margin-bottom: 20px; }
+        .details { width: 100%; border-collapse: collapse; margin-top: 16px; }
+        .details td { padding: 10px; border-bottom: 1px solid #e2e8f0; }
+        .details td.label { font-weight: bold; width: 35%; background: #f8fafc; }
+        .footer { background: #eef2f6; padding: 16px; text-align: center; font-size: 12px; color: #4a5568; }
+        .badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+        .badge-confirmed { background: #28a745; color: white; }
+        .badge-pending { background: #ffc107; color: #333; }
+        .badge-cancelled { background: #dc3545; color: white; }
+        .qr-code {
+    text-align: center;
+    margin: 25px 0 10px;
+}
+.qr-code img {
+    width: 150px;
+    height: 150px;
+    border-radius: 12px;
+    background: white;
+    padding: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏨 Horozia</h1>
+        </div>
+        <div class="content">
+            <div class="message">
+                {{ customMessage|raw }}
+            </div>
+            <p>Bonjour <strong>{{ reservation.user.prenom }} {{ reservation.user.nom }}</strong>,</p>
+            <p>Voici les détails de votre réservation :</p>
+            <table class="details">
+                <tr><td class="label">Logement</td><td>{{ reservation.logement.nom }}</td></tr>
+                <tr><td class="label">Adresse</td><td>{{ reservation.logement.adresse }}</td></tr>
+                <tr><td class="label">Arrivée</td><td>{{ reservation.dateDebut|date('d/m/Y') }}</td></tr>
+                <tr><td class="label">Départ</td><td>{{ reservation.dateFin|date('d/m/Y') }}</td></tr>
+                <tr><td class="label">Nuits</td><td>{{ reservation.dateDebut.diff(reservation.dateFin).days }}</td></tr>
+                <tr><td class="label">Adultes / Enfants</td><td>{{ reservation.adultes }} / {{ reservation.enfants }}</td></tr>
+                <tr><td class="label">Chambres</td><td>{{ reservation.nombreChambres }}</td></tr>
+                <tr><td class="label">Pension</td><td>{{ reservation.modeReservation ? reservation.modeReservation|replace({'_': ' '})|capitalize : '-' }}</td></tr>
+                <tr><td class="label">Montant total</td><td>{{ reservation.montant|number_format(2, ',', ' ') }} DT</td></tr>
+                <tr><td class="label">Modalité</td><td>{{ reservation.modalites }}</td></tr>
+                <tr><td class="label">Statut</td><td>
+                    <span class="badge badge-{{ reservation.status == 'confirmée' ? 'confirmed' : (reservation.status == 'en_attente' ? 'pending' : 'cancelled') }}">
+                        {{ reservation.status|upper }}
+                    </span>
+                </td></tr>
+            </table>
+            <div class="qr-code">
+    <img src="{{ qrCodeBase64 }}" alt="QR Code" style="width: 150px; height: 150px; border-radius: 12px; background: white; padding: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+    <p style="font-size: 13px; margin-top: 10px; color: #23779C; font-weight: bold;">🔍 Scannez ce code pour accéder à votre réservation</p>
+</div>
+            <p style="margin-top: 24px;">Merci de votre confiance.<br>L'équipe Horozia</p>
+        </div>
+        <div class="footer">
+            © {{ "now"|date("Y") }} Horozia - Tous droits réservés.
+        </div>
+    </div>
+</body>
+</html>

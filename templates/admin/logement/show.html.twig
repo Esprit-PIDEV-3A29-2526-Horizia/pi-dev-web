@@ -1,0 +1,399 @@
+{% extends 'admin/base_admin.html.twig' %}
+
+{% block title %}Détail du logement - {{ logement.nom }}{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link href='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.css' rel='stylesheet' />
+    <style>
+        /* Styles pour garantir que le sidebar reste visible */
+        .admin-layout {
+            display: flex;
+            flex-wrap: nowrap;
+            min-height: 100vh;
+        }
+        .admin-sidebar {
+            flex-shrink: 0;
+            z-index: 1030;
+            display: block !important;
+            visibility: visible !important;
+        }
+        .admin-main {
+            flex-grow: 1;
+            overflow-x: auto;
+        }
+        .fc-view-harness {
+            width: 100% !important;
+            max-width: 100% !important;
+        }
+        .fc {
+            max-width: 100%;
+            overflow-x: auto;
+        }
+        .toggle-view { margin-bottom: 20px; }
+        .toggle-view .btn {
+            border-radius: 30px;
+            padding: 6px 20px;
+        }
+        .view-section { display: none; }
+        .view-section.active { display: block; }
+        #calendar { min-height: 500px; width: 100%; }
+        .pagination-wrapper { margin-top: 20px; }
+        .pagination {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+        .page-item .page-link {
+            display: inline-block;
+            padding: 8px 12px;
+            border-radius: 30px;
+            background-color: #f0f0f0;
+            color: #23779C;
+            text-decoration: none;
+            transition: 0.2s;
+        }
+        .page-item.active .page-link {
+            background-color: #23779C;
+            color: white;
+        }
+        .page-item.disabled .page-link {
+            background-color: #e9ecef;
+            color: #6c757d;
+            pointer-events: none;
+        }
+        .badge-status-confirmed { background-color: #81AE8D !important; color: white; }
+        .badge-status-pending { background-color: #E8B156 !important; color: #333; }
+        .badge-status-cancelled { background-color: #dc3545 !important; color: white; }
+        .badge-status-default { background-color: #6c757d !important; color: white; }
+        .btn-horozia-primary { background-color: #23779C; border-color: #23779C; }
+        .btn-horozia-primary:hover { background-color: #1a5c7a; border-color: #1a5c7a; }
+        .text-horozia-primary { color: #23779C !important; }
+        .bg-horozia-primary { background-color: #23779C !important; }
+    </style>
+{% endblock %}
+
+{% block admin_content %}
+<div class="container-fluid px-4 py-5">
+    <div class="row g-5">
+        <!-- Colonne principale -->
+        <div class="col-lg-8">
+            <!-- Image hero -->
+            <div class="card border-0 shadow-lg rounded-4 overflow-hidden mb-4">
+                <div class="position-relative">
+                    <img src="{{ logement.image ? logement.image : 'https://placehold.co/800x450?text=Image+indisponible' }}"
+                         alt="{{ logement.nom }}"
+                         class="img-fluid w-100"
+                         style="max-height: 450px; object-fit: cover;"
+                         onerror="this.src='https://placehold.co/800x450?text=Image+indisponible'">
+                    <div class="position-absolute bottom-0 start-0 w-100 bg-dark bg-opacity-50 text-white p-4">
+                        <h1 class="display-5 fw-bold mb-1">{{ logement.nom }}</h1>
+                        <p class="lead mb-0">{{ logement.type }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Emplacement -->
+            <div class="card border-0 shadow-sm rounded-4 mb-4">
+                <div class="card-body p-4">
+                    <h3 class="card-title fw-bold text-horozia-primary">
+                        <i class="bi bi-geo-alt-fill me-2"></i>Emplacement
+                    </h3>
+                    <p class="text-muted fs-5">{{ logement.adresse }}</p>
+                </div>
+            </div>
+
+            <!-- Équipements -->
+            {% if logement.equipement %}
+            <div class="card border-0 shadow-sm rounded-4 mb-4">
+                <div class="card-body p-4">
+                    <h3 class="card-title fw-bold text-horozia-primary">
+                        <i class="bi bi-grid-3x3-gap-fill me-2"></i>Équipements
+                    </h3>
+                    <div class="mt-3">
+                        {% set equipements = logement.equipement|split(',') %}
+                        {% for equip in equipements %}
+                            <span class="badge bg-light text-dark border rounded-pill px-3 py-2 me-2 mb-2">
+                                <i class="bi bi-check-circle-fill text-success me-1"></i>
+                                {{ equip|trim }}
+                            </span>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Boutons de basculement -->
+            <div class="toggle-view d-flex justify-content-end gap-2 mb-3">
+                <button id="btnTableView" class="btn btn-outline-primary rounded-pill active">📋 Tableau</button>
+                <button id="btnCalendarView" class="btn btn-outline-primary rounded-pill">📅 Calendrier</button>
+            </div>
+
+            <!-- Section Tableau -->
+            <div id="tableView" class="view-section active">
+                <div class="card border-0 shadow-sm rounded-4">
+                    <div class="card-header bg-transparent border-0 pt-4 px-4">
+                        <h3 class="card-title fw-bold">
+                            <i class="bi bi-calendar-week me-2"></i>Réservations pour ce logement
+                            <span class="badge bg-secondary ms-2">{{ total }}</span>
+                        </h3>
+                    </div>
+                    <div class="card-body p-4">
+                        {% if reservations %}
+                            <div class="table-responsive">
+                                <table class="table table-hover align-middle">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Client</th>
+                                            <th>Dates</th>
+                                            <th>Montant</th>
+                                            <th>Statut</th>
+                                            <th>Occupants</th>
+                                            <th>Chambres</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for r in reservations %}
+                                            <tr>
+                                                <td>
+                                                    <a href="{{ path('app_user_show', {'id': r.user.id}) }}" class="text-decoration-none fw-semibold text-horozia-primary">
+                                                        <i class="bi bi-person-circle me-1"></i>{{ r.user.nom ?: r.user.email }}
+                                                    </a>
+                                                  </td>
+                                                <td>{{ r.dateDebut|date('d/m/Y') }} → {{ r.dateFin|date('d/m/Y') }}</td>
+                                                <td class="fw-bold">{{ r.montant|number_format(2, ',', ' ') }} DT</td>
+                                                <td>
+                                                    <span class="badge 
+                                                        {% if r.status == 'confirmée' %}badge-status-confirmed
+                                                        {% elseif r.status == 'en_attente' %}badge-status-pending
+                                                        {% elseif r.status == 'annulée' %}badge-status-cancelled
+                                                        {% else %}badge-status-default{% endif %}">
+                                                        {{ r.status }}
+                                                    </span>
+                                                </td>
+                                                <td>{{ r.adultes }} A + {{ r.enfants }} E</td>
+                                                <td>{{ r.nombreChambres }} ch.</td>
+                                                <td>
+                                                    <button type="button" class="btn btn-sm btn-outline-info rounded-pill me-1 btn-qr" data-id="{{ r.idreslog }}" data-bs-toggle="modal" data-bs-target="#qrModal">
+                                                        <i class="bi bi-qr-code"></i> QR
+                                                    </button>
+                                                    <a href="{{ path('admin_logement_download_pdf', {'id': r.idreslog}) }}" class="btn btn-sm btn-outline-danger rounded-pill" target="_blank">
+                                                        <i class="bi bi-file-pdf"></i> PDF
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {% if totalPages > 1 %}
+                                <div class="pagination-wrapper mt-4">
+                                    <ul class="pagination justify-content-center">
+                                        {% if currentPage > 1 %}
+                                            <li class="page-item">
+                                                <a class="page-link rounded-pill me-2" href="{{ path('admin_logement_show', {'id': logement.id, 'page': currentPage-1}) }}">&laquo; Précédent</a>
+                                            </li>
+                                        {% else %}
+                                            <li class="page-item disabled"><span class="page-link rounded-pill me-2">&laquo; Précédent</span></li>
+                                        {% endif %}
+
+                                        {% for p in 1..totalPages %}
+                                            <li class="page-item {{ p == currentPage ? 'active' : '' }}">
+                                                <a class="page-link rounded-pill mx-1" href="{{ path('admin_logement_show', {'id': logement.id, 'page': p}) }}">{{ p }}</a>
+                                            </li>
+                                        {% endfor %}
+
+                                        {% if currentPage < totalPages %}
+                                            <li class="page-item">
+                                                <a class="page-link rounded-pill ms-2" href="{{ path('admin_logement_show', {'id': logement.id, 'page': currentPage+1}) }}">Suivant &raquo;</a>
+                                            </li>
+                                        {% else %}
+                                            <li class="page-item disabled"><span class="page-link rounded-pill ms-2">Suivant &raquo;</span></li>
+                                        {% endif %}
+                                    </ul>
+                                </div>
+                            {% endif %}
+                        {% else %}
+                            <div class="alert alert-info text-center py-4">
+                                <i class="bi bi-info-circle fs-1 d-block mb-2"></i>
+                                Aucune réservation trouvée pour ce logement.
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section Calendrier -->
+            <div id="calendarView" class="view-section">
+                <div class="card border-0 shadow-sm rounded-4">
+                    <div class="card-body p-4">
+                        <div id="calendar"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Colonne latérale -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-lg rounded-4 mb-4" style="background: linear-gradient(135deg, #23779C, #3D94CA);">
+                <div class="card-body text-center p-4 text-white">
+                    <h3 class="display-4 fw-bold mb-2">{{ logement.tarifNuit|number_format(0, ',', ' ') }} DT</h3>
+                    <p class="text-white-50 mb-0">par nuit</p>
+                    <hr class="my-3 bg-white opacity-25">
+                    <p class="mb-0"><i class="bi bi-calendar-check me-2"></i>Tarif par personne : inclus</p>
+                </div>
+            </div>
+
+            <div class="row g-3 mb-4">
+                <div class="col-6">
+                    <div class="card border-0 shadow-sm h-100 text-center">
+                        <div class="card-body">
+                            <div class="stat-icon mb-2 bg-horozia-primary bg-opacity-10 rounded-circle p-3 d-inline-block">
+                                <i class="bi bi-people fs-1 text-horozia-primary"></i>
+                            </div>
+                            <h2 class="display-6 fw-bold mb-0">{{ logement.capacite }}</h2>
+                            <p class="text-muted">personnes max</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="card border-0 shadow-sm h-100 text-center">
+                        <div class="card-body">
+                            <div class="stat-icon mb-2 {{ logement.disponibilite ? 'bg-success bg-opacity-10' : 'bg-danger bg-opacity-10' }} rounded-circle p-3 d-inline-block">
+                                <i class="bi {{ logement.disponibilite ? 'bi-check-circle-fill fs-1 text-success' : 'bi-x-circle-fill fs-1 text-danger' }}"></i>
+                            </div>
+                            <h3 class="fw-bold mb-0 {{ logement.disponibilite ? 'text-success' : 'text-danger' }}">
+                                {{ logement.disponibilite ? 'Disponible' : 'Indisponible' }}
+                            </h3>
+                            <p class="text-muted">Statut</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-grid gap-2">
+                <a href="{{ path('admin_logement_edit', {'id': logement.id}) }}" class="btn btn-horozia-primary btn-lg rounded-pill text-white">
+                    <i class="bi bi-pencil-square me-2"></i>Modifier ce logement
+                </a>
+                <a href="{{ path('admin_logement_index') }}" class="btn btn-outline-secondary btn-lg rounded-pill">
+                    <i class="bi bi-arrow-left me-2"></i>Retour à la liste
+                </a>
+                {{ include('admin/logement/_delete_form.html.twig', {'logement': logement}, with_context = false) }}
+            </div>
+
+            <div class="mt-4 text-center text-muted small">
+                <i class="bi bi-shield-check me-1"></i> Vérifié par Horozia
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modale QR Code -->
+<div class="modal fade" id="qrModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">QR Code de réservation</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body text-center" id="qrModalBody">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Chargement...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@5.11.3/main.min.js'></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const tableView = document.getElementById('tableView');
+        const calendarView = document.getElementById('calendarView');
+        const btnTable = document.getElementById('btnTableView');
+        const btnCalendar = document.getElementById('btnCalendarView');
+        const loginUrl = '{{ path('app_login') }}';
+
+        if (btnTable && btnCalendar) {
+            btnTable.addEventListener('click', () => {
+                tableView.classList.add('active');
+                calendarView.classList.remove('active');
+                btnTable.classList.add('active');
+                btnCalendar.classList.remove('active');
+            });
+
+            btnCalendar.addEventListener('click', () => {
+                calendarView.classList.add('active');
+                tableView.classList.remove('active');
+                btnCalendar.classList.add('active');
+                btnTable.classList.remove('active');
+                if (!window.calendarInstance) {
+                    initCalendar();
+                } else {
+                    window.calendarInstance.render();
+                    // Force le redimensionnement après l'affichage
+                    setTimeout(() => {
+                        if (window.calendarInstance) window.calendarInstance.updateSize();
+                    }, 100);
+                }
+            });
+        }
+
+        function initCalendar() {
+            const calendarEl = document.getElementById('calendar');
+            if (!calendarEl) return;
+            window.calendarInstance = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                locale: 'fr',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek'
+                },
+                events: {
+                    url: '{{ path('admin_logement_booked_dates', {'id': logement.id}) }}',
+                    method: 'GET',
+                    failure: function(xhr) {
+                        if (xhr.status === 401 || xhr.status === 403) {
+                            window.location.href = loginUrl;
+                        } else {
+                            console.error('Erreur chargement des réservations');
+                        }
+                    }
+                },
+                eventColor: '#dc3545',
+                eventDisplay: 'block',
+                height: 'auto'
+            });
+            window.calendarInstance.render();
+        }
+
+        // Gestion QR code
+        document.querySelectorAll('.btn-qr').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                const id = this.dataset.id;
+                const modalBody = document.getElementById('qrModalBody');
+                if (!modalBody) return;
+                modalBody.innerHTML = '<div class="spinner-border text-primary" role="status"><span class="visually-hidden">Chargement...</span></div>';
+                fetch(`/admin/logement/qrcode/${id}`, {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                })
+                .then(response => {
+                    if (response.status === 401 || response.status === 403) {
+                        window.location.href = loginUrl;
+                        return;
+                    }
+                    return response.text();
+                })
+                .then(html => {
+                    if (html) modalBody.innerHTML = html;
+                })
+                .catch(() => {
+                    modalBody.innerHTML = '<div class="alert alert-danger">Erreur lors du chargement du QR code.</div>';
+                });
+            });
+        });
+    });
+</script>
+{% endblock %}

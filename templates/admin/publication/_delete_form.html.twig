@@ -1,0 +1,4 @@
+<form method="post" action="{{ path('admin_publication_delete', {'id': publication.id}) }}" onsubmit="return confirm('Supprimer définitivement cette publication ?');" style="display: inline-block;">
+    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ publication.id) }}">
+    <button class="btn btn-danger"><i class="bi bi-trash"></i> Supprimer</button>
+</form>

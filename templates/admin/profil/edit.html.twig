@@ -1,0 +1,119 @@
+{% extends 'admin/base_admin.html.twig' %}
+
+{% block title %}Modifier le profil - Horozia{% endblock %}
+
+{% block admin_content %}
+
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h1 class="fw-bold mb-1" style="color:#1f2d3d;">Modifier le Profil</h1>
+        <p class="text-muted mb-0">Modifiez les informations du profil #{{ profil.id }}</p>
+    </div>
+    <a href="{{ path('app_profil_index') }}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i> Retour à la liste
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-header bg-white fw-bold">
+        <i class="bi bi-pencil-square me-2 text-warning"></i>Modification du profil
+    </div>
+    <div class="card-body">
+        <form method="POST">
+            <div class="row g-4">
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Type de profil <span class="text-danger">*</span></label>
+                    <select name="type" class="form-select" required>
+                        <option value="ADMIN" {{ profil.type == 'ADMIN' ? 'selected' : '' }}>ADMIN</option>
+                        <option value="AGENT" {{ profil.type == 'AGENT' ? 'selected' : '' }}>AGENT</option>
+                        <option value="CLIENT" {{ profil.type == 'CLIENT' ? 'selected' : '' }}>CLIENT</option>
+                    </select>
+                </div>
+                
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Statut <span class="text-danger">*</span></label>
+                    <select name="statut" class="form-select" required>
+                        <option value="ACTIF" {{ profil.statut == 'ACTIF' ? 'selected' : '' }}>ACTIF</option>
+                        <option value="INACTIF" {{ profil.statut == 'INACTIF' ? 'selected' : '' }}>INACTIF</option>
+                        <option value="EN_ATTENTE" {{ profil.statut == 'EN_ATTENTE' ? 'selected' : '' }}>EN ATTENTE</option>
+                        <option value="BLOQUE" {{ profil.statut == 'BLOQUE' ? 'selected' : '' }}>BLOQUÉ</option>
+                    </select>
+                </div>
+            </div>
+            
+            <hr class="my-4">
+            
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-warning">
+                    <i class="bi bi-save me-1"></i> Mettre à jour
+                </button>
+                <a href="{{ path('app_profil_index') }}" class="btn btn-outline-secondary">
+                    Annuler
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+{# Utilisateurs associés #}
+{% if profil.users|length > 0 %}
+<div class="card mt-4">
+    <div class="card-header bg-white fw-bold">
+        <i class="bi bi-people-fill me-2 text-primary"></i>
+        Utilisateurs avec ce profil ({{ profil.users|length }})
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Nom complet</th>
+                        <th>Email</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in profil.users|slice(0, 10) %}
+                    <tr>
+                        <td class="fw-bold text-primary">{{ user.id }}</td>
+                        <td>{{ user.nom }} {{ user.prenom }}</td>
+                        <td>{{ user.email }}</td>
+                        <td>
+                            <a href="{{ path('app_user_show', {id: user.id}) }}" class="btn btn-sm btn-outline-info" title="Voir l'utilisateur">
+                                <i class="bi bi-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% if profil.users|length > 10 %}
+        <p class="text-muted small mt-2">... et {{ profil.users|length - 10 }} autre(s) utilisateur(s)</p>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+{# Zone dangereuse - suppression #}
+<div class="card mt-4 border-danger">
+    <div class="card-header bg-white text-danger fw-bold">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>Zone dangereuse
+    </div>
+    <div class="card-body">
+        <p class="small text-muted mb-3">
+            Cette action est irréversible. La suppression d'un profil affectera les utilisateurs qui y sont associés.
+        </p>
+        <form method="POST"
+              action="{{ path('app_profil_delete', {id: profil.id}) }}"
+              onsubmit="return confirm('Supprimer définitivement ce profil ? Cette action est irréversible.');">
+            <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ profil.id) }}">
+            <button type="submit" class="btn btn-danger">
+                <i class="bi bi-trash me-1"></i> Supprimer ce profil
+            </button>
+        </form>
+    </div>
+</div>
+
+{% endblock %}

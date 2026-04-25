@@ -1,152 +1,198 @@
-{% extends 'base.html.twig' %}
+{% extends 'base_front.html.twig' %}
 {% block title %}Horizia - Réservation Confirmée !{% endblock %}
+
 {% block body %}
-<div class="hz-client">
-  <nav class="hz-navbar">
-    <div class="hz-nav-brand"><span class="hz-brand-text">HORIZIA</span></div>
-    <div class="hz-nav-links">
-      <a href="{{ path('client_accueil') }}" class="hz-nav-link">Accueil</a>
-      <a href="{{ path('client_catalogue') }}" class="hz-nav-link">Catalogue</a>
-      <a href="{{ path('client_mes_reservations') }}" class="hz-nav-link">Mes Réservations</a>
-      <a href="{{ path('client_planning') }}" class="hz-nav-link">Planning</a>
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-7">
+
+            {# Carte de confirmation #}
+            <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+                <div class="card-header text-white text-center py-4" style="background: linear-gradient(135deg, #23779C, #1a5a78);">
+                    <i class="fas fa-check-circle fa-4x mb-2" style="color: #27ae60;"></i>
+                    <h2 class="mb-0 fw-bold">Réservation Confirmée !</h2>
+                    <p class="mb-0 opacity-75">Votre réservation a été enregistrée avec succès</p>
+                </div>
+                
+                <div class="card-body p-4">
+                    
+                    {# Numéro de réservation #}
+                    <div class="text-center mb-4">
+                        <span class="badge bg-light text-dark px-4 py-2 rounded-pill">
+                            <i class="fas fa-ticket-alt me-2 text-teal"></i>
+                            Réservation #{{ location.idLocation }}
+                        </span>
+                    </div>
+
+                    {# Détails de la réservation #}
+                    <div class="border rounded-3 p-3 mb-4">
+                        <h6 class="fw-bold mb-3" style="color: var(--teal);">
+                            <i class="fas fa-info-circle me-2"></i>Détails de la réservation
+                        </h6>
+                        
+                        <div class="row mb-2">
+                            <div class="col-5 text-muted">
+                                <i class="fas fa-user me-2"></i>Client :
+                            </div>
+                            <div class="col-7 fw-semibold">
+                                {{ location.clientNomComplet }}
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-2">
+                            <div class="col-5 text-muted">
+                                <i class="fas fa-car me-2"></i>Véhicule :
+                            </div>
+                            <div class="col-7 fw-semibold">
+                                {% if location.vehicule %}
+                                    {{ location.vehicule.modele.marque.nomMarque }} {{ location.vehicule.modele.nomModele }}
+                                    <br><small class="text-muted">{{ location.vehicule.immatriculation }}</small>
+                                {% else %}—{% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-2">
+                            <div class="col-5 text-muted">
+                                <i class="fas fa-calendar-alt me-2"></i>Période :
+                            </div>
+                            <div class="col-7 fw-semibold">
+                                {{ location.dateDebut ? location.dateDebut|date('d/m/Y') : '—' }}
+                                <i class="fas fa-arrow-right mx-1 text-teal"></i>
+                                {{ location.dateFinPrevue ? location.dateFinPrevue|date('d/m/Y') : '—' }}
+                            </div>
+                        </div>
+                    </div>
+
+                    {# Détails financiers #}
+                    <div class="bg-light rounded-3 p-3 mb-4">
+                        <h6 class="fw-bold mb-3" style="color: var(--teal);">
+                            <i class="fas fa-credit-card me-2"></i>Détails financiers
+                        </h6>
+                        
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Montant total :</span>
+                            <span class="fw-bold text-success fs-5">{{ location.montantTotal|number_format(3,'.','') }} DT</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span class="text-muted">Avance (30%) :</span>
+                            <span class="fw-bold" style="color: var(--teal);">{{ location.avance|number_format(3,'.','') }} DT</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span class="text-muted">Reste à payer :</span>
+                            <span class="fw-bold">{{ location.getResteAPayer|number_format(3,'.','') }} DT</span>
+                        </div>
+                    </div>
+
+                    {# Section email - email pré-rempli #}
+                    <div class="border rounded-3 p-3 mb-4">
+                        <h6 class="fw-bold mb-3" style="color: var(--teal);">
+                            <i class="fas fa-envelope me-2"></i>Recevoir la confirmation par email
+                        </h6>
+                        
+                        <form method="POST" action="{{ path('client_confirmation', {id: location.idLocation}) }}" class="email-form">
+                            <div class="input-group">
+                                <span class="input-group-text bg-white border-end-0">
+                                    <i class="fas fa-envelope text-muted"></i>
+                                </span>
+                                <input type="email" name="email" class="form-control border-start-0" 
+                                       placeholder="Votre adresse email..."
+                                       value="{{ app.user.email|default('') }}"
+                                       {% if app.user %}readonly{% endif %}
+                                       required>
+                                {% if app.user %}
+                                    <span class="input-group-text bg-light border-start-0">
+                                        <i class="fas fa-check-circle text-success"></i>
+                                    </span>
+                                {% endif %}
+                            </div>
+                            {% if app.user %}
+                                <small class="text-muted form-text">
+                                    <i class="fas fa-info-circle"></i> Email pré-rempli depuis votre profil
+                                </small>
+                            {% endif %}
+                            
+                            <button type="submit" class="btn btn-teal w-100 mt-3" style="border-radius: 10px;">
+                                <i class="fas fa-paper-plane me-2"></i>Envoyer la confirmation
+                            </button>
+                        </form>
+                        
+                        {% if email_envoye is same as true %}
+                            <div class="alert alert-success mt-3 mb-0 py-2">
+                                <i class="fas fa-check-circle me-2"></i>Email envoyé avec succès !
+                            </div>
+                        {% elseif email_envoye is same as false %}
+                            <div class="alert alert-danger mt-3 mb-0 py-2">
+                                <i class="fas fa-exclamation-circle me-2"></i>Erreur lors de l'envoi. Réessayez.
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    {# Boutons d'action #}
+                    <div class="d-flex gap-2 justify-content-center flex-wrap">
+                        <a href="{{ path('client_mes_reservations') }}" class="btn btn-outline-teal px-4">
+                            <i class="fas fa-list me-2"></i>Mes réservations
+                        </a>
+                        <a href="{{ path('client_catalogue') }}" class="btn btn-outline-teal px-4">
+                            <i class="fas fa-car me-2"></i>Voir le catalogue
+                        </a>
+                        <a href="{{ path('client_accueil') }}" class="btn btn-orange px-4">
+                            <i class="fas fa-home me-2"></i>Accueil
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-    <div class="hz-nav-right">
-      <div class="hz-user-badge"><i class="bi bi-person-fill me-1"></i>Client</div>
-    </div>
-  </nav>
-
-  <div class="hz-confirmation-wrap">
-
-    {# Icône succès #}
-    <div class="hz-success-icon">
-      <i class="bi bi-check-lg"></i>
-    </div>
-    <h1 class="hz-confirm-title">Réservation Confirmée !</h1>
-    <p class="hz-confirm-subtitle">Votre réservation a été enregistrée avec succès.</p>
-
-    {# Carte détails #}
-    <div class="hz-confirm-card">
-      <div class="hz-confirm-num">
-        Réservation <strong>#{{ location.idLocation }}</strong>
-      </div>
-
-      <div class="hz-confirm-grid">
-        <div class="hz-confirm-row">
-          <span class="hz-confirm-label"><i class="bi bi-person-fill me-2"></i>Client</span>
-          <span class="hz-confirm-value">{{ location.clientNomComplet }}</span>
-        </div>
-        <div class="hz-confirm-row">
-          <span class="hz-confirm-label"><i class="bi bi-car-front-fill me-2"></i>Véhicule</span>
-          <span class="hz-confirm-value">
-            {% if location.vehicule %}{{ location.vehicule.immatriculation }}{% else %}—{% endif %}
-          </span>
-        </div>
-        <div class="hz-confirm-row">
-          <span class="hz-confirm-label"><i class="bi bi-calendar-range me-2"></i>Période</span>
-          <span class="hz-confirm-value">
-            {{ location.dateDebut ? location.dateDebut|date('d/m/Y') : '—' }}
-            →
-            {{ location.dateFinPrevue ? location.dateFinPrevue|date('d/m/Y') : '—' }}
-          </span>
-        </div>
-        <div class="hz-confirm-row">
-          <span class="hz-confirm-label"><i class="bi bi-cash-coin me-2"></i>Montant total</span>
-          <span class="hz-confirm-value hz-confirm-total">
-            {{ location.montantTotal|number_format(3,'.','') }} TND
-          </span>
-        </div>
-        <div class="hz-confirm-row">
-          <span class="hz-confirm-label"><i class="bi bi-wallet2 me-2"></i>Avance (30%)</span>
-          <span class="hz-confirm-value hz-confirm-avance">
-            {{ location.avance|number_format(3,'.','') }} TND
-          </span>
-        </div>
-      </div>
-    </div>
-
-    {# Section email #}
-    <div class="hz-email-section">
-      <h5><i class="bi bi-envelope-fill me-2"></i>Recevoir la confirmation par email</h5>
-      <form method="POST" action="{{ path('client_confirmation', {id: location.idLocation}) }}" class="hz-email-form">
-        <input type="email" name="email" class="hz-email-input"
-               placeholder="Votre adresse email..." required>
-        <button type="submit" class="hz-btn-email">
-          <i class="bi bi-send-fill me-2"></i>Envoyer
-        </button>
-      </form>
-      {% if email_envoye is same as true %}
-        <div class="hz-email-status hz-email-ok">
-          <i class="bi bi-check-circle-fill me-2"></i>Email envoyé avec succès !
-        </div>
-      {% elseif email_envoye is same as false %}
-        <div class="hz-email-status hz-email-err">
-          <i class="bi bi-x-circle-fill me-2"></i>Erreur lors de l'envoi. Réessayez.
-        </div>
-      {% endif %}
-    </div>
-
-    {# Boutons de navigation #}
-    <div class="hz-confirm-actions">
-      <a href="{{ path('client_mes_reservations') }}" class="hz-btn-secondary">
-        <i class="bi bi-clipboard-check me-2"></i>Mes Réservations
-      </a>
-      <a href="{{ path('client_catalogue') }}" class="hz-btn-secondary">
-        <i class="bi bi-grid me-2"></i>Retour au Catalogue
-      </a>
-      <a href="{{ path('client_accueil') }}" class="hz-btn-primary">
-        <i class="bi bi-house-fill me-2"></i>Accueil
-      </a>
-    </div>
-
-  </div>
-
-  <footer class="hz-footer">
-    <div><i class="bi bi-car-front-fill me-2"></i>HORIZIA <span class="ms-3 text-white-50">Agence de Voyage — Tunis, Tunisie</span></div>
-    <div><span><i class="bi bi-telephone me-1"></i>+216 53661445</span><span class="ms-4">© 2025 Horizia</span></div>
-  </footer>
 </div>
 
 <style>
-:root { --hz-primary:#23779C; --hz-accent:#e8a020; --hz-nav-bg:#1a3a4a; }
-.hz-client { font-family:'Segoe UI',sans-serif; background:#f0f4f7; min-height:100vh; }
-.hz-navbar { background:var(--hz-nav-bg); display:flex; align-items:center; justify-content:space-between; padding:0 32px; height:64px; position:sticky; top:0; z-index:100; }
-.hz-brand-text { color:white; font-size:18px; font-weight:700; }
-.hz-nav-links { display:flex; gap:8px; }
-.hz-nav-link { color:rgba(255,255,255,.75); text-decoration:none; padding:8px 16px; border-radius:20px; font-size:14px; }
-.hz-nav-link:hover,.hz-nav-link.active { background:var(--hz-accent); color:white; }
-.hz-nav-right { display:flex; align-items:center; gap:12px; }
-.hz-user-badge { background:rgba(255,255,255,.15); color:white; padding:6px 16px; border-radius:20px; font-size:13px; }
-.hz-btn-logout { background:var(--hz-accent); color:white; text-decoration:none; padding:8px 18px; border-radius:20px; font-size:13px; font-weight:600; }
-
-.hz-confirmation-wrap { max-width:680px; margin:0 auto; padding:48px 24px; text-align:center; }
-.hz-success-icon { width:90px; height:90px; background:linear-gradient(135deg,#27ae60,#2ecc71); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 20px; box-shadow:0 8px 30px rgba(39,174,96,.3); }
-.hz-success-icon i { font-size:42px; color:white; }
-.hz-confirm-title { font-size:32px; font-weight:800; color:#1a2a3a; margin-bottom:8px; }
-.hz-confirm-subtitle { color:#6b7c8d; font-size:16px; margin-bottom:32px; }
-
-.hz-confirm-card { background:white; border-radius:20px; padding:32px; box-shadow:0 4px 20px rgba(0,0,0,.08); margin-bottom:28px; text-align:left; }
-.hz-confirm-num { font-size:18px; color:#6b7c8d; margin-bottom:20px; text-align:center; border-bottom:1px solid #f0f0f0; padding-bottom:16px; }
-.hz-confirm-grid { display:flex; flex-direction:column; gap:12px; }
-.hz-confirm-row { display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid #f8f8f8; }
-.hz-confirm-label { font-size:14px; color:#6b7c8d; display:flex; align-items:center; }
-.hz-confirm-value { font-size:14px; font-weight:600; color:#1a2a3a; }
-.hz-confirm-total { color:#27ae60; font-size:18px; font-weight:800; }
-.hz-confirm-avance { color:var(--hz-primary); font-weight:700; }
-
-.hz-email-section { background:white; border-radius:16px; padding:24px; box-shadow:0 2px 12px rgba(0,0,0,.06); margin-bottom:24px; text-align:left; }
-.hz-email-section h5 { font-size:15px; font-weight:700; color:#1a2a3a; margin-bottom:16px; }
-.hz-email-form { display:flex; gap:10px; }
-.hz-email-input { flex:1; border:1.5px solid #e0e8f0; border-radius:10px; padding:11px 16px; font-size:14px; outline:none; }
-.hz-email-input:focus { border-color:var(--hz-primary); }
-.hz-btn-email { background:var(--hz-primary); color:white; border:none; padding:11px 22px; border-radius:10px; font-weight:700; font-size:14px; cursor:pointer; white-space:nowrap; }
-.hz-email-status { margin-top:12px; font-size:14px; font-weight:600; padding:10px 16px; border-radius:8px; }
-.hz-email-ok  { background:#f0fdf4; color:#16a34a; }
-.hz-email-err { background:#fef2f2; color:#dc2626; }
-
-.hz-confirm-actions { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
-.hz-btn-secondary { background:white; color:var(--hz-primary); text-decoration:none; padding:12px 22px; border-radius:10px; font-weight:600; font-size:14px; border:1.5px solid var(--hz-primary); }
-.hz-btn-primary { background:var(--hz-primary); color:white; text-decoration:none; padding:12px 24px; border-radius:10px; font-weight:700; font-size:14px; }
-
-.hz-footer { background:#1a3a4a; color:rgba(255,255,255,.7); padding:18px 32px; display:flex; align-items:center; justify-content:space-between; font-size:13px; margin-top:60px; }
+    :root {
+        --orange: #e84a3e;
+        --teal: #23779C;
+        --teal-dk: #1a5a78;
+    }
+    
+    .btn-orange {
+        background: var(--orange);
+        color: white;
+        border: none;
+        transition: all .3s;
+    }
+    .btn-orange:hover {
+        background: #c73a2e;
+        color: white;
+        transform: translateY(-2px);
+    }
+    .btn-teal {
+        background: var(--teal);
+        color: white;
+        border: none;
+        transition: all .3s;
+    }
+    .btn-teal:hover {
+        background: var(--teal-dk);
+        color: white;
+        transform: translateY(-2px);
+    }
+    .btn-outline-teal {
+        border: 2px solid var(--teal);
+        color: var(--teal);
+        background: transparent;
+        transition: all .3s;
+    }
+    .btn-outline-teal:hover {
+        background: var(--teal);
+        color: white;
+    }
+    .text-teal {
+        color: var(--teal);
+    }
+    
+    @media (max-width: 576px) {
+        .btn-outline-teal, .btn-orange, .btn-teal {
+            padding: 8px 16px;
+            font-size: 0.85rem;
+        }
+    }
 </style>
 {% endblock %}

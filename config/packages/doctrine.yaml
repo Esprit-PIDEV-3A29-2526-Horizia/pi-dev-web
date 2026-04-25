@@ -1,10 +1,18 @@
 doctrine:
     dbal:
         url: '%env(resolve:DATABASE_URL)%'
-        driver: 'pdo_mysql'
-        charset: utf8mb4
-        server_version: '10.4.32-MariaDB'
         profiling_collect_backtrace: '%kernel.debug%'
+        use_savepoints: true
+        schema_filter: ~^(?!events)~
+        # Ajoutez cette section pour gérer les types enum
+        charset: utf8mb4
+        default_table_options:
+            charset: utf8mb4
+            collate: utf8mb4_unicode_ci
+        # Convertir les enum en string
+        mapping_types:
+            enum: string
+        
     orm:
         auto_mapping: true
         mappings:

@@ -6,7 +6,7 @@ use App\Entity\Location;
 use App\Repository\LocationRepository;
 use App\Service\ContratService;
 use App\Service\EmailService;
-use App\Service\QRCodeService;
+use App\Service\QrCodeService;
 use Symfony\Bridge\Doctrine\Attribute\MapEntity;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -107,7 +107,7 @@ class DocumentsController extends AbstractController
     #[Route('/qrcode/{id}', name: 'admin_documents_qrcode')]
     public function qrcode(
         #[MapEntity(mapping: ['id' => 'idLocation'])] Location $location,
-        QRCodeService $qrCodeService
+        QrCodeService $qrCodeService
     ): Response {
         $qrCode = $qrCodeService->genererQRCodeLocation(
             $location->getIdLocation(),

@@ -189,16 +189,18 @@ class VehiculeController extends AbstractController
     #[Route('/{id}/delete', name: 'admin_vehicule_delete', methods: ['POST'])]
     public function delete(Request $request, Vehicule $vehicule, EntityManagerInterface $em): Response
     {
-        if ($this->isCsrfTokenValid('delete' . $vehicule->getIdVehicule(), $request->request->get('_token'))) {
+     if ($this->isCsrfTokenValid('delete' . $vehicule->getIdVehicule(), $request->request->get('_token'))) {
 
-            if ($vehicule->getLocations()->count() > 0) {
-                $this->addFlash('error', 'Impossible de supprimer ce véhicule car il a ' . $vehicule->getLocations()->count() . ' location(s) associée(s).');
-            } else {
-                $em->remove($vehicule);
-                $em->flush();
-                $this->addFlash('success', 'Véhicule supprimé avec succès !');
-            }
-        }
+    $nbLocations = count($vehicule->getLocations());
+    
+    if ($nbLocations > 0) {
+        $this->addFlash('error', 'Impossible de supprimer ce véhicule car il a ' . $nbLocations . ' location(s) associée(s).');
+    } else {
+        $em->remove($vehicule);
+        $em->flush();
+        $this->addFlash('success', 'Véhicule supprimé avec succès !');
+    }
+}
 
         return $this->redirectToRoute('admin_vehicule_index');
     }

@@ -1,0 +1,134 @@
+<nav class="admin-topbar">
+    <div class="d-flex align-items-center gap-3">
+        <button type="button" id="sidebarToggle" class="sidebar-toggle-btn" aria-label="Afficher ou masquer la barre latérale">
+            <i class="bi bi-list"></i>
+        </button>
+        <span style="font-weight: 600; color: #2c3e50;">
+            {% block topbar_title %}Administration{% endblock %}
+        </span>
+    </div>
+
+    <div class="d-flex align-items-center gap-3">
+        <!-- NOTIFICATION DROPDOWN -->
+        <div class="dropdown">
+            <button class="topbar-icon-btn position-relative dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="background: none; border: none;">
+                <i class="bi bi-bell fs-5"></i>
+                {% set flashCount = app.flashes|length %}
+                {% if flashCount > 0 %}
+                    <span class="notification-badge" style="position: absolute; top: -5px; right: -8px; background: #dc3545; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.7rem;">{{ flashCount }}</span>
+                {% endif %}
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3 p-0" style="width: 320px; max-height: 400px; overflow-y: auto;">
+                <li class="dropdown-header bg-light rounded-top py-2 px-3 fw-semibold">
+                    <i class="bi bi-bell me-1"></i> Notifications
+                </li>
+                <li><hr class="dropdown-divider m-0"></li>
+                {% set hasFlash = false %}
+                {% for label, messages in app.flashes %}
+                    {% for message in messages %}
+                        {% set hasFlash = true %}
+                        <li class="dropdown-item notification-item border-bottom px-3 py-2" style="white-space: normal; border-left: 4px solid 
+                            {% if label == 'success' %}#28a745{% elseif label == 'danger' %}#dc3545{% elseif label == 'warning' %}#ffc107{% else %}#17a2b8{% endif %}">
+                            <div class="notification-message small">{{ message|raw }}</div>
+                            <small class="text-muted" style="font-size: 0.7rem;">{{ 'now'|date('H:i') }}</small>
+                        </li>
+                    {% endfor %}
+                {% endfor %}
+                {% if not hasFlash %}
+                    <li class="text-center py-3 text-muted">Aucune notification</li>
+                {% endif %}
+            </ul>
+        </div>
+
+        <button class="topbar-icon-btn" type="button">
+            <i class="bi bi-chat-left fs-5"></i>
+        </button>
+
+        <div class="dropdown">
+            <button class="btn border-0 bg-transparent d-flex align-items-center gap-2 p-0" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <span class="fw-semibold text-dark">Administrateur</span>
+                <i class="bi bi-chevron-down small text-muted"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3 p-2" style="min-width: 220px;">
+                <li><a class="dropdown-item rounded-2 py-2" href="#"><i class="bi bi-person me-2"></i> Profile</a></li>
+                <li><a class="dropdown-item rounded-2 py-2" href="{{ path('app_admin') }}"><i class="bi bi-bar-chart me-2"></i> Dashboard</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item rounded-2 py-2" href="#"><i class="bi bi-gear me-2"></i> Settings & Privacy</a></li>
+                <li><a class="dropdown-item rounded-2 py-2" href="#"><i class="bi bi-question-circle me-2"></i> Help Center</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><a class="dropdown-item rounded-2 py-2 text-danger" href="{{ path('app_logout') }}"><i class="bi bi-box-arrow-right me-2"></i> Déconnexion</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<script>
+    // Toggle sidebar functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const sidebar = document.querySelector('.admin-sidebar');
+        const mainContent = document.querySelector('.admin-main');
+        const toggleBtn = document.getElementById('sidebarToggle');
+        
+        if (sidebar && mainContent && toggleBtn) {
+            // Restaurer l'état sauvegardé
+            const isCollapsed = localStorage.getItem('adminSidebarCollapsed') === 'true';
+            if (isCollapsed) {
+                sidebar.classList.add('collapsed');
+                mainContent.classList.add('expanded');
+            }
+            
+            // Événement de clic
+            toggleBtn.addEventListener('click', function() {
+                sidebar.classList.toggle('collapsed');
+                mainContent.classList.toggle('expanded');
+                
+                // Sauvegarder l'état
+                localStorage.setItem('adminSidebarCollapsed', sidebar.classList.contains('collapsed'));
+                
+                // Redimensionner FullCalendar si présent
+                if (typeof calendar !== 'undefined' && calendar) {
+                    setTimeout(function() {
+                        calendar.updateSize();
+                    }, 300);
+                }
+            });
+        }
+    });
+</script>
+
+<style>
+    /* Animation fluide pour le toggle */
+    .admin-sidebar {
+        transition: width 0.3s ease;
+    }
+    .admin-main {
+        transition: margin-left 0.3s ease;
+    }
+    .admin-sidebar.collapsed {
+        width: 80px;
+    }
+    .admin-main.expanded {
+        margin-left: 80px;
+    }
+    
+    /* Ajustements responsives */
+    @media (max-width: 768px) {
+        .admin-sidebar {
+            transform: translateX(-100%);
+            width: 280px;
+        }
+        .admin-sidebar.collapsed {
+            transform: translateX(-100%);
+            width: 280px;
+        }
+        .admin-main {
+            margin-left: 0;
+        }
+        .admin-main.expanded {
+            margin-left: 0;
+        }
+        .admin-sidebar.mobile-open {
+            transform: translateX(0);
+        }
+    }
+</style>

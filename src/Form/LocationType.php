@@ -169,14 +169,14 @@ class LocationType extends AbstractType
                     new Assert\PositiveOrZero(message: 'Le kilométrage doit être positif ou zéro.'),
                 ],
             ])
-            ->add('prixParJour', NumberType::class, [
-                'label' => 'Prix par jour (TND)',
-                'attr'  => ['class' => 'form-control', 'id' => 'prix_par_jour', 'step' => '0.001'],
-                'constraints' => [
-                    new Assert\NotBlank(message: 'Le prix par jour est obligatoire.'),
-                    new Assert\Positive(message: 'Le prix doit être supérieur à 0.'),
-                ],
-            ])
+          ->add('prixParJour', NumberType::class, [
+    'label' => 'Prix par jour (TND)',
+    'attr'  => ['class' => 'form-control', 'id' => 'prix_par_jour', 'step' => '0.001', 'readonly' => true],
+    'constraints' => [
+        // new Assert\NotBlank(message: 'Le prix par jour est obligatoire.'), // ← COMMENTEZ cette ligne
+        new Assert\Positive(message: 'Le prix doit être supérieur à 0.'),
+    ],
+])
             ->add('avance', NumberType::class, [
                 'label'    => 'Avance (TND)',
                 'required' => false,

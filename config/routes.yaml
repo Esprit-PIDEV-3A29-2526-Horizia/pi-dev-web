@@ -1,5 +1,264 @@
+
+app_login:
+    path: /login
+    controller: App\Controller\Front\UserController::login
+
+app_register:
+    path: /register
+    controller: App\Controller\Front\UserController::register
+
+app_logout:
+    path: /logout
+    controller: App\Controller\Front\UserController::logout
+
+app_front_home:
+    path: /
+    controller: App\Controller\Front\HomeController::index
+
+app_front_voyages:
+    path: /voyages
+    controller: App\Controller\Front\HomeController::voyages
+
+app_front_voyage_detail:
+    path: /voyage/{id}
+    controller: App\Controller\Front\HomeController::detail
+
+app_front_reserver_voyage:
+    path: /voyage/{id}/reserver
+    controller: App\Controller\Front\HomeController::reserver
+
+app_front_mes_reservations:
+    path: /mes-reservations
+    controller: App\Controller\Front\HomeController::mesReservations
+
+app_front_annuler_reservation:
+    path: /reservation/{id}/annuler
+    controller: App\Controller\Front\HomeController::annulerReservation
+
+app_front_modifier_reservation:
+    path: /reservation/{id}/modifier
+    controller: App\Controller\Front\HomeController::modifierReservation
+
+app_front_profile:
+    path: /mon-profil
+    controller: App\Controller\Front\UserProfileController::profile
+
+# Routes publiques pour les événements (front)
+#app_front_events:
+#    path: /events
+#    controller: App\Controller\Admin\EventController::publicEvents
+
+#app_front_event_show:
+#    path: /event/{id}
+#    controller: App\Controller\Admin\EventController::publicShow
+
+app_front_mes_participations:
+    path: /mes-participations
+    controller: App\Controller\Admin\ParticipationController::mesParticipations
+
+app_contact:
+    path: /contact
+    controller: App\Controller\Front\HomeController::contact
+
+app_categorie_index:
+    path: /admin/categorie
+    controller: App\Controller\Admin\CategorieController::index
+
+app_categorie_new:
+    path: /admin/categorie/new
+    controller: App\Controller\Admin\CategorieController::new
+
+app_categorie_edit:
+    path: /admin/categorie/edit/{id}
+    controller: App\Controller\Admin\CategorieController::edit
+
+app_categorie_delete:
+    path: /admin/categorie/delete/{id}
+    controller: App\Controller\Admin\CategorieController::delete
+
+app_admin:
+    path: /admin
+    controller: App\Controller\Admin\DashboardController::index
+
+app_user_index:
+    path: /admin/user
+    controller: App\Controller\Admin\UserController::index
+
+app_user_new:
+    path: /admin/user/new
+    controller: App\Controller\Admin\UserController::new
+
+app_user_edit:
+    path: /admin/user/{id}/edit
+    controller: App\Controller\Admin\UserController::edit
+
+app_user_delete:
+    path: /admin/user/{id}
+    controller: App\Controller\Admin\UserController::delete
+
+app_profil_index:
+    path: /admin/profil
+    controller: App\Controller\Admin\ProfilController::index
+
+app_profil_new:
+    path: /admin/profil/new
+    controller: App\Controller\Admin\ProfilController::new
+
+app_profile_edit:
+    path: /profile/edit
+    controller: App\Controller\Admin\ProfilController::editProfile
+
+app_profil_delete:
+    path: /admin/profil/{id}
+    controller: App\Controller\Admin\ProfilController::delete
+
+app_front_change_password:
+    path: /change-password
+    controller: App\Controller\Admin\ProfilController::changePassword
+
+app_voyage_index:
+    path: /admin/voyage
+    controller: App\Controller\Admin\VoyageController::index
+
+app_voyage_new:
+    path: /admin/voyage/new
+    controller: App\Controller\Admin\VoyageController::new
+
+app_voyage_edit:
+    path: /admin/voyage/edit/{id}
+    controller: App\Controller\Admin\VoyageController::edit
+
+app_voyage_delete:
+    path: /admin/voyage/delete/{id}
+    controller: App\Controller\Admin\VoyageController::delete
+
+app_voyage_show:
+    path: /admin/voyage/{id}
+    controller: App\Controller\Admin\VoyageController::show
+app_reservation_index:
+    path: /admin/reservation
+    controller: App\Controller\Admin\ReservationController::index
+
+app_reservation_new:
+    path: /admin/reservation/new
+    controller: App\Controller\Admin\ReservationController::new
+
+app_reservation_edit:
+    path: /admin/reservation/edit/{id}
+    controller: App\Controller\Admin\ReservationController::edit
+
+app_reservation_delete:
+    path: /admin/reservation/delete/{id}
+    controller: App\Controller\Admin\ReservationController::delete
+
+app_reservation_show:
+    path: /admin/reservation/{id}
+    controller: App\Controller\Admin\ReservationController::show
+
+app_reservation_confirmer:
+    path: /admin/reservation/confirmer/{id}
+    controller: App\Controller\Admin\ReservationController::confirmer
+
+# Calendrier
+app_calendar:
+    path: /admin/calendar
+    controller: App\Controller\Admin\CalendarController::index
+# Gestion des Participations
+app_participation_index:
+    path: /admin/participation
+    controller: App\Controller\Admin\ParticipationController::index
+
+app_participation_new:
+    path: /admin/participation/new
+    controller: App\Controller\Admin\ParticipationController::new
+
+app_participation_edit:
+    path: /admin/participation/edit/{id}
+    controller: App\Controller\Admin\ParticipationController::edit
+
+app_participation_delete:
+    path: /admin/participation/delete/{id}
+    controller: App\Controller\Admin\ParticipationController::delete
+
+# Gestion des Events
+app_event_index:
+    path: /admin/event
+    controller: App\Controller\Admin\EventController::index
+
+app_event_new:
+    path: /admin/event/new
+    controller: App\Controller\Admin\EventController::new
+
+app_event_edit:
+    path: /admin/event/edit/{id}
+    controller: App\Controller\Admin\EventController::edit
+
+app_event_delete:
+    path: /admin/event/delete/{id}
+    controller: App\Controller\Admin\EventController::delete
+
+app_event_show:
+    path: /admin/event/{id}
+    controller: App\Controller\Admin\EventController::show
+# Routes pour Google OAuth
+connect_google_start:
+    path: /connect/google
+    controller: App\Controller\Front\UserController::connectGoogle
+
+google_connect_check:
+    path: /connect/google/check
+    controller: App\Controller\Front\UserController::connectGoogleCheck
+app_forgot_password:
+    path: /forgot-password
+    controller: App\Controller\Front\UserController::forgotPassword
+
+app_verify_code:
+    path: /verify-code
+    controller: App\Controller\Front\UserController::verifyCode
+
+app_reset_password_form:
+    path: /reset-password-form
+    controller: App\Controller\Front\UserController::resetPasswordForm
+
+app_after_login_redirect:
+    path: /after-login
+    controller: App\Controller\Front\UserController::afterLoginRedirect
+
+app_profil_edit:
+    path: /admin/profil/{id}/edit
+    controller: App\Controller\Admin\ProfilController::edit
+    methods: ['GET', 'POST']
+
+admin_register_face:
+    path: /admin/register-face
+    controller: App\Controller\FaceRegistrationController::registerPage
+
+admin_register_face_save:
+    path: /admin/register-face/save
+    controller: App\Controller\FaceRegistrationController::saveFace
+
+app_2fa_verify:
+    path: /2fa/verify
+    controller: App\Controller\TwoFactorController::verifyPage
+
+app_2fa_verify_check:
+    path: /2fa/verify/check
+    controller: App\Controller\TwoFactorController::verifyCheck
+app_capture_face:
+    path: /capture-face
+    controller: App\Controller\FaceCaptureController::capturePage
+
+app_capture_face_send:
+    path: /capture-face/send
+    controller: App\Controller\FaceCaptureController::sendCapturedFace
+    methods: ['POST']
+
+
 controllers:
     resource:
         path: ../src/Controller/
         namespace: App\Controller
+
     type: attribute
+   
+

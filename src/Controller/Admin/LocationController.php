@@ -19,6 +19,8 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use DateTime;
+use Exception;
+use Psr\Log\LoggerInterface;
 
 #[Route('/admin/location')]
 class LocationController extends AbstractController
@@ -66,80 +68,93 @@ class LocationController extends AbstractController
     // ══════════════════════════════════════════════════════════
     // ➕ NOUVEAU
     // ══════════════════════════════════════════════════════════
-    #[Route('/new', name: 'admin_location_new', methods: ['GET', 'POST'])]
-    public function new(
-        Request $request,
-        EntityManagerInterface $em,
-        VehiculeRepository $vehiculeRepository,
-        ContratService $contratService,
-        EmailService $emailService,
-        WhatsAppService $whatsAppService
-    ): Response {
-        $location = new Location();
-        $form     = $this->createForm(LocationType::class, $location);
-        $form->handleRequest($request);
+    // ══════════════════════════════════════════════════════════
+// ➕ NOUVEAU
+// ══════════════════════════════════════════════════════════
+#[Route('/new', name: 'admin_location_new', methods: ['GET', 'POST'])]
+public function new(
+    Request $request,
+    EntityManagerInterface $em,
+    VehiculeRepository $vehiculeRepository,
+    ContratService $contratService,
+    EmailService $emailService,
+    WhatsAppService $whatsAppService
+): Response {
+    $location = new Location();
+    $form     = $this->createForm(LocationType::class, $location);
+    $form->handleRequest($request);
 
-        if ($form->isSubmitted() && $form->isValid()) {
+    if ($form->isSubmitted() && $form->isValid()) {
 
-            // ── Extras ──
-            $extrasChoisis = $request->request->all('extras');
-            $extrasData    = [];
-            foreach ((array) $extrasChoisis as $cle) {
-                if (isset(self::EXTRAS_DISPONIBLES[$cle])) {
-                    $extrasData[$cle] = self::EXTRAS_DISPONIBLES[$cle]['prix'];
-                }
-            }
-            $location->setExtras(empty($extrasData) ? null : $extrasData);
-            $location->calculerMontantTotal();
-
-            if (empty($location->getStatut())) {
-                $location->setStatut('réservée');
-            }
-
-            $vehicule = $location->getVehicule();
-            if ($vehicule) {
-                $vehicule->setEtat('louee');
-                $em->persist($vehicule);
-            }
-
-            $em->persist($location);
-            $em->flush();
-
-            // ── Email de confirmation ──
-            $emailClient = trim($request->request->get('email_client', ''));
-            if (!empty($emailClient)) {
-                try {
-                    $emailService->envoyerConfirmationLocation($location, $emailClient);
-                    $this->addFlash('info', 'Email de confirmation envoyé à ' . $emailClient);
-                } catch (\Exception $e) {
-                    $this->addFlash('warning', 'Email non envoyé : ' . $e->getMessage());
-                }
-            }
-
-            // ── WhatsApp de confirmation ──
-            // Utilise le numéro WhatsApp saisi dans le form, ou le téléphone du client par défaut
-            $whatsappTel = trim($request->request->get('whatsapp_client', ''))
-                ?: $location->getClientTelephone();
-
-            if (!empty($whatsappTel)) {
-                $r = $whatsAppService->envoyerConfirmationReservation($location, $whatsappTel);
-                $this->addFlash(
-                    $r['succes'] ? 'info' : 'warning',
-                    '💬 WhatsApp : ' . $r['message']
-                );
-            }
-
-            $this->addFlash('success', 'Location créée avec succès !');
-            return $this->redirectToRoute('admin_location_index');
+        // 🔴 Récupérer le véhicule et son prix
+        $vehicule = $location->getVehicule();
+        if ($vehicule) {
+            // Forcer le prix par jour depuis le véhicule
+            $location->setPrixParJour((string) $vehicule->getPrixParJour());
+            $vehicule->setEtat('louee');
+            $em->persist($vehicule);
+        } else {
+            $this->addFlash('error', 'Veuillez sélectionner un véhicule.');
+            return $this->redirectToRoute('admin_location_new');
+        }
+         // ✅ FORCER le prix depuis le véhicule (sécurité)
+        $prixVehicule = $vehicule->getPrixParJour();
+        if ($prixVehicule === null || $prixVehicule <= 0) {
+            $this->addFlash('error', 'Le véhicule sélectionné n\'a pas de prix valide.');
+            return $this->redirectToRoute('admin_location_new');
         }
 
-        return $this->render('admin/location/new.html.twig', [
-            'form'         => $form->createView(),
-            'vehicules'    => $vehiculeRepository->findDisponibles(),
-            'extras_dispo' => self::EXTRAS_DISPONIBLES,
-        ]);
+        // ── Extras ──
+        $extrasChoisis = $request->request->all('extras');
+        $extrasData    = [];
+        foreach ((array) $extrasChoisis as $cle) {
+            if (isset(self::EXTRAS_DISPONIBLES[$cle])) {
+                $extrasData[$cle] = self::EXTRAS_DISPONIBLES[$cle]['prix'];
+            }
+        }
+        $location->setExtras(empty($extrasData) ? null : $extrasData);
+        $location->calculerMontantTotal();
+
+        if (empty($location->getStatut())) {
+            $location->setStatut('réservée');
+        }
+
+        $em->persist($location);
+        $em->flush();
+
+        // ── Email de confirmation ──
+        $emailClient = trim($request->request->get('email_client', ''));
+        if (!empty($emailClient)) {
+            try {
+                $emailService->envoyerConfirmationLocation($location, $emailClient);
+                $this->addFlash('info', 'Email de confirmation envoyé à ' . $emailClient);
+            } catch (Exception $e) {
+                $this->addFlash('warning', 'Email non envoyé : ' . $e->getMessage());
+            }
+        }
+
+        // ── WhatsApp de confirmation ──
+        $whatsappTel = trim($request->request->get('whatsapp_client', ''))
+            ?: $location->getClientTelephone();
+
+        if (!empty($whatsappTel)) {
+            $r = $whatsAppService->envoyerConfirmationReservation($location, $whatsappTel);
+            $this->addFlash(
+                $r['succes'] ? 'info' : 'warning',
+                '💬 WhatsApp : ' . $r['message']
+            );
+        }
+
+        $this->addFlash('success', 'Location créée avec succès !');
+        return $this->redirectToRoute('admin_location_index');
     }
 
+    return $this->render('admin/location/new.html.twig', [
+        'form'         => $form->createView(),
+        'vehicules'    => $vehiculeRepository->findDisponibles(),
+        'extras_dispo' => self::EXTRAS_DISPONIBLES,
+    ]);
+}
     // ══════════════════════════════════════════════════════════
     // 🔄 UPDATE STATUTS AUTOMATIQUE
     // ══════════════════════════════════════════════════════════
@@ -292,91 +307,171 @@ public function testWhatsapp(WhatsAppService $whatsAppService): JsonResponse
         ], $resultat['succes'] ? 200 : 400);
     }
 
-    // ══════════════════════════════════════════════════════════
-    // 📷 AJAX — SCANNER CIN (OCR)
-    // ══════════════════════════════════════════════════════════
-    #[Route('/scan-cin', name: 'admin_location_scan_cin', methods: ['POST'])]
-    public function scanCin(Request $request, OCRService $ocrService): JsonResponse
-    {
-        $fichier = $request->files->get('image');
+ // ══════════════════════════════════════════════════════════
+// 📷 AJAX — SCANNER CIN (OCR)
+// ══════════════════════════════════════════════════════════
+#[Route('/scan-cin', name: 'admin_location_scan_cin', methods: ['POST'])]
+public function scanCin(Request $request, OCRService $ocrService, LoggerInterface $logger): JsonResponse
+{
+    $logger->info('=== SCAN CIN START ===');
+    
+    $fichier = $request->files->get('image');
 
-        if (!$fichier) {
-            return $this->json(['success' => false, 'message' => 'Aucune image reçue.'], 400);
-        }
-        if ($fichier->getSize() > 5 * 1024 * 1024) {
-            return $this->json(['success' => false, 'message' => 'Image trop lourde (max 5 Mo).'], 400);
-        }
+    if (!$fichier) {
+        $logger->error('Aucune image reçue');
+        return $this->json(['success' => false, 'message' => 'Aucune image reçue.'], 400);
+    }
+    
+    $logger->info('Fichier reçu: ' . $fichier->getClientOriginalName() . ', type: ' . $fichier->getMimeType() . ', size: ' . $fichier->getSize());
+    
+    $allowedExtensions = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
+    $extension = strtolower($fichier->getClientOriginalExtension());
+    if (!in_array($extension, $allowedExtensions)) {
+        $logger->error('Format non supporté: ' . $extension);
+        return $this->json(['success' => false, 'message' => 'Format non supporté. Utilisez JPG, PNG ou JPEG.'], 400);
+    }
+    
+    if ($fichier->getSize() > 5 * 1024 * 1024) {
+        $logger->error('Image trop lourde: ' . $fichier->getSize());
+        return $this->json(['success' => false, 'message' => 'Image trop lourde (max 5 Mo).'], 400);
+    }
 
-        $tempDir  = sys_get_temp_dir();
-        $ext      = $fichier->getClientOriginalExtension() ?: 'jpg';
-        $tempName = 'cin_' . uniqid() . '.' . $ext;
-        $fichier->move($tempDir, $tempName);
-        $tempPath = $tempDir . DIRECTORY_SEPARATOR . $tempName;
+    $tempDir = sys_get_temp_dir();
+    $tempName = 'cin_' . uniqid() . '.' . $extension;
+    $fichier->move($tempDir, $tempName);
+    $tempPath = $tempDir . DIRECTORY_SEPARATOR . $tempName;
+    
+    $logger->info('Fichier temporaire: ' . $tempPath);
 
-        $typesAutorises = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-        $mimeDetecte    = mime_content_type($tempPath) ?: 'unknown';
-        if (!in_array($mimeDetecte, $typesAutorises)) {
+    $resultat = [];
+    try {
+        $resultat = $ocrService->scannerCINRecto($tempPath);
+        $logger->info('Résultat OCR: ' . json_encode($resultat));
+    } catch (Exception $e) {
+        $logger->error('Exception OCR: ' . $e->getMessage());
+        $resultat = ['erreur' => $e->getMessage()];
+    } finally {
+        if (file_exists($tempPath)) {
             unlink($tempPath);
-            return $this->json(['success' => false, 'message' => 'Format non supporté (' . $mimeDetecte . '). Utilisez JPG ou PNG.'], 400);
+            $logger->info('Fichier temporaire supprimé');
         }
-
-        $resultat = [];
-        try {
-            $resultat = $ocrService->scannerCINRecto($tempPath);
-        } catch (\Exception $e) {
-            $resultat = ['erreur' => $e->getMessage()];
-        } finally {
-            if (file_exists($tempPath)) unlink($tempPath);
-        }
-
-        if (isset($resultat['erreur'])) {
-            return $this->json(['success' => false, 'message' => $resultat['erreur']], 500);
-        }
-        if (isset($resultat['cin'])) {
-            return $this->json(['success' => true, 'cin' => $resultat['cin']]);
-        }
-        return $this->json(['success' => false, 'message' => $resultat['info'] ?? 'CIN non détectée.']);
     }
 
-    // ══════════════════════════════════════════════════════════
-    // 🗺️ AJAX — GÉOLOCALISER UNE ADRESSE
-    // ══════════════════════════════════════════════════════════
-    #[Route('/geolocate', name: 'admin_location_geolocate', methods: ['POST'])]
-    public function geolocate(Request $request, GeolocationService $geolocationService): JsonResponse
-    {
-        $adresse = $request->request->get('adresse')
-            ?? (json_decode($request->getContent(), true)['adresse'] ?? null);
-
-        if (empty(trim((string) $adresse))) {
-            return $this->json(['success' => false, 'message' => 'Adresse vide.'], 400);
-        }
-
-        try {
-            $resultat = $geolocationService->geocoderAdresse(trim($adresse));
-        } catch (\Exception $e) {
-            return $this->json(['success' => false, 'message' => 'Erreur réseau : impossible de contacter le service de géolocalisation.'], 503);
-        }
-
-        if (isset($resultat['erreur'])) {
-            return $this->json(['success' => false, 'message' => $resultat['erreur']], 404);
-        }
-
-        try {
-            $distanceKm       = $geolocationService->calculerDistanceDepuisAgence((float) $resultat['latitude'], (float) $resultat['longitude']);
-            $distanceFormatee = $geolocationService->formaterDistance($distanceKm);
-        } catch (\Exception $e) {
-            $distanceFormatee = null;
-        }
-
-        return $this->json([
-            'success'          => true,
-            'latitude'         => $resultat['latitude'],
-            'longitude'        => $resultat['longitude'],
-            'adresse_formatee' => $resultat['adresse_formatee'] ?? '',
-            'ville'            => $resultat['ville']            ?? '',
-            'code_postal'      => $resultat['code_postal']      ?? '',
-            'distance_agence'  => $distanceFormatee,
-        ]);
+    if (isset($resultat['erreur'])) {
+        return $this->json(['success' => false, 'message' => 'Erreur OCR: ' . $resultat['erreur']], 500);
+    }
+    
+    if (isset($resultat['cin'])) {
+        return $this->json(['success' => true, 'cin' => $resultat['cin']]);
+    }
+    
+    $message = $resultat['info'] ?? 'CIN non détectée. Assurez-vous que la photo est claire.';
+    return $this->json(['success' => false, 'message' => $message], 404);
+}
+   // ══════════════════════════════════════════════════════════
+// 🗺️ AJAX — GÉOLOCALISER UNE ADRESSE
+// ══════════════════════════════════════════════════════════
+#[Route('/geolocate', name: 'admin_location_geolocate', methods: ['POST'])]
+public function geolocate(Request $request, GeolocationService $geolocationService): JsonResponse
+{
+    // Support des deux formats POST (form-data ou JSON)
+    $adresse = $request->request->get('adresse');
+    
+    if (!$adresse && $request->getContent()) {
+        $data = json_decode($request->getContent(), true);
+        $adresse = $data['adresse'] ?? null;
+    }
+    
+    $adresse = trim((string) $adresse);
+    
+    if (empty($adresse)) {
+        return $this->json(['success' => false, 'message' => 'Adresse vide. Veuillez saisir une adresse complète.'], 400);
     }
 
+    // Nettoyer l'adresse
+    $adresse = preg_replace('/\s+/', ' ', $adresse);
+    
+    try {
+        $resultat = $geolocationService->geocoderAdresse($adresse);
+    } catch (Exception $e) {
+        return $this->json(['success' => false, 'message' => 'Erreur réseau : impossible de contacter le service de géolocalisation.'], 503);
+    }
+
+    if (isset($resultat['erreur'])) {
+        return $this->json(['success' => false, 'message' => $resultat['erreur']], 404);
+    }
+
+    if (!isset($resultat['latitude']) || !isset($resultat['longitude'])) {
+        return $this->json(['success' => false, 'message' => 'Adresse non trouvée. Vérifiez l\'adresse saisie.'], 404);
+    }
+
+    try {
+        $distanceKm = $geolocationService->calculerDistanceDepuisAgence((float) $resultat['latitude'], (float) $resultat['longitude']);
+        $distanceFormatee = $geolocationService->formaterDistance($distanceKm);
+    } catch (Exception $e) {
+        $distanceFormatee = null;
+    }
+
+    return $this->json([
+        'success'          => true,
+        'latitude'         => (float) $resultat['latitude'],
+        'longitude'        => (float) $resultat['longitude'],
+        'adresse_formatee' => $resultat['adresse_formatee'] ?? $adresse,
+        'ville'            => $resultat['ville'] ?? '',
+        'code_postal'      => $resultat['code_postal'] ?? '',
+        'distance_agence'  => $distanceFormatee,
+    ]);
+}
+#[Route('/test-ocr-key', name: 'test_ocr_key')]
+public function testOCRKey(OCRService $ocrService): JsonResponse
+{
+    $testImagePath = __DIR__ . '/../../public/test-cin.jpg';
+    
+    if (!file_exists($testImagePath)) {
+        return $this->json(['error' => 'Veuillez placer une image test-cin.jpg dans le dossier public'], 400);
+    }
+    
+    $resultat = $ocrService->scannerCINRecto($testImagePath);
+    
+    return $this->json($resultat);
+}
+#[Route('/test-whatsapp-config', name: 'admin_location_test_whatsapp_config', methods: ['GET'])]
+public function testWhatsappConfig(WhatsAppService $whatsAppService): JsonResponse
+{
+    $resultat = $whatsAppService->testerConnexion();
+    return $this->json($resultat);
+}
+
+#[Route('/test-ocr', name: 'admin_location_test_ocr', methods: ['GET'])]
+public function testOCR(OCRService $ocrService): JsonResponse
+{
+    $resultat = $ocrService->testerCleAPI();
+    return $this->json($resultat);
+}
+#[Route('/diagnostic-whatsapp', name: 'admin_location_diagnostic_whatsapp', methods: ['GET'])]
+public function diagnosticWhatsapp(WhatsAppService $whatsAppService, LoggerInterface $logger): JsonResponse
+{
+    $resultats = [
+        'twilio_config' => [
+            'account_sid_exists' => !empty($_ENV['TWILIO_ACCOUNT_SID']),
+            'auth_token_exists' => !empty($_ENV['TWILIO_AUTH_TOKEN']),
+            'whatsapp_from_exists' => !empty($_ENV['TWILIO_WHATSAPP_FROM']),
+            'account_sid_prefix' => substr($_ENV['TWILIO_ACCOUNT_SID'] ?? '', 0, 5) . '...',
+            'whatsapp_from' => $_ENV['TWILIO_WHATSAPP_FROM'] ?? 'non défini',
+        ],
+        'test_connexion' => $whatsAppService->testerConnexion(),
+        'php_extensions' => [
+            'curl' => extension_loaded('curl'),
+            'openssl' => extension_loaded('openssl'),
+            'json' => extension_loaded('json'),
+        ],
+        'twilio_sandbox_instructions' => [
+            '1. Activez le sandbox WhatsApp sur votre compte Twilio',
+            '2. Envoyez "join <votre-mot>" au +14155238886',
+            '3. Le numéro doit être au format +216XXXXXXXX',
+        ]
+    ];
+    
+    return $this->json($resultats);
+}
 }

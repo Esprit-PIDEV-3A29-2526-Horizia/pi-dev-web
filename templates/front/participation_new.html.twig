@@ -1,0 +1,226 @@
+{% extends 'base_front.html.twig' %}
+
+{% block title %}S'inscrire - {{ event.getTitre() }}{% endblock %}
+
+{% block stylesheets %}
+{{ parent() }}
+<style>
+    /* Force dark navbar on this page */
+    #ftco-navbar {
+        background: #000 !important;
+        position: relative !important;
+    }
+
+    .counter-btn {
+        width: 44px;
+        height: 44px;
+        background: #F96D00;
+        color: #fff;
+        border: none;
+        font-size: 1.4rem;
+        font-weight: 700;
+        cursor: pointer;
+        line-height: 1;
+        transition: background 0.2s;
+    }
+    .counter-btn:hover { background: #e05d00; }
+    .counter-btn:disabled { background: #ccc; cursor: not-allowed; }
+    .counter-btn.left  { border-radius: 6px 0 0 6px; }
+    .counter-btn.right { border-radius: 0 6px 6px 0; }
+
+    #participation_nombre_places {
+        width: 80px !important;
+        height: 44px;
+        text-align: center;
+        font-size: 1.2rem;
+        font-weight: 700;
+        border: none !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        outline: none !important;
+        -moz-appearance: textfield;
+    }
+    #participation_nombre_places::-webkit-outer-spin-button,
+    #participation_nombre_places::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+    .total-box {
+        background: #fff8f3;
+        border: 2px solid #F96D00;
+        border-radius: 8px;
+        padding: 16px 20px;
+    }
+    #total_display {
+        color: #F96D00;
+        font-size: 1.6rem;
+        font-weight: 800;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+<section class="ftco-section" style="padding-top: 80px;">
+    <div class="container">
+        <div class="row justify-content-center">
+
+            {# ── Left: Event summary ── #}
+            <div class="col-md-5 ftco-animate">
+                <div style="border-radius:8px; overflow:hidden; border:1px solid #eee; background:#fff; box-shadow: 0 4px 20px rgba(0,0,0,0.08);">
+                    {% if event.getImage_url() %}
+                        <img src="{{ event.getImage_url() }}" alt="{{ event.getTitre() }}"
+                             style="width:100%; height:260px; object-fit:cover; display:block;">
+                    {% else %}
+                        <div style="height:260px; background:#eef2f7; display:flex;
+                                    align-items:center; justify-content:center; color:#aaa;">
+                            <i class="fa fa-image fa-3x"></i>
+                        </div>
+                    {% endif %}
+
+                    <div style="padding:24px;">
+                        <span class="subheading">{{ event.getCategorie() }}</span>
+                        <h4 class="mb-3">{{ event.getTitre() }}</h4>
+
+                        <ul class="list-unstyled mb-3">
+                            <li class="mb-2">
+                                <span class="fa fa-map-marker mr-2" style="color:#F96D00;"></span>
+                                {{ event.getLocation() }}
+                            </li>
+                            <li class="mb-2">
+                                <span class="fa fa-calendar mr-2" style="color:#F96D00;"></span>
+                                {{ event.getDate_debut()|date('d/m/Y H:i') }}
+                            </li>
+                            <li class="mb-2">
+                                <span class="fa fa-users mr-2" style="color:#F96D00;"></span>
+                                {{ event.getPlaces_restantes() }} places restantes
+                            </li>
+                        </ul>
+
+                        <hr>
+
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <strong>Prix par place</strong>
+                            <span style="color:#F96D00; font-size:1.2rem; font-weight:700;">
+                                {{ event.getPrix() }} TND
+                            </span>
+                        </div>
+
+                        <div class="total-box d-flex justify-content-between align-items-center">
+                            <strong>Total estimé</strong>
+                            <span id="total_display">0.000 TND</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {# ── Right: Form ── #}
+            <div class="col-md-5 ftco-animate pl-md-5">
+                <span class="subheading">Inscription</span>
+                <h2 class="mb-4">Réservez vos places</h2>
+
+                {{ form_start(form, {attr: {novalidate: 'novalidate', id: 'participation-form'}}) }}
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label><strong>Prénom *</strong></label>
+                            {{ form_widget(form.prenom) }}
+                            {{ form_errors(form.prenom) }}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label><strong>Nom *</strong></label>
+                            {{ form_widget(form.nom) }}
+                            {{ form_errors(form.nom) }}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label><strong>Email *</strong></label>
+                    {{ form_widget(form.email) }}
+                    {{ form_errors(form.email) }}
+                </div>
+
+                <div class="form-group">
+                    <label><strong>Téléphone *</strong></label>
+                    {{ form_widget(form.telephone) }}
+                    {{ form_errors(form.telephone) }}
+                </div>
+
+                <div class="form-group">
+                    <label><strong>Nombre de places *</strong></label>
+                    <div class="d-flex align-items-center justify-content-center">
+                        <button type="button" class="counter-btn left" id="btn_decrement">−</button>
+                        {{ form_widget(form.nombre_places, {attr: {
+                            id: 'nombre_places',
+                            min: 1,
+                            max: event.getPlaces_restantes(),
+                            readonly: 'readonly'
+                        }}) }}
+                        <button type="button" class="counter-btn right" id="btn_increment">+</button>
+                    </div>
+                    <small class="text-muted">Maximum {{ event.getPlaces_restantes() }} places disponibles.</small>
+                    {{ form_errors(form.nombre_places) }}
+                </div>
+
+                <div class="form-group mt-4">
+                    <button type="submit" class="btn btn-primary py-3 px-5 w-100">
+                        <span class="fa fa-check mr-2"></span> Confirmer l'inscription
+                    </button>
+                </div>
+
+                <a href="{{ path('app_front_event_show', {id: event.getId_event()}) }}"
+                   class="btn btn-outline-primary py-3 w-100 mt-2">
+                    <span class="fa fa-arrow-left mr-2"></span> Retour à l'événement
+                </a>
+
+                {{ form_end(form) }}
+            </div>
+        </div>
+    </div>
+</section>
+
+{% block javascripts %}
+{{ parent() }}
+<script>
+    $(document).ready(function () {
+        var prix    = parseFloat('{{ event.getPrix() }}');
+        var max     = parseInt('{{ event.getPlaces_restantes() }}');
+        var $input  = $('#participation_nombre_places');
+        var $display = $('#total_display');
+        var $btnInc  = $('#btn_increment');
+        var $btnDec  = $('#btn_decrement');
+
+        // Set initial value
+        $input.val(1);
+
+        function updateTotal() {
+            var n     = parseInt($input.val()) || 0;
+            var total = n * prix;
+            $display.text(total.toFixed(3) + ' TND');
+            $btnDec.prop('disabled', n <= 1);
+            $btnInc.prop('disabled', n >= max);
+        }
+
+        $btnInc.on('click', function () {
+            var val = parseInt($input.val()) || 0;
+            if (val < max) {
+                $input.val(val + 1);
+                updateTotal();
+            }
+        });
+
+        $btnDec.on('click', function () {
+            var val = parseInt($input.val()) || 0;
+            if (val > 1) {
+                $input.val(val - 1);
+                updateTotal();
+            }
+        });
+
+        updateTotal();
+    });
+</script>
+{% endblock %}
+
+{% endblock %}

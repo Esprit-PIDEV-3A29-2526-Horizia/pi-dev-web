@@ -1,24 +1,273 @@
-{% extends 'base.html.twig' %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Horozia Admin{% endblock %}</title>
+    
+    <!-- Bootstrap 5 + Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 
-{% block title %}Admin - Horozia{% endblock %}
+    <!-- FullCalendar -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css">
 
-{% block navbar %}{% endblock %}
-{% block footer %}{% endblock %}
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-{% block body %}
-<div class="admin-layout">
-    {% include 'admin/partials/sidebar-admin.html.twig' %}
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f6f9;
+        }
 
-    <div class="admin-main">
+        /* ========== SIDEBAR ========== */
+      .admin-sidebar {
+    width: 280px;
+    background: linear-gradient(135deg, #426dad 0%, #021341 100%);
+    color: white;
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100vh;
+    z-index: 1000;
+    transition: width 0.3s ease;
+    box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+        .admin-sidebar.collapsed {
+            width: 80px;
+        }
+
+        .admin-sidebar.collapsed .sidebar-brand-center span,
+        .admin-sidebar.collapsed .sidebar-link span {
+            display: none;
+        }
+
+        .admin-sidebar.collapsed .sidebar-link {
+            justify-content: center;
+            padding: 12px;
+        }
+
+        .admin-sidebar.collapsed .sidebar-link i {
+            margin: 0;
+            font-size: 1.3rem;
+        }
+
+        .admin-sidebar.collapsed .sidebar-brand-center {
+            padding: 20px 0;
+        }
+
+        .admin-sidebar.collapsed .sidebar-logo-large {
+            width: 50px;
+            margin: 0 auto;
+        }
+
+        .sidebar-brand-center {
+            text-align: center;
+            padding: 25px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.2);
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-logo-large {
+            max-width: 150px;
+            height: auto;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar-menu li {
+            margin: 5px 0;
+        }
+
+        .sidebar-menu li a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 25px;
+            color: white;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            font-size: 15px;
+            white-space: nowrap;
+        }
+
+        .sidebar-menu li a i {
+            font-size: 20px;
+            width: 25px;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-menu li a:hover {
+            background: rgba(255,255,255,0.15);
+            padding-left: 30px;
+        }
+
+        .sidebar-menu li a.active {
+            background: rgba(255,255,255,0.25);
+            border-left: 4px solid #fbbf24;
+        }
+
+        /* ========== MAIN CONTENT ========== */
+        .admin-main {
+            margin-left: 280px;
+            min-height: 100vh;
+            transition: margin-left 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .admin-main.expanded {
+            margin-left: 80px;
+        }
+
+        /* ========== TOPBAR ========== */
+        .admin-topbar {
+            background: white;
+            padding: 15px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+            position: sticky;
+            top: 0;
+            z-index: 999;
+        }
+
+        .sidebar-toggle-btn {
+            background: transparent;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sidebar-toggle-btn:hover {
+            color: #667eea;
+        }
+
+        .topbar-icon-btn {
+            background: transparent;
+            border: none;
+            position: relative;
+            font-size: 20px;
+            color: #555;
+            cursor: pointer;
+        }
+
+        .topbar-icon-btn:hover {
+            color: #667eea;
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #dc3545;
+            color: white;
+            font-size: 10px;
+            border-radius: 50%;
+            padding: 2px 6px;
+        }
+
+        /* ========== CONTENT ========== */
+        .admin-content {
+            flex: 1;
+            padding: 30px;
+        }
+
+        /* ========== FOOTER ========== */
+        .admin-footer {
+            background: #fff;
+            border-top: 1px solid #e9edf3;
+            font-size: 14px;
+            padding: 15px 25px;
+        }
+
+        /* ========== CARDS ========== */
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            border: none;
+        }
+
+        /* Scrollbar */
+        .admin-sidebar::-webkit-scrollbar {
+            width: 5px;
+        }
+        
+        .admin-sidebar::-webkit-scrollbar-track {
+            background: rgba(255,255,255,0.1);
+            border-radius: 5px;
+        }
+        
+        .admin-sidebar::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.3);
+            border-radius: 5px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .admin-sidebar {
+                transform: translateX(-100%);
+                width: 280px;
+            }
+            .admin-sidebar.mobile-open {
+                transform: translateX(0);
+            }
+            .admin-main {
+                margin-left: 0;
+            }
+            .admin-main.expanded {
+                margin-left: 0;
+            }
+            .admin-content {
+                padding: 20px 15px;
+            }
+        }
+    </style>
+
+    {% block stylesheets %}{% endblock %}
+</head>
+<body>
+    {# ===== SIDEBAR ===== #}
+    <div class="admin-sidebar" id="adminSidebar">
+        {% include 'admin/partials/sidebar-admin.html.twig' %}
+    </div>
+    
+    {# ===== MAIN CONTENT ===== #}
+    <div class="admin-main" id="adminMain">
+        {# ===== NAVBAR ===== #}
         {% include 'admin/partials/navbar-admin.html.twig' %}
 
+        {# ===== PAGE CONTENT ===== #}
         <main class="admin-content">
             {% block admin_content %}{% endblock %}
         </main>
 
-        <footer class="admin-footer d-flex justify-content-between align-items-center px-4 py-3">
-            <span>Horozia ©</span>
-            <div class="d-flex gap-3">
+        {# ===== FOOTER ===== #}
+        <footer class="admin-footer d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <span>Horozia © {{ "now"|date("Y") }}</span>
+            <div class="d-flex gap-3 flex-wrap justify-content-center">
                 <a href="#" class="text-decoration-none text-muted">Support</a>
                 <a href="#" class="text-decoration-none text-muted">Help Center</a>
                 <a href="#" class="text-decoration-none text-muted">Privacy</a>
@@ -26,5 +275,40 @@
             </div>
         </footer>
     </div>
-</div>
-{% endblock %}
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+    
+    <script>
+        // Toggle sidebar functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebar = document.getElementById('adminSidebar');
+            const mainContent = document.getElementById('adminMain');
+            const toggleBtn = document.getElementById('sidebarToggle');
+            
+            if (sidebar && mainContent && toggleBtn) {
+                const isCollapsed = localStorage.getItem('adminSidebarCollapsed') === 'true';
+                if (isCollapsed) {
+                    sidebar.classList.add('collapsed');
+                    mainContent.classList.add('expanded');
+                }
+                
+                toggleBtn.addEventListener('click', function() {
+                    sidebar.classList.toggle('collapsed');
+                    mainContent.classList.toggle('expanded');
+                    localStorage.setItem('adminSidebarCollapsed', sidebar.classList.contains('collapsed'));
+                    
+                    // Redimensionner la carte Leaflet si elle existe
+                    if (typeof mapDash !== 'undefined' && mapDash) {
+                        setTimeout(function() {
+                            mapDash.invalidateSize();
+                        }, 300);
+                    }
+                });
+            }
+        });
+    </script>
+
+    {% block javascripts %}{% endblock %}
+</body>
+</html>

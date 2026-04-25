@@ -1,0 +1,183 @@
+{% extends 'admin/base_admin.html.twig' %}
+
+{% block title %}Liste des utilisateurs{% endblock %}
+
+{% block admin_content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 fw-bold mb-1">Utilisateurs</h1>
+        <p class="text-muted mb-0">Gestion des comptes utilisateurs</p>
+    </div>
+    <a href="{{ path('app_user_new') }}" class="btn btn-primary">
+        <i class="bi bi-plus-circle me-1"></i> Ajouter un utilisateur
+    </a>
+</div>
+
+{# Flash messages #}
+{% for message in app.flashes('success') %}
+<div class="alert alert-success alert-dismissible fade show mb-3" role="alert">
+    <i class="bi bi-check-circle-fill me-2"></i>{{ message }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+{% endfor %}
+{% for message in app.flashes('error') %}
+<div class="alert alert-danger alert-dismissible fade show mb-3" role="alert">
+    <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ message }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+{% endfor %}
+
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-5">
+                <label class="form-label small fw-bold">Recherche</label>
+                <input type="text" id="searchInput" class="form-control" placeholder="Nom, prénom, email, profil...">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label small fw-bold">Filtrer par</label>
+                <select id="sortSelect" class="form-select">
+                    <option value="">Tous</option>
+                    <option value="nom_asc">Nom A-Z</option>
+                    <option value="nom_desc">Nom Z-A</option>
+                    <option value="email_asc">Email A-Z</option>
+                    <option value="profil_asc">Profil A-Z</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <button type="button" id="resetBtn" class="btn btn-outline-secondary w-100">Réinitialiser</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table id="userTable" class="table table-hover align-middle mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th>ID</th>
+                        <th>Utilisateur</th>
+                        <th>Email</th>
+                        <th>Téléphone</th>
+                        <th>Profil</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr data-nom="{{ user.nom|lower }}" data-prenom="{{ user.prenom|lower }}" 
+                        data-email="{{ user.email|lower }}" data-profil="{{ user.profil.type|lower }}">
+                        <td class="fw-bold text-primary">{{ user.id }}</td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style="width:36px;height:36px;">
+                                    <i class="bi bi-person-fill text-primary"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-bold">{{ user.nom }} {{ user.prenom }}</div>
+                                    <div class="small text-muted">ID: #{{ user.id }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>{{ user.email }}</td>
+                        <td>{{ user.telephone ?? '-' }}</td>
+                        <td>
+                            {% set profilBadge = {
+                                'ADMIN': 'danger',
+                                'AGENT': 'warning',
+                                'CLIENT': 'success'
+                            } %}
+                            <span class="badge bg-{{ profilBadge[user.profil.type] ?? 'secondary' }} bg-opacity-10 text-{{ profilBadge[user.profil.type] ?? 'secondary' }} px-3 py-2 rounded-pill">
+                                {{ user.profil.type ?? 'Non défini' }}
+                            </span>
+                        </td>
+                        <td class="text-end">
+                            <div class="d-flex gap-2 justify-content-end">
+                                <a href="{{ path('app_user_show', {id: user.id}) }}" class="btn btn-sm btn-outline-info rounded-pill" title="Voir">
+                                    <i class="bi bi-eye me-1"></i> Voir
+                                </a>
+                                <a href="{{ path('app_user_edit', {id: user.id}) }}" class="btn btn-sm btn-outline-warning rounded-pill" title="Modifier">
+                                    <i class="bi bi-pencil me-1"></i> Modifier
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center py-4 text-muted">Aucun utilisateur trouvé.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div id="emptySearchMessage" class="alert alert-warning mt-3 d-none">Aucun utilisateur ne correspond à votre recherche.</div>
+
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchInput');
+    const sortSelect = document.getElementById('sortSelect');
+    const resetBtn = document.getElementById('resetBtn');
+    const tbody = document.querySelector('#userTable tbody');
+    const emptyMessage = document.getElementById('emptySearchMessage');
+
+    function getRows() {
+        return Array.from(tbody.querySelectorAll('tr')).filter(row => row.cells && row.cells.length > 1);
+    }
+
+    function applyFilters() {
+        const searchTerm = searchInput.value.toLowerCase().trim();
+        const sortValue = sortSelect.value;
+        let rows = getRows();
+        let visibleCount = 0;
+
+        rows.forEach(row => {
+            const nom = row.dataset.nom || '';
+            const prenom = row.dataset.prenom || '';
+            const email = row.dataset.email || '';
+            const profil = row.dataset.profil || '';
+
+            const matches = searchTerm === '' || 
+                nom.includes(searchTerm) || 
+                prenom.includes(searchTerm) || 
+                email.includes(searchTerm) || 
+                profil.includes(searchTerm);
+
+            row.style.display = matches ? '' : 'none';
+            if (matches) visibleCount++;
+        });
+
+        if (sortValue) {
+            rows = getRows().filter(row => row.style.display !== 'none');
+            rows.sort((a, b) => {
+                if (sortValue === 'nom_asc') return (a.dataset.nom || '').localeCompare(b.dataset.nom || '');
+                if (sortValue === 'nom_desc') return (b.dataset.nom || '').localeCompare(a.dataset.nom || '');
+                if (sortValue === 'email_asc') return (a.dataset.email || '').localeCompare(b.dataset.email || '');
+                if (sortValue === 'profil_asc') return (a.dataset.profil || '').localeCompare(b.dataset.profil || '');
+                return 0;
+            });
+            rows.forEach(row => tbody.appendChild(row));
+        }
+
+        emptyMessage.classList.toggle('d-none', visibleCount > 0);
+    }
+
+    searchInput.addEventListener('input', applyFilters);
+    sortSelect.addEventListener('change', applyFilters);
+    resetBtn.addEventListener('click', () => {
+        searchInput.value = '';
+        sortSelect.value = '';
+        applyFilters();
+    });
+});
+</script>
+{% endblock %}

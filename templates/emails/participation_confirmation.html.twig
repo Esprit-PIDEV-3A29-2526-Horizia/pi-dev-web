@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Confirmation de paiement - Horozia</title>
+</head>
+<body style="font-family: Arial, sans-serif;">
+    <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="background: #F96D00; padding: 20px; text-align: center; color: white;">
+            <h1>✅ Paiement Confirmé !</h1>
+        </div>
+        
+        <div style="background: #f9fafb; padding: 20px;">
+            <h2>Merci pour votre réservation</h2>
+            
+            <p><strong>Événement :</strong> {{ event.getTitre() }}</p>
+            <p><strong>Date :</strong> {{ event.getDate_debut()|date('d/m/Y H:i') }}</p>
+            <p><strong>Lieu :</strong> {{ event.getLocation() }}</p>
+            <p><strong>Nombre de places :</strong> {{ participation.getNombre_places() }}</p>
+            <p><strong>Montant total :</strong> {{ participation.getMontant_total() }} TND</p>
+            
+            <hr>
+            <p>À très bientôt !</p>
+            <p><strong>L'équipe Horozia</strong></p>
+        </div>
+    </div>
+</body>
+</html>

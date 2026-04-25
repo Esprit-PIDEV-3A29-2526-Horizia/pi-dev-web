@@ -1,0 +1,553 @@
+{% extends 'admin/base_admin.html.twig' %}
+
+{% block title %}Liste des réservations{% endblock %}
+
+{% block admin_content %}
+<div class="container-fluid py-3 reservation-page">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="fw-bold mb-1 reservation-title">Liste des réservations</h1>
+            <p class="reservation-subtitle mb-0">Consultez et gérez les réservations clients.</p>
+        </div>
+    </div>
+
+    <div class="card reservation-filter-wrap mb-4">
+        <div class="card-body p-4">
+            <div class="row g-3 align-items-end">
+                <div class="col-lg-5">
+                    <label for="searchInput" class="filter-label">Recherche</label>
+                    <input
+                        type="text"
+                        id="searchInput"
+                        class="form-control filter-control"
+                        placeholder="Rechercher par statut, voyage ou client"
+                        value="{{ search }}"
+                    >
+                </div>
+
+                <div class="col-lg-4">
+                    <label for="sortSelect" class="filter-label">Filtrer par</label>
+                    <select id="sortSelect" class="form-select filter-control">
+                        <option value="">Voulez-vous choisir ?</option>
+                        <option value="date_desc" {{ sort == 'date_desc' ? 'selected' : '' }}>Date récente</option>
+                        <option value="date_asc" {{ sort == 'date_asc' ? 'selected' : '' }}>Date ancienne</option>
+                        <option value="statut_asc" {{ sort == 'statut_asc' ? 'selected' : '' }}>Statut A-Z</option>
+                        <option value="nbr_asc" {{ sort == 'nbr_asc' ? 'selected' : '' }}>Nb personnes croissant</option>
+                        <option value="nbr_desc" {{ sort == 'nbr_desc' ? 'selected' : '' }}>Nb personnes décroissant</option>
+                    </select>
+                </div>
+
+                <div class="col-lg-3">
+                    <button type="button" id="resetBtn" class="btn btn-palette-reset w-100">
+                        Réinitialiser
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if reservations is not empty %}
+        <div class="row g-4">
+            {% for reservation in reservations %}
+                {% set clientName = reservation.user ? (reservation.user.prenom ~ ' ' ~ reservation.user.nom)|trim : 'Client inconnu' %}
+
+                <div class="col-xl-4 col-md-6">
+                    <div class="card reservation-card h-100">
+                        <div class="card-body p-4">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div>
+                                    <div class="reservation-label-mini">Date réservation</div>
+                                    <div class="reservation-date">{{ reservation.dateReservation ? reservation.dateReservation|date('Y-m-d') : '' }}</div>
+                                    <div class="reservation-time">{{ reservation.dateReservation ? reservation.dateReservation|date('H:i') : '' }}</div>
+                                </div>
+
+                                <div class="d-flex flex-column gap-2 align-items-end">
+                                    {% if reservation.statut == 'CONFIRMEE' %}
+                                        <span class="hz-badge badge-confirmed">Confirmée</span>
+                                    {% elseif reservation.statut == 'EN_ATTENTE' %}
+                                        <span class="hz-badge badge-pending">En attente</span>
+                                    {% else %}
+                                        <span class="hz-badge badge-cancelled">Annulée</span>
+                                    {% endif %}
+
+                                    {% if reservation.paymentStatus is defined %}
+                                        {% if reservation.paymentStatus == 'PAYEE' %}
+                                            <span class="hz-badge badge-paid">Payée</span>
+                                        {% elseif reservation.paymentStatus == 'ANNULEE' %}
+                                            <span class="hz-badge badge-payment-cancelled">Paiement annulé</span>
+                                        {% else %}
+                                            <span class="hz-badge badge-unpaid">Non payée</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="hz-badge badge-unknown">Inconnu</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <h4 class="reservation-voyage mb-3">
+                                {{ reservation.voyage ? reservation.voyage.titre : 'Voyage inconnu' }}
+                            </h4>
+
+                            <div class="row g-3 mb-4">
+                                <div class="col-6">
+                                    <div class="info-box">
+                                        <div class="small info-label">Client</div>
+                                        <div class="fw-semibold info-value">
+                                            {{ clientName }}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-6">
+                                    <div class="info-box">
+                                        <div class="small info-label">Total</div>
+                                        <div class="fw-bold info-value">{{ reservation.nbrPersonnes }}</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="d-flex gap-2 flex-wrap">
+    <a href="{{ path('app_reservation_show', {'id': reservation.id}) }}"
+       class="btn btn-palette-detail">
+        <i class="fas fa-eye me-1"></i> Détail
+    </a>
+
+    {% if reservation.statut == 'EN_ATTENTE' %}
+        <form method="post"
+              action="{{ path('app_reservation_confirmer', {'id': reservation.id}) }}"
+              class="d-inline">
+            <input type="hidden" name="_token" value="{{ csrf_token('confirm' ~ reservation.id) }}">
+            <button type="submit" class="btn btn-palette-confirm">
+                <i class="fas fa-check-circle me-1"></i> Confirmer
+            </button>
+        </form>
+
+        <a href="{{ path('app_reservation_edit', {'id': reservation.id}) }}"
+           class="btn btn-palette-report">
+            <i class="fas fa-edit me-1"></i> Reporter
+        </a>
+
+    {% elseif reservation.statut == 'CONFIRMEE' %}
+        <a href="{{ path('app_reservation_edit', {'id': reservation.id}) }}"
+           class="btn btn-palette-report">
+            <i class="fas fa-edit me-1"></i> Reporter
+        </a>
+    {% else %}
+        <span class="no-action-text">Aucune action disponible</span>
+    {% endif %}
+</div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+
+            {% if reservations.paginationData is defined and reservations.pageCount > 1 %}
+                <div class="col-12 mt-4">
+                    <div class="pagination-wrapper">
+                        {{ knp_pagination_render(reservations, 'front/pagination.html.twig') }}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    {% else %}
+        <div class="card empty-card">
+            <div class="card-body py-5 text-center text-muted">
+                Aucune réservation trouvée.
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<style>
+:root {
+    --hz-blue-dark: #23779C;
+    --hz-blue-light: #3D94CA;
+    --hz-green: #81AE8D;
+    --hz-gold: #E8B156;
+    --hz-beige: #DACEB6;
+    --hz-bg: #F8F7F3;
+    --hz-card: #FFFFFF;
+    --hz-border: #E8E3D8;
+    --hz-text: #1F2937;
+    --hz-muted: #6B7280;
+}
+
+.reservation-page {
+    padding-bottom: 24px;
+}
+
+.reservation-title {
+    color: var(--hz-text);
+}
+
+.reservation-subtitle {
+    color: var(--hz-muted);
+}
+
+.reservation-filter-wrap,
+.empty-card,
+.reservation-card {
+    border: 1px solid var(--hz-border);
+    border-radius: 22px;
+    background: var(--hz-card);
+    box-shadow: 0 8px 24px rgba(35, 119, 156, 0.05);
+}
+
+.filter-label {
+    display: block;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--hz-text);
+    margin-bottom: 10px;
+}
+
+.filter-control {
+    height: 48px;
+    border-radius: 12px;
+    border: 1px solid #d9dee7;
+    background: #fff;
+    color: #334155;
+    font-size: 15px;
+    box-shadow: none;
+}
+
+.filter-control:focus {
+    border-color: var(--hz-blue-light);
+    box-shadow: 0 0 0 0.15rem rgba(61, 148, 202, 0.15);
+}
+
+.filter-control::placeholder {
+    color: #7b8794;
+}
+
+.reservation-card {
+    transition: 0.2s ease;
+}
+
+.reservation-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 14px 32px rgba(35, 119, 156, 0.08);
+}
+
+.reservation-label-mini {
+    font-size: 14px;
+    color: var(--hz-muted);
+    margin-bottom: 4px;
+}
+
+.reservation-date {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--hz-text);
+}
+
+.reservation-time {
+    font-size: 14px;
+    color: var(--hz-muted);
+}
+
+.reservation-voyage {
+    color: var(--hz-text);
+    font-size: 1.1rem;
+    font-weight: 800;
+}
+
+.info-box {
+    background: #fbfaf7;
+    border: 1px solid var(--hz-border);
+    border-radius: 16px;
+    padding: 14px;
+    height: 100%;
+}
+
+.info-label {
+    color: var(--hz-muted);
+    margin-bottom: 4px;
+}
+
+.info-value {
+    color: var(--hz-text);
+}
+
+.hz-badge {
+    display: inline-block;
+    padding: 8px 14px;
+    border-radius: 999px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.badge-confirmed {
+    background: rgba(129, 174, 141, 0.22);
+    color: #4f7c59;
+}
+
+.badge-pending {
+    background: rgba(232, 177, 86, 0.24);
+    color: #9a6a18;
+}
+
+.badge-cancelled {
+    background: rgba(232, 177, 86, 0.18);
+    color: #8b5e16;
+}
+
+.badge-paid {
+    background: rgba(129, 174, 141, 0.22);
+    color: #4f7c59;
+}
+
+.badge-unpaid {
+    background: rgba(232, 177, 86, 0.20);
+    color: #9a6a18;
+}
+
+.badge-payment-cancelled {
+    background: rgba(218, 206, 182, 0.65);
+    color: #7d6f54;
+}
+
+.badge-unknown {
+    background: rgba(218, 206, 182, 0.5);
+    color: #6b7280;
+}
+
+.btn-palette-detail,
+.btn-palette-confirm,
+.btn-palette-report,
+.btn-palette-reset {
+    border: none;
+    border-radius: 12px;
+    padding: 10px 16px;
+    font-weight: 700;
+    transition: 0.2s ease;
+    box-shadow: none;
+}
+
+.btn-palette-detail {
+    background: var(--hz-blue-dark);
+    color: #fff;
+}
+
+.btn-palette-detail:hover {
+    background: #2a5a7a;
+    color: #fff;
+}
+
+.btn-palette-confirm {
+    background: var(--hz-green);
+    color: #fff;
+}
+
+.btn-palette-confirm:hover {
+    background: #709b7b;
+    color: #fff;
+}
+
+.btn-palette-report {
+    background: var(--hz-blue-light);
+    color: #fff;
+}
+
+.btn-palette-report:hover {
+    background: #2f86bc;
+    color: #fff;
+}
+
+.btn-palette-reset {
+    height: 48px;
+    background: var(--hz-beige);
+    color: var(--hz-text);
+}
+
+.btn-palette-reset:hover {
+    background: #cfc1a4;
+    color: var(--hz-text);
+}
+
+.no-action-text {
+    font-size: 0.92rem;
+    color: var(--hz-muted);
+    display: flex;
+    align-items: center;
+}
+
+.pagination-wrapper {
+    margin-top: 30px;
+    display: flex;
+    justify-content: center;
+}
+
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding-left: 0;
+    list-style: none;
+    margin: 0;
+}
+
+.page-item {
+    list-style: none;
+}
+
+.page-item .page-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 52px;
+    height: 52px;
+    padding: 0 22px;
+    border-radius: 999px;
+    background: #f1f3f5;
+    color: #7a8a99;
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 1rem;
+    border: none;
+    box-shadow: none;
+    transition: all 0.25s ease;
+}
+
+.page-item .page-link:hover {
+    background: #e7ebef;
+    color: #23779C;
+    text-decoration: none;
+}
+
+.page-item.active .page-link {
+    background: #23779C;
+    color: #ffffff;
+    box-shadow: 0 6px 14px rgba(35, 119, 156, 0.25);
+}
+
+.page-item.disabled .page-link {
+    background: #f1f3f5;
+    color: #b8c0c8;
+    pointer-events: none;
+    opacity: 1;
+}
+
+.page-item:first-child .page-link,
+.page-item:last-child .page-link {
+    padding: 0 24px;
+}
+
+@media (max-width: 991px) {
+    .btn-palette-reset {
+        width: 100%;
+    }
+}
+
+@media (max-width: 768px) {
+    .page-item .page-link {
+        min-width: 46px;
+        height: 46px;
+        padding: 0 18px;
+        font-size: 0.95rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const searchInput = document.getElementById('searchInput');
+            const sortSelect = document.getElementById('sortSelect');
+            const resetBtn = document.getElementById('resetBtn');
+            let searchTimeout;
+
+            function applyFilters() {
+                const params = new URLSearchParams(window.location.search);
+
+                if (searchInput && searchInput.value.trim()) {
+                    params.set('search', searchInput.value.trim());
+                } else {
+                    params.delete('search');
+                }
+
+                if (sortSelect && sortSelect.value) {
+                    params.set('sort', sortSelect.value);
+                } else {
+                    params.delete('sort');
+                }
+
+                params.delete('page');
+                window.location.search = params.toString();
+            }
+
+            if (searchInput) {
+                searchInput.addEventListener('input', function () {
+                    clearTimeout(searchTimeout);
+                    searchTimeout = setTimeout(() => {
+                        applyFilters();
+                    }, 400);
+                });
+            }
+
+            if (sortSelect) {
+                sortSelect.addEventListener('change', function () {
+                    applyFilters();
+                });
+            }
+
+            if (resetBtn) {
+                resetBtn.addEventListener('click', function () {
+                    window.location.href = "{{ path('app_reservation_index') }}";
+                });
+            }
+
+          // Confirmation SweetAlert pour le bouton Confirmer
+const confirmForms = document.querySelectorAll('.reservation-confirm-form');
+
+confirmForms.forEach(form => {
+    form.addEventListener('submit', function (e) {
+        e.preventDefault();
+
+        Swal.fire({
+            title: 'Confirmer cette réservation ?',
+            html: `
+                <div style="text-align: left">
+                    <p>Cette action va :</p>
+                    <ul style="margin-left: 20px">
+                        <li>✅ Confirmer la réservation</li>
+                        <li>📧 Envoyer un email de confirmation au client</li>
+                        <li>📉 Réduire le nombre de places disponibles</li>
+                    </ul>
+                </div>
+            `,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#81AE8D',
+            cancelButtonColor: '#DACEB6',
+            confirmButtonText: 'Oui, confirmer',
+            cancelButtonText: 'Annuler',
+            reverseButtons: true,
+            background: '#ffffff',
+            borderRadius: '18px'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Afficher un loader
+                Swal.fire({
+                    title: 'Confirmation en cours...',
+                    text: 'Veuillez patienter',
+                    allowOutsideClick: false,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+                form.submit();
+            }
+        });
+    });
+});
+    </script>
+{% endblock %}

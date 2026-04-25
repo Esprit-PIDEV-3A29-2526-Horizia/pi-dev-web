@@ -1,0 +1,202 @@
+<div class="admin-sidebar" style="overflow-y: auto; overflow-x: hidden; max-height: 100vh;">
+    <div class="sidebar-brand-center">
+        <img src="{{ asset('images/logo.png') }}" alt="Logo Horozia" class="sidebar-logo-large">
+    </div>
+
+    <ul class="sidebar-menu">
+        <!-- Dashboard -->
+        <li>
+            <a class="sidebar-link {{ app.request.attributes.get('_route') == 'app_admin' ? 'active' : '' }}" href="{{ path('app_admin') }}">
+                <i class="bi bi-grid-fill"></i>
+                <span>Dashboard</span>
+            </a>
+        </li>
+
+        <!-- Dashboard Location -->
+        <li>
+            <a class="sidebar-link {{ app.request.attributes.get('_route') == 'admin_location_dashboard' ? 'active' : '' }}" href="{{ path('admin_location_dashboard') }}">
+                <i class="bi bi-car-front-fill"></i>
+                <span>Dashboard Location</span>
+            </a>
+        </li>
+
+        <!-- ===== GESTION LOCATION ===== -->
+        <li style="border-top: 1px solid rgba(255,255,255,0.1); margin-top: 8px; padding-top: 8px;">
+            <span style="display: block; padding: 8px 25px; color: rgba(255,255,255,0.5); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px;">
+                <i class="bi bi-car-front-fill"></i> GESTION LOCATION
+            </span>
+        </li>
+
+        <li>
+            <a class="sidebar-link {{ app.request.attributes.get('_route') starts with 'admin_vehicule' ? 'active' : '' }}" href="{{ path('admin_vehicule_index') }}">
+                <i class="bi bi-truck-front-fill"></i>
+                <span>Véhicules</span>
+            </a>
+        </li>
+        <li>
+            <a class="sidebar-link {{ app.request.attributes.get('_route') starts with 'admin_location' and app.request.attributes.get('_route') != 'admin_location_dashboard' ? 'active' : '' }}" href="{{ path('admin_location_index') }}">
+                <i class="bi bi-calendar-check-fill"></i>
+                <span>Locations</span>
+            </a>
+        </li>
+        <li>
+            <a class="sidebar-link {{ app.request.attributes.get('_route') == 'admin_planning_index' ? 'active' : '' }}" href="{{ path('admin_planning_index') }}">
+                <i class="bi bi-calendar3"></i>
+                <span>Planning</span>
+            </a>
+        </li>
+        <li>
+            <a class="sidebar-link {{ app.request.attributes.get('_route') starts with 'admin_marque' ? 'active' : '' }}" href="{{ path('admin_marque_index') }}">
+                <i class="bi bi-tags-fill"></i>
+                <span>Marques</span>
+            </a>
+        </li>
+        <li>
+            <a class="sidebar-link {{ app.request.attributes.get('_route') starts with 'admin_modele' ? 'active' : '' }}" href="{{ path('admin_modele_index') }}">
+                <i class="bi bi-list-ul"></i>
+                <span>Modèles</span>
+            </a>
+        </li>
+        <li>
+            <a class="sidebar-link {{ app.request.attributes.get('_route') starts with 'admin_documents' ? 'active' : '' }}" href="{{ path('admin_documents_index') }}">
+                <i class="bi bi-file-earmark-text-fill"></i>
+                <span>Documents</span>
+            </a>
+        </li>
+
+        <!-- ===== GESTION VOYAGES ===== -->
+        <li style="border-top: 1px solid rgba(255,255,255,0.1); margin-top: 8px; padding-top: 8px;">
+            <span style="display: block; padding: 8px 25px; color: rgba(255,255,255,0.5); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px;">
+                <i class="bi bi-airplane-fill"></i> GESTION VOYAGES
+            </span>
+        </li>
+
+        <li>
+            <a class="sidebar-link {{ app.request.attributes.get('_route') starts with 'app_voyage' ? 'active' : '' }}" href="{{ path('app_voyage_index') }}">
+                <i class="bi bi-airplane-fill"></i>
+                <span>Voyages</span>
+            </a>
+        </li>
+        <li>
+            <a class="sidebar-link {{ app.request.attributes.get('_route') starts with 'app_categorie' ? 'active' : '' }}" href="{{ path('app_categorie_index') }}">
+                <i class="bi bi-tags-fill"></i>
+                <span>Catégories</span>
+            </a>
+        </li>
+        <li>
+            <a class="sidebar-link {{ app.request.attributes.get('_route') starts with 'app_reservation' ? 'active' : '' }}" href="{{ path('app_reservation_index') }}">
+                <i class="bi bi-calendar-check-fill"></i>
+                <span>Réservations voyages</span>
+            </a>
+        </li>
+
+        <!-- ===== GESTION LOGEMENTS ===== -->
+        <li style="border-top: 1px solid rgba(255,255,255,0.1); margin-top: 8px; padding-top: 8px;">
+            <span style="display: block; padding: 8px 25px; color: rgba(255,255,255,0.5); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px;">
+                <i class="bi bi-building"></i> GESTION LOGEMENTS
+            </span>
+        </li>
+
+        <li>
+            <a class="sidebar-link {{ app.request.attributes.get('_route') starts with 'admin_logement' ? 'active' : '' }}" href="{{ path('admin_logement_index') }}">
+                <i class="bi bi-building"></i>
+                <span>Logements</span>
+            </a>
+        </li>
+        <li>
+            <a class="sidebar-link {{ app.request.attributes.get('_route') == 'admin_cancel_requests' ? 'active' : '' }}" href="{{ path('admin_cancel_requests') }}">
+                <i class="bi bi-clock-history"></i>
+                <span>Demandes annulation</span>
+            </a>
+        </li>
+
+        <!-- ===== GESTION ÉVÉNEMENTS ===== -->
+        <li style="border-top: 1px solid rgba(255,255,255,0.1); margin-top: 8px; padding-top: 8px;">
+            <span style="display: block; padding: 8px 25px; color: rgba(255,255,255,0.5); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px;">
+                <i class="bi bi-calendar-event-fill"></i> GESTION ÉVÉNEMENTS
+            </span>
+        </li>
+
+        <li>
+            <a class="sidebar-link {{ app.request.attributes.get('_route') starts with 'app_event' ? 'active' : '' }}" href="{{ path('app_event_index') }}">
+                <i class="bi bi-calendar-event-fill"></i>
+                <span>Événements</span>
+            </a>
+        </li>
+        <li>
+            <a class="sidebar-link {{ app.request.attributes.get('_route') starts with 'app_participation' ? 'active' : '' }}" href="{{ path('app_participation_index') }}">
+                <i class="bi bi-people-fill"></i>
+                <span>Participations</span>
+            </a>
+        </li>
+
+        <!-- ===== GESTION PUBLICATIONS ===== -->
+        <li style="border-top: 1px solid rgba(255,255,255,0.1); margin-top: 8px; padding-top: 8px;">
+            <span style="display: block; padding: 8px 25px; color: rgba(255,255,255,0.5); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px;">
+                <i class="bi bi-newspaper"></i> GESTION PUBLICATIONS
+            </span>
+        </li>
+
+        <li>
+            <a class="sidebar-link {{ app.request.attributes.get('_route') starts with 'admin_publication' ? 'active' : '' }}" href="{{ path('admin_publication_index') }}">
+                <i class="bi bi-newspaper"></i>
+                <span>Publications</span>
+            </a>
+        </li>
+        <li>
+            <a class="sidebar-link {{ app.request.attributes.get('_route') starts with 'admin_commentaire' ? 'active' : '' }}" href="{{ path('admin_commentaire_index') }}">
+                <i class="bi bi-chat-dots-fill"></i>
+                <span>Commentaires</span>
+            </a>
+        </li>
+
+        <!-- ===== GESTION UTILISATEURS ===== -->
+        <li style="border-top: 1px solid rgba(255,255,255,0.1); margin-top: 8px; padding-top: 8px;">
+            <span style="display: block; padding: 8px 25px; color: rgba(255,255,255,0.5); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px;">
+                <i class="bi bi-people-fill"></i> GESTION UTILISATEURS
+            </span>
+        </li>
+
+        <li>
+            <a class="sidebar-link {{ app.request.attributes.get('_route') starts with 'app_user' ? 'active' : '' }}" href="{{ path('app_user_index') }}">
+                <i class="bi bi-people-fill"></i>
+                <span>Utilisateurs</span>
+            </a>
+        </li>
+        <li>
+            <a class="sidebar-link {{ app.request.attributes.get('_route') starts with 'app_profil' ? 'active' : '' }}" href="{{ path('app_profil_index') }}">
+                <i class="bi bi-person-badge-fill"></i>
+                <span>Profils</span>
+            </a>
+        </li>
+
+        <!-- Calendrier global -->
+        <li style="border-top: 1px solid rgba(255,255,255,0.1); margin-top: 8px; padding-top: 8px;">
+            <a class="sidebar-link {{ app.request.attributes.get('_route') == 'app_calendar' ? 'active' : '' }}" href="{{ path('app_calendar') }}">
+                <i class="bi bi-calendar3"></i>
+                <span>Calendrier général</span>
+            </a>
+        </li>
+    </ul>
+</div>
+
+<style>
+    .admin-sidebar {
+        scrollbar-width: thin;
+        scrollbar-color: rgba(255,255,255,0.3) rgba(255,255,255,0.1);
+    }
+    .admin-sidebar::-webkit-scrollbar {
+        width: 5px;
+    }
+    .admin-sidebar::-webkit-scrollbar-track {
+        background: rgba(255,255,255,0.1);
+        border-radius: 5px;
+    }
+    .admin-sidebar::-webkit-scrollbar-thumb {
+        background: rgba(255,255,255,0.3);
+        border-radius: 5px;
+    }
+    .admin-sidebar::-webkit-scrollbar-thumb:hover {
+        background: rgba(255,255,255,0.5);
+    }
+</style>

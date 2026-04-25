@@ -1,305 +1,503 @@
-{% extends 'admin/layout.html.twig' %}
-{% block title %}Dashboard – Horizia{% endblock %}
-{% block topbar_title %}Dashboard{% endblock %}
+{% extends 'admin/base_admin.html.twig' %}
+
+{% block title %}Dashboard Location - Horozia{% endblock %}
+
 {% block admin_content %}
 
-{# ── Leaflet CSS ── #}
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-
 <style>
-.map-legend { display:flex; flex-wrap:wrap; gap:10px; margin-top:10px; }
-.legend-item { display:flex; align-items:center; gap:6px; font-size:.8rem; color:#64748b; }
-.legend-dot { width:12px; height:12px; border-radius:50%; flex-shrink:0; }
+    /* Styles spécifiques au dashboard */
+    .map-legend { 
+        display: flex; 
+        flex-wrap: wrap; 
+        gap: 10px; 
+        margin-top: 10px; 
+    }
+    .legend-item { 
+        display: flex; 
+        align-items: center; 
+        gap: 6px; 
+        font-size: .8rem; 
+        color: #64748b; 
+    }
+    .legend-dot { 
+        width: 12px; 
+        height: 12px; 
+        border-radius: 50%; 
+        flex-shrink: 0; 
+    }
+    
+    .dashboard-card {
+        background: #fff;
+        border-radius: 20px;
+        padding: 22px;
+        border: 1px solid #edf1f5;
+        box-shadow: 0 12px 28px rgba(15, 23, 42, 0.06);
+        transition: transform 0.2s, box-shadow 0.2s;
+        height: 100%;
+    }
+    .dashboard-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+    }
+    
+    .stat-label {
+        font-size: .95rem;
+        font-weight: 600;
+        color: #6b7280;
+        margin-bottom: 6px;
+    }
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 800;
+        color: #1f2937;
+        line-height: 1.1;
+    }
+    .stat-icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+    .soft-blue { background: rgba(61, 148, 202, .14); color: #3D94CA; }
+    .soft-green { background: rgba(129, 174, 141, .14); color: #81AE8D; }
+    .soft-yellow { background: rgba(232, 177, 86, .18); color: #E8B156; }
+    .soft-neutral { background: rgba(218, 206, 182, .3); color: #8b7d62; }
+    .soft-red { background: rgba(220, 53, 69, .12); color: #dc3545; }
+    
+    .card-title-custom {
+        font-size: 1.02rem;
+        font-weight: 800;
+        color: #1f2937;
+        margin-bottom: 1rem;
+    }
+    
+    .badge-count {
+        background: rgba(61,148,202,.15);
+        color: #3D94CA;
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-size: .8rem;
+        font-weight: 700;
+    }
+    
+    .action-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        transition: all 0.2s;
+        text-decoration: none;
+    }
+    .action-btn-view {
+        background: rgba(61,148,202,.12);
+        color: #3D94CA;
+    }
+    .action-btn-view:hover {
+        background: #3D94CA;
+        color: #fff;
+    }
+    
+    .dashboard-table thead th {
+        background: #f8fafc;
+        color: #475569;
+        font-weight: 600;
+        border-bottom: 2px solid #e2e8f0;
+    }
+    .dashboard-table tbody tr:hover {
+        background: #f8fafc;
+    }
+    
+    /* Responsive - comme le dashboard principal */
+    .chart-box,
+    .line-chart-box,
+    .bar-chart-box {
+        position: relative;
+        height: 320px;
+    }
+    
+    @media (max-width: 768px) {
+        .dashboard-card {
+            padding: 16px;
+        }
+        .stat-value {
+            font-size: 1.5rem;
+        }
+        .stat-icon {
+            width: 45px;
+            height: 45px;
+        }
+        .card-title-custom {
+            font-size: 0.9rem;
+        }
+        .map-legend {
+            gap: 6px;
+        }
+        .legend-item {
+            font-size: 0.7rem;
+        }
+        .chart-box,
+        .line-chart-box,
+        .bar-chart-box {
+            height: 280px;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .stat-value {
+            font-size: 1.2rem;
+        }
+        .stat-label {
+            font-size: 0.75rem;
+        }
+    }
 </style>
 
-<div class="page-header">
-    <div class="page-header-left">
-        <div class="page-header-icon"><i class="bi bi-grid-fill"></i></div>
-        <div>
-            <h2>Dashboard</h2>
-            <p class="text-muted mb-0" style="font-size:.92rem;">Vue d'ensemble – {{ moisNom }}</p>
-        </div>
+<div class="container-fluid">
+    <div class="mb-4">
+        <h2 class="fw-bold mb-1">Dashboard Location</h2>
+        <p class="text-muted mb-0">Vue d'ensemble – {{ moisNom }}</p>
     </div>
-</div>
 
-{# ── Stats cards ── #}
-<div class="row g-3 mb-4">
-    <div class="col-6 col-lg-3">
-        <div class="dashboard-card d-flex align-items-center gap-3">
-            <div class="stat-icon soft-blue"><i class="bi bi-truck-front-fill fs-5"></i></div>
-            <div>
-                <div class="stat-label mb-0">Véhicules dispo</div>
-                <div class="stat-value" style="font-size:1.8rem;">{{ vehiculesDisponibles }}</div>
+    {# ── Stats cards ── #}
+    <div class="row g-4 mb-4">
+        <div class="col-md-6 col-xl-3">
+            <div class="dashboard-card">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-label">Véhicules dispo</div>
+                        <div class="stat-value">{{ vehiculesDisponibles }}</div>
+                        <div class="stat-meta text-muted">Disponibles</div>
+                    </div>
+                    <div class="stat-icon soft-blue">
+                        <i class="bi bi-truck-front-fill fs-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-xl-3">
+            <div class="dashboard-card">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-label">Véhicules loués</div>
+                        <div class="stat-value">{{ vehiculesLoues }}</div>
+                        <div class="stat-meta text-muted">En location</div>
+                    </div>
+                    <div class="stat-icon soft-yellow">
+                        <i class="bi bi-key-fill fs-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-xl-3">
+            <div class="dashboard-card">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-label">Locations actives</div>
+                        <div class="stat-value">{{ locationsActives }}</div>
+                        <div class="stat-meta text-muted">En cours</div>
+                    </div>
+                    <div class="stat-icon soft-green">
+                        <i class="bi bi-calendar-check-fill fs-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 col-xl-3">
+            <div class="dashboard-card">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="stat-label">CA du mois</div>
+                        <div class="stat-value">{{ caMois|number_format(0, ',', ' ') }} TND</div>
+                        <div class="stat-meta text-muted">Total TND</div>
+                    </div>
+                    <div class="stat-icon soft-neutral">
+                        <i class="bi bi-cash-stack fs-4"></i>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-    <div class="col-6 col-lg-3">
-        <div class="dashboard-card d-flex align-items-center gap-3">
-            <div class="stat-icon soft-yellow"><i class="bi bi-key-fill fs-5"></i></div>
-            <div>
-                <div class="stat-label mb-0">Véhicules loués</div>
-                <div class="stat-value" style="font-size:1.8rem;">{{ vehiculesLoues }}</div>
-            </div>
-        </div>
-    </div>
-    <div class="col-6 col-lg-3">
-        <div class="dashboard-card d-flex align-items-center gap-3">
-            <div class="stat-icon soft-green"><i class="bi bi-calendar-check-fill fs-5"></i></div>
-            <div>
-                <div class="stat-label mb-0">Locations actives</div>
-                <div class="stat-value" style="font-size:1.8rem;">{{ locationsActives }}</div>
-            </div>
-        </div>
-    </div>
-    <div class="col-6 col-lg-3">
-        <div class="dashboard-card d-flex align-items-center gap-3">
-            <div class="stat-icon soft-neutral"><i class="bi bi-cash-coin fs-5"></i></div>
-            <div>
-                <div class="stat-label mb-0">CA du mois</div>
-                <div class="stat-value" style="font-size:1.5rem;">{{ caMois|number_format(0, ',', ' ') }} TND</div>
-            </div>
-        </div>
-    </div>
-</div>
 
-{# ── Graphiques ── #}
-<div class="row g-3 mb-4">
-    <div class="col-lg-4">
-        <div class="dashboard-card">
-            <div class="card-title-custom mb-3"><i class="bi bi-pie-chart-fill me-2" style="color:var(--color-primary);"></i>Répartition statuts</div>
-            <div style="width:220px;height:220px;margin:0 auto;position:relative;">
-                <canvas id="chartStatuts"></canvas>
+    {# ── Graphiques ── #}
+    <div class="row g-4 mb-4">
+        <div class="col-xl-4">
+            <div class="dashboard-card h-100">
+                <div class="card-title-custom mb-3">
+                    <i class="bi bi-pie-chart-fill me-2" style="color:#3D94CA;"></i>
+                    Répartition statuts
+                </div>
+                <div class="chart-box">
+                    <canvas id="chartStatuts"></canvas>
+                </div>
+                <div class="mt-3">
+                    {% for statut, nb in statuts %}
+                    <div class="d-flex justify-content-between align-items-center mb-1" style="font-size:.88rem;">
+                        <span>{{ statut }}</span>
+                        <span class="fw-700">{{ nb }}</span>
+                    </div>
+                    {% endfor %}
+                </div>
             </div>
-            <div class="mt-3">
-                {% for statut, nb in statuts %}
-                <div class="d-flex justify-content-between align-items-center mb-1" style="font-size:.88rem;">
-                    <span>{{ statut }}</span>
-                    <span class="fw-700">{{ nb }}</span>
+        </div>
+        <div class="col-xl-4">
+            <div class="dashboard-card h-100">
+                <div class="card-title-custom mb-3">
+                    <i class="bi bi-trophy-fill me-2" style="color:#E8B156;"></i>
+                    Top modèles loués
+                </div>
+                {% if topModele.total > 0 %}
+                <div class="text-center mb-3" style="padding:16px;background:rgba(61,148,202,.07);border-radius:12px;">
+                    <div style="font-size:2rem;font-weight:800;color:#3D94CA;">{{ topModele.nomMarque }} {{ topModele.nomModele }}</div>
+                    <div class="text-muted" style="font-size:.85rem;">{{ topModele.total }} location(s)</div>
+                </div>
+                {% endif %}
+                {% for nom, nb in top5Modeles %}
+                <div class="d-flex justify-content-between align-items-center mb-2" style="font-size:.9rem;">
+                    <span><i class="bi bi-car-front me-2" style="color:#3D94CA;"></i>{{ nom }}</span>
+                    <span class="badge-count">{{ nb }}</span>
                 </div>
                 {% endfor %}
             </div>
         </div>
-    </div>
-    <div class="col-lg-4">
-        <div class="dashboard-card">
-            <div class="card-title-custom mb-3"><i class="bi bi-trophy-fill me-2" style="color:var(--color-warning);"></i>Top modèles loués</div>
-            {% if topModele.total > 0 %}
-            <div class="text-center mb-3" style="padding:16px;background:rgba(61,148,202,.07);border-radius:12px;">
-                <div style="font-size:2rem;font-weight:800;color:var(--color-primary);">{{ topModele.nomMarque }} {{ topModele.nomModele }}</div>
-                <div class="text-muted" style="font-size:.85rem;">{{ topModele.total }} location(s)</div>
-            </div>
-            {% endif %}
-            {% for nom, nb in top5Modeles %}
-            <div class="d-flex justify-content-between align-items-center mb-2" style="font-size:.9rem;">
-                <span><i class="bi bi-car-front me-2" style="color:var(--color-secondary);"></i>{{ nom }}</span>
-                <span class="badge-count" style="background:rgba(61,148,202,.15);color:var(--color-primary);padding:3px 10px;border-radius:20px;font-size:.8rem;font-weight:700;">{{ nb }}</span>
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-    <div class="col-lg-4">
-        <div class="dashboard-card">
-            <div class="card-title-custom mb-3"><i class="bi bi-speedometer2 me-2" style="color:var(--color-accent);"></i>Taux d'occupation</div>
-            <div class="text-center py-3">
-                <div style="font-size:3rem;font-weight:800;color:var(--color-primary);">{{ tauxOccupation }}%</div>
-                <div class="text-muted" style="font-size:.88rem;">{{ moisNom }}</div>
-            </div>
-            <div style="background:#eef2f7;border-radius:99px;height:12px;overflow:hidden;">
-                <div style="height:100%;width:{{ tauxOccupation }}%;background:linear-gradient(90deg,#23779C,#3D94CA);border-radius:99px;transition:.6s;"></div>
-            </div>
-        </div>
-    </div>
-</div>
-
-{# ══════════════════════════════════════════════════════════
-   CARTE LEAFLET — Géolocalisation des locations actives
-══════════════════════════════════════════════════════════ #}
-<div class="dashboard-card mb-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <div class="card-title-custom mb-0">
-            <i class="bi bi-map-fill me-2" style="color:#dc3545;"></i>
-            Carte des locations actives
-        </div>
-        <div style="font-size:.82rem;color:#94a3b8;">
-            <i class="bi bi-info-circle me-1"></i>
-            {{ locationsCartographie is defined ? locationsCartographie|length : 0 }} location(s) affichée(s)
-        </div>
-    </div>
-
-    {# Légende #}
-    <div class="map-legend mb-2">
-        <div class="legend-item"><div class="legend-dot" style="background:#3b82f6;"></div> En cours</div>
-        <div class="legend-item"><div class="legend-dot" style="background:#f59e0b;"></div> Réservée</div>
-        <div class="legend-item"><div class="legend-dot" style="background:#10b981;"></div> Terminée</div>
-        <div class="legend-item"><div class="legend-dot" style="background:#dc3545;"></div> Annulée</div>
-        <div class="legend-item"><div class="legend-dot" style="background:#23779C;"></div> Agence Horizia</div>
-        <div class="legend-item"><div class="legend-dot" style="background:#94a3b8;border:2px dashed #64748b;"></div> Position approx.</div>
-    </div>
-
-    <div id="map-dashboard" style="height:420px;border-radius:12px;border:1px solid #e2e8f0;overflow:hidden;"></div>
-</div>
-
-{# ── Alertes retour ── #}
-{% if alertesRetour|length > 0 %}
-<div class="dashboard-card mb-3">
-    <div class="card-title-custom mb-3" style="color:#dc3545;">
-        <i class="bi bi-exclamation-triangle-fill me-2"></i>Retours prévus dans 3 jours
-    </div>
-    <div class="table-responsive">
-        <table class="table dashboard-table">
-            <thead><tr><th>#</th><th>Client</th><th>Véhicule</th><th>Fin prévue</th><th>Action</th></tr></thead>
-            <tbody>
-                {% for loc in alertesRetour %}
-                <tr>
-                    <td>{{ loc.idLocation }}</td>
-                    <td>{{ loc.clientNomComplet }}</td>
-                    <td>{{ loc.vehicule.immatriculation }}</td>
-                    <td style="color:#dc3545;font-weight:700;">{{ loc.dateFinPrevue|date('d/m/Y') }}</td>
-                    <td><a href="{{ path('admin_location_show', {id: loc.idLocation}) }}" class="action-btn action-btn-view"><i class="bi bi-eye"></i></a></td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-</div>
-{% endif %}
-
-{# ── JS Chart.js + Leaflet ── #}
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script>
-document.addEventListener('DOMContentLoaded', function () {
-
-    // ── Chart statuts ──
-    const ctx = document.getElementById('chartStatuts');
-    if (ctx) {
-        new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: [{% for s, n in statuts %}'{{ s }}'{% if not loop.last %},{% endif %}{% endfor %}],
-                datasets: [{
-                    data: [{% for s, n in statuts %}{{ n }}{% if not loop.last %},{% endif %}{% endfor %}],
-                    backgroundColor: ['#3D94CA','#81AE8D','#6c757d','#dc3545','#E8B156'],
-                    borderWidth: 0
-                }]
-            },
-            options: { responsive: true, plugins: { legend: { display: false } }, cutout: '65%' }
-        });
-    }
-
-    // ══════════════════════════════════════════
-    // CARTE LEAFLET DASHBOARD
-    // ══════════════════════════════════════════
-    const mapDash = L.map('map-dashboard', {
-        scrollWheelZoom: false,
-        zoomControl: true
-    }).setView([36.8065, 10.1815], 10); // Tunis centre
-
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-        maxZoom: 19
-    }).addTo(mapDash);
-
-    // Couleurs par statut
-    const statutColors = {
-        'en_cours':  '#3b82f6',
-        'réservée':  '#f59e0b',
-        'reservee':  '#f59e0b',
-        'terminée':  '#10b981',
-        'terminee':  '#10b981',
-        'annulée':   '#dc3545',
-        'annulee':   '#dc3545',
-        'no_show':   '#6b7280',
-    };
-
-    function makeMarkerIcon(color, approx) {
-        return L.divIcon({
-            html: `<div style="
-                width:28px;height:28px;border-radius:50% 50% 50% 0;
-                background:${color};
-                border:${approx ? '2px dashed #64748b' : '3px solid #fff'};
-                transform:rotate(-45deg);
-                box-shadow:0 2px 6px rgba(0,0,0,.25);"></div>`,
-            className: '',
-            iconSize: [28, 28],
-            iconAnchor: [14, 28],
-            popupAnchor: [0, -30]
-        });
-    }
-
-    // Données des locations (injectées depuis Twig)
-    const locations = [
-        {% if locationsCartographie is defined %}
-        {% for loc in locationsCartographie %}
-        {
-            id:      {{ loc.idLocation }},
-            nom:     "{{ loc.clientNomComplet|escape('js') }}",
-            tel:     "{{ loc.clientTelephone|escape('js') }}",
-            immat:   "{{ loc.vehicule.immatriculation|escape('js') }}",
-            statut:  "{{ loc.statut|escape('js') }}",
-            debut:   "{{ loc.dateDebut|date('d/m/Y') }}",
-            fin:     "{{ loc.dateFinPrevue|date('d/m/Y') }}",
-            lat:     {{ loc.clientLatitude  is not null ? loc.clientLatitude  : 'null' }},
-            lng:     {{ loc.clientLongitude is not null ? loc.clientLongitude : 'null' }},
-            adresse: "{{ ((loc.clientAdresse ?? '') ~ (loc.clientVille ? ', ' ~ loc.clientVille : ''))|escape('js') }}",
-            url:     "{{ path('admin_location_show', {id: loc.idLocation}) }}"
-        }{% if not loop.last %},{% endif %}
-        {% endfor %}
-        {% endif %}
-    ];
-
-    const bounds = [];
-
-    locations.forEach(function(loc) {
-        let lat = loc.lat;
-        let lng = loc.lng;
-        let approx = false;
-
-        // Si pas de coordonnées → légère dispersion aléatoire autour de Tunis
-        if (lat === null || lng === null) {
-            lat  = 36.8065 + (Math.random() - 0.5) * 0.15;
-            lng  = 10.1815 + (Math.random() - 0.5) * 0.15;
-            approx = true;
-        }
-
-        const color  = statutColors[loc.statut] || '#6b7280';
-        const icon   = makeMarkerIcon(color, approx);
-
-        const popup = `
-            <div style="font-family:sans-serif;min-width:200px;">
-                <div style="font-weight:700;font-size:.92rem;color:#1e293b;margin-bottom:6px;">
-                    #${loc.id} — ${loc.nom}
+        <div class="col-xl-4">
+            <div class="dashboard-card h-100">
+                <div class="card-title-custom mb-3">
+                    <i class="bi bi-speedometer2 me-2" style="color:#81AE8D;"></i>
+                    Taux d'occupation
                 </div>
-                <div style="font-size:.8rem;color:#64748b;margin-bottom:2px;">🚗 ${loc.immat}</div>
-                <div style="font-size:.8rem;color:#64748b;margin-bottom:2px;">📞 ${loc.tel}</div>
-                ${loc.adresse ? `<div style="font-size:.8rem;color:#64748b;margin-bottom:2px;">📍 ${loc.adresse}</div>` : ''}
-                <div style="font-size:.8rem;color:#64748b;margin-bottom:8px;">📅 ${loc.debut} → ${loc.fin}</div>
-                ${approx ? '<div style="font-size:.75rem;color:#f59e0b;margin-bottom:8px;">⚠️ Position approximative</div>' : ''}
-                <a href="${loc.url}" style="display:inline-block;background:#23779C;color:#fff;padding:4px 12px;border-radius:6px;font-size:.78rem;text-decoration:none;font-weight:600;">
-                    Voir la fiche →
-                </a>
-            </div>`;
+                <div class="text-center py-3">
+                    <div style="font-size:3rem;font-weight:800;color:#3D94CA;">{{ tauxOccupation }}%</div>
+                    <div class="text-muted" style="font-size:.88rem;">{{ moisNom }}</div>
+                </div>
+                <div style="background:#eef2f7;border-radius:99px;height:12px;overflow:hidden;">
+                    <div style="height:100%;width:{{ tauxOccupation }}%;background:linear-gradient(90deg,#23779C,#3D94CA);border-radius:99px;transition:.6s;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-        L.marker([lat, lng], { icon }).addTo(mapDash).bindPopup(popup, { maxWidth: 280 });
-        bounds.push([lat, lng]);
-    });
+    {# ── CARTE LEAFLET ── #}
+    <div class="row g-4 mb-4">
+        <div class="col-12">
+            <div class="dashboard-card">
+                <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                    <div class="card-title-custom mb-0">
+                        <i class="bi bi-map-fill me-2" style="color:#dc3545;"></i>
+                        Carte des locations actives
+                    </div>
+                    <div style="font-size:.82rem;color:#94a3b8;">
+                        <i class="bi bi-info-circle me-1"></i>
+                        {{ locationsCartographie is defined ? locationsCartographie|length : 0 }} location(s) affichée(s)
+                    </div>
+                </div>
 
-    // Ajuster le zoom sur tous les marqueurs
-    if (bounds.length > 0) {
-        mapDash.fitBounds(bounds, { padding: [40, 40], maxZoom: 13 });
-    }
+                {# Légende #}
+                <div class="map-legend mb-2">
+                    <div class="legend-item"><div class="legend-dot" style="background:#3b82f6;"></div> En cours</div>
+                    <div class="legend-item"><div class="legend-dot" style="background:#f59e0b;"></div> Réservée</div>
+                    <div class="legend-item"><div class="legend-dot" style="background:#10b981;"></div> Terminée</div>
+                    <div class="legend-item"><div class="legend-dot" style="background:#dc3545;"></div> Annulée</div>
+                    <div class="legend-item"><div class="legend-dot" style="background:#23779C;"></div> Agence Horizia</div>
+                    <div class="legend-item"><div class="legend-dot" style="background:#94a3b8;border:2px dashed #64748b;"></div> Position approx.</div>
+                </div>
 
-    // Marqueur Agence Horizia
-    const agenceIcon = L.divIcon({
-        html: `<div style="background:#23779C;color:#fff;padding:5px 10px;border-radius:8px;font-size:.72rem;font-weight:700;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.25);">
-            🏢 Horizia
-        </div>`,
-        className: '',
-        iconAnchor: [35, 14]
-    });
-    L.marker([36.8559, 10.1938], { icon: agenceIcon })
-        .addTo(mapDash)
-        .bindPopup('<strong>Agence Horizia</strong><br>Tunis, Tunisie');
-});
-</script>
+                <div id="map-dashboard" style="height:400px;border-radius:12px;border:1px solid #e2e8f0;overflow:hidden;width:100%;"></div>
+            </div>
+        </div>
+    </div>
 
+    {# ── Alertes retour ── #}
+    {% if alertesRetour|length > 0 %}
+    <div class="row g-4 mb-4">
+        <div class="col-12">
+            <div class="dashboard-card">
+                <div class="card-title-custom mb-3" style="color:#dc3545;">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    Retours prévus dans 3 jours ({{ alertesRetour|length }})
+                </div>
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0 dashboard-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Client</th>
+                                <th>Véhicule</th>
+                                <th>Fin prévue</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for loc in alertesRetour %}
+                            <tr>
+                                <td><strong>#{{ loc.idLocation }}</strong></td>
+                                <td>{{ loc.clientNomComplet }}</td>
+                                <td>{{ loc.vehicule.immatriculation }}</td>
+                                <td style="color:#dc3545;font-weight:700;">{{ loc.dateFinPrevue|date('d/m/Y') }}</td>
+                                <td>
+                                    <a href="{{ path('admin_location_show', {id: loc.idLocation}) }}" class="action-btn action-btn-view">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+{# ── CSS Leaflet ── #}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+
+            // ── Chart statuts ──
+            const ctx = document.getElementById('chartStatuts');
+            if (ctx && typeof Chart !== 'undefined') {
+                new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: [{% for s, n in statuts %}'{{ s }}'{% if not loop.last %},{% endif %}{% endfor %}],
+                        datasets: [{
+                            data: [{% for s, n in statuts %}{{ n }}{% if not loop.last %},{% endif %}{% endfor %}],
+                            backgroundColor: ['#3D94CA','#81AE8D','#6c757d','#dc3545','#E8B156'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: { 
+                        responsive: true, 
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } }, 
+                        cutout: '65%' 
+                    }
+                });
+            }
+
+            // ── CARTE LEAFLET ──
+            if (typeof L !== 'undefined') {
+                const mapDash = L.map('map-dashboard', {
+                    scrollWheelZoom: false,
+                    zoomControl: true
+                }).setView([36.8065, 10.1815], 10);
+
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+                    maxZoom: 19
+                }).addTo(mapDash);
+
+                const statutColors = {
+                    'en_cours':  '#3b82f6',
+                    'réservée':  '#f59e0b',
+                    'reservee':  '#f59e0b',
+                    'terminée':  '#10b981',
+                    'terminee':  '#10b981',
+                    'annulée':   '#dc3545',
+                    'annulee':   '#dc3545',
+                    'no_show':   '#6b7280',
+                };
+
+                function makeMarkerIcon(color, approx) {
+                    return L.divIcon({
+                        html: `<div style="
+                            width:28px;height:28px;border-radius:50% 50% 50% 0;
+                            background:${color};
+                            border:${approx ? '2px dashed #64748b' : '3px solid #fff'};
+                            transform:rotate(-45deg);
+                            box-shadow:0 2px 6px rgba(0,0,0,.25);"></div>`,
+                        className: '',
+                        iconSize: [28, 28],
+                        iconAnchor: [14, 28],
+                        popupAnchor: [0, -30]
+                    });
+                }
+
+                const locations = [
+                    {% if locationsCartographie is defined %}
+                    {% for loc in locationsCartographie %}
+                    {
+                        id:      {{ loc.idLocation }},
+                        nom:     "{{ loc.clientNomComplet|escape('js') }}",
+                        tel:     "{{ loc.clientTelephone|escape('js') }}",
+                        immat:   "{{ loc.vehicule.immatriculation|escape('js') }}",
+                        statut:  "{{ loc.statut|escape('js') }}",
+                        debut:   "{{ loc.dateDebut|date('d/m/Y') }}",
+                        fin:     "{{ loc.dateFinPrevue|date('d/m/Y') }}",
+                        lat:     {{ loc.clientLatitude is not null ? loc.clientLatitude : 'null' }},
+                        lng:     {{ loc.clientLongitude is not null ? loc.clientLongitude : 'null' }},
+                        adresse: "{{ ((loc.clientAdresse ?? '') ~ (loc.clientVille ? ', ' ~ loc.clientVille : ''))|escape('js') }}",
+                        url:     "{{ path('admin_location_show', {id: loc.idLocation}) }}"
+                    }{% if not loop.last %},{% endif %}
+                    {% endfor %}
+                    {% endif %}
+                ];
+
+                const bounds = [];
+
+                locations.forEach(function(loc) {
+                    let lat = loc.lat;
+                    let lng = loc.lng;
+                    let approx = false;
+
+                    if (lat === null || lng === null) {
+                        lat = 36.8065 + (Math.random() - 0.5) * 0.15;
+                        lng = 10.1815 + (Math.random() - 0.5) * 0.15;
+                        approx = true;
+                    }
+
+                    const color = statutColors[loc.statut] || '#6b7280';
+                    const icon = makeMarkerIcon(color, approx);
+
+                    const popup = `
+                        <div style="font-family:sans-serif;min-width:200px;">
+                            <div style="font-weight:700;font-size:.92rem;color:#1e293b;margin-bottom:6px;">
+                                #${loc.id} — ${loc.nom}
+                            </div>
+                            <div style="font-size:.8rem;color:#64748b;margin-bottom:2px;">🚗 ${loc.immat}</div>
+                            <div style="font-size:.8rem;color:#64748b;margin-bottom:2px;">📞 ${loc.tel}</div>
+                            ${loc.adresse ? `<div style="font-size:.8rem;color:#64748b;margin-bottom:2px;">📍 ${loc.adresse}</div>` : ''}
+                            <div style="font-size:.8rem;color:#64748b;margin-bottom:8px;">📅 ${loc.debut} → ${loc.fin}</div>
+                            ${approx ? '<div style="font-size:.75rem;color:#f59e0b;margin-bottom:8px;">⚠️ Position approximative</div>' : ''}
+                            <a href="${loc.url}" style="display:inline-block;background:#23779C;color:#fff;padding:4px 12px;border-radius:6px;font-size:.78rem;text-decoration:none;font-weight:600;">
+                                Voir la fiche →
+                            </a>
+                        </div>`;
+
+                    L.marker([lat, lng], { icon }).addTo(mapDash).bindPopup(popup, { maxWidth: 280 });
+                    bounds.push([lat, lng]);
+                });
+
+                if (bounds.length > 0) {
+                    mapDash.fitBounds(bounds, { padding: [40, 40], maxZoom: 13 });
+                }
+
+                // Marqueur Agence Horizia
+                const agenceIcon = L.divIcon({
+                    html: `<div style="background:#23779C;color:#fff;padding:5px 10px;border-radius:8px;font-size:.72rem;font-weight:700;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.25);">
+                        🏢 Horizia
+                    </div>`,
+                    className: '',
+                    iconAnchor: [35, 14]
+                });
+                L.marker([36.8559, 10.1938], { icon: agenceIcon })
+                    .addTo(mapDash)
+                    .bindPopup('<strong>Agence Horizia</strong><br>Tunis, Tunisie');
+            }
+        });
+    </script>
 {% endblock %}

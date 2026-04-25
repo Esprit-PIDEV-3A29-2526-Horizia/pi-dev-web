@@ -1,0 +1,602 @@
+{% extends 'base_front.html.twig' %}
+
+{% block title %}Détail réservation - Horozia{% endblock %}
+
+{% block body %}
+
+{% for message in app.flashes('success') %}
+    <script>
+        Swal.fire({
+            icon: 'success',
+            title: 'Succès',
+            text: "{{ message|e('js') }}",
+            confirmButtonText: 'OK',
+            confirmButtonColor: '#81AE8D'
+        });
+    </script>
+{% endfor %}
+
+{% for message in app.flashes('error') %}
+    <script>
+        Swal.fire({
+            icon: 'error',
+            title: 'Erreur',
+            text: "{{ message|e('js') }}",
+            confirmButtonText: 'OK',
+            confirmButtonColor: '#23779C'
+        });
+    </script>
+{% endfor %}
+
+{% set statut = reservation.statut|default('EN_ATTENTE')|upper %}
+{% set paymentStatus = reservation.paymentStatus|default('NON_PAYEE')|upper %}
+{% set voyage = reservation.voyage ?? null %}
+{% set imagePath = voyage and voyage.imageUrl ? voyage.imageUrl : 'front/pacific/images/destination-1.jpg' %}
+
+<section class="hero-wrap hero-wrap-2 js-fullheight" style="background-image: url('{{ asset('front/pacific/images/image_2.jpg') }}');">
+    <div class="overlay"></div>
+    <div class="container">
+        <div class="row no-gutters slider-text js-fullheight align-items-end justify-content-center">
+            <div class="col-md-9 ftco-animate pb-5 text-center">
+                <p class="breadcrumbs">
+                    <span class="mr-2">
+                        <a href="{{ path('app_front_home', {'currency': currency|default('TND')}) }}">Accueil <i class="fa fa-chevron-right"></i></a>
+                    </span>
+                    <span class="mr-2">
+                        <a href="{{ path('app_front_mes_reservations') }}">Mes réservations <i class="fa fa-chevron-right"></i></a>
+                    </span>
+                    <span>Détail réservation <i class="fa fa-chevron-right"></i></span>
+                </p>
+                <h1 class="mb-0 bread">Détail réservation</h1>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="ftco-section reservation-detail-page">
+    <div class="container">
+        <div class="detail-shell">
+            <div class="row">
+                <div class="col-lg-7 mb-4 mb-lg-0">
+                    <div class="detail-main-card">
+                        <div class="detail-image-wrap">
+                            <div class="detail-image"
+                                 style="background-image: url('{% if imagePath starts with 'http' %}{{ imagePath }}{% else %}{{ asset(imagePath) }}{% endif %}');">
+                            </div>
+                            <div class="detail-image-overlay"></div>
+
+                            <div class="detail-top-badges">
+                                <span class="hz-badge
+                                    {% if statut == 'CONFIRMEE' %}
+                                        badge-confirmed
+                                    {% elseif statut == 'ANNULEE' %}
+                                        badge-cancelled
+                                    {% else %}
+                                        badge-pending
+                                    {% endif %}
+                                ">
+                                    {% if statut == 'CONFIRMEE' %}
+                                        Confirmée
+                                    {% elseif statut == 'ANNULEE' %}
+                                        Annulée
+                                    {% else %}
+                                        En attente
+                                    {% endif %}
+                                </span>
+
+                                <span class="hz-badge
+                                    {% if paymentStatus == 'PAYEE' %}
+                                        badge-paid
+                                    {% elseif paymentStatus == 'ANNULEE' %}
+                                        badge-payment-cancelled
+                                    {% else %}
+                                        badge-unpaid
+                                    {% endif %}
+                                ">
+                                    {% if paymentStatus == 'PAYEE' %}
+                                        Payée
+                                    {% elseif paymentStatus == 'ANNULEE' %}
+                                        Paiement annulé
+                                    {% else %}
+                                        Non payée
+                                    {% endif %}
+                                </span>
+                            </div>
+
+                            <div class="detail-image-content">
+                                <div class="image-mini-label">Réservation</div>
+                                <div class="image-main-date">
+                                    {{ reservation.dateReservation ? reservation.dateReservation|date('Y-m-d') : '' }}
+                                </div>
+                                <div class="image-time">
+                                    {{ reservation.dateReservation ? reservation.dateReservation|date('H:i') : '' }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="detail-content">
+                            <h2 class="detail-voyage-title">
+                                {{ voyage ? voyage.titre : 'Voyage introuvable' }}
+                            </h2>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <div class="detail-box">
+                                        <div class="detail-label">Destination</div>
+                                        <div class="detail-value">{{ voyage ? voyage.destination : 'Indisponible' }}</div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <div class="detail-box">
+                                        <div class="detail-label">Statut</div>
+                                        <div class="detail-value">
+                                            {% if statut == 'CONFIRMEE' %}
+                                                Confirmée
+                                            {% elseif statut == 'ANNULEE' %}
+                                                Annulée
+                                            {% else %}
+                                                En attente
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <div class="detail-box">
+                                        <div class="detail-label">Adultes</div>
+                                        <div class="detail-value">{{ reservation.nbAdultes ?? 0 }}</div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <div class="detail-box">
+                                        <div class="detail-label">Enfants</div>
+                                        <div class="detail-value">{{ reservation.nbEnfants ?? 0 }}</div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <div class="detail-box">
+                                        <div class="detail-label">Total personnes</div>
+                                        <div class="detail-value">{{ reservation.nbrPersonnes }}</div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <div class="detail-box">
+                                        <div class="detail-label">Paiement</div>
+                                        <div class="detail-value">
+                                            {% if paymentStatus == 'PAYEE' %}
+                                                Payée
+                                            {% elseif paymentStatus == 'ANNULEE' %}
+                                                Paiement annulé
+                                            {% else %}
+                                                Non payée
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {% if reservation.prixTotal is defined and reservation.prixTotal is not null %}
+                                    <div class="col-12 mb-3">
+                                        <div class="detail-box price-box">
+                                            <div class="detail-label">Prix total</div>
+                                            <div class="detail-value strong">
+                                                {{ reservation.prixTotal|number_format(2, '.', ' ') }} DT
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="detail-actions mt-4">
+                                <a href="{{ path('app_front_mes_reservations') }}" class="btn btn-palette-back">
+                                    Retour
+                                </a>
+
+                                {% if voyage %}
+                                    <a href="{{ path('app_front_voyage_detail', {'id': voyage.id, 'currency': currency|default('TND')}) }}"
+                                       class="btn btn-palette-detail">
+                                        Voir le voyage
+                                    </a>
+                                {% endif %}
+
+                                {% if statut == 'CONFIRMEE' and paymentStatus != 'PAYEE' %}
+                                    <a href="{{ path('app_payment_checkout', {'id': reservation.id}) }}"
+                                       class="btn btn-palette-confirm">
+                                        Payer maintenant
+                                    </a>
+                                {% endif %}
+
+                                {% if statut != 'ANNULEE' and statut != 'CONFIRMEE' and paymentStatus != 'PAYEE' %}
+                                    <form method="post"
+                                          action="{{ path('app_front_annuler_reservation', {'id': reservation.id}) }}"
+                                          class="cancel-reservation-form d-inline-block">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('annuler_reservation_' ~ reservation.id) }}">
+                                        <button type="submit" class="btn btn-palette-cancel">
+                                            Annuler
+                                        </button>
+                                    </form>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-5">
+                    <div class="side-card mb-4">
+                        <h4 class="side-title">Dates du voyage</h4>
+
+                        <div class="detail-box mb-3">
+                            <div class="detail-label">Date départ</div>
+                            <div class="detail-value">
+                                {{ voyage and voyage.dateDepart ? voyage.dateDepart|date('Y-m-d') : '-' }}
+                            </div>
+                        </div>
+
+                        <div class="detail-box">
+                            <div class="detail-label">Date retour</div>
+                            <div class="detail-value">
+                                {{ voyage and voyage.dateRetour ? voyage.dateRetour|date('Y-m-d') : '-' }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+:root {
+    --hz-blue-dark: #23779C;
+    --hz-blue-light: #3D94CA;
+    --hz-green: #81AE8D;
+    --hz-gold: #E8B156;
+    --hz-beige: #DACEB6;
+    --hz-border: #E8E3D8;
+    --hz-text: #1F2937;
+    --hz-muted: #6B7280;
+}
+
+.reservation-detail-page {
+    background: #f9fafb;
+}
+
+.detail-main-card,
+.side-card {
+    background: #fff;
+    border: 1px solid var(--hz-border);
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 10px 24px rgba(35, 119, 156, 0.06);
+}
+
+.detail-image-wrap {
+    position: relative;
+    height: 320px;
+    overflow: hidden;
+}
+
+.detail-image {
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+}
+
+.detail-image-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.7), rgba(0,0,0,0.15));
+}
+
+.detail-top-badges {
+    position: absolute;
+    top: 18px;
+    left: 18px;
+    right: 18px;
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+    z-index: 2;
+}
+
+.detail-image-content {
+    position: absolute;
+    left: 24px;
+    bottom: 22px;
+    z-index: 2;
+    color: #fff;
+}
+
+.image-mini-label {
+    font-size: 13px;
+    opacity: 0.95;
+}
+
+.image-main-date {
+    font-size: 28px;
+    font-weight: 800;
+    line-height: 1.1;
+}
+
+.image-time {
+    font-size: 15px;
+    opacity: 0.95;
+    margin-top: 4px;
+}
+
+.detail-content {
+    padding: 24px;
+}
+
+.detail-voyage-title {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--hz-text);
+    margin-bottom: 20px;
+}
+
+.detail-box {
+    background: #fbfaf7;
+    border: 1px solid var(--hz-border);
+    border-radius: 16px;
+    padding: 14px 16px;
+    height: 100%;
+}
+
+.price-box {
+    background: rgba(129, 174, 141, 0.08);
+}
+
+.detail-label {
+    font-size: 0.85rem;
+    color: var(--hz-muted);
+    margin-bottom: 6px;
+}
+
+.detail-value {
+    color: var(--hz-text);
+    font-weight: 700;
+}
+
+.detail-value.strong {
+    font-size: 1.08rem;
+}
+
+.side-card {
+    padding: 24px;
+}
+
+.side-title {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--hz-text);
+    margin-bottom: 18px;
+}
+
+.summary-line {
+    display: flex;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 12px 0;
+    border-bottom: 1px solid #f0ebe2;
+    color: var(--hz-text);
+}
+
+.summary-line:last-child {
+    border-bottom: none;
+}
+
+.hz-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+    backdrop-filter: blur(10px);
+}
+
+.badge-confirmed {
+    background: rgba(129, 174, 141, 0.85);
+    color: #fff;
+}
+
+.badge-cancelled {
+    background: rgba(232, 177, 86, 0.85);
+    color: #fff;
+}
+
+.badge-pending {
+    background: rgba(35, 119, 156, 0.85);
+    color: #fff;
+}
+
+.badge-paid {
+    background: rgba(129, 174, 141, 0.85);
+    color: #fff;
+}
+
+.badge-unpaid {
+    background: rgba(232, 177, 86, 0.88);
+    color: #fff;
+}
+
+.badge-payment-cancelled {
+    background: rgba(218, 206, 182, 0.95);
+    color: #5f5a4f;
+}
+
+.detail-actions,
+.qr-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.btn-palette-back,
+.btn-palette-detail,
+.btn-palette-confirm,
+.btn-palette-cancel,
+.btn-download-qr,
+.btn-view-qr {
+    border: none;
+    border-radius: 12px;
+    padding: 10px 16px;
+    font-weight: 700;
+    text-decoration: none !important;
+    box-shadow: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-palette-back {
+    background: var(--hz-beige);
+    color: var(--hz-text);
+}
+
+.btn-palette-back:hover {
+    background: #cfc1a4;
+    color: var(--hz-text);
+}
+
+.btn-palette-detail {
+    background: var(--hz-blue-dark);
+    color: #fff !important;
+}
+
+.btn-palette-detail:hover {
+    background: #1d6483;
+    color: #fff !important;
+}
+
+.btn-palette-confirm {
+    background: var(--hz-green);
+    color: #fff !important;
+}
+
+.btn-palette-confirm:hover {
+    background: #709b7b;
+    color: #fff !important;
+}
+
+.btn-palette-cancel {
+    background: var(--hz-gold);
+    color: #fff !important;
+}
+
+.btn-palette-cancel:hover {
+    background: #d79f42;
+    color: #fff !important;
+}
+
+.qr-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.qr-image-box {
+    background: linear-gradient(145deg, #ffffff, #f6f8fb);
+    border: 1px solid var(--hz-border);
+    border-radius: 22px;
+    padding: 18px;
+    box-shadow: 0 10px 24px rgba(35, 119, 156, 0.08);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.qr-image-box:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 16px 30px rgba(35, 119, 156, 0.14);
+}
+
+.qr-image {
+    max-width: 220px;
+    width: 100%;
+    display: block;
+    border-radius: 12px;
+}
+
+.qr-help {
+    color: var(--hz-muted);
+    font-size: 0.95rem;
+    text-align: center;
+    max-width: 280px;
+}
+
+.btn-download-qr {
+    background: var(--hz-blue-dark);
+    color: #fff !important;
+}
+
+.btn-download-qr:hover {
+    background: #1d6483;
+    color: #fff !important;
+    transform: translateY(-2px);
+}
+
+.btn-view-qr {
+    background: var(--hz-green);
+    color: #fff !important;
+}
+
+.btn-view-qr:hover {
+    background: #709b7b;
+    color: #fff !important;
+    transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+    .detail-image-wrap {
+        height: 260px;
+    }
+
+    .detail-voyage-title {
+        font-size: 1.5rem;
+    }
+
+    .image-main-date {
+        font-size: 22px;
+    }
+}
+</style>
+
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const forms = document.querySelectorAll('.cancel-reservation-form');
+
+            forms.forEach(function (form) {
+                form.addEventListener('submit', function (e) {
+                    e.preventDefault();
+
+                    Swal.fire({
+                        title: 'Annuler la réservation ?',
+                        text: "Cette action annulera votre réservation.",
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#E8B156',
+                        cancelButtonColor: '#DACEB6',
+                        confirmButtonText: 'Oui, annuler',
+                        cancelButtonText: 'Non'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            form.submit();
+                        }
+                    });
+                });
+            });
+        });
+    </script>
+{% endblock %}
