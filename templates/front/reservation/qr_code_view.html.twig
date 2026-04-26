@@ -30,36 +30,30 @@
         <div class="qr-card-main">
             <div class="qr-header text-center">
                 <span class="qr-subtitle">Horozia</span>
-                <h2>{{ voyage ? voyage.titre : 'Voyage' }}</h2>
-                <p>Réservation #{{ reservation.id }}</p>
+                <p>{{ voyage ? voyage.titre : 'Voyage' }}</p>
             </div>
 
             <div class="qr-preview-box text-center">
                 <img
-                    src="{{ path('app_reservation_qrcode', {'id': reservation.id}) }}?t={{ 'now'|date('U') }}"
+                    src="{{ path('app_reservation_qrcode', {'id': reservation.id}) }}"
                     alt="QR Code réservation"
                     class="qr-preview-image"
-                    onerror="this.style.display='none';document.getElementById('qr-error-message').style.display='block';"
                 >
-
-                <div id="qr-error-message" class="qr-error-message" style="display:none;">
-                    Impossible de charger le QR code.
-                </div>
             </div>
 
             <div class="qr-info text-center">
                 <p>
-                    Scannez ce QR code pour accéder rapidement à la réservation.
+                    Scannez ce QR code pour accéder rapidement au détail de la réservation.
                 </p>
             </div>
 
             <div class="qr-actions">
                 <a href="{{ path('app_reservation_qrcode_download', {'id': reservation.id}) }}" class="btn btn-download-qr">
-                    <i class="fa fa-download mr-2"></i> Télécharger
+                    Télécharger
                 </a>
 
                 <a href="{{ path('app_front_reservation_detail', {'id': reservation.id}) }}" class="btn btn-back-detail">
-                    <i class="fa fa-arrow-left mr-2"></i> Retour au détail
+                    Retour au détail
                 </a>
             </div>
         </div>
@@ -115,13 +109,6 @@
     max-width: 280px;
     display: block;
     margin: 0 auto;
-}
-
-.qr-error-message {
-    color: #dc3545;
-    font-weight: 700;
-    padding: 20px;
-    text-align: center;
 }
 
 .qr-info p {

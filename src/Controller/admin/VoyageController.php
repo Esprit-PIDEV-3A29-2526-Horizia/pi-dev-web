@@ -4,10 +4,13 @@ namespace App\Controller\admin;
 
 use App\Entity\Voyage;
 use App\Form\VoyageType;
+use App\Service\GeminiService;
 use App\Service\OpenWeatherService;
+use App\Service\PexelsService;
 use Doctrine\ORM\EntityManagerInterface;
 use Knp\Component\Pager\PaginatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
@@ -120,6 +123,9 @@ class VoyageController extends AbstractController
 
         if ($form->isSubmitted() && $form->isValid()) {
             $voyage->setPlacesRestantes($voyage->getPlacesTotal());
+            
+            // 👇 AJOUTER CETTE LIGNE pour assigner l'admin connecté
+            $voyage->setCreatedBy($this->getUser());
 
             $entityManager->persist($voyage);
             $entityManager->flush();
@@ -218,5 +224,72 @@ class VoyageController extends AbstractController
         }
 
         return $this->redirectToRoute('app_voyage_index');
+    }
+
+#[Route('/generate-content', name: 'app_voyage_generate_content', methods: ['POST'])]
+    public function generateContent(
+        Request $request,
+        GeminiService $geminiService,
+        PexelsService $pexelsService
+        ): JsonResponse {
+        $data = json_decode($request->getContent(), true);
+
+        if (!is_array($data)) {
+            return $this->json([
+                'success' => false,
+                'message' => 'Requête invalide.',
+            ], 400);
+        }
+
+        $destination = trim((string) ($data['destination'] ?? ''));
+
+        if ($destination === '') {
+            return $this->json([
+                'success' => false,
+                'message' => 'Destination obligatoire.',
+            ], 400);
+        }
+
+        $generated = $geminiService->generateVoyageContent($destination);
+
+        $titre = trim((string) ($generated['titre'] ?? ''));
+        $description = trim((string) ($generated['description'] ?? ''));
+        $pays = trim((string) ($generated['pays'] ?? ''));
+        $imagePrompt = trim((string) ($generated['image_prompt'] ?? ''));
+
+        if ($titre === '') {
+            $titre = 'Voyage ' . ucfirst($destination);
+        }
+
+        if ($description === '') {
+            $description = 'Découvrez ' . ucfirst($destination) . ', une destination fascinante qui séduit par son atmosphère unique, son patrimoine culturel et la richesse de son histoire. Entre sites emblématiques, quartiers animés, traditions locales et plaisirs gastronomiques, ce voyage promet une expérience complète mêlant découverte, détente et immersion.';
+        }
+
+        $queries = array_filter([
+            $destination,
+            $destination . ' city',
+            $destination . ' tourism',
+            $pays !== '' ? $destination . ' ' . $pays : null,
+            $pays !== '' ? $pays . ' travel' : null,
+            $imagePrompt !== '' ? $imagePrompt : null,
+        ]);
+
+        $imageUrl = null;
+        foreach ($queries as $query) {
+            $imageUrl = $pexelsService->searchImage($query);
+            if ($imageUrl) {
+                break;
+            }
+        }
+
+        return $this->json([
+            'success' => true,
+            'titre' => $titre,
+            'description' => $description,
+            'image_prompt' => $imagePrompt,
+            'pays' => $pays,
+            'image_url' => $imageUrl,
+            'debug_query' => $queries,
+        ]);
     }
 }

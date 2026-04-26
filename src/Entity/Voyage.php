@@ -62,6 +62,11 @@ class Voyage
     #[Assert\PositiveOrZero(message: "Le nombre de places restantes doit être positif ou nul.")]
     private ?int $placesRestantes = null;
 
+    // RELATION : l'utilisateur (admin) qui a créé le voyage
+    #[ORM\ManyToOne(targetEntity: User::class)]
+    #[ORM\JoinColumn(name: 'created_by_id', referencedColumnName: 'id', nullable: false)]
+    private ?User $createdBy = null;
+
     public function getId(): ?int
     {
         return $this->id;
@@ -179,6 +184,17 @@ class Voyage
     public function setPlacesRestantes(?int $placesRestantes): self
     {
         $this->placesRestantes = $placesRestantes;
+        return $this;
+    }
+
+    public function getCreatedBy(): ?User
+    {
+        return $this->createdBy;
+    }
+
+    public function setCreatedBy(?User $createdBy): self
+    {
+        $this->createdBy = $createdBy;
         return $this;
     }
 

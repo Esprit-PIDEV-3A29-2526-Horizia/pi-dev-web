@@ -7,6 +7,7 @@ use App\Repository\CategorieRepository;
 
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: CategorieRepository::class)]
 #[ORM\Table(name: 'categorie')]
@@ -18,6 +19,8 @@ class Categorie
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(message: "Le nom de la catégorie est obligatoire.")]
+    #[Assert\Length(min: 2, minMessage: "Le nom doit contenir au moins 2 caractères.")]
     private ?string $nom = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
@@ -25,13 +28,19 @@ class Categorie
 
     #[ORM\Column(name: 'image_url', length: 255, nullable: true)]
     private ?string $imageUrl = null;
-#[ORM\OneToMany(mappedBy: 'categorie', targetEntity: Voyage::class)]
-private Collection $voyages;
 
-public function __construct()
-{
-    $this->voyages = new ArrayCollection();
-}  
+    #[ORM\OneToMany(mappedBy: 'categorie', targetEntity: Voyage::class)]
+    private Collection $voyages;
+
+    // RELATION : l'utilisateur (admin) qui a créé la catégorie
+    #[ORM\ManyToOne(targetEntity: User::class)]
+    #[ORM\JoinColumn(name: 'created_by_id', referencedColumnName: 'id', nullable: false)]
+    private ?User $createdBy = null;
+
+    public function __construct()
+    {
+        $this->voyages = new ArrayCollection();
+    }  
 
     public function getId(): ?int
     {
@@ -97,6 +106,17 @@ public function __construct()
             }
         }
 
+        return $this;
+    }
+
+    public function getCreatedBy(): ?User
+    {
+        return $this->createdBy;
+    }
+
+    public function setCreatedBy(?User $createdBy): self
+    {
+        $this->createdBy = $createdBy;
         return $this;
     }
 

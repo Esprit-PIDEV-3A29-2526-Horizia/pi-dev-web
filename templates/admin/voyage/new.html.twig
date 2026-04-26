@@ -21,7 +21,11 @@
             <div class="row">
                 <div class="col-md-6 mb-3 {% if form.titre.vars.errors|length > 0 %}field-error{% endif %}">
                     {{ form_label(form.titre) }}
-                    {{ form_widget(form.titre, {'attr': {'class': 'form-control'}}) }}
+                    {{ form_widget(form.titre, {
+                        'attr': {
+                            'class': 'form-control'
+                        }
+                    }) }}
                     {% if form.titre.vars.errors|length > 0 %}
                         <div class="validation-error">{{ form_errors(form.titre) }}</div>
                     {% endif %}
@@ -29,7 +33,19 @@
 
                 <div class="col-md-6 mb-3 {% if form.destination.vars.errors|length > 0 %}field-error{% endif %}">
                     {{ form_label(form.destination) }}
-                    {{ form_widget(form.destination, {'attr': {'class': 'form-control'}}) }}
+                    {{ form_widget(form.destination, {
+                        'attr': {
+                            'class': 'form-control'
+                        }
+                    }) }}
+
+                    <div class="mt-2 d-flex gap-2 align-items-center flex-wrap">
+                        <button type="button" class="btn btn-sm btn-outline-primary" id="generate-ai-btn">
+                            <i class="bi bi-stars me-1"></i> Générer avec IA
+                        </button>
+                        <span id="generate-ai-status" class="small text-muted"></span>
+                    </div>
+
                     {% if form.destination.vars.errors|length > 0 %}
                         <div class="validation-error">{{ form_errors(form.destination) }}</div>
                     {% endif %}
@@ -38,7 +54,12 @@
 
             <div class="mb-3 {% if form.description.vars.errors|length > 0 %}field-error{% endif %}">
                 {{ form_label(form.description) }}
-                {{ form_widget(form.description, {'attr': {'class': 'form-control', 'rows': 4}}) }}
+                {{ form_widget(form.description, {
+                    'attr': {
+                        'class': 'form-control',
+                        'rows': 5
+                    }
+                }) }}
                 {% if form.description.vars.errors|length > 0 %}
                     <div class="validation-error">{{ form_errors(form.description) }}</div>
                 {% endif %}
@@ -93,11 +114,11 @@
                 {{ form_widget(form.imageUrl, {'attr': {
                     'class': 'form-control',
                     'id': 'image-url-input',
-                    'placeholder': '/images/Grece.jpg ou https://...'
+                    'placeholder': 'https://...'
                 }}) }}
 
                 <div class="form-text">
-                    Utilisez une URL publique comme <strong>/images/Grece.jpg</strong> ou une URL complète.
+                    L’image sera remplie automatiquement via l’API si disponible, sinon vous pouvez saisir une URL manuellement.
                 </div>
 
                 {% if form.imageUrl.vars.errors|length > 0 %}
@@ -118,10 +139,11 @@
                                         {{ asset(currentImage starts with '/' ? currentImage|slice(1) : currentImage) }}
                                     {% endif %}
                                  {% else %}
-                                    https://via.placeholder.com/500x280?text=Apercu+Voyage
+                                    /images/placeholder_voyage.jpg
                                  {% endif %}"
                             alt="Aperçu de l'image"
                             class="image-preview-element"
+                            style="max-width: 100%; height: auto; border-radius: 12px; object-fit: cover;"
                         >
                     </div>
                 </div>
@@ -146,31 +168,132 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            const input = document.getElementById('image-url-input');
+            const imageInput = document.getElementById('image-url-input');
             const preview = document.getElementById('image-preview');
-            const placeholder = 'https://via.placeholder.com/500x280?text=Apercu+Voyage';
+            const placeholder = '/images/placeholder_voyage.jpg';
 
-            if (input && preview) {
-                input.addEventListener('input', function () {
-                    const value = input.value.trim();
+            function updatePreview(value) {
+                if (!preview) return;
 
-                    if (value === '') {
-                        preview.src = placeholder;
-                        return;
-                    }
+                const finalValue = (value || '').trim();
 
-                    if (value.startsWith('http://') || value.startsWith('https://')) {
-                        preview.src = value;
-                    } else {
-                        const cleanPath = value.startsWith('/') ? value.substring(1) : value;
-                        preview.src = '/' + cleanPath;
-                    }
+                if (finalValue === '') {
+                    preview.src = placeholder;
+                    return;
+                }
+
+                if (finalValue.startsWith('http://') || finalValue.startsWith('https://')) {
+                    preview.src = finalValue;
+                } else {
+                    const cleanPath = finalValue.startsWith('/') ? finalValue.substring(1) : finalValue;
+                    preview.src = '/' + cleanPath;
+                }
+            }
+
+            if (imageInput && preview) {
+                imageInput.addEventListener('input', function () {
+                    updatePreview(imageInput.value);
                 });
 
                 preview.addEventListener('error', function () {
                     preview.src = placeholder;
                 });
             }
+
+            const generateBtn = document.getElementById('generate-ai-btn');
+            const destinationInput = document.getElementById('{{ form.destination.vars.id }}');
+            const titreInput = document.getElementById('{{ form.titre.vars.id }}');
+            const descriptionInput = document.getElementById('{{ form.description.vars.id }}');
+            const statusEl = document.getElementById('generate-ai-status');
+
+            if (!generateBtn || !destinationInput || !titreInput || !descriptionInput) {
+                console.error('Un ou plusieurs éléments du formulaire sont introuvables.');
+                return;
+            }
+
+            generateBtn.addEventListener('click', async function () {
+                const destination = destinationInput.value.trim();
+
+                if (!destination) {
+                    if (statusEl) {
+                        statusEl.textContent = 'Veuillez saisir une destination.';
+                    }
+                    alert('Veuillez saisir une destination.');
+                    return;
+                }
+
+                titreInput.value = '';
+                descriptionInput.value = '';
+
+                if (imageInput) {
+                    imageInput.value = '';
+                    updatePreview('');
+                }
+
+                generateBtn.disabled = true;
+
+                if (statusEl) {
+                    statusEl.textContent = 'Génération en cours...';
+                }
+
+                try {
+                    const response = await fetch('{{ path('app_voyage_generate_content') }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: JSON.stringify({
+                            destination: destination
+                        })
+                    });
+
+                    const data = await response.json();
+                    console.log('DATA API =', data);
+
+                    if (!response.ok || !data.success) {
+                        if (statusEl) {
+                            statusEl.textContent = data.message || 'Erreur lors de la génération.';
+                        }
+                        alert(data.message || 'Erreur lors de la génération.');
+                        return;
+                    }
+
+                    if (data.titre) {
+                        titreInput.value = data.titre;
+                    }
+
+                    if (data.description) {
+                        descriptionInput.value = data.description;
+                    }
+
+                    if (imageInput) {
+                        console.log('IMAGE URL =', data.image_url);
+
+                        if (data.image_url && data.image_url.trim() !== '') {
+                            imageInput.value = data.image_url;
+                            updatePreview(data.image_url);
+                        } else {
+                            imageInput.value = placeholder;
+                            updatePreview(placeholder);
+                        }
+                    }
+
+                    if (statusEl) {
+                        statusEl.textContent = 'Contenu généré avec succès.';
+                    }
+                } catch (error) {
+                    console.error('Erreur fetch =', error);
+
+                    if (statusEl) {
+                        statusEl.textContent = 'Erreur de connexion avec le serveur.';
+                    }
+
+                    alert('Erreur de connexion avec le serveur.');
+                } finally {
+                    generateBtn.disabled = false;
+                }
+            });
         });
     </script>
 {% endblock %}

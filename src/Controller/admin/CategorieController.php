@@ -107,6 +107,9 @@ class CategorieController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+            // 👇 AJOUTER CETTE LIGNE pour assigner l'admin connecté
+            $categorie->setCreatedBy($this->getUser());
+            
             $entityManager->persist($categorie);
             $entityManager->flush();
 
