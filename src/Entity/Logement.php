@@ -42,8 +42,7 @@ class Logement
     private ?int $capacite = null;
 
     #[ORM\Column(type: 'text', nullable: true)]
-        #[Assert\NotBlank(message: "Les équipements est obligatoire")]
-
+    #[Assert\NotBlank(message: "Les équipements est obligatoire")]
     #[Assert\Length(min: 3, minMessage: "Les équipements doivent décrire au moins {{ limit }} caractères")]
     #[Assert\Regex(pattern: "/^[A-Z]/", message: "La première lettre des équipements doit être une majuscule")]
     private ?string $equipement = null;
@@ -56,6 +55,11 @@ class Logement
     #[ORM\Column(type: 'boolean', nullable: false, options: ['default' => true])]
     #[Assert\IsTrue(message: "Le logement doit être disponible", groups: ["create"])]
     private ?bool $disponibilite = true;
+
+    // RELATION : l'utilisateur (admin) qui a créé le logement
+    #[ORM\ManyToOne(targetEntity: User::class)]
+    #[ORM\JoinColumn(name: 'created_by_id', referencedColumnName: 'id', nullable: false)]
+    private ?User $createdBy = null;
 
     #[ORM\OneToMany(targetEntity: Reservationlog::class, mappedBy: 'logement')]
     private Collection $reservationlogs;
@@ -156,6 +160,17 @@ class Logement
     public function setDisponibilite(bool $disponibilite): self
     {
         $this->disponibilite = $disponibilite;
+        return $this;
+    }
+
+    public function getCreatedBy(): ?User
+    {
+        return $this->createdBy;
+    }
+
+    public function setCreatedBy(?User $createdBy): self
+    {
+        $this->createdBy = $createdBy;
         return $this;
     }
 
