@@ -1,199 +1,915 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>Réservation Horozia</title>
+{% extends 'base_front.html.twig' %}
+
+{% block title %}Nos logements - Horozia{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            font-family: 'DejaVu Sans', sans-serif;
-            background: #fff;
-            padding: 12px;
-            font-size: 12px;
-        }
-        .container {
-            max-width: 750px;
-            margin: 0 auto;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            overflow: hidden;
-            page-break-inside: avoid;
-        }
-        /* En-tête avec tableau */
-        .header-table {
+        /* ========== STYLES FLIP CARD ========== */
+        .flip-card {
+            background-color: transparent;
             width: 100%;
-            background: #23779C;
-            border-collapse: collapse;
+            height: 450px;
+            perspective: 1000px;
+            margin-bottom: 30px;
         }
-        .header-table td {
-            padding: 8px 15px;
-            border: none;
-            vertical-align: middle;
-        }
-        .header-text {
-            text-align: left;
-            color: white;
-        }
-        .agency-name {
-            font-size: 22px;
-            font-weight: bold;
-            letter-spacing: 1px;
-        }
-        .agency-sub {
-            font-size: 10px;
-            opacity: 0.9;
-        }
-        .header-text h1 {
-            font-size: 14px;
-            font-weight: normal;
-            margin-top: 4px;
-        }
-        .header-qr {
-            text-align: right;
-            width: 140px;   /* assez large pour l'image 120px */
-            background: transparent; /* pas de fond */
-        }
-        .header-qr img {
-            width: 120px;    /* QR plus grand */
-            height: 120px;
-            display: inline-block;
-            background: transparent; /* si l'image a un fond, cela ne l'enlèvera pas, mais on tente */
-        }
-        /* Contenu */
-        .content {
-            padding: 12px 15px;
-        }
-        .section {
-            margin-bottom: 12px;
-        }
-        .section-title {
-            font-size: 14px;
-            font-weight: bold;
-            color: #23779C;
-            border-bottom: 1px solid #23779C;
-            padding-bottom: 3px;
-            margin-bottom: 8px;
-        }
-        table.data-table {
+        .flip-card-inner {
+            position: relative;
             width: 100%;
-            border-collapse: collapse;
-        }
-        table.data-table td {
-            padding: 4px 4px;
-            border-bottom: 1px solid #eee;
-            vertical-align: top;
-        }
-        table.data-table td.label {
-            width: 35%;
-            font-weight: bold;
-            background-color: #f9f9f9;
-        }
-        table.data-table td.value {
-            width: 65%;
-        }
-        .badge {
-            display: inline-block;
-            padding: 2px 10px;
-            border-radius: 12px;
-            font-size: 10px;
-            font-weight: bold;
-            color: white;
-        }
-        .badge-confirmed { background: #28a745; }
-        .badge-pending { background: #ffc107; color: #333; }
-        .badge-cancelled { background: #dc3545; }
-        .footer {
-            background: #f5f5f5;
-            padding: 6px;
+            height: 100%;
             text-align: center;
-            font-size: 10px;
-            color: #666;
-            border-top: 1px solid #ddd;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border: 2px solid #23779C;
         }
-        @media print {
-            body {
-                padding: 0;
-            }
-            .header-table {
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-            }
-            .header-qr img {
-                background: transparent;
-            }
+        .flip-card:hover .flip-card-inner {
+            transform: rotateY(180deg);
+        }
+        .flip-card-front, .flip-card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 20px;
+            overflow: hidden;
+        }
+        .flip-card-front {
+            background-color: #fff;
+            color: #333;
+        }
+        .flip-card-front-img {
+            height: 220px;
+            background-size: cover;
+            background-position: center;
+            position: relative;
+        }
+        .price-badge {
+            position: absolute;
+            bottom: 15px;
+            right: 15px;
+            background: #23779C;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 30px;
+            font-weight: bold;
+            font-size: 1rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            z-index: 2;
+        }
+        .flip-card-front-content {
+            padding: 20px;
+            text-align: left;
+        }
+        .flip-card-front-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #1f2d3d;
+            margin-bottom: 5px;
+        }
+        .flip-card-front-type {
+            color: #23779C;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        .flip-card-front-location {
+            color: #6c757d;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-bottom: 15px;
+        }
+        .flip-card-back {
+            background: linear-gradient(135deg, #23779C, #3D94CA);
+            color: white;
+            transform: rotateY(180deg);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 25px;
+            text-align: left;
+        }
+        .flip-card-back h3 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            color: white;
+        }
+        .flip-card-back p {
+            margin-bottom: 12px;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .btn-reserver {
+            display: block;
+            background: white;
+            color: #23779C;
+            text-align: center;
+            padding: 14px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 1rem;
+            margin-top: 20px;
+            transition: all 0.3s;
+            border: none;
+            cursor: pointer;
+            width: 100%;
+        }
+        .btn-reserver:hover {
+            background: #f0f0f0;
+            transform: scale(1.02);
+            color: #1a5c7a;
+        }
+        .equipement-badge {
+            display: inline-block;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            margin-right: 6px;
+            margin-bottom: 6px;
+        }
+
+        /* ========== MODALE ========== */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal-container {
+            background: white;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 20px;
+            position: relative;
+            border: 2px solid #23779C;
+        }
+        .modal-close {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 28px;
+            cursor: pointer;
+            color: #23779C;
+        }
+        body.modal-open {
+            overflow: hidden;
+        }
+
+        /* ========== STYLES RECHERCHE DYNAMIQUE ========== */
+        .custom-input, .custom-select {
+            border: none;
+            outline: none;
+            border-radius: 15px;
+            padding: 1em;
+            background-color: #ccc;
+            box-shadow: inset 2px 5px 10px rgba(0,0,0,0.3);
+            transition: 300ms ease-in-out;
+            width: 100%;
+            font-size: 1rem;
+        }
+        .custom-input:focus, .custom-select:focus {
+            background-color: white;
+            transform: scale(1.05);
+            box-shadow: 13px 13px 100px #969696, -13px -13px 100px #ffffff;
+        }
+        .search-wrapper {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+        .search-wrapper .search-field {
+            flex: 2;
+            min-width: 200px;
+        }
+        .search-wrapper .type-field {
+            flex: 1;
+            min-width: 180px;
+        }
+        .search-wrapper .sort-field {
+            flex: 1;
+            min-width: 180px;
+        }
+        @media (max-width: 768px) {
+            .search-wrapper { flex-direction: column; gap: 15px; }
+        }
+
+        /* Message dans la modale */
+        .modal-message {
+            padding: 12px;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            font-size: 0.9rem;
+        }
+        .modal-message.success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .modal-message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        /* ========== BOUTON RECOMMANDATIONS AMÉLIORÉ ========== */
+        #btnRecommendations {
+            background: linear-gradient(135deg, #23779C, #3D94CA);
+            border: none;
+            font-weight: bold;
+            font-size: 1.1rem;
+            padding: 12px 30px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(35,119,156,0.3);
+        }
+        #btnRecommendations:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(35,119,156,0.4);
+        }
+
+        /* Bouton retour */
+        #btnBackToLogements {
+            background: #6c757d;
+            border: none;
+            color: white;
+            margin-top: 20px;
+        }
+        #btnBackToLogements:hover {
+            background: #5a6268;
         }
     </style>
-</head>
-<body>
+{% endblock %}
+
+{% block body %}
+
+<!-- HERO SECTION avec barre de recherche -->
+<section class="hero-wrap js-fullheight" style="background-image: url('{{ asset('front/pacific/images/bg_5.jpg') }}');">
+    <div class="overlay"></div>
     <div class="container">
-        <!-- En-tête : texte à gauche, QR à droite -->
-        <table class="header-table">
-            <tr>
-                <td class="header-text">
-                    <div class="agency-name">HORIZIA</div>
-                    <div class="agency-sub">TRAVEL AGENCY</div>
-                    <h1>CONFIRMATION DE RÉSERVATION</h1>
-                </td>
-                <td class="header-qr">
-                    <img src="{{ qrCodeBase64 }}" alt="QR Code">
-                </td>
-            </tr>
-        </table>
+        <div class="row no-gutters slider-text js-fullheight align-items-center">
+            <div class="col-md-8 ftco-animate">
+                <span class="subheading">Bienvenue chez Horozia</span>
+                <h1 class="mb-4">Découvrez votre prochain logement</h1>
+                <p class="mb-4">Horozia vous propose des hébergements soigneusement sélectionnés, une réservation simple et une expérience moderne pour vos séjours.</p>
 
-        <div class="content">
-            <div class="section">
-                <div class="section-title">INFORMATIONS LOGEMENT</div>
-                <table class="data-table">
-                    <tr><td class="label">Nom</td><td class="value">{{ reservation.logement.nom }}</td></tr>
-                    <tr><td class="label">Adresse</td><td class="value">{{ reservation.logement.adresse }}</td></tr>
-                    <tr><td class="label">Type</td><td class="value">{{ reservation.logement.type }}</td></tr>
-                </table>
+                <form id="filtersForm" method="get" action="{{ path('app_front_logement_index') }}" class="search-wrapper">
+                    <div class="search-field">
+                        <input type="text" name="q" id="searchInput" class="custom-input" placeholder="Rechercher par nom, adresse ou type..." value="{{ currentSearch }}">
+                    </div>
+                    <div class="type-field">
+                        <select name="type" id="typeSelect" class="custom-select">
+                            <option value="tous" {% if currentType == 'tous' or currentType is empty %}selected{% endif %}>Tous les types</option>
+                            {% for typeOption in allTypes %}
+                                <option value="{{ typeOption }}" {% if currentType == typeOption %}selected{% endif %}>
+                                    {{ typeOption|capitalize }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="sort-field">
+                        <select name="sort" id="sortSelect" class="custom-select">
+                            <option value="" {% if currentSort is empty %}selected{% endif %}>Trier par défaut</option>
+                            <option value="prix_asc" {% if currentSort == 'prix_asc' %}selected{% endif %}>Prix croissant</option>
+                            <option value="prix_desc" {% if currentSort == 'prix_desc' %}selected{% endif %}>Prix décroissant</option>
+                        </select>
+                    </div>
+                </form>
+
+                <div class="row mt-4">
+                    <div class="col-12 text-center">
+                        <button id="btnRecommendations" class="btn btn-horozia-primary rounded-pill px-5 py-2">
+                            <i class="fa fa-magic me-2"></i> Recommandations IA pour vous
+                        </button>
+                    </div>
+                </div>
             </div>
-
-            <div class="section">
-                <div class="section-title">DÉTAILS DU SÉJOUR</div>
-                <table class="data-table">
-                    <tr><td class="label">Arrivée</td><td class="value">{{ reservation.dateDebut|date('d/m/Y') }}</td></tr>
-                    <tr><td class="label">Départ</td><td class="value">{{ reservation.dateFin|date('d/m/Y') }}</td></tr>
-                    <tr><td class="label">Nombre de nuits</td><td class="value">{{ reservation.dateDebut.diff(reservation.dateFin).days }} nuit(s)</td></tr>
-                    <tr><td class="label">Adultes</td><td class="value">{{ reservation.adultes }}</td></tr>
-                    <tr><td class="label">Enfants</td><td class="value">{{ reservation.enfants }}</td></tr>
-                    <tr><td class="label">Chambres</td><td class="value">{{ reservation.nombreChambres }}</td></tr>
-                    <tr><td class="label">Type de chambres</td><td class="value">{{ chambreType }}</td></tr>
-                    <tr><td class="label">Pension</td><td class="value">{{ reservation.modeReservation ? reservation.modeReservation|replace({'_': ' '})|capitalize : '-' }}</td></tr>
-                </table>
-            </div>
-
-            <div class="section">
-                <div class="section-title">PAIEMENT</div>
-                <table class="data-table">
-                    <tr><td class="label">Prix par nuit (HT)</td><td class="value">{{ (reservation.montant / reservation.dateDebut.diff(reservation.dateFin).days)|number_format(2, ',', ' ') }} DT</td></tr>
-                    <tr><td class="label">Nombre de nuits</td><td class="value">{{ reservation.dateDebut.diff(reservation.dateFin).days }}</td></tr>
-                    <tr><td class="label">Sous-total</td><td class="value">{{ reservation.montant|number_format(2, ',', ' ') }} DT</td></tr>
-                    <tr><td class="label"><strong>Montant total TTC</strong></td><td class="value"><strong>{{ reservation.montant|number_format(2, ',', ' ') }} DT</strong></td></tr>
-                    <tr><td class="label">Modalité</td><td class="value">{{ reservation.modalites }}</td></tr>
-                    <tr>
-                        <td class="label">Statut</td>
-                        <td class="value">
-                            <span class="badge 
-                                {% if reservation.status == 'confirmée' %}badge-confirmed
-                                {% elseif reservation.status == 'en_attente' %}badge-pending
-                                {% else %}badge-cancelled{% endif %}">
-                                {{ reservation.status|upper }}
-                            </span>
-                        </td>
-                    </tr>
-                </table>
-            </div>
-        </div>
-
-        <div class="footer">
-            Merci d'avoir choisi Horozia. Bon séjour !
         </div>
     </div>
-</body>
-</html>
+</section>
+
+<!-- LISTE DES LOGEMENTS -->
+<section class="ftco-section">
+    <div class="container">
+        <div class="row justify-content-center pb-4">
+            <div class="col-md-8 heading-section text-center ftco-animate">
+                <span class="subheading">Nos hébergements</span>
+                <h2 class="mb-4">Logements disponibles</h2>
+            </div>
+        </div>
+
+        <div class="cards-container row g-4">
+            {% for logement in logements %}
+                <div class="col-md-4 ftco-animate mb-4">
+                    <div class="flip-card">
+                        <div class="flip-card-inner">
+                            <div class="flip-card-front">
+                                <div class="flip-card-front-img" style="background-image: url('{{ logement.image ? logement.image : asset('front/pacific/images/destination-1.jpg') }}');">
+                                    <div class="price-badge">{{ logement.tarifNuit|number_format(0, ',', ' ') }} DT / nuit</div>
+                                </div>
+                                <div class="flip-card-front-content">
+                                    <div class="flip-card-front-title">{{ logement.nom }}</div>
+                                    <div class="flip-card-front-type">{{ logement.type }}</div>
+                                    <div class="flip-card-front-location">
+                                        <i class="fa fa-map-marker"></i> {{ logement.adresse|slice(0, 40) }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flip-card-back">
+                                <div>
+                                    <h3>{{ logement.nom }}</h3>
+                                    <p><i class="fa fa-users"></i> Capacité : {{ logement.capacite }} personnes</p>
+                                    <p><i class="fa fa-tag"></i> Type : {{ logement.type }}</p>
+                                    <p><i class="fa fa-map-marker"></i> {{ logement.adresse }}</p>
+                                    <p><i class="fa fa-money"></i> {{ logement.tarifNuit|number_format(0, ',', ' ') }} DT / nuit</p>
+                                    {% if logement.equipement %}
+                                        <div>
+                                            {% set equipements = logement.equipement|split(',') %}
+                                            {% for equip in equipements|slice(0, 4) %}
+                                                <span class="equipement-badge">{{ equip|trim }}</span>
+                                            {% endfor %}
+                                            {% if equipements|length > 4 %}
+                                                <span class="equipement-badge">+{{ equipements|length - 4 }}</span>
+                                            {% endif %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <button type="button" class="btn-reserver" data-id="{{ logement.id }}">
+                                    <i class="fa fa-calendar-check-o"></i> Réserver
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="col-12 text-center">Aucun logement disponible.</div>
+            {% endfor %}
+        </div>
+
+        <!-- Conteneur des recommandations (caché par défaut) -->
+        <div id="recommendationsContainer" class="mt-5" style="display: none;">
+            <div class="row justify-content-center pb-4">
+                <div class="col-md-8 heading-section text-center ftco-animate">
+                    <span class="subheading">Analyse IA de votre historique</span>
+                    <h2 class="mb-4">Recommandations personnalisées</h2>
+                </div>
+            </div>
+            <div id="recommendationsStatus" class="text-center mb-3"></div>
+            <div class="row g-4" id="recommendationsList"></div>
+            <div class="text-center mt-3">
+                <button id="btnBackToLogements" class="btn btn-secondary rounded-pill px-4">
+                    <i class="fa fa-arrow-left me-2"></i> Voir tous les logements
+                </button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- MODALE DE RÉSERVATION -->
+<div id="reservationModalOverlay" class="modal-overlay">
+    <div class="modal-container">
+        <span class="modal-close">&times;</span>
+        <div id="modalContent">
+            <div class="text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Chargement...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        // ========== VARIABLES GLOBALES ==========
+        const isConnected = {{ isConnected|default(false) ? 'true' : 'false' }};
+        const loginUrl = "/login";
+
+        // ========== SOUMISSION AUTOMATIQUE (recherche) ==========
+        const searchForm = document.getElementById('filtersForm');
+        const searchInput = document.getElementById('searchInput');
+        const typeSelect = document.getElementById('typeSelect');
+        const sortSelect = document.getElementById('sortSelect');
+
+        let timeoutId = null;
+        function submitSearchForm() { searchForm.submit(); }
+        if (searchInput) {
+            searchInput.addEventListener('input', function() {
+                if (timeoutId) clearTimeout(timeoutId);
+                timeoutId = setTimeout(submitSearchForm, 500);
+            });
+        }
+        if (typeSelect) typeSelect.addEventListener('change', submitSearchForm);
+        if (sortSelect) sortSelect.addEventListener('change', submitSearchForm);
+
+        // ========== GESTION DE LA MODALE ==========
+        const modalOverlay = document.getElementById('reservationModalOverlay');
+        const modalContent = document.getElementById('modalContent');
+        const closeModalBtn = document.querySelector('.modal-close');
+
+        function openModal() {
+            modalOverlay.classList.add('active');
+            document.body.classList.add('modal-open');
+        }
+        function closeModal() {
+            modalOverlay.classList.remove('active');
+            document.body.classList.remove('modal-open');
+            modalContent.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Chargement...</span></div></div>';
+        }
+        if (closeModalBtn) closeModalBtn.addEventListener('click', closeModal);
+        modalOverlay.addEventListener('click', (e) => { if (e.target === modalOverlay) closeModal(); });
+
+        // ========== OUVERTURE MODALE POUR UN LOGEMENT ==========
+        function openReservationModal(logementId) {
+            if (!isConnected) {
+                Swal.fire({
+                    title: 'Connexion requise',
+                    text: 'Veuillez vous connecter pour effectuer une réservation.',
+                    icon: 'warning',
+                    confirmButtonColor: '#23779C',
+                    confirmButtonText: 'Se connecter'
+                }).then((result) => {
+                    if (result.isConfirmed) window.location.href = loginUrl;
+                });
+                return;
+            }
+            fetch(`/logement/${logementId}/reserver-modal`, {
+                method: 'GET',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(response => response.text())
+            .then(html => {
+                modalContent.innerHTML = html;
+                openModal();
+                setTimeout(() => initReservationForm(), 100);
+            })
+            .catch(error => {
+                console.error(error);
+                Swal.fire({
+                    title: 'Erreur',
+                    text: 'Impossible de charger le formulaire.',
+                    icon: 'error',
+                    confirmButtonColor: '#23779C'
+                });
+                closeModal();
+            });
+        }
+
+        // Attacher les événements de réservation aux cartes (normales)
+        document.querySelectorAll('.btn-reserver').forEach(btn => {
+            btn.addEventListener('click', function() {
+                openReservationModal(this.getAttribute('data-id'));
+            });
+        });
+
+        // ========== RECOMMANDATIONS IA ==========
+        const recoBtn = document.getElementById('btnRecommendations');
+        const recoContainer = document.getElementById('recommendationsContainer');
+        const recoStatus = document.getElementById('recommendationsStatus');
+        const recoList = document.getElementById('recommendationsList');
+        const normalCardsContainer = document.querySelector('.cards-container');
+        const normalHeading = document.querySelector('.heading-section');
+        const backBtn = document.getElementById('btnBackToLogements');
+
+        if (recoBtn) {
+            recoBtn.addEventListener('click', function() {
+                if (normalCardsContainer) normalCardsContainer.style.display = 'none';
+                if (normalHeading) normalHeading.style.display = 'none';
+                
+                recoContainer.style.display = 'block';
+                recoStatus.innerHTML = '<div class="spinner-border text-primary me-2"></div> Analyse de votre historique par IA (peut prendre 5-10 secondes)...';
+                recoList.innerHTML = '';
+                recoContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+                fetch('{{ path('app_front_logement_recommendations') }}')
+                    .then(response => {
+                        if (response.status === 401) {
+                            return response.json().then(data => {
+                                if (data.redirect) {
+                                    window.location.href = data.redirect;
+                                }
+                            });
+                        }
+                        if (!response.ok) throw new Error(`Erreur HTTP ${response.status}`);
+                        return response.json();
+                    })
+                    .then(data => {
+                        if (data && data.html) {
+                            recoStatus.innerHTML = '<div class="alert alert-success">✨ IA a trouvé ces suggestions pour vous !</div>';
+                            recoList.innerHTML = data.html;
+                            
+                            const cards = document.querySelectorAll('#recommendationsList .col-md-4');
+                            cards.forEach(card => {
+                                card.style.display = 'block';
+                                card.style.visibility = 'visible';
+                                card.style.opacity = '1';
+                                card.classList.remove('ftco-animate');
+                                card.offsetHeight;
+                                setTimeout(() => card.classList.add('ftco-animate'), 10);
+                            });
+                            
+                            attachRecommendationReserveEvents();
+                        } else if (data && data.message) {
+                            recoStatus.innerHTML = `<div class="alert alert-info">${data.message}</div>`;
+                        } else if (data && data.error) {
+                            recoStatus.innerHTML = `<div class="alert alert-danger">Erreur : ${data.error}</div>`;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Fetch error:', error);
+                        recoStatus.innerHTML = '<div class="alert alert-danger">Erreur lors de la requête. Veuillez réessayer.</div>';
+                    });
+            });
+        }
+
+        function attachRecommendationReserveEvents() {
+            document.querySelectorAll('#recommendationsList .btn-reserver').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    openReservationModal(this.getAttribute('data-id'));
+                });
+            });
+        }
+
+        if (backBtn) {
+            backBtn.addEventListener('click', function() {
+                if (normalCardsContainer) normalCardsContainer.style.display = 'flex';
+                if (normalHeading) normalHeading.style.display = 'block';
+                recoContainer.style.display = 'none';
+                recoList.innerHTML = '';
+                recoStatus.innerHTML = '';
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+        }
+
+        // ========== FORMULAIRE DE RÉSERVATION ==========
+        function initReservationForm() {
+            const dateArrivee = document.getElementById('date_arrivee_modal');
+            const dateDepart = document.getElementById('date_depart_modal');
+            const totalSpan = document.getElementById('total_modal');
+            const nuitsSpan = document.getElementById('nuits_modal');
+            const reservationForm = document.getElementById('reservationFormModal');
+            const formErrorsDiv = document.getElementById('formErrors');
+            const modaliteRadios = document.querySelectorAll('input[name="modalite"]');
+            const adultesInput = document.getElementById('adultes');
+            const enfantsInput = document.getElementById('enfants');
+            const modeReservationSelect = document.getElementById('mode_reservation');
+            const chambresInput = document.getElementById('nombre_chambres');
+            const prixParNuit = parseFloat(document.getElementById('prix_par_nuit_data').value);
+            const personnesSpan = document.getElementById('personnes_modal');
+            const prixPensionSpan = document.getElementById('prix_pension_nuit');
+            const pensionLabelSpan = document.getElementById('pensionLabel');
+
+            // Type de logement (hôtel ou non)
+            const logementTypeElem = document.getElementById('logement_type');
+            const isHotel = logementTypeElem && (logementTypeElem.value === 'hôtel' || logementTypeElem.value === 'hotel');
+
+            const chambresCol = document.getElementById('chambresCol');
+            const repartitionContainer = document.getElementById('repartitionContainer');
+            const repartitionSelect = document.getElementById('repartition_chambres');
+
+            if (chambresCol) chambresCol.style.display = isHotel ? 'block' : 'none';
+            if (!isHotel && chambresInput) {
+                chambresInput.value = 1;
+                if (repartitionContainer) repartitionContainer.style.display = 'none';
+                if (repartitionSelect) repartitionSelect.value = '';
+            }
+
+            function adjustChambresIfNeeded() {
+                if (!isHotel) return;
+                const adultes = parseInt(adultesInput?.value || 1);
+                const enfants = parseInt(enfantsInput?.value || 0);
+                const totalPersonnes = adultes + enfants;
+                const currentChambres = parseInt(chambresInput?.value || 1);
+                if (totalPersonnes > 4 && currentChambres === 1) {
+                    const needed = Math.ceil(totalPersonnes / 4);
+                    if (chambresInput) {
+                        chambresInput.value = needed;
+                        updateRepartitionOptions();
+                        calculerTotal();
+                    }
+                }
+            }
+
+            function updateRepartitionOptions() {
+                if (!isHotel) {
+                    if (repartitionContainer) repartitionContainer.style.display = 'none';
+                    if (repartitionSelect) repartitionSelect.value = '';
+                    return;
+                }
+                const adultes = parseInt(adultesInput?.value || 1);
+                const enfants = parseInt(enfantsInput?.value || 0);
+                const totalPersonnes = adultes + enfants;
+                const chambresDemandees = parseInt(chambresInput?.value || 1);
+                const maxParChambre = 4;
+                const chambresNecessaires = Math.ceil(totalPersonnes / maxParChambre);
+                const chambresEffectives = Math.max(chambresDemandees, chambresNecessaires);
+
+                if (!repartitionContainer) return;
+                const oldValue = repartitionSelect ? repartitionSelect.value : '';
+
+                if (chambresEffectives > 1 && totalPersonnes > 0) {
+                    const combos = [];
+                    function findCombos(remaining, chambers, current) {
+                        if (chambers === 0) {
+                            if (remaining === 0) combos.push([...current]);
+                            return;
+                        }
+                        for (let i = 1; i <= Math.min(remaining, maxParChambre); i++) {
+                            current.push(i);
+                            findCombos(remaining - i, chambers - 1, current);
+                            current.pop();
+                        }
+                    }
+                    findCombos(totalPersonnes, chambresEffectives, []);
+                    const uniqueCombos = [];
+                    combos.forEach(combo => {
+                        const sorted = [...combo].sort((a,b)=>a-b);
+                        const key = sorted.join(',');
+                        if (!uniqueCombos.some(c => c.join(',') === key)) uniqueCombos.push(sorted);
+                    });
+                    repartitionSelect.innerHTML = '<option value="">Choisir une répartition</option>';
+                    uniqueCombos.forEach(combo => {
+                        const labels = combo.map(p => p + ' personne' + (p > 1 ? 's' : ''));
+                        const text = labels.join(' + ');
+                        repartitionSelect.innerHTML += `<option value="${combo.join(',')}">${text}</option>`;
+                    });
+                    if (oldValue && Array.from(repartitionSelect.options).some(opt => opt.value === oldValue)) {
+                        repartitionSelect.value = oldValue;
+                    }
+                    repartitionContainer.style.display = 'block';
+                } else {
+                    repartitionContainer.style.display = 'none';
+                    if (repartitionSelect) repartitionSelect.value = '';
+                }
+            }
+
+            function calculerTotal() {
+                const adultes = parseInt(adultesInput?.value || 1);
+                const enfants = parseInt(enfantsInput?.value || 0);
+                const nombrePersonnes = adultes + enfants;
+                const modeReservation = modeReservationSelect?.value || null;
+
+                let coefficient = 1.00;
+                let pensionLabel = "Prix par personne / nuit";
+                switch (modeReservation) {
+                    case 'demi_pension':
+                        coefficient = 1.20;
+                        pensionLabel = "Prix par personne / nuit (Demi-pension)";
+                        break;
+                    case 'all_inclusive':
+                        coefficient = 1.45;
+                        pensionLabel = "Prix par personne / nuit (All Inclusive)";
+                        break;
+                    case 'all_inclusive_soft(sans_alcool)':
+                        coefficient = 1.37;
+                        pensionLabel = "Prix par personne / nuit (All Inclusive Soft)";
+                        break;
+                    case 'logement_petit_dejeuner':
+                        coefficient = 1.00;
+                        pensionLabel = "Prix par personne / nuit (Petit déjeuner)";
+                        break;
+                }
+
+                const prixPensionNuit = prixParNuit * coefficient;
+                if (prixPensionSpan) prixPensionSpan.innerText = prixPensionNuit.toFixed(2);
+                if (pensionLabelSpan) pensionLabelSpan.innerText = pensionLabel;
+                if (personnesSpan) personnesSpan.innerText = nombrePersonnes;
+
+                if (dateArrivee.value && dateDepart.value) {
+                    const arrivee = new Date(dateArrivee.value);
+                    const depart = new Date(dateDepart.value);
+                    if (depart > arrivee) {
+                        const nuits = (depart - arrivee) / (1000 * 60 * 60 * 24);
+                        const total = nuits * nombrePersonnes * prixPensionNuit;
+                        if (nuitsSpan) nuitsSpan.innerText = nuits;
+                        if (totalSpan) totalSpan.innerText = total.toFixed(2) + ' DT';
+                        return;
+                    }
+                }
+                if (nuitsSpan) nuitsSpan.innerText = '0';
+                if (totalSpan) totalSpan.innerText = '0 DT';
+            }
+
+            dateArrivee.addEventListener('change', () => { calculerTotal(); updateRepartitionOptions(); });
+            dateDepart.addEventListener('change', () => { calculerTotal(); updateRepartitionOptions(); });
+            if (adultesInput) adultesInput.addEventListener('input', () => { adjustChambresIfNeeded(); calculerTotal(); updateRepartitionOptions(); });
+            if (enfantsInput) enfantsInput.addEventListener('input', () => { adjustChambresIfNeeded(); calculerTotal(); updateRepartitionOptions(); });
+            if (modeReservationSelect) modeReservationSelect.addEventListener('change', () => { calculerTotal(); updateRepartitionOptions(); });
+            if (chambresInput && isHotel) chambresInput.addEventListener('input', () => { calculerTotal(); updateRepartitionOptions(); });
+
+            calculerTotal();
+            updateRepartitionOptions();
+            adjustChambresIfNeeded();
+
+            let isSubmitting = false;
+
+            function showModalMessage(message, type = 'success') {
+                const oldMsg = document.getElementById('dynamicModalMessage');
+                if (oldMsg) oldMsg.remove();
+                const msgDiv = document.createElement('div');
+                msgDiv.id = 'dynamicModalMessage';
+                msgDiv.className = `modal-message ${type}`;
+                msgDiv.innerText = message;
+                const submitBtn = reservationForm.querySelector('button[type="submit"]');
+                if (submitBtn) {
+                    submitBtn.parentNode.insertBefore(msgDiv, submitBtn.nextSibling);
+                } else {
+                    reservationForm.appendChild(msgDiv);
+                }
+                msgDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            }
+
+            function clearModalMessage() {
+                const oldMsg = document.getElementById('dynamicModalMessage');
+                if (oldMsg) oldMsg.remove();
+            }
+
+            async function submitReservation(event) {
+                event.preventDefault();
+                if (isSubmitting) return;
+                isSubmitting = true;
+                clearModalMessage();
+
+                dateArrivee.classList.remove('is-invalid');
+                dateDepart.classList.remove('is-invalid');
+                const modaliteError = document.getElementById('modaliteError');
+                if (modaliteError) modaliteError.style.display = 'none';
+                if (formErrorsDiv) {
+                    formErrorsDiv.classList.add('d-none');
+                    formErrorsDiv.innerHTML = '';
+                }
+
+                let errorMessages = [];
+
+                if (!dateArrivee.value) {
+                    errorMessages.push('La date d\'arrivée est obligatoire.');
+                    dateArrivee.classList.add('is-invalid');
+                } else {
+                    const arrivee = new Date(dateArrivee.value);
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    if (arrivee < today) {
+                        errorMessages.push('La date d\'arrivée ne peut pas être dans le passé.');
+                        dateArrivee.classList.add('is-invalid');
+                    }
+                }
+
+                if (!dateDepart.value) {
+                    errorMessages.push('La date de départ est obligatoire.');
+                    dateDepart.classList.add('is-invalid');
+                } else if (dateArrivee.value) {
+                    const arrivee = new Date(dateArrivee.value);
+                    const depart = new Date(dateDepart.value);
+                    if (depart <= arrivee) {
+                        errorMessages.push('La date de départ doit être postérieure à la date d\'arrivée.');
+                        dateDepart.classList.add('is-invalid');
+                    }
+                }
+
+                let selectedModalite = null;
+                modaliteRadios.forEach(radio => {
+                    if (radio.checked) selectedModalite = radio.value;
+                });
+                if (!selectedModalite) {
+                    errorMessages.push('Veuillez choisir une modalité de paiement.');
+                    if (modaliteError) modaliteError.style.display = 'block';
+                }
+
+                const modeReservation = modeReservationSelect?.value || null;
+                const pensionErrorDiv = document.getElementById('pensionError');
+                if (!modeReservation) {
+                    errorMessages.push('Veuillez choisir une formule de pension.');
+                    if (pensionErrorDiv) pensionErrorDiv.style.display = 'block';
+                    modeReservationSelect?.classList.add('is-invalid');
+                } else {
+                    if (pensionErrorDiv) pensionErrorDiv.style.display = 'none';
+                    modeReservationSelect?.classList.remove('is-invalid');
+                }
+
+                const adultes = parseInt(adultesInput?.value || 1);
+                const enfants = parseInt(enfantsInput?.value || 0);
+                const nombreChambres = parseInt(chambresInput?.value || 1);
+                if (adultes < 1) errorMessages.push('Au moins 1 adulte.');
+                if (enfants < 0) errorMessages.push('Nombre d\'enfants invalide.');
+                if (nombreChambres < 1) errorMessages.push('Au moins 1 chambre.');
+
+                if (errorMessages.length > 0) {
+                    if (formErrorsDiv) {
+                        formErrorsDiv.innerHTML = errorMessages.join('<br>');
+                        formErrorsDiv.classList.remove('d-none');
+                    }
+                    isSubmitting = false;
+                    return;
+                }
+
+                const logementId = reservationForm.querySelector('input[name="logement_id"]').value;
+                let paiementImmediat = false;
+
+                if (selectedModalite === 'En ligne') {
+                    const result = await Swal.fire({
+                        title: 'Paiement en ligne',
+                        text: 'Choisissez une option :',
+                        icon: 'question',
+                        showDenyButton: true,
+                        showCancelButton: false,
+                        confirmButtonText: 'Payer maintenant',
+                        denyButtonText: 'Payer plus tard',
+                        confirmButtonColor: '#23779C',
+                        denyButtonColor: '#6c757d'
+                    });
+                    if (result.isConfirmed) {
+                        paiementImmediat = true;
+                    } else if (result.isDenied) {
+                        paiementImmediat = false;
+                    } else {
+                        isSubmitting = false;
+                        return;
+                    }
+                }
+
+                const repartitionChambres = document.getElementById('repartition_chambres')?.value || null;
+
+                const data = {
+                    logement_id: logementId,
+                    date_arrivee: dateArrivee.value,
+                    date_depart: dateDepart.value,
+                    modalite: selectedModalite,
+                    paiement_immediat: paiementImmediat,
+                    adultes: adultes,
+                    enfants: enfants,
+                    nombre_chambres: nombreChambres,
+                    mode_reservation: modeReservation,
+                    repartition_chambres: repartitionChambres
+                };
+
+                try {
+                    const response = await fetch('/reservation/create-ajax', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                        body: JSON.stringify(data)
+                    });
+                    const result = await response.json();
+
+                    if (response.ok && result.success) {
+                        closeModal();
+                        if (result.stripe_url) {
+                            window.location.href = result.stripe_url;
+                        } else {
+                            await Swal.fire({
+                                title: 'Réservation confirmée',
+                                text: result.message + ' Un email de confirmation vous a été envoyé.',
+                                icon: 'success',
+                                confirmButtonColor: '#23779C',
+                                confirmButtonText: 'OK',
+                                timer: 4000,
+                                timerProgressBar: true,
+                                allowOutsideClick: false
+                            });
+                            window.location.href = "{{ path('app_front_reservationlog_index') }}";
+                        }
+                    } else {
+                        const errorMsg = result.message || 'Une erreur est survenue.';
+                        showModalMessage(errorMsg, 'error');
+                        isSubmitting = false;
+                    }
+                } catch (err) {
+                    console.error(err);
+                    showModalMessage('Une erreur technique est survenue. Veuillez réessayer.', 'error');
+                    isSubmitting = false;
+                }
+            }
+
+            if (reservationForm) {
+                reservationForm.removeEventListener('submit', reservationForm.submitHandler);
+                reservationForm.submitHandler = submitReservation;
+                reservationForm.addEventListener('submit', reservationForm.submitHandler);
+            }
+        }
+    </script>
+{% endblock %}
