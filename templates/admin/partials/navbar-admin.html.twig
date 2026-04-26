@@ -6,34 +6,24 @@
     </div>
 
     <div class="d-flex align-items-center gap-3">
-        <!-- NOTIFICATION DROPDOWN -->
+        <!-- NOTIFICATION DROPDOWN pour les demandes d'annulation -->
         <div class="dropdown">
             <button class="topbar-icon-btn position-relative dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false" style="background: none; border: none;">
                 <i class="bi bi-bell fs-5"></i>
-                {% set flashCount = app.flashes|length %}
-                {% if flashCount > 0 %}
-                    <span class="notification-badge" style="position: absolute; top: -5px; right: -8px; background: #dc3545; color: white; border-radius: 50%; padding: 2px 6px; font-size: 0.7rem;">{{ flashCount }}</span>
-                {% endif %}
+                <span id="cancelRequestBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.7rem; display: none;">0</span>
             </button>
             <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0 rounded-3 p-0" style="width: 320px; max-height: 400px; overflow-y: auto;">
                 <li class="dropdown-header bg-light rounded-top py-2 px-3 fw-semibold">
-                    <i class="bi bi-bell me-1"></i> Notifications
+                    <i class="bi bi-bell me-1"></i> Demandes d'annulation
                 </li>
                 <li><hr class="dropdown-divider m-0"></li>
-                {% set hasFlash = false %}
-                {% for label, messages in app.flashes %}
-                    {% for message in messages %}
-                        {% set hasFlash = true %}
-                        <li class="dropdown-item notification-item border-bottom px-3 py-2" style="white-space: normal; border-left: 4px solid 
-                            {% if label == 'success' %}#28a745{% elseif label == 'danger' %}#dc3545{% elseif label == 'warning' %}#ffc107{% else %}#17a2b8{% endif %}">
-                            <div class="notification-message small">{{ message|raw }}</div>
-                            <small class="text-muted" style="font-size: 0.7rem;">{{ 'now'|date('H:i') }}</small>
-                        </li>
-                    {% endfor %}
-                {% endfor %}
-                {% if not hasFlash %}
-                    <li class="text-center py-3 text-muted">Aucune notification</li>
-                {% endif %}
+                <div id="cancelRequestsList">
+                    <li class="text-center py-3 text-muted">Chargement...</li>
+                </div>
+                <li><hr class="dropdown-divider m-0"></li>
+                <li class="text-center py-2">
+                    <a href="{{ path('admin_cancel_requests') }}" class="btn btn-sm btn-primary">Voir toutes</a>
+                </li>
             </ul>
         </div>
 
@@ -58,3 +48,203 @@
         </div>
     </div>
 </nav>
+
+<script>
+    // Fonction pour échapper les caractères HTML (corrigée)
+    function escapeHtml(str) {
+        // Conversion explicite en chaîne de caractères
+        if (str === null || str === undefined) return '';
+        const stringValue = String(str);
+        return stringValue.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+
+    // Récupérer la liste initiale des demandes via AJAX
+    function loadCancelRequests() {
+        fetch('{{ path('admin_cancel_requests_api') }}', {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(res => res.json())
+        .then(data => {
+            const badge = document.getElementById('cancelRequestBadge');
+            const count = data.count;
+            if (count > 0) {
+                badge.innerText = count;
+                badge.style.display = 'inline-block';
+            } else {
+                badge.style.display = 'none';
+            }
+
+            const listContainer = document.getElementById('cancelRequestsList');
+            if (data.requests.length === 0) {
+                listContainer.innerHTML = '<li class="text-center py-3 text-muted">Aucune demande en attente</li>';
+            } else {
+                let html = '';
+                data.requests.forEach(req => {
+                    html += `
+                        <li class="dropdown-item border-bottom" data-id="${escapeHtml(req.id)}" data-logement="${escapeHtml(req.logement)}" style="cursor: pointer;">
+                            <strong>${escapeHtml(req.logement)}</strong><br>
+                            <small>${escapeHtml(req.dateDebut)} → ${escapeHtml(req.dateFin)}</small>
+                        </li>
+                    `;
+                });
+                listContainer.innerHTML = html;
+                
+                document.querySelectorAll('#cancelRequestsList .dropdown-item[data-id]').forEach(item => {
+                    item.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        const reservationId = this.getAttribute('data-id');
+                        window.location.href = `{{ path('admin_cancel_requests') }}?highlight=${reservationId}`;
+                    });
+                });
+            }
+        })
+        .catch(err => console.error('Erreur chargement demandes:', err));
+    }
+
+    // Connexion au hub Mercure public avec polling de secours
+    let eventSource = null;
+    let reconnectAttempts = 0;
+    const maxReconnectAttempts = 10;
+    let usePolling = false;
+    
+    function connectEventSource() {
+        if (eventSource) {
+            eventSource.close();
+        }
+        
+        try {
+            const mercureUrl = 'https://demo.mercure.rocks/.well-known/mercure';
+            const topic = 'https://horozia/admin/cancel-requests';
+            const url = new URL(mercureUrl);
+            url.searchParams.append('topic', topic);
+            
+            eventSource = new EventSource(url);
+            
+            eventSource.onopen = function() {
+                console.log('EventSource connecté à Mercure');
+                reconnectAttempts = 0;
+                usePolling = false;
+            };
+            
+            eventSource.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    if (data.type === 'new_cancel_request') {
+                        updateNotificationList(data);
+                    }
+                } catch (err) {
+                    console.error('Erreur traitement message:', err);
+                }
+            };
+            
+            eventSource.onerror = (err) => {
+                console.error('EventSource error:', err);
+                eventSource.close();
+                eventSource = null;
+                
+                // Passer en mode polling si EventSource échoue
+                if (!usePolling) {
+                    usePolling = true;
+                    startPolling();
+                }
+            };
+        } catch (err) {
+            console.error('Erreur connexion EventSource:', err);
+            startPolling();
+        }
+    }
+    
+    // Polling de secours (recharge les données toutes les 5 secondes)
+    let pollingInterval = null;
+    
+    function startPolling() {
+        if (pollingInterval) clearInterval(pollingInterval);
+        
+        console.log('Mode polling activé (recharge toutes les 5 secondes)');
+        
+        // Chargement immédiat
+        loadCancelRequests();
+        
+        // Puis toutes les 5 secondes
+        pollingInterval = setInterval(() => {
+            loadCancelRequests();
+        }, 5000);
+    }
+    
+    function updateNotificationList(data) {
+        // Mettre à jour le badge
+        const badge = document.getElementById('cancelRequestBadge');
+        let count = parseInt(badge.innerText);
+        if (isNaN(count)) count = 0;
+        badge.innerText = count + 1;
+        badge.style.display = 'inline-block';
+        
+        // Ajouter la nouvelle demande en haut de la liste
+        const listContainer = document.getElementById('cancelRequestsList');
+        const newItem = document.createElement('li');
+        newItem.className = 'dropdown-item border-bottom';
+        newItem.setAttribute('data-id', escapeHtml(data.reservationId));
+        newItem.setAttribute('data-logement', escapeHtml(data.logement));
+        newItem.style.cursor = 'pointer';
+        newItem.innerHTML = `<strong>${escapeHtml(data.logement)}</strong><br>
+                             <small>${escapeHtml(data.dateDebut)} → ${escapeHtml(data.dateFin)}</small>`;
+        
+        newItem.addEventListener('click', function(e) {
+            e.preventDefault();
+            const id = this.getAttribute('data-id');
+            window.location.href = `{{ path('admin_cancel_requests') }}?highlight=${id}`;
+        });
+        
+        if (listContainer.firstChild) {
+            listContainer.insertBefore(newItem, listContainer.firstChild);
+        } else {
+            listContainer.appendChild(newItem);
+        }
+        
+        if (listContainer.innerText.includes('Aucune demande')) {
+            listContainer.innerHTML = '';
+            listContainer.appendChild(newItem);
+        }
+        
+        // Notification navigateur
+        if (Notification.permission === 'granted') {
+            new Notification('Nouvelle demande d\'annulation', { 
+                body: data.message || `Demande pour ${data.logement}` 
+            });
+        }
+    }
+    
+    // Arrêter le polling si nécessaire
+    function stopPolling() {
+        if (pollingInterval) {
+            clearInterval(pollingInterval);
+            pollingInterval = null;
+        }
+    }
+    
+    if (Notification.permission !== 'denied') {
+        Notification.requestPermission();
+    }
+    
+    // Chargement initial
+    loadCancelRequests();
+    
+    // Essayer EventSource, démarrer le polling en cas d'échec
+    setTimeout(() => {
+        if (!usePolling && !eventSource) {
+            connectEventSource();
+        }
+    }, 1000);
+    
+    // Démarrage immédiat du polling au cas où
+    setTimeout(() => {
+        if (!eventSource && !usePolling) {
+            startPolling();
+        }
+    }, 3000);
+</script>

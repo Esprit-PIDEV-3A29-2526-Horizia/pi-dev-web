@@ -51,17 +51,9 @@
                        <li class="nav-item {% if current_route == 'app_front_events' %}active{% endif %}">
                         <a href="{{ path('app_front_events') }}" class="nav-link">Events</a>
                     </li>
-                     <li class="nav-item {% if current_route == 'app_front_mes_participations' %}active{% endif %}">
-                        <a href="{{ path('app_front_mes_participations') }}" class="nav-link">Mes Inscriptions</a>
-                    </li>
-                    {% if app.user %}
-                        <li class="nav-item {% if current_route ==  'app_front_mes_favoris' %}active{% endif %}">
-                            <a href="{{ path('app_front_mes_favoris') }}" class="nav-link">
-                                Mes favoris
-                            </a>
-                        </li>
-                    {% endif %}
-<li class="nav-item dropdown">
+                    
+                   
+                    <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="publicationsDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                             Publications
                         </a>
@@ -83,20 +75,20 @@
                         </div>
                     </li>
                     {% if app.user %}
-                        <li class="nav-item dropdown {% if current_route starts with 'app_front_reservation' %}active{% endif %}">
+                        <li class="nav-item dropdown {% if app.request.attributes.get('_route') starts with 'app_front_reservation' %}active{% endif %}">
                             <a class="nav-link dropdown-toggle" href="#" id="reservationsDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 Mes réservations
                             </a>
                             <div class="dropdown-menu" aria-labelledby="reservationsDropdown">
                                 <a class="dropdown-item" href="{{ path('app_front_mes_reservations') }}">Mes réservations de voyages</a>
                                 <a class="dropdown-item" href="{{ path('app_front_reservationlog_index') }}">Mes réservations de logements</a>
+                                <a class="dropdown-item" href="{{ path('app_front_mes_participations') }}" class="nav-link">Mes participations</a>
+                                <a class="dropdown-item" href="{{ path('app_front_mes_favoris') }}" class="nav-link">Mes favoris </a>
                             </div>
                         </li>
                     {% endif %}
 
-                    <li class="nav-item {% if current_route == 'app_contact' %}active{% endif %}">
-                        <a href="#" class="nav-link">Contact</a>
-                    </li>
+                    
 
                      {% if app.user %}
                         <li class="nav-item {% if current_route == 'app_front_profile' %}active{% endif %}">

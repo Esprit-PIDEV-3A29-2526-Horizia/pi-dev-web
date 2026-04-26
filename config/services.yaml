@@ -6,6 +6,8 @@ parameters:
     stripe.secret_key: '%env(STRIPE_SECRET_KEY)%'
     stripe.public_key: '%env(STRIPE_PUBLIC_KEY)%'
     app.base_url: '%env(APP_BASE_URL)%'
+    mercure_public_url: '%env(MERCURE_PUBLIC_URL)%'
+
 
 services:
     _defaults:

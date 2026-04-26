@@ -1,0 +1,12 @@
+version: '3'
+
+services:
+  mercure:
+    image: dunglas/mercure
+    ports:
+      - "3001:80"
+    environment:
+      - MERCURE_PUBLISHER_JWT_KEY=ljtPWYribCMUQwSZXARVsx4vH3Ez0opB
+      - MERCURE_SUBSCRIBER_JWT_KEY=ljtPWYribCMUQwSZXARVsx4vH3Ez0opB
+      - MERCURE_EXTRA_DIRECTIVES=anonymous
+      - MERCURE_CORS_ALLOWED_ORIGINS=*

@@ -39,6 +39,7 @@ class AdminController extends AbstractController
     #[Route('/admin', name: 'app_admin')]
     public function index(EntityManagerInterface $entityManager): Response
     {
+        // ... votre code existant (inchangé)
         $voyageRepository = $entityManager->getRepository(Voyage::class);
         $reservationRepository = $entityManager->getRepository(Reservation::class);
         $userRepository = $entityManager->getRepository(User::class);
@@ -217,33 +218,24 @@ class AdminController extends AbstractController
         ]);
     }
 
-    #[Route('/admin/reservations/cancel-requests', name: 'admin_cancel_requests')]
+       #[Route('/admin/reservations/cancel-requests', name: 'admin_cancel_requests')]
     public function cancelRequests(EntityManagerInterface $em): Response
     {
         $this->checkAdminAccess();
 
         $requests = $em->getRepository(Reservationlog::class)
-            ->createQueryBuilder('r')
-            ->where('r.status = :status')
-            ->setParameter('status', 'demande_annulation')
-            ->orderBy('r.createdAt', 'ASC')
-            ->getQuery()
-            ->getResult();
+            ->findBy(['status' => 'demande_annulation'], ['createdAt' => 'ASC']);
 
-        $pendingCancelRequests = $em->getRepository(Reservationlog::class)
-            ->createQueryBuilder('r')
-            ->select('COUNT(r.idreslog)')
-            ->where('r.status = :status')
-            ->setParameter('status', 'demande_annulation')
-            ->getQuery()
-            ->getSingleScalarResult();
+        $pendingCancelRequests = count($requests);
 
         return $this->render('admin/cancel_requests.html.twig', [
             'requests' => $requests,
             'pendingCancelRequests' => $pendingCancelRequests,
+            'mercure_url' => $this->getParameter('mercure_public_url'),
         ]);
     }
 
+       
     #[Route('/admin/reservation/approve-cancel/{id}', name: 'admin_approve_cancel', methods: ['POST'])]
     public function approveCancel(int $id, EntityManagerInterface $em, EmailService $emailService): JsonResponse
     {
@@ -260,18 +252,16 @@ class AdminController extends AbstractController
         $emailService->sendCancellationApprovedEmail($reservation->getUser()->getEmail(), $reservation);
         $this->addFlash('success', '✅ Annulation approuvée pour la réservation #' . $reservation->getIdreslog());
 
-        $this->requestStack->getSession()->save();
-
-        // Stocker la notification pour l'utilisateur PROPRIÉTAIRE de la réservation (pas l'admin)
-        $userSession = $this->requestStack->getSession();
+        // Stocker la notification pour l'utilisateur
+        $session = $this->requestStack->getSession();
         $userId = $reservation->getUser()->getId();
-        $notifications = $userSession->get('user_notifications_' . $userId, []);
+        $notifications = $session->get('user_notifications_' . $userId, []);
         $notifications[] = [
             'message' => '✅ Votre demande d\'annulation pour la réservation #' . $reservation->getIdreslog() . ' a été acceptée.',
             'type' => 'success'
         ];
-        $userSession->set('user_notifications_' . $userId, $notifications);
-        $userSession->save();
+        $session->set('user_notifications_' . $userId, $notifications);
+        $session->save();
 
         return $this->json(['success' => true, 'message' => 'Annulation confirmée.']);
     }
@@ -292,19 +282,37 @@ class AdminController extends AbstractController
         $emailService->sendCancellationRejectedEmail($reservation->getUser()->getEmail(), $reservation);
         $this->addFlash('warning', '⚠️ Demande d\'annulation rejetée pour la réservation #' . $reservation->getIdreslog());
 
-        $this->requestStack->getSession()->save();
-
-        // Stocker la notification pour l'utilisateur PROPRIÉTAIRE de la réservation
-        $userSession = $this->requestStack->getSession();
+        // Stocker la notification pour l'utilisateur
+        $session = $this->requestStack->getSession();
         $userId = $reservation->getUser()->getId();
-        $notifications = $userSession->get('user_notifications_' . $userId, []);
+        $notifications = $session->get('user_notifications_' . $userId, []);
         $notifications[] = [
             'message' => '❌ Votre demande d\'annulation pour la réservation #' . $reservation->getIdreslog() . ' a été rejetée.',
             'type' => 'error'
         ];
-        $userSession->set('user_notifications_' . $userId, $notifications);
-        $userSession->save();
+        $session->set('user_notifications_' . $userId, $notifications);
+        $session->save();
 
         return $this->json(['success' => true, 'message' => 'Demande rejetée.']);
     }
+
+    #[Route('/admin/cancel-requests/api', name: 'admin_cancel_requests_api', methods: ['GET'])]
+    public function cancelRequestsApi(EntityManagerInterface $em): JsonResponse
+    {
+        $this->checkAdminAccess();
+
+        $requests = $em->getRepository(Reservationlog::class)
+            ->findBy(['status' => 'demande_annulation'], ['createdAt' => 'ASC']);
+
+        $data = array_map(fn($r) => [
+            'id' => $r->getIdreslog(),
+            'logement' => $r->getLogement()->getNom(),
+            'dateDebut' => $r->getDateDebut()->format('d/m/Y'),
+            'dateFin' => $r->getDateFin()->format('d/m/Y'),
+            'createdAt' => $r->getCreatedAt()->format('d/m/Y H:i')
+        ], $requests);
+
+        return $this->json(['count' => count($requests), 'requests' => $data]);
+    }
+
 }

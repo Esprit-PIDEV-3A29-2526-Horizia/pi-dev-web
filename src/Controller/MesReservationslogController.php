@@ -19,163 +19,187 @@ use Symfony\Component\Routing\Annotation\Route;
 
 class MesReservationslogController extends AbstractController
 {
-    // Page principale
     #[Route('/mes-reservations_log', name: 'app_front_reservationlog_index')]
     public function index(): Response
     {
         return $this->render('front/reservationlog/index.html.twig');
     }
 
-    // Route AJAX avec pagination et notifications
-  // Dans MesReservationslogController.php, remplacer la méthode ajax par celle-ci :
+    #[Route('/mes-reservations/ajax', name: 'app_front_reservation_ajax', methods: ['GET'])]
+    public function ajax(Request $request, EntityManagerInterface $em, ChambreTypeService $chambreTypeService, PaginatorInterface $paginator): JsonResponse
+    {
+        try {
+            $user = $this->getUser();
+            if (!$user instanceof User) {
+                return $this->json(['error' => 'Utilisateur non authentifié'], 401);
+            }
 
-#[Route('/mes-reservations/ajax', name: 'app_front_reservation_ajax', methods: ['GET'])]
-public function ajax(Request $request, EntityManagerInterface $em, ChambreTypeService $chambreTypeService, PaginatorInterface $paginator): JsonResponse
-{
-    try {
+            $search = $request->query->get('search', '');
+            $status = $request->query->get('status', '');
+            $sort   = $request->query->get('sort', 'date_desc');
+            $page   = max(1, $request->query->getInt('page', 1));
+            $limit  = max(1, $request->query->getInt('limit', 6));
+
+            $qb = $em->getRepository(Reservationlog::class)->createQueryBuilder('r')
+                ->leftJoin('r.logement', 'l')
+                ->leftJoin('r.user', 'u')
+                ->where('r.user = :user')
+                ->setParameter('user', $user);
+
+            if ($search !== '') {
+                $qb->andWhere('l.nom LIKE :search')
+                   ->setParameter('search', '%' . $search . '%');
+            }
+
+            if ($status !== '') {
+                $qb->andWhere('r.status = :status')
+                   ->setParameter('status', $status);
+            }
+
+            switch ($sort) {
+                case 'date_asc':   $qb->orderBy('r.date_debut', 'ASC'); break;
+                case 'date_desc':  $qb->orderBy('r.date_debut', 'DESC'); break;
+                case 'montant_asc': $qb->orderBy('r.montant', 'ASC'); break;
+                case 'montant_desc': $qb->orderBy('r.montant', 'DESC'); break;
+                default: $qb->orderBy('r.idreslog', 'DESC');
+            }
+
+            $pagination = $paginator->paginate($qb, $page, $limit);
+            $reservations = $pagination->getItems();
+            $total = $pagination->getTotalItemCount();
+            $totalPages = (int) ceil($total / $limit);
+
+            $session = $request->getSession();
+            $notifications = $session->get('user_notifications_' . $user->getId(), []);
+            $session->remove('user_notifications_' . $user->getId());
+
+            $html = '';
+            foreach ($reservations as $reservation) {
+                if (!$reservation->getLogement()) continue;
+
+                $chambreTypeDesc = $chambreTypeService->getChambreType(
+                    $reservation->getAdultes(),
+                    $reservation->getEnfants(),
+                    $reservation->getNombreChambres()
+                );
+                $pension = $reservation->getModeReservation();
+                $pensionLabel = $pension ? str_replace('_', ' ', $pension) : '-';
+                
+                $chambresDisplay = $chambreTypeDesc;
+                if ($reservation->getRepartitionChambres()) {
+                    $formatted = $chambreTypeService->formatRepartition($reservation->getRepartitionChambres());
+                    if ($formatted) $chambresDisplay = $formatted;
+                }
+
+                $badgeClass = match($reservation->getStatus()) {
+                    'confirmée' => 'confirmed',
+                    'en_attente' => 'pending',
+                    'terminée' => 'completed',
+                    'expirée' => 'expired',
+                    'annulée' => 'cancelled',
+                    'demande_annulation' => 'pending',
+                    default => 'cancelled'
+                };
+
+                $createdAt = $reservation->getCreatedAt() ? $reservation->getCreatedAt()->getTimestamp() : 0;
+                $isCancelled = ($reservation->getStatus() === 'annulée');
+
+                $html .= '<div class="col-md-6 col-lg-4" data-id="' . $reservation->getIdreslog() . '">
+                    <div class="reservation-card">
+                        <div class="reservation-card-content">
+                            <div class="card-header">
+                                <h5>' . htmlspecialchars($reservation->getLogement()->getNom()) . '</h5>
+                                <span class="badge-status ' . $badgeClass . '">' . htmlspecialchars($reservation->getStatus()) . '</span>
+                            </div>
+                            <div class="card-details">
+                                <div class="detail-item"><small><i class="fa fa-calendar"></i> Arrivée</small><p>' . $reservation->getDateDebut()->format('d/m/Y') . '</p></div>
+                                <div class="detail-item"><small><i class="fa fa-calendar"></i> Départ</small><p>' . $reservation->getDateFin()->format('d/m/Y') . '</p></div>
+                                <div class="detail-item"><small><i class="fa fa-money"></i> Montant</small><p>' . number_format($reservation->getMontant(), 2, ',', ' ') . ' DT</p></div>
+                                <div class="detail-item"><small><i class="fa fa-credit-card"></i> Modalité</small><p>' . htmlspecialchars($reservation->getModalites()) . '</p></div>
+                                <div class="detail-item"><small><i class="fa fa-users"></i> Occupants</small><p>' . $reservation->getAdultes() . ' adulte(s) + ' . $reservation->getEnfants() . ' enfant(s)</p></div>
+                                <div class="detail-item"><small><i class="fa fa-bed"></i> Chambres</small><p>' . htmlspecialchars($chambresDisplay) . '</p></div>
+                                <div class="detail-item"><small><i class="fa fa-cutlery"></i> Pension</small><p>' . htmlspecialchars($pensionLabel) . '</p></div>
+                            </div>
+                            <div class="card-actions">';
+                
+                if ($isCancelled) {
+                    $html .= '<a href="#" class="btn-action btn-permanent-delete" data-id="' . $reservation->getIdreslog() . '"><i class="fa fa-trash"></i> Supprimer définitivement</a>';
+                } else {
+                    if ($reservation->getStatus() !== 'terminée') {
+                        $html .= '<a href="#" class="btn-action btn-edit" data-id="' . $reservation->getIdreslog() . '"><i class="fa fa-pencil"></i> Modifier</a>';
+                        
+                        $now = time();
+                        $ageHours = ($now - $createdAt) / 3600;
+                        if ($ageHours < 1) {
+                            $html .= '<a href="#" class="btn-action btn-delete" data-id="' . $reservation->getIdreslog() . '" data-created-at="' . $createdAt . '"><i class="fa fa-trash"></i> Supprimer</a>';
+                        } else {
+                            $html .= '<a href="#" class="btn-action btn-request-cancel" data-id="' . $reservation->getIdreslog() . '"><i class="fa fa-ban"></i> Annuler</a>';
+                        }
+                    }
+                    if ($reservation->getStatus() == 'confirmée') {
+                        $html .= '<a href="#" class="btn-action btn-qr" data-id="' . $reservation->getIdreslog() . '"><i class="fa fa-qrcode"></i> QR Code</a>';
+                    }
+                    if ($reservation->getStatus() == 'en_attente' && $reservation->getModalites() == 'En ligne') {
+                        try {
+                            $payUrl = $this->generateUrl('app_front_reservation_pay', ['id' => $reservation->getIdreslog()]);
+                            $html .= '<a href="' . $payUrl . '" class="btn-action btn-pay" style="background: #23779C; color:white;"><i class="fa fa-credit-card"></i> Finaliser paiement</a>';
+                        } catch (\Exception $e) {}
+                    }
+                }
+                
+                $html .= '</div></div></div></div>';
+            }
+
+            if (empty($reservations)) {
+                $html = '<div class="col-12"><div class="text-center py-5 bg-light rounded-4"><i class="bi bi-calendar-x display-1 text-muted mb-4 d-block"></i><h3 class="text-muted mb-3">Aucune réservation</h3><p class="text-muted mb-4">Commencez par réserver un logement.</p><a href="' . $this->generateUrl('app_front_logement_index') . '" class="btn btn-horozia-primary btn-lg px-5 rounded-pill"><i class="bi bi-house-door me-2"></i> Découvrir les logements</a></div></div>';
+            }
+
+            return $this->json([
+                'html' => $html,
+                'notifications' => $notifications,
+                'currentPage' => $page,
+                'totalPages' => $totalPages,
+                'total' => $total
+            ]);
+        } catch (\Exception $e) {
+            error_log('ERREUR AJAX RESERVATIONS: ' . $e->getMessage());
+            return $this->json([
+                'html' => '<div class="col-12 text-center text-danger">Erreur technique : ' . $e->getMessage() . '</div>',
+                'notifications' => [],
+                'currentPage' => 1,
+                'totalPages' => 0,
+                'total' => 0
+            ], 500);
+        }
+    }
+
+    #[Route('/reservation/permanent-delete/{id}', name: 'app_front_reservation_permanent_delete', methods: ['POST'])]
+    public function permanentDelete(int $id, EntityManagerInterface $em): JsonResponse
+    {
         $user = $this->getUser();
         if (!$user instanceof User) {
-            return $this->json(['error' => 'Utilisateur non authentifié'], 401);
+            return $this->json(['success' => false, 'error' => 'Utilisateur non authentifié'], 401);
         }
 
-        $search = $request->query->get('search', '');
-        $status = $request->query->get('status', '');
-        $sort   = $request->query->get('sort', 'date_desc');
-        $page   = max(1, $request->query->getInt('page', 1));
-        $limit  = max(1, $request->query->getInt('limit', 6));
-
-        // Construction directe du QueryBuilder
-        $qb = $em->getRepository(Reservationlog::class)->createQueryBuilder('r')
-            ->leftJoin('r.logement', 'l')
-            ->leftJoin('r.user', 'u')
-            ->where('r.user = :user')
-            ->setParameter('user', $user);
-
-        // Filtre par nom de logement
-        if ($search !== '') {
-            $qb->andWhere('l.nom LIKE :search')
-               ->setParameter('search', '%' . $search . '%');
+        $reservation = $em->getRepository(Reservationlog::class)->find($id);
+        if (!$reservation) {
+            return $this->json(['success' => false, 'error' => 'Réservation non trouvée'], 404);
         }
 
-        // Filtre par statut (sauf "annulée" déjà exclu)
-        if ($status !== '') {
-            $qb->andWhere('r.status = :status')
-               ->setParameter('status', $status);
+        if ($reservation->getUser()->getId() !== $user->getId()) {
+            return $this->json(['success' => false, 'error' => 'Non autorisé'], 403);
         }
 
-        // Exclure les réservations annulées (sauf si on filtre spécifiquement sur "annulée")
-        if ($status !== 'annulée') {
-            $qb->andWhere('r.status != :cancelled')
-               ->setParameter('cancelled', 'annulée');
+        if ($reservation->getStatus() !== 'annulée') {
+            return $this->json(['success' => false, 'error' => 'Seules les réservations annulées peuvent être supprimées définitivement.'], 400);
         }
 
-        // Tri
-        switch ($sort) {
-            case 'date_asc':   $qb->orderBy('r.date_debut', 'ASC'); break;
-            case 'date_desc':  $qb->orderBy('r.date_debut', 'DESC'); break;
-            case 'montant_asc': $qb->orderBy('r.montant', 'ASC'); break;
-            case 'montant_desc': $qb->orderBy('r.montant', 'DESC'); break;
-            default: $qb->orderBy('r.idreslog', 'DESC');
-        }
+        $em->remove($reservation);
+        $em->flush();
 
-        // Pagination avec KnpPaginator (sur le QueryBuilder)
-        $pagination = $paginator->paginate($qb, $page, $limit);
-        $reservations = $pagination->getItems();
-        $total = $pagination->getTotalItemCount();
-        $totalPages = (int) ceil($total / $limit);
-
-        // Notifications utilisateur
-        $session = $request->getSession();
-        $notifications = $session->get('user_notifications_' . $user->getId(), []);
-        $session->remove('user_notifications_' . $user->getId());
-
-        $html = '';
-        foreach ($reservations as $reservation) {
-            if (!$reservation->getLogement()) continue;
-
-            $chambreTypeDesc = $chambreTypeService->getChambreType(
-                $reservation->getAdultes(),
-                $reservation->getEnfants(),
-                $reservation->getNombreChambres()
-            );
-            $pension = $reservation->getModeReservation();
-            $pensionLabel = $pension ? str_replace('_', ' ', $pension) : '-';
-            
-            $chambresDisplay = $chambreTypeDesc;
-            if ($reservation->getRepartitionChambres()) {
-                $formatted = $chambreTypeService->formatRepartition($reservation->getRepartitionChambres());
-                if ($formatted) $chambresDisplay = $formatted;
-            }
-
-            $badgeClass = match($reservation->getStatus()) {
-                'confirmée' => 'confirmed',
-                'en_attente' => 'pending',
-                'terminée' => 'completed',
-                'expirée' => 'expired',
-                default => 'cancelled'
-            };
-
-            $createdAt = $reservation->getCreatedAt() ? $reservation->getCreatedAt()->getTimestamp() : 0;
-
-            $html .= '<div class="col-md-6 col-lg-4" data-id="' . $reservation->getIdreslog() . '">
-                <div class="reservation-card">
-                    <div class="reservation-card-content">
-                        <div class="card-header">
-                            <h5>' . htmlspecialchars($reservation->getLogement()->getNom()) . '</h5>
-                            <span class="badge-status ' . $badgeClass . '">' . htmlspecialchars($reservation->getStatus()) . '</span>
-                        </div>
-                        <div class="card-details">
-                            <div class="detail-item"><small><i class="fa fa-calendar"></i> Arrivée</small><p>' . $reservation->getDateDebut()->format('d/m/Y') . '</p></div>
-                            <div class="detail-item"><small><i class="fa fa-calendar"></i> Départ</small><p>' . $reservation->getDateFin()->format('d/m/Y') . '</p></div>
-                            <div class="detail-item"><small><i class="fa fa-money"></i> Montant</small><p>' . number_format($reservation->getMontant(), 2, ',', ' ') . ' DT</p></div>
-                            <div class="detail-item"><small><i class="fa fa-credit-card"></i> Modalité</small><p>' . htmlspecialchars($reservation->getModalites()) . '</p></div>
-                            <div class="detail-item"><small><i class="fa fa-users"></i> Occupants</small><p>' . $reservation->getAdultes() . ' adulte(s) + ' . $reservation->getEnfants() . ' enfant(s)</p></div>
-                            <div class="detail-item"><small><i class="fa fa-bed"></i> Chambres</small><p>' . htmlspecialchars($chambresDisplay) . '</p></div>
-                            <div class="detail-item"><small><i class="fa fa-cutlery"></i> Pension</small><p>' . htmlspecialchars($pensionLabel) . '</p></div>
-                        </div>
-                        <div class="card-actions">';
-            
-            if ($reservation->getStatus() !== 'terminée') {
-                $html .= '<a href="#" class="btn-action btn-edit" data-id="' . $reservation->getIdreslog() . '"><i class="fa fa-pencil"></i> Modifier</a>';
-                $html .= '<a href="#" class="btn-action btn-delete" data-id="' . $reservation->getIdreslog() . '" data-created-at="' . $createdAt . '"><i class="fa fa-trash"></i> Supprimer</a>';
-            }
-            if ($reservation->getStatus() == 'confirmée') {
-                $html .= '<a href="#" class="btn-action btn-qr" data-id="' . $reservation->getIdreslog() . '"><i class="fa fa-qrcode"></i> QR Code</a>';
-            }
-            if ($reservation->getStatus() == 'en_attente' && $reservation->getModalites() == 'En ligne') {
-                try {
-                    $payUrl = $this->generateUrl('app_front_reservation_pay', ['id' => $reservation->getIdreslog()]);
-                    $html .= '<a href="' . $payUrl . '" class="btn-action btn-pay" style="background: #23779C; color:white;"><i class="fa fa-credit-card"></i> Finaliser paiement</a>';
-                } catch (\Exception $e) {}
-            }
-            
-            $html .= '</div></div></div></div>';
-        }
-
-        if (empty($reservations)) {
-            $html = '<div class="col-12"><div class="text-center py-5 bg-light rounded-4"><i class="bi bi-calendar-x display-1 text-muted mb-4 d-block"></i><h3 class="text-muted mb-3">Aucune réservation</h3><p class="text-muted mb-4">Commencez par réserver un logement.</p><a href="' . $this->generateUrl('app_front_logement_index') . '" class="btn btn-horozia-primary btn-lg px-5 rounded-pill"><i class="bi bi-house-door me-2"></i> Découvrir les logements</a></div></div>';
-        }
-
-        return $this->json([
-            'html' => $html,
-            'notifications' => $notifications,
-            'currentPage' => $page,
-            'totalPages' => $totalPages,
-            'total' => $total
-        ]);
-    } catch (\Exception $e) {
-        // Log l'erreur pour le débogage
-        error_log('ERREUR AJAX RESERVATIONS: ' . $e->getMessage() . ' dans ' . $e->getFile() . ':' . $e->getLine());
-        return $this->json([
-            'html' => '<div class="col-12 text-center text-danger">Erreur technique : ' . $e->getMessage() . '</div>',
-            'notifications' => [],
-            'currentPage' => 1,
-            'totalPages' => 0,
-            'total' => 0
-        ], 500);
+        return $this->json(['success' => true, 'message' => 'Réservation supprimée définitivement.']);
     }
-}
-    // Suppression directe (moins d'1h)
+
     #[Route('/reservation/delete/{id}', name: 'app_front_reservation_delete', methods: ['POST'])]
     public function delete(int $id, EntityManagerInterface $em, EmailService $emailService): JsonResponse
     {
@@ -207,29 +231,33 @@ public function ajax(Request $request, EntityManagerInterface $em, ChambreTypeSe
         return $this->json(['success' => true, 'message' => 'Réservation supprimée.']);
     }
 
-    // Demande d'annulation (plus d'1h)
-    #[Route('/reservation/request-cancel/{id}', name: 'app_front_reservation_request_cancel', methods: ['POST'])]
-    public function requestCancel(int $id, EntityManagerInterface $em): JsonResponse
-    {
-        $user = $this->getUser();
-        if (!$user instanceof User) {
-            return $this->json(['success' => false, 'error' => 'Utilisateur non authentifié'], 401);
-        }
-
-        $reservation = $em->getRepository(Reservationlog::class)->find($id);
-        if (!$reservation || $reservation->getUser()->getId() !== $user->getId()) {
-            return $this->json(['success' => false, 'error' => 'Réservation non trouvée'], 404);
-        }
-        
-        if (!in_array($reservation->getStatus(), ['confirmée', 'en_attente'])) {
-            return $this->json(['success' => false, 'error' => 'Seules les réservations confirmées ou en attente peuvent être annulées.'], 400);
-        }
-        
-        $reservation->setStatus('demande_annulation');
-        $em->flush();
-        
-        return $this->json(['success' => true, 'message' => 'Demande d\'annulation envoyée à l\'administrateur.']);
+    // Demande d'annulation (plus d'1h) - AVEC ENVOI MERCURE EN TEMPS RÉEL
+   // Demande d'annulation (plus d'1h) - Version simplifiée
+#[Route('/reservation/request-cancel/{id}', name: 'app_front_reservation_request_cancel', methods: ['POST'])]
+public function requestCancel(int $id, EntityManagerInterface $em): JsonResponse
+{
+    $user = $this->getUser();
+    if (!$user instanceof User) {
+        return $this->json(['success' => false, 'error' => 'Utilisateur non authentifié'], 401);
     }
+
+    $reservation = $em->getRepository(Reservationlog::class)->find($id);
+    if (!$reservation || $reservation->getUser()->getId() !== $user->getId()) {
+        return $this->json(['success' => false, 'error' => 'Réservation non trouvée'], 404);
+    }
+    
+    if (!in_array($reservation->getStatus(), ['confirmée', 'en_attente'])) {
+        return $this->json(['success' => false, 'error' => 'Seules les réservations confirmées ou en attente peuvent être annulées.'], 400);
+    }
+    
+    $reservation->setStatus('demande_annulation');
+    $em->flush();
+
+    // La notification sera gérée par le polling (recharge périodique)
+    // Le polling dans navbar.html.twig recharge les données toutes les 5 secondes
+    
+    return $this->json(['success' => true, 'message' => 'Demande d\'annulation envoyée à l\'administrateur.']);
+}
 
     // QR Code
     #[Route('/reservation/qrcode/{id}', name: 'app_front_reservation_qrcode', methods: ['GET'])]
@@ -277,7 +305,6 @@ public function ajax(Request $request, EntityManagerInterface $em, ChambreTypeSe
         return new Response($html);
     }
 
-    // Télécharger PDF
     #[Route('/reservation/download-pdf/{id}', name: 'app_front_reservation_download_pdf', methods: ['GET'])]
     public function downloadPdf(int $id, EntityManagerInterface $em, PdfService $pdfService): Response
     {
@@ -299,7 +326,6 @@ public function ajax(Request $request, EntityManagerInterface $em, ChambreTypeSe
         ]);
     }
 
-    // Envoyer email
     #[Route('/reservation/send-email/{id}', name: 'app_front_reservation_send_email', methods: ['POST'])]
     public function sendEmail(int $id, EntityManagerInterface $em, EmailService $emailService): JsonResponse
     {
@@ -327,7 +353,6 @@ public function ajax(Request $request, EntityManagerInterface $em, ChambreTypeSe
         }
     }
 
-    // Modale d'édition
     #[Route('/reservation/edit-modal/{id}', name: 'app_front_reservation_edit_modal', methods: ['GET'])]
     public function editModal(int $id, EntityManagerInterface $em): Response
     {
@@ -348,7 +373,6 @@ public function ajax(Request $request, EntityManagerInterface $em, ChambreTypeSe
         ]);
     }
 
-    // Éditer réservation
     #[Route('/reservation/edit/{id}', name: 'app_front_reservation_edit', methods: ['POST'])]
     public function edit(int $id, Request $request, EntityManagerInterface $em): JsonResponse
     {

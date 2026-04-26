@@ -20,7 +20,7 @@
         </thead>
         <tbody>
             {% for r in requests %}
-            <tr id="row-{{ r.idreslog }}">
+            <tr id="row-{{ r.idreslog }}" class="cancel-row">
                 <td>{{ r.logement.nom }}</td>
                 <td>{{ r.dateDebut|date('d/m/Y') }} → {{ r.dateFin|date('d/m/Y') }}</td>
                 <td>{{ r.montant }} DT</td>
@@ -28,8 +28,8 @@
                 <td>
                     <button class="btn btn-sm btn-success btn-approve" data-id="{{ r.idreslog }}">✔ Approuver</button>
                     <button class="btn btn-sm btn-danger btn-reject" data-id="{{ r.idreslog }}">✘ Rejeter</button>
-                 </td>
-             </tr>
+                </td>
+            </tr>
             {% else %}
             <tr>
                 <td colspan="6" class="text-center">Aucune demande en attente</td>
@@ -38,6 +38,35 @@
         </tbody>
     </table>
 </div>
+
+<style>
+    /* Style de surbrillance pour la ligne cliquée */
+    .highlight-row {
+        background-color: #091786 !important;
+        transition: all 0.3s ease-in-out;
+        box-shadow: 0 0 10px rgba(129, 137, 253, 0.5);
+    }
+    
+    /* Animation de pulsation pour attirer l'attention */
+    @keyframes pulse {
+        0% {
+            background-color: #6d77b0;
+            transform: scale(1);
+        }
+        50% {
+            background-color: #141b99;
+            transform: scale(1.01);
+        }
+        100% {
+            background-color: #5c99ee;
+            transform: scale(1);
+        }
+    }
+    
+    .highlight-row-pulse {
+        animation: pulse 0.8s ease-in-out 2;
+    }
+</style>
 
 <script>
     function handleAction(id, action) {
@@ -49,17 +78,48 @@
         .then(data => {
             if (data.success) {
                 document.getElementById(`row-${id}`).remove();
+                // Recharger le badge et la liste dans la navbar
+                if (typeof loadCancelRequests !== 'undefined') {
+                    loadCancelRequests();
+                }
                 location.reload();
             } else {
                 alert('Erreur: ' + (data.error || 'Inconnue'));
             }
         });
     }
+    
     document.querySelectorAll('.btn-approve').forEach(btn => {
         btn.addEventListener('click', () => handleAction(btn.dataset.id, 'approve'));
     });
     document.querySelectorAll('.btn-reject').forEach(btn => {
         btn.addEventListener('click', () => handleAction(btn.dataset.id, 'reject'));
     });
+    
+    // Gestion du scroll automatique vers la demande mise en surbrillance
+    const urlParams = new URLSearchParams(window.location.search);
+    const highlightId = urlParams.get('highlight');
+    
+    if (highlightId) {
+        const targetRow = document.getElementById(`row-${highlightId}`);
+        if (targetRow) {
+            // Supprimer la query string de l'URL sans recharger
+            const newUrl = window.location.pathname;
+            window.history.replaceState({}, document.title, newUrl);
+            
+            // Scroll vers l'élément
+            targetRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            // Ajouter une classe de surbrillance avec animation
+            targetRow.classList.add('highlight-row');
+            targetRow.classList.add('highlight-row-pulse');
+            
+            // Retirer la surbrillance après 3 secondes
+            setTimeout(() => {
+                targetRow.classList.remove('highlight-row');
+                targetRow.classList.remove('highlight-row-pulse');
+            }, 3000);
+        }
+    }
 </script>
 {% endblock %}
