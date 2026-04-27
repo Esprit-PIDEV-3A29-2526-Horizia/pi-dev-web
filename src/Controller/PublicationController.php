@@ -341,7 +341,7 @@ class PublicationController extends AbstractController
         return $this->json(['isFavorite' => $isFavorite]);
     }
 
-    #[Route('/mes-favoris', name: 'front_my_favorites')]
+#[Route('/mes-favoris-publications', name: 'front_my_publications_favorites')]
     public function myFavorites(PublicationRepository $repo, Request $request): Response
     {
         $favorites = $request->getSession()->get('favorite_publications', []);

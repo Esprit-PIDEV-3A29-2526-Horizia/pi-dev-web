@@ -26,6 +26,9 @@
     <nav class="navbar navbar-expand-lg navbar-dark ftco_navbar bg-dark ftco-navbar-light" id="ftco-navbar">
         <div class="container">
             <a class="navbar-brand" href="{{ path('app_front_home') }}">
+            {% set current_route = app.request.attributes.get('_route') %}
+
+
                 <img src="{{ asset('assets/images/LOGO2.png') }}" alt="Logo" style="height: 50px; width: auto;">
             </a>
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#ftco-nav" aria-controls="ftco-nav" aria-expanded="false" aria-label="Toggle navigation">
@@ -33,8 +36,6 @@
             </button>
             <div class="collapse navbar-collapse" id="ftco-nav">
                 <ul class="navbar-nav ml-auto">
-                    {% set current_route = app.request.attributes.get('_route') %}
-                    
                     <li class="nav-item {% if current_route == 'app_front_home' %}active{% endif %}">
                         <a href="{{ path('app_front_home') }}" class="nav-link">Accueil</a>
                     </li>
@@ -43,52 +44,15 @@
                             Voyages
                         </a>
                     </li>
-                    
                     <!-- Logement : visible tout le temps -->
-                    <li class="nav-item {% if current_route == 'app_front_logement_index' %}active{% endif %}">
+                    <li class="nav-item{% if current_route == 'app_front_logement_index' %}active{% endif %}">
                         <a href="{{ path('app_front_logement_index') }}" class="nav-link">Logement</a>
                     </li>
-                    
-                    <li class="nav-item {% if current_route == 'app_front_events' %}active{% endif %}">
+                       <li class="nav-item {% if current_route == 'app_front_events' %}active{% endif %}">
                         <a href="{{ path('app_front_events') }}" class="nav-link">Events</a>
                     </li>
                     
-                    <!-- ===== LOCATION DE VOITURES ===== -->
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="locationDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            <i class="fa fa-car"></i> Location
-                        </a>
-                        <div class="dropdown-menu" aria-labelledby="locationDropdown">
-                            <a class="dropdown-item {% if current_route == 'client_accueil' %}active{% endif %}" href="{{ path('client_accueil') }}">
-                                <i class="fa fa-home"></i> Accueil Location
-                            </a>
-                            <a class="dropdown-item {% if current_route == 'client_catalogue' %}active{% endif %}" href="{{ path('client_catalogue') }}">
-                                <i class="fa fa-search"></i> Catalogue véhicules
-                            </a>
-                            <a class="dropdown-item {% if current_route == 'client_planning' %}active{% endif %}" href="{{ path('client_planning') }}">
-                                <i class="fa fa-calendar"></i> Planning disponibilités
-                            </a>
-                            {% if app.user %}
-                                <div class="dropdown-divider"></div>
-                                <a class="dropdown-item {% if current_route == 'client_mes_reservations' %}active{% endif %}" href="{{ path('client_mes_reservations') }}">
-                                    <i class="fa fa-list"></i> Mes réservations
-                                </a>
-                            {% endif %}
-                        </div>
-                    </li>
-                    
-                    <li class="nav-item {% if current_route == 'app_front_mes_participations' %}active{% endif %}">
-                        <a href="{{ path('app_front_mes_participations') }}" class="nav-link">Mes Inscriptions</a>
-                    </li>
-                    
-                    {% if app.user %}
-                        <li class="nav-item {% if current_route == 'app_front_mes_favoris' %}active{% endif %}">
-                            <a href="{{ path('app_front_mes_favoris') }}" class="nav-link">
-                                Mes favoris
-                            </a>
-                        </li>
-                    {% endif %}
-                    
+                   
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="publicationsDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                             Publications
@@ -105,51 +69,40 @@
                                     Mes publications
                                 </a>
                             {% endif %}
-                           <a class="dropdown-item" href="{{ path('front_my_publications_favorites') }}">
-    <i class="fa fa-star text-warning"></i> Mes favoris
-</a>
+                            <a class="dropdown-item {% if current_route == 'front_my_favorites' %}active{% endif %}" href="{{ path('front_my_favorites') }}">
+                                <i class="fa fa-star text-warning"></i> Mes favoris
+                            </a>
                         </div>
                     </li>
-                    
                     {% if app.user %}
-                        <li class="nav-item dropdown {% if current_route starts with 'app_front_reservation' %}active{% endif %}">
+                        <li class="nav-item dropdown {% if app.request.attributes.get('_route') starts with 'app_front_reservation' %}active{% endif %}">
                             <a class="nav-link dropdown-toggle" href="#" id="reservationsDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 Mes réservations
                             </a>
                             <div class="dropdown-menu" aria-labelledby="reservationsDropdown">
                                 <a class="dropdown-item" href="{{ path('app_front_mes_reservations') }}">Mes réservations de voyages</a>
                                 <a class="dropdown-item" href="{{ path('app_front_reservationlog_index') }}">Mes réservations de logements</a>
-                                <div class="dropdown-divider"></div>
-                                <a class="dropdown-item" href="{{ path('client_mes_reservations') }}">Mes réservations de véhicules</a>
+                                <a class="dropdown-item" href="{{ path('app_front_mes_participations') }}" class="nav-link">Mes participations</a>
+                                <a class="dropdown-item" href="{{ path('app_front_mes_favoris') }}" class="nav-link">Mes favoris </a>
                             </div>
                         </li>
                     {% endif %}
 
-                    <li class="nav-item {% if current_route == 'app_contact' %}active{% endif %}">
-                        <a href="#" class="nav-link">Contact</a>
-                    </li>
+                    
 
-                    {% if app.user %}
+                     {% if app.user %}
                         <li class="nav-item {% if current_route == 'app_front_profile' %}active{% endif %}">
-                            <a href="{{ path('app_front_profile') }}" class="nav-link">
-                                <i class="fa fa-user-circle"></i> {{ app.user.prenom|default(app.user.nom) }}
-                            </a>
+                            <a href="{{ path('app_front_profile') }}" class="nav-link">Mon Profil</a>
                         </li>
                         <li class="nav-item">
-                            <a href="{{ path('app_logout') }}" class="nav-link">
-                                <i class="fa fa-sign-out"></i> Déconnexion
-                            </a>
+                            <a href="{{ path('app_logout') }}" class="nav-link">Déconnexion</a>
                         </li>
                     {% else %}
                         <li class="nav-item {% if current_route == 'app_login' %}active{% endif %}">
-                            <a href="{{ path('app_login') }}" class="nav-link">
-                                <i class="fa fa-sign-in"></i> Connexion
-                            </a>
+                            <a href="{{ path('app_login') }}" class="nav-link">Connexion</a>
                         </li>
                         <li class="nav-item {% if current_route == 'app_register' %}active{% endif %}">
-                            <a href="{{ path('app_register') }}" class="nav-link">
-                                <i class="fa fa-user-plus"></i> Inscription
-                            </a>
+                            <a href="{{ path('app_register') }}" class="nav-link">Inscription</a>
                         </li>
                     {% endif %}
                 </ul>
@@ -181,11 +134,11 @@
                     <div class="ftco-footer-widget pt-md-5 mb-4 ml-md-5">
                         <h2 class="ftco-heading-2">Information</h2>
                         <ul class="list-unstyled">
-                            <li><a href="{{ path('client_accueil') }}" class="py-2 d-block">Location de véhicules</a></li>
-                            <li><a href="{{ path('app_front_voyages') }}" class="py-2 d-block">Voyages organisés</a></li>
-                            <li><a href="{{ path('app_front_logement_index') }}" class="py-2 d-block">Réservation logements</a></li>
+                            <li><a href="#" class="py-2 d-block">Online Enquiry</a></li>
+                            <li><a href="#" class="py-2 d-block">General Enquiries</a></li>
                             <li><a href="#" class="py-2 d-block">Booking Conditions</a></li>
                             <li><a href="#" class="py-2 d-block">Privacy and Policy</a></li>
+                            <li><a href="#" class="py-2 d-block">Refund Policy</a></li>
                             <li><a href="#" class="py-2 d-block">Call Us</a></li>
                         </ul>
                     </div>
@@ -241,28 +194,6 @@
     <script src="{{ asset('assets/js/bootstrap-datepicker.js') }}"></script>
     <script src="{{ asset('assets/js/scrollax.min.js') }}"></script>
     <script src="{{ asset('assets/js/main.js') }}"></script>
-
-    <script>
-        // Active le lien actif dans le dropdown
-        document.addEventListener('DOMContentLoaded', function() {
-            const currentPath = window.location.pathname;
-            const dropdownLinks = document.querySelectorAll('.dropdown-menu .dropdown-item');
-            dropdownLinks.forEach(link => {
-                const href = link.getAttribute('href');
-                if (href && currentPath === href) {
-                    link.classList.add('active');
-                    // Afficher le dropdown parent comme actif
-                    const parentDropdown = link.closest('.dropdown');
-                    if (parentDropdown) {
-                        const dropdownToggle = parentDropdown.querySelector('.dropdown-toggle');
-                        if (dropdownToggle) {
-                            dropdownToggle.classList.add('active');
-                        }
-                    }
-                }
-            });
-        });
-    </script>
 
     {% block javascripts %}{% endblock %}
 </body>

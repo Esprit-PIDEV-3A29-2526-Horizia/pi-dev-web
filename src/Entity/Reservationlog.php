@@ -60,12 +60,12 @@ class Reservationlog
     #[ORM\Column(type: 'integer', options: ['default' => 1])]
     #[Assert\NotNull(message: "Le nombre de chambres est obligatoire.")]
     #[Assert\Positive(message: "Le nombre de chambres doit être positif.")]
-    private int $nombreChambres = 1;
+    private int $nombre_Chambres = 1;
 
     #[ORM\Column(type: 'string', length: 50, nullable: true)]
     // Supprimé : #[Assert\NotNull]
     #[Assert\Choice(choices: ['all_inclusive', 'demi_pension', 'petit_dejeuner', 'soft'], message: "Type de pension invalide.")]
-    private ?string $modeReservation = null;
+    private ?string $mode_Reservation = null;
 #[ORM\Column(name: 'created_at', type: 'datetime', nullable: false)]
 private ?\DateTimeInterface $createdAt = null;
 
@@ -80,10 +80,10 @@ public function setCreatedAt(\DateTimeInterface $createdAt): self
     return $this;
 }
 #[ORM\Column(type: 'string', length: 255, nullable: true)]
-private ?string $repartitionChambres = null;
+private ?string $repartition_Chambres = null;
 
-public function getRepartitionChambres(): ?string { return $this->repartitionChambres; }
-public function setRepartitionChambres(?string $repartitionChambres): self { $this->repartitionChambres = $repartitionChambres; return $this; }
+public function getRepartitionChambres(): ?string { return $this->repartition_Chambres; }
+public function setRepartitionChambres(?string $repartitionChambres): self { $this->repartition_Chambres = $repartitionChambres; return $this; }
     // Getters & Setters (existants + nouveaux)
     public function getIdreslog(): ?int { return $this->idreslog; }
     public function setIdreslog(int $idreslog): self { $this->idreslog = $idreslog; return $this; }
@@ -115,9 +115,9 @@ public function setRepartitionChambres(?string $repartitionChambres): self { $th
     public function getEnfants(): int { return $this->enfants; }
     public function setEnfants(int $enfants): self { $this->enfants = $enfants; return $this; }
 
-    public function getNombreChambres(): int { return $this->nombreChambres; }
-    public function setNombreChambres(int $nombreChambres): self { $this->nombreChambres = $nombreChambres; return $this; }
+    public function getNombreChambres(): int { return $this->nombre_Chambres; }
+    public function setNombreChambres(int $nombreChambres): self { $this->nombre_Chambres = $nombreChambres; return $this; }
 
-    public function getModeReservation(): ?string { return $this->modeReservation; }
-    public function setModeReservation(?string $modeReservation): self { $this->modeReservation = $modeReservation; return $this; }
+    public function getModeReservation(): ?string { return $this->mode_Reservation; }
+    public function setModeReservation(?string $modeReservation): self { $this->mode_Reservation = $modeReservation; return $this; }
 }
