@@ -8,6 +8,7 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
+use App\Entity\User;
 
 #[ORM\Entity(repositoryClass: PublicationRepository::class)]
 #[ORM\Table(name: "publication")]
@@ -58,7 +59,9 @@ class Publication
 
     #[ORM\Column(type: 'json', nullable: true)]
     private ?array $tags = null;
-
+    #[ORM\ManyToOne(targetEntity: User::class)]
+    #[ORM\JoinColumn(name: "created_by_id", referencedColumnName: "id", nullable: false)]
+    private ?User $createdBy = null;
     /**
      * @var Collection<int, Commentaire>
      */
@@ -264,4 +267,14 @@ class Publication
     {
         return $this->removeCommentaire($commentaireList);
     }
+    public function getCreatedBy(): ?User
+{
+    return $this->createdBy;
+}
+
+public function setCreatedBy(?User $createdBy): static
+{
+    $this->createdBy = $createdBy;
+    return $this;
+}
 }

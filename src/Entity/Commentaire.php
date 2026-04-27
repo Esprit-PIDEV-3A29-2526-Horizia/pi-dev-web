@@ -6,6 +6,7 @@ use App\Repository\CommentaireRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
+use App\Entity\User;
 
 #[ORM\Entity(repositoryClass: CommentaireRepository::class)]
 #[ORM\Table(name: "commentaire")]
@@ -36,6 +37,9 @@ class Commentaire
 
     #[ORM\Column(nullable: true)]
     private ?bool $modifie = false;
+    #[ORM\ManyToOne(targetEntity: User::class)]
+    #[ORM\JoinColumn(name: "created_by_id", referencedColumnName: "id", nullable: false)]
+    private ?User $createdBy = null;
 
     public function __construct()
     {
@@ -112,4 +116,15 @@ class Commentaire
         $this->modifie = $modifie;
         return $this;
     }
+    public function getCreatedBy(): ?User
+    {
+    return $this->createdBy;
+    }
+
+    public function setCreatedBy(?User $createdBy): static
+    {
+    $this->createdBy = $createdBy;
+    return $this;
+    }
+
 }

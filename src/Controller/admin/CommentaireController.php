@@ -1,4 +1,5 @@
 <?php
+// src/Controller/admin/CommentaireController.php
 
 namespace App\Controller\admin;
 
@@ -28,7 +29,6 @@ class CommentaireController extends AbstractController
             }
         }
 
-        // Création d'un nouveau commentaire (si formulaire soumis)
         $commentaire = new Commentaire();
         $form = $this->createForm(CommentaireType::class, $commentaire);
         $form->handleRequest($request);
@@ -37,7 +37,15 @@ class CommentaireController extends AbstractController
             $commentaire->setPublication($publication);
             $commentaire->setDateCreation(new \DateTimeImmutable());
             $commentaire->setModifie(false);
-            $commentaire->setUtilisateurId($this->getUser()?->getId() ?? 0);
+            // Liaison à l'utilisateur connecté (admin)
+            $commentaire->setCreatedBy($this->getUser());
+            // Pour l'affichage, on peut aussi définir l'auteur textuel
+            $user = $this->getUser();
+            if ($user) {
+                $commentaire->setAuteur($user->getPrenom() . ' ' . $user->getNom());
+            } else {
+                $commentaire->setAuteur('Admin');
+            }
             
             $em->persist($commentaire);
             $publication->setCommentaires($publication->getCommentaires() + 1);
@@ -47,7 +55,6 @@ class CommentaireController extends AbstractController
             return $this->redirectToRoute('admin_commentaire_index', ['publication' => $publicationId]);
         }
 
-        // Récupérer les commentaires existants pour cette publication
         if ($publication) {
             $commentaires = $commentaireRepository->findBy(['publication' => $publication], ['date_creation' => 'DESC']);
         } else {

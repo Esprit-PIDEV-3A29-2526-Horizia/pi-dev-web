@@ -1,45 +1,72 @@
 <?php
+// src/Entity/Favori.php
 
 namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
-
 use App\Repository\FavoriRepository;
 
 #[ORM\Entity(repositoryClass: FavoriRepository::class)]
 #[ORM\Table(name: 'favoris')]
+#[ORM\UniqueConstraint(name: 'unique_favori', columns: ['user_id', 'publication_id'])]
 class Favori
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
-    private ?int $utilisateur_id = null;
+    private ?int $id = null;
 
-    public function getUtilisateur_id(): ?int
+    #[ORM\ManyToOne(targetEntity: User::class)]
+    #[ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id', nullable: false, onDelete: 'CASCADE')]
+    private ?User $user = null;
+
+    #[ORM\ManyToOne(targetEntity: Publication::class)]
+    #[ORM\JoinColumn(name: 'publication_id', referencedColumnName: 'id', nullable: false, onDelete: 'CASCADE')]
+    private ?Publication $publication = null;
+
+    #[ORM\Column(type: 'datetime_immutable', nullable: false)]
+    private ?\DateTimeImmutable $dateAjout = null;
+
+    public function __construct()
     {
-        return $this->utilisateur_id;
+        $this->dateAjout = new \DateTimeImmutable();
     }
 
-    public function setUtilisateur_id(int $utilisateur_id): self
+    public function getId(): ?int
     {
-        $this->utilisateur_id = $utilisateur_id;
+        return $this->id;
+    }
+
+    public function getUser(): ?User
+    {
+        return $this->user;
+    }
+
+    public function setUser(?User $user): self
+    {
+        $this->user = $user;
         return $this;
     }
 
-    #[ORM\Column(type: 'integer', nullable: false)]
-    private ?int $publication_id = null;
-
-    public function getPublication_id(): ?int
+    public function getPublication(): ?Publication
     {
-        return $this->publication_id;
+        return $this->publication;
     }
 
-    public function setPublication_id(int $publication_id): self
+    public function setPublication(?Publication $publication): self
     {
-        $this->publication_id = $publication_id;
+        $this->publication = $publication;
         return $this;
     }
 
+    public function getDateAjout(): ?\DateTimeImmutable
+    {
+        return $this->dateAjout;
+    }
+
+    public function setDateAjout(\DateTimeImmutable $dateAjout): self
+    {
+        $this->dateAjout = $dateAjout;
+        return $this;
+    }
 }
