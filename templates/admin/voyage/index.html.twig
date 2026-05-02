@@ -133,6 +133,18 @@
                                     </div>
                                 </div>
 
+                                <!-- Ajouter ce bloc après le availability-box ou avant les actions -->
+                                {% if voyage.createdBy %}
+                                <div class="created-by-info mt-3 pt-2 border-top">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <i class="bi bi-person-circle text-muted"></i>
+                                        <span class="small text-muted">
+                                            Créé par <strong>{{ voyage.createdBy.prenom }} {{ voyage.createdBy.nom }}</strong>
+                                        </span>
+                                    </div>
+                                </div>
+                                {% endif %}
+
                                 <div class="voyage-actions mt-4">
                                     <a href="{{ path('app_voyage_show', {'id': voyage.id}) }}"
                                        class="icon-action icon-view"

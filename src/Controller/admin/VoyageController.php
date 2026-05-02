@@ -2,6 +2,7 @@
 
 namespace App\Controller\Admin;
 
+use App\Entity\User;
 use App\Entity\Voyage;
 use App\Form\VoyageType;
 use App\Service\OpenWeatherService;
@@ -9,25 +10,12 @@ use Doctrine\ORM\EntityManagerInterface;
 use Knp\Component\Pager\PaginatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
 #[Route('/admin/voyage')]
 class VoyageController extends AbstractController
 {
-    private RequestStack $requestStack;
-
-    public function __construct(RequestStack $requestStack)
-    {
-        $this->requestStack = $requestStack;
-
-        $session = $requestStack->getSession();
-        if ($session && !$session->isStarted()) {
-            $session->start();
-        }
-    }
-
     private function checkAdminAccess(): void
     {
         $user = $this->getUser();
@@ -49,14 +37,14 @@ class VoyageController extends AbstractController
         $search = trim((string) $request->query->get('search', ''));
         $sort = trim((string) $request->query->get('sort', ''));
 
-        $qb = $entityManager->getRepository(Voyage::class)
-            ->createQueryBuilder('v')
-            ->leftJoin('v.categorie', 'c')
-            ->addSelect('c');
+        $qb = $entityManager->createQueryBuilder()
+            ->select('v', 'c')
+            ->from(Voyage::class, 'v')
+            ->leftJoin('v.categorie', 'c');
 
         if ($search !== '') {
             $qb->andWhere('LOWER(v.titre) LIKE :search OR LOWER(v.destination) LIKE :search')
-               ->setParameter('search', '%' . mb_strtolower($search) . '%');
+                ->setParameter('search', '%' . mb_strtolower($search) . '%');
         }
 
         switch ($sort) {
@@ -92,13 +80,15 @@ class VoyageController extends AbstractController
         $weatherData = [];
 
         foreach ($voyages as $voyage) {
+            if (!$voyage instanceof Voyage) {
+                continue;
+            }
+
             $destination = trim((string) $voyage->getDestination());
 
-            if ($destination !== '') {
-                $weatherData[$voyage->getId()] = $openWeatherService->getWeatherByCity($destination);
-            } else {
-                $weatherData[$voyage->getId()] = null;
-            }
+            $weatherData[$voyage->getId()] = $destination !== ''
+                ? $openWeatherService->getWeatherByCity($destination)
+                : null;
         }
 
         return $this->render('admin/voyage/index.html.twig', [
@@ -121,10 +111,19 @@ class VoyageController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             $voyage->setPlacesRestantes($voyage->getPlacesTotal());
 
+            $user = $this->getUser();
+
+            if (!$user instanceof User) {
+                throw $this->createAccessDeniedException('Utilisateur invalide.');
+            }
+
+            $voyage->setCreatedBy($user);
+
             $entityManager->persist($voyage);
             $entityManager->flush();
 
             $this->addFlash('success', 'Voyage ajouté avec succès.');
+
             return $this->redirectToRoute('app_voyage_index');
         }
 
@@ -141,18 +140,17 @@ class VoyageController extends AbstractController
     ): Response {
         $this->checkAdminAccess();
 
-        $voyage = $entityManager->getRepository(Voyage::class)->find($id);
+        $voyage = $entityManager->find(Voyage::class, $id);
 
-        if (!$voyage) {
+        if (!$voyage instanceof Voyage) {
             throw $this->createNotFoundException('Voyage introuvable.');
         }
 
-        $weather = null;
         $destination = trim((string) $voyage->getDestination());
 
-        if ($destination !== '') {
-            $weather = $openWeatherService->getWeatherByCity($destination);
-        }
+        $weather = $destination !== ''
+            ? $openWeatherService->getWeatherByCity($destination)
+            : null;
 
         return $this->render('admin/voyage/show.html.twig', [
             'voyage' => $voyage,
@@ -168,9 +166,9 @@ class VoyageController extends AbstractController
     ): Response {
         $this->checkAdminAccess();
 
-        $voyage = $entityManager->getRepository(Voyage::class)->find($id);
+        $voyage = $entityManager->find(Voyage::class, $id);
 
-        if (!$voyage) {
+        if (!$voyage instanceof Voyage) {
             throw $this->createNotFoundException('Voyage introuvable.');
         }
 
@@ -185,6 +183,7 @@ class VoyageController extends AbstractController
             $entityManager->flush();
 
             $this->addFlash('success', 'Voyage modifié avec succès.');
+
             return $this->redirectToRoute('app_voyage_index');
         }
 
@@ -202,13 +201,13 @@ class VoyageController extends AbstractController
     ): Response {
         $this->checkAdminAccess();
 
-        $voyage = $entityManager->getRepository(Voyage::class)->find($id);
+        $voyage = $entityManager->find(Voyage::class, $id);
 
-        if (!$voyage) {
+        if (!$voyage instanceof Voyage) {
             throw $this->createNotFoundException('Voyage introuvable.');
         }
 
-        if ($this->isCsrfTokenValid('delete' . $voyage->getId(), $request->request->get('_token'))) {
+        if ($this->isCsrfTokenValid('delete' . $voyage->getId(), (string) $request->request->get('_token'))) {
             $entityManager->remove($voyage);
             $entityManager->flush();
 

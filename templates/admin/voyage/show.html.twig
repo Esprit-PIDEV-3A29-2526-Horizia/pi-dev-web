@@ -127,6 +127,18 @@
                                 <span>{{ voyage.placesRestantes }}/{{ voyage.placesTotal }}</span>
                             </div>
                         </div>
+
+                        <!-- Ajouter ce bloc après l'élément des places -->
+                            {% if voyage.createdBy %}
+                            <div class="voyage-show-info-item">
+                                <i class="bi bi-person-badge"></i>
+                                <div>
+                                    <strong>Créé par</strong><br>
+                                    <span>{{ voyage.createdBy.prenom }} {{ voyage.createdBy.nom }}</span>
+                                    <small class="d-block text-muted">{{ voyage.createdBy.email }}</small>
+                                </div>
+                            </div>
+                            {% endif %}
                     </div>
 
 
@@ -218,6 +230,19 @@
     justify-content: center;
     font-weight: 700;
     border: 1px dashed #cdd6df;
+}
+
+.created-by-info {
+    border-top-color: #edf1f5 !important;
+}
+
+.created-by-info i {
+    font-size: 0.9rem;
+}
+
+.created-by-info strong {
+    color: #23779c;
+    font-weight: 600;
 }
 
 .detail-weather-overlay {

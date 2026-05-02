@@ -23,7 +23,7 @@ class ChatbotController extends AbstractController
             ], 400);
         }
 
-        $message = trim($data['message'] ?? '');
+        $message = trim((string) ($data['message'] ?? ''));
 
         if ($message === '') {
             return $this->json([
@@ -38,8 +38,8 @@ class ChatbotController extends AbstractController
 
             return $this->json([
                 'success' => true,
-                'reply' => $result['reply'] ?? 'Je n’ai pas pu générer de réponse.',
-                'reply_html' => $result['reply_html'] ?? null,
+                'reply' => $result['reply'],
+                'reply_html' => $result['reply_html'],
             ], 200);
         } catch (\Throwable $e) {
             return $this->json([

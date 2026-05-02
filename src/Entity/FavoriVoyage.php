@@ -10,11 +10,12 @@ use Doctrine\ORM\Mapping as ORM;
 class FavoriVoyage
 {
     #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column(type: 'integer')]
-    private ?int $id = null;
+#[ORM\GeneratedValue]
+#[ORM\Column(type: 'integer')]
+/** @phpstan-ignore-next-line */
+private ?int $id = null;
 
-    #[ORM\Column(name: 'visitor_token', type: 'string', length: 100)]
+    #[ORM\Column(name: 'visitor_token', type: 'string', length: 100, nullable: true)]
     private ?string $visitorToken = null;
 
     #[ORM\ManyToOne(targetEntity: Voyage::class)]
@@ -23,6 +24,11 @@ class FavoriVoyage
 
     #[ORM\Column(name: 'created_at', type: 'datetime_immutable')]
     private ?\DateTimeImmutable $createdAt = null;
+
+    // RELATION : l'utilisateur (connecté) qui a créé le favori
+    #[ORM\ManyToOne(targetEntity: User::class)]
+    #[ORM\JoinColumn(name: 'created_by_id', referencedColumnName: 'id', nullable: true)]
+    private ?User $createdBy = null;
 
     public function __construct()
     {
@@ -39,7 +45,7 @@ class FavoriVoyage
         return $this->visitorToken;
     }
 
-    public function setVisitorToken(string $visitorToken): self
+    public function setVisitorToken(?string $visitorToken): self
     {
         $this->visitorToken = $visitorToken;
         return $this;
@@ -64,6 +70,17 @@ class FavoriVoyage
     public function setCreatedAt(\DateTimeImmutable $createdAt): self
     {
         $this->createdAt = $createdAt;
+        return $this;
+    }
+
+    public function getCreatedBy(): ?User
+    {
+        return $this->createdBy;
+    }
+
+    public function setCreatedBy(?User $createdBy): self
+    {
+        $this->createdBy = $createdBy;
         return $this;
     }
 }

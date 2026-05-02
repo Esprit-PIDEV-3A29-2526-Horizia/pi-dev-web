@@ -14,6 +14,7 @@ class Reservation
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
+    /** @phpstan-ignore-next-line */
     private ?int $id = null;
 
     #[ORM\Column(name: 'date_reservation', type: Types::DATETIME_MUTABLE)]
@@ -22,7 +23,7 @@ class Reservation
 
     #[ORM\Column(name: 'statut', type: 'string', length: 50, options: ['default' => 'EN_ATTENTE'])]
     #[Assert\NotBlank(message: 'Le statut est obligatoire.')]
-    private ?string $statut = 'EN_ATTENTE';
+    private string $statut = 'EN_ATTENTE';
 
     #[ORM\ManyToOne(targetEntity: Voyage::class)]
     #[ORM\JoinColumn(name: 'id_voyage', referencedColumnName: 'id', nullable: false, onDelete: 'CASCADE')]
@@ -36,12 +37,12 @@ class Reservation
     #[ORM\Column(name: 'nb_adultes', type: 'integer', nullable: false, options: ['default' => 1])]
     #[Assert\NotBlank(message: "Le nombre d'adultes est obligatoire.")]
     #[Assert\PositiveOrZero(message: "Le nombre d'adultes ne peut pas être négatif.")]
-    private ?int $nbAdultes = 1;
+    private int $nbAdultes = 1;
 
     #[ORM\Column(name: 'nb_enfants', type: 'integer', nullable: false, options: ['default' => 0])]
     #[Assert\NotBlank(message: "Le nombre d'enfants est obligatoire.")]
     #[Assert\PositiveOrZero(message: "Le nombre d'enfants ne peut pas être négatif.")]
-    private ?int $nbEnfants = 0;
+    private int $nbEnfants = 0;
 
     #[ORM\Column(name: 'nbr_personnes', type: 'integer', nullable: true)]
     #[Assert\NotBlank(message: 'Le nombre de personnes est obligatoire.')]
@@ -52,7 +53,7 @@ class Reservation
     private ?float $prixTotal = null;
 
     #[ORM\Column(name: 'payment_status', type: 'string', length: 20, nullable: false, options: ['default' => 'NON_PAYEE'])]
-    private ?string $paymentStatus = 'NON_PAYEE';
+    private string $paymentStatus = 'NON_PAYEE';
 
     public function __construct()
     {
@@ -73,10 +74,11 @@ class Reservation
     public function setDateReservation(\DateTimeInterface $dateReservation): self
     {
         $this->dateReservation = $dateReservation;
+
         return $this;
     }
 
-    public function getStatut(): ?string
+    public function getStatut(): string
     {
         return $this->statut;
     }
@@ -84,6 +86,7 @@ class Reservation
     public function setStatut(string $statut): self
     {
         $this->statut = $statut;
+
         return $this;
     }
 
@@ -96,6 +99,7 @@ class Reservation
     {
         $this->voyage = $voyage;
         $this->recalculerPrixTotal();
+
         return $this;
     }
 
@@ -107,10 +111,11 @@ class Reservation
     public function setUser(?User $user): self
     {
         $this->user = $user;
+
         return $this;
     }
 
-    public function getNbAdultes(): ?int
+    public function getNbAdultes(): int
     {
         return $this->nbAdultes;
     }
@@ -123,7 +128,7 @@ class Reservation
         return $this;
     }
 
-    public function getNbEnfants(): ?int
+    public function getNbEnfants(): int
     {
         return $this->nbEnfants;
     }
@@ -144,6 +149,7 @@ class Reservation
     public function setNbrPersonnes(?int $nbrPersonnes): self
     {
         $this->nbrPersonnes = $nbrPersonnes;
+
         return $this;
     }
 
@@ -155,10 +161,11 @@ class Reservation
     public function setPrixTotal(?float $prixTotal): self
     {
         $this->prixTotal = $prixTotal;
+
         return $this;
     }
 
-    public function getPaymentStatus(): ?string
+    public function getPaymentStatus(): string
     {
         return $this->paymentStatus;
     }
@@ -166,14 +173,13 @@ class Reservation
     public function setPaymentStatus(string $paymentStatus): self
     {
         $this->paymentStatus = $paymentStatus;
+
         return $this;
     }
 
     public function recalculerNbrPersonnes(): void
     {
-        $adultes = $this->nbAdultes ?? 0;
-        $enfants = $this->nbEnfants ?? 0;
-        $this->nbrPersonnes = $adultes + $enfants;
+        $this->nbrPersonnes = $this->nbAdultes + $this->nbEnfants;
         $this->recalculerPrixTotal();
     }
 
@@ -182,13 +188,18 @@ class Reservation
      */
     public function validateReservation(\Symfony\Component\Validator\Context\ExecutionContextInterface $context): void
     {
-        if (($this->nbAdultes ?? 0) + ($this->nbEnfants ?? 0) <= 0) {
+        if ($this->nbAdultes + $this->nbEnfants <= 0) {
             $context->buildViolation('La réservation doit contenir au moins 1 personne.')
                 ->atPath('nbAdultes')
                 ->addViolation();
         }
 
-        if ($this->voyage && $this->nbrPersonnes > $this->voyage->getPlacesRestantes()) {
+        if (
+            $this->voyage !== null
+            && $this->nbrPersonnes !== null
+            && $this->voyage->getPlacesRestantes() !== null
+            && $this->nbrPersonnes > $this->voyage->getPlacesRestantes()
+        ) {
             $context->buildViolation('Le nombre demandé dépasse les places restantes.')
                 ->atPath('nbAdultes')
                 ->addViolation();
@@ -197,7 +208,7 @@ class Reservation
 
     public function recalculerPrixTotal(): void
     {
-        if ($this->voyage) {
+        if ($this->voyage !== null) {
             $this->prixTotal = ($this->voyage->getPrix() ?? 0) * ($this->nbrPersonnes ?? 0);
         } else {
             $this->prixTotal = 0;

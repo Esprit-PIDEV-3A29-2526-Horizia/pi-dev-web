@@ -12,7 +12,10 @@ class AiChatbotService
     ) {
     }
 
-    public function ask(string $message): array
+    /**
+ * @return array{reply: string, reply_html: string|null}
+ */
+public function ask(string $message): array
     {
         $originalMessage = trim($message);
         $normalizedMessage = mb_strtolower($originalMessage);
@@ -230,7 +233,16 @@ class AiChatbotService
         return false;
     }
 
-    private function extractCriteria(string $message): array
+    /**
+ * @return array{
+ *     destination: string|null,
+ *     budgetMin: float|null,
+ *     themes: array<int, string>,
+ *     minPlaces: int|null,
+ *     months: array<int, int>
+ * }
+ */
+private function extractCriteria(string $message): array
     {
         $budgetMin = $this->extractBudget($message);
 
@@ -296,7 +308,10 @@ class AiChatbotService
         return null;
     }
 
-    private function extractMonthsFromMessage(string $message): array
+    /**
+ * @return array<int, int>
+ */
+private function extractMonthsFromMessage(string $message): array
     {
         $months = [];
 
@@ -343,7 +358,16 @@ class AiChatbotService
         return array_values(array_unique($months));
     }
 
-    private function buildRecommendationIntro(array $criteria): string
+    /**
+ * @param array{
+ *     destination: string|null,
+ *     budgetMin: float|null,
+ *     themes: array<int, string>,
+ *     minPlaces: int|null,
+ *     months: array<int, int>
+ * } $criteria
+ */
+private function buildRecommendationIntro(array $criteria): string
     {
         $parts = ['Voici mes recommandations les plus adaptées'];
 
@@ -362,7 +386,10 @@ class AiChatbotService
         return implode(' ', $parts) . ' :';
     }
 
-    private function formatVoyagesHtml(array $voyages): string
+    /**
+ * @param array<int, \App\Entity\Voyage> $voyages
+ */
+private function formatVoyagesHtml(array $voyages): string
     {
         $html = '<div class="chatbot-response-block">';
 

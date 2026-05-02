@@ -2,18 +2,21 @@
 
 namespace App\Controller\Front;
 
-use App\Entity\Reservation;
 use App\Entity\Events;
-use App\Entity\Voyage;
 use App\Entity\Logement;
+use App\Entity\Reservation;
 use App\Entity\Reservationlog;
 use App\Entity\User;
+use App\Entity\Voyage;
+use App\Service\CurrencyService;
 use App\Service\GeminiService;
 use App\Service\LogementSearchService;
 use App\Service\OpenWeatherService;
-use App\Service\CurrencyService;
 use Doctrine\ORM\EntityManagerInterface;
-use Doctrine\Persistence\ManagerRegistry;
+use Endroid\QrCode\Builder\Builder;
+use Endroid\QrCode\Encoding\Encoding;
+use Endroid\QrCode\Writer\PngWriter;
+use Endroid\QrCode\Writer\Result\ResultInterface;
 use Knp\Component\Pager\PaginatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -22,24 +25,16 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
-use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
-use Endroid\QrCode\Builder\Builder;
-use Endroid\QrCode\Encoding\Encoding;
-use Endroid\QrCode\ErrorCorrectionLevel\ErrorCorrectionLevel;
-use Endroid\QrCode\RoundBlockSizeMode\RoundBlockSizeMode;
-use Endroid\QrCode\Writer\PngWriter;
 
 class HomeController extends AbstractController
 {
     #[Route('/', name: 'app_front_home')]
     public function index(
-        ManagerRegistry $doctrine,
+        EntityManagerInterface $entityManager,
         OpenWeatherService $openWeatherService,
         CurrencyService $currencyService,
         Request $request
     ): Response {
-        $entityManager = $doctrine->getManager();
-
         $currency = $currencyService->normalizeCurrency($request->query->get('currency', 'TND'));
 
         $voyages = $entityManager->createQueryBuilder()
@@ -58,13 +53,15 @@ class HomeController extends AbstractController
         $convertedPrices = [];
 
         foreach ($voyages as $voyage) {
+            if (!$voyage instanceof Voyage) {
+                continue;
+            }
+
             $destination = trim((string) $voyage->getDestination());
 
-            if ($destination !== '') {
-                $weatherData[$voyage->getId()] = $openWeatherService->getWeatherByCity($destination);
-            } else {
-                $weatherData[$voyage->getId()] = null;
-            }
+            $weatherData[$voyage->getId()] = $destination !== ''
+                ? $openWeatherService->getWeatherByCity($destination)
+                : null;
 
             $convertedPrices[$voyage->getId()] = $currencyService->convert(
                 (float) $voyage->getPrix(),
@@ -91,37 +88,28 @@ class HomeController extends AbstractController
     #[Route('/voyage/{id}', name: 'app_front_voyage_detail', requirements: ['id' => '\d+'], methods: ['GET'])]
     public function detail(
         int $id,
-        ManagerRegistry $doctrine,
+        EntityManagerInterface $entityManager,
         OpenWeatherService $openWeatherService,
         CurrencyService $currencyService,
         Request $request
     ): Response {
-        $voyage = $doctrine->getRepository(Voyage::class)->find($id);
+        $voyage = $entityManager->find(Voyage::class, $id);
 
-        if (!$voyage) {
+        if (!$voyage instanceof Voyage) {
             throw $this->createNotFoundException('Voyage introuvable.');
         }
 
-        $weather = null;
         $destination = trim((string) $voyage->getDestination());
-
-        if ($destination !== '') {
-            $weather = $openWeatherService->getWeatherByCity($destination);
-        }
+        $weather = $destination !== '' ? $openWeatherService->getWeatherByCity($destination) : null;
 
         $currency = $currencyService->normalizeCurrency($request->query->get('currency', 'TND'));
-
-        $convertedPrice = $currencyService->convert(
-            (float) $voyage->getPrix(),
-            $currency
-        );
 
         return $this->render('front/voyages/detail.html.twig', [
             'voyage' => $voyage,
             'weather' => $weather,
             'currency' => $currency,
             'currencySymbol' => $currencyService->getSymbol($currency),
-            'convertedPrice' => $convertedPrice,
+            'convertedPrice' => $currencyService->convert((float) $voyage->getPrix(), $currency),
             'allowedCurrencies' => $currencyService->getAllowedCurrencies(),
         ]);
     }
@@ -130,14 +118,13 @@ class HomeController extends AbstractController
     public function reserver(
         int $id,
         Request $request,
-        ManagerRegistry $doctrine,
         EntityManagerInterface $entityManager,
         CurrencyService $currencyService,
         OpenWeatherService $openWeatherService
     ): Response {
-        $voyage = $doctrine->getRepository(Voyage::class)->find($id);
+        $voyage = $entityManager->find(Voyage::class, $id);
 
-        if (!$voyage) {
+        if (!$voyage instanceof Voyage) {
             throw $this->createNotFoundException('Voyage introuvable.');
         }
 
@@ -151,22 +138,16 @@ class HomeController extends AbstractController
         }
 
         $user = $this->getUser();
+
         if (!$user instanceof User) {
             return $this->redirectToRoute('app_login');
         }
 
         $prixEnfantRatio = 0.5;
         $currency = $currencyService->normalizeCurrency($request->query->get('currency', 'TND'));
-
-        $prixAdulteConverti = $currencyService->convert((float) $voyage->getPrix(), $currency);
-        $prixEnfantConverti = $currencyService->convert((float) ($voyage->getPrix() * $prixEnfantRatio), $currency);
-
-        $weather = null;
         $destination = trim((string) $voyage->getDestination());
 
-        if ($destination !== '') {
-            $weather = $openWeatherService->getWeatherByCity($destination);
-        }
+        $weather = $destination !== '' ? $openWeatherService->getWeatherByCity($destination) : null;
 
         if ($request->isMethod('POST')) {
             $nbAdultes = max(0, (int) $request->request->get('nbAdultes', 0));
@@ -196,30 +177,15 @@ class HomeController extends AbstractController
             $reservation->setUser($user);
             $reservation->setDateReservation(new \DateTime());
             $reservation->setStatut('EN_ATTENTE');
+            $reservation->setPaymentStatus('NON_PAYEE');
+            $reservation->setNbAdultes($nbAdultes);
+            $reservation->setNbEnfants($nbEnfants);
+            $reservation->recalculerNbrPersonnes();
 
-            if (method_exists($reservation, 'setPaymentStatus')) {
-                $reservation->setPaymentStatus('NON_PAYEE');
-            }
+            $prixVoyage = (float) $voyage->getPrix();
+            $prixTotalDt = ($prixVoyage * $nbAdultes) + (($prixVoyage * $prixEnfantRatio) * $nbEnfants);
 
-            if (method_exists($reservation, 'setNbAdultes')) {
-                $reservation->setNbAdultes($nbAdultes);
-            }
-
-            if (method_exists($reservation, 'setNbEnfants')) {
-                $reservation->setNbEnfants($nbEnfants);
-            }
-
-            if (method_exists($reservation, 'recalculerNbrPersonnes')) {
-                $reservation->recalculerNbrPersonnes();
-            } else {
-                $reservation->setNbrPersonnes($nbPersonnes);
-            }
-
-            $prixTotalDt = ($voyage->getPrix() * $nbAdultes) + (($voyage->getPrix() * $prixEnfantRatio) * $nbEnfants);
-
-            if (method_exists($reservation, 'setPrixTotal')) {
-                $reservation->setPrixTotal($prixTotalDt);
-            }
+            $reservation->setPrixTotal($prixTotalDt);
 
             $entityManager->persist($reservation);
             $entityManager->flush();
@@ -237,8 +203,8 @@ class HomeController extends AbstractController
             'currency' => $currency,
             'currencySymbol' => $currencyService->getSymbol($currency),
             'allowedCurrencies' => $currencyService->getAllowedCurrencies(),
-            'prixAdulteConverti' => $prixAdulteConverti,
-            'prixEnfantConverti' => $prixEnfantConverti,
+            'prixAdulteConverti' => $currencyService->convert((float) $voyage->getPrix(), $currency),
+            'prixEnfantConverti' => $currencyService->convert((float) ($voyage->getPrix() * $prixEnfantRatio), $currency),
             'weather' => $weather,
         ]);
     }
@@ -246,7 +212,7 @@ class HomeController extends AbstractController
     #[Route('/mes-reservations', name: 'app_front_mes_reservations', methods: ['GET'])]
     public function mesReservations(
         Request $request,
-        ManagerRegistry $doctrine,
+        EntityManagerInterface $entityManager,
         PaginatorInterface $paginator
     ): Response {
         $user = $this->getUser();
@@ -257,17 +223,17 @@ class HomeController extends AbstractController
 
         $currency = $request->query->get('currency', 'TND');
         $selectedStatut = trim((string) $request->query->get('statut', ''));
-        $page = $request->query->getInt('page', 1);
 
-        $qb = $doctrine->getRepository(Reservation::class)->createQueryBuilder('r')
+        $qb = $entityManager->createQueryBuilder()
+            ->select('r', 'v')
+            ->from(Reservation::class, 'r')
             ->leftJoin('r.voyage', 'v')
-            ->addSelect('v')
             ->andWhere('r.user = :user')
             ->setParameter('user', $user)
             ->orderBy('r.dateReservation', 'DESC');
 
         if ($selectedStatut !== '') {
-            if (strtoupper($selectedStatut) === 'PAYEE' && $this->reservationHasField($doctrine, 'paymentStatus')) {
+            if (strtoupper($selectedStatut) === 'PAYEE') {
                 $qb->andWhere('UPPER(r.paymentStatus) = :paymentStatus')
                     ->setParameter('paymentStatus', 'PAYEE');
             } else {
@@ -276,21 +242,19 @@ class HomeController extends AbstractController
             }
         }
 
-        $reservations = $paginator->paginate($qb, $page, 6);
-
         return $this->render('front/reservation/mes_reservations.html.twig', [
-            'reservations' => $reservations,
+            'reservations' => $paginator->paginate($qb, $request->query->getInt('page', 1), 6),
             'selectedStatut' => $selectedStatut,
             'currency' => $currency,
         ]);
     }
 
     #[Route('/mes-reservations/{id}', name: 'app_front_reservation_detail', methods: ['GET'], requirements: ['id' => '\d+'])]
-    public function detailReservation(int $id, ManagerRegistry $doctrine): Response
+    public function detailReservation(int $id, EntityManagerInterface $entityManager): Response
     {
-        $reservation = $doctrine->getRepository(Reservation::class)->find($id);
+        $reservation = $entityManager->find(Reservation::class, $id);
 
-        if (!$reservation) {
+        if (!$reservation instanceof Reservation) {
             throw $this->createNotFoundException('Réservation introuvable.');
         }
 
@@ -301,10 +265,9 @@ class HomeController extends AbstractController
         }
 
         if (
-            method_exists($reservation, 'getUser') &&
-            $reservation->getUser() &&
-            $reservation->getUser()->getId() !== $user->getId() &&
-            !in_array('ROLE_ADMIN', $user->getRoles())
+            $reservation->getUser() !== null
+            && $reservation->getUser()->getId() !== $user->getId()
+            && !in_array('ROLE_ADMIN', $user->getRoles(), true)
         ) {
             throw $this->createAccessDeniedException('Accès refusé.');
         }
@@ -318,13 +281,12 @@ class HomeController extends AbstractController
     #[Route('/reservation/{id}/annuler', name: 'app_front_annuler_reservation', requirements: ['id' => '\d+'], methods: ['POST'])]
     public function annulerReservation(
         int $id,
-        ManagerRegistry $doctrine,
         EntityManagerInterface $entityManager,
         Request $request
     ): Response {
-        $reservation = $doctrine->getRepository(Reservation::class)->find($id);
+        $reservation = $entityManager->find(Reservation::class, $id);
 
-        if (!$reservation) {
+        if (!$reservation instanceof Reservation) {
             throw $this->createNotFoundException('Réservation introuvable.');
         }
 
@@ -335,39 +297,32 @@ class HomeController extends AbstractController
         }
 
         if (
-            method_exists($reservation, 'getUser') &&
-            $reservation->getUser() &&
-            $reservation->getUser()->getId() !== $user->getId() &&
-            !in_array('ROLE_ADMIN', $user->getRoles())
+            $reservation->getUser() !== null
+            && $reservation->getUser()->getId() !== $user->getId()
+            && !in_array('ROLE_ADMIN', $user->getRoles(), true)
         ) {
             throw $this->createAccessDeniedException('Accès refusé.');
         }
 
-        if (
-            !$this->isCsrfTokenValid(
-                'annuler_reservation_' . $reservation->getId(),
-                (string) $request->request->get('_token')
-            )
-        ) {
+        if (!$this->isCsrfTokenValid('annuler_reservation_' . $reservation->getId(), (string) $request->request->get('_token'))) {
             throw $this->createAccessDeniedException('Token CSRF invalide.');
         }
 
-        $paymentStatus = method_exists($reservation, 'getPaymentStatus')
-            ? strtoupper((string) $reservation->getPaymentStatus())
-            : 'NON_PAYEE';
-
-        if (strtoupper((string) $reservation->getStatut()) === 'ANNULEE') {
+        if (strtoupper($reservation->getStatut()) === 'ANNULEE') {
             $this->addFlash('error', 'Cette réservation est déjà annulée.');
+
             return $this->redirectToRoute('app_front_mes_reservations');
         }
 
-        if (strtoupper((string) $reservation->getStatut()) === 'CONFIRMEE') {
+        if (strtoupper($reservation->getStatut()) === 'CONFIRMEE') {
             $this->addFlash('error', 'Une réservation confirmée ne peut pas être annulée.');
+
             return $this->redirectToRoute('app_front_mes_reservations');
         }
 
-        if ($paymentStatus === 'PAYEE') {
+        if (strtoupper($reservation->getPaymentStatus()) === 'PAYEE') {
             $this->addFlash('error', 'Une réservation payée ne peut pas être annulée.');
+
             return $this->redirectToRoute('app_front_mes_reservations');
         }
 
@@ -380,8 +335,16 @@ class HomeController extends AbstractController
     }
 
     #[Route('/voyages', name: 'app_front_voyages', methods: ['GET'])]
-    public function voyages(ManagerRegistry $doctrine, Request $request, OpenWeatherService $openWeatherService, CurrencyService $currencyService, PaginatorInterface $paginator ): Response {
-        $qb = $doctrine->getRepository(Voyage::class)->createQueryBuilder('v')
+    public function voyages(
+        EntityManagerInterface $entityManager,
+        Request $request,
+        OpenWeatherService $openWeatherService,
+        CurrencyService $currencyService,
+        PaginatorInterface $paginator
+    ): Response {
+        $qb = $entityManager->createQueryBuilder()
+            ->select('v')
+            ->from(Voyage::class, 'v')
             ->orderBy('v.id', 'DESC');
 
         $filters = [
@@ -407,29 +370,23 @@ class HomeController extends AbstractController
         }
 
         $currency = $filters['currency'];
-
-        $voyages = $paginator->paginate(
-            $qb,
-            $request->query->getInt('page', 1),
-            6
-        );
+        $voyages = $paginator->paginate($qb, $request->query->getInt('page', 1), 6);
 
         $weatherData = [];
         $convertedPrices = [];
 
         foreach ($voyages as $voyage) {
-            $destination = trim((string) $voyage->getDestination());
-
-            if ($destination !== '') {
-                $weatherData[$voyage->getId()] = $openWeatherService->getWeatherByCity($destination);
-            } else {
-                $weatherData[$voyage->getId()] = null;
+            if (!$voyage instanceof Voyage) {
+                continue;
             }
 
-            $convertedPrices[$voyage->getId()] = $currencyService->convert(
-                (float) $voyage->getPrix(),
-                $currency
-            );
+            $destination = trim((string) $voyage->getDestination());
+
+            $weatherData[$voyage->getId()] = $destination !== ''
+                ? $openWeatherService->getWeatherByCity($destination)
+                : null;
+
+            $convertedPrices[$voyage->getId()] = $currencyService->convert((float) $voyage->getPrix(), $currency);
         }
 
         return $this->render('front/voyages/voyages.html.twig', [
@@ -444,48 +401,40 @@ class HomeController extends AbstractController
     }
 
     #[Route('/reservation/{id}/qrcode', name: 'app_reservation_qrcode', methods: ['GET'])]
-    public function reservationQrCode(int $id, ManagerRegistry $doctrine): Response
+    public function reservationQrCode(int $id, EntityManagerInterface $entityManager): Response
     {
-        $reservation = $doctrine->getRepository(Reservation::class)->find($id);
+        $reservation = $entityManager->find(Reservation::class, $id);
 
-        if (!$reservation) {
+        if (!$reservation instanceof Reservation) {
             throw $this->createNotFoundException('Réservation introuvable.');
         }
 
         $result = $this->buildReservationQrCode($reservation);
 
-        return new Response(
-            $result->getString(),
-            200,
-            [
-                'Content-Type' => $result->getMimeType(),
-                'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
-            ]
-        );
+        return new Response($result->getString(), 200, [
+            'Content-Type' => $result->getMimeType(),
+            'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
+        ]);
     }
 
     #[Route('/reservation/{id}/qrcode/download', name: 'app_reservation_qrcode_download', methods: ['GET'])]
-    public function downloadReservationQrCode(int $id, ManagerRegistry $doctrine): Response
+    public function downloadReservationQrCode(int $id, EntityManagerInterface $entityManager): Response
     {
-        $reservation = $doctrine->getRepository(Reservation::class)->find($id);
+        $reservation = $entityManager->find(Reservation::class, $id);
 
-        if (!$reservation) {
+        if (!$reservation instanceof Reservation) {
             throw $this->createNotFoundException('Réservation introuvable.');
         }
 
         $result = $this->buildReservationQrCode($reservation);
 
-        $response = new Response(
-            $result->getString(),
-            200,
-            [
-                'Content-Type' => $result->getMimeType(),
-            ]
-        );
+        $response = new Response($result->getString(), 200, [
+            'Content-Type' => $result->getMimeType(),
+        ]);
 
         $disposition = $response->headers->makeDisposition(
             ResponseHeaderBag::DISPOSITION_ATTACHMENT,
-            'reservation-' . $reservation->getId() . '-qrcode.svg'
+            'reservation-' . $reservation->getId() . '-qrcode.png'
         );
 
         $response->headers->set('Content-Disposition', $disposition);
@@ -493,34 +442,30 @@ class HomeController extends AbstractController
         return $response;
     }
 
-    private function buildReservationQrCode(Reservation $reservation)
-{
-    $detailPath = $this->generateUrl(
-        'app_front_reservation_detail',
-        ['id' => $reservation->getId()]
-    );
+    private function buildReservationQrCode(Reservation $reservation): ResultInterface
+    {
+        $detailPath = $this->generateUrl('app_front_reservation_detail', [
+            'id' => $reservation->getId(),
+        ]);
 
-    $baseUrl = rtrim((string) $this->getParameter('app.base_url'), '/');
-    $detailUrl = $baseUrl . $detailPath;
+        $baseUrl = rtrim((string) $this->getParameter('app.base_url'), '/');
+        $detailUrl = $baseUrl . $detailPath;
 
-    return Builder::create()
-        ->writer(new PngWriter())
-        ->data($detailUrl)
-        ->encoding(new Encoding('UTF-8'))
-        ->errorCorrectionLevel(ErrorCorrectionLevel::High)
-        ->size(420)
-        ->margin(16)
-        ->roundBlockSizeMode(RoundBlockSizeMode::Margin)
-        ->build();
-}
-
+        return Builder::create()
+            ->writer(new PngWriter())
+            ->data($detailUrl)
+            ->encoding(new Encoding('UTF-8'))
+            ->size(420)
+            ->margin(16)
+            ->build();
+    }
 
     #[Route('/reservation/{id}/qrcode/view', name: 'app_reservation_qrcode_view', methods: ['GET'])]
-    public function viewReservationQrCode(int $id, ManagerRegistry $doctrine): Response
+    public function viewReservationQrCode(int $id, EntityManagerInterface $entityManager): Response
     {
-        $reservation = $doctrine->getRepository(Reservation::class)->find($id);
+        $reservation = $entityManager->find(Reservation::class, $id);
 
-        if (!$reservation) {
+        if (!$reservation instanceof Reservation) {
             throw $this->createNotFoundException('Réservation introuvable.');
         }
 
@@ -534,7 +479,7 @@ class HomeController extends AbstractController
     {
         $user = $this->getUser();
 
-        if (!$user) {
+        if (!$user instanceof User) {
             return $this->redirectToRoute('app_login');
         }
 
@@ -546,41 +491,44 @@ class HomeController extends AbstractController
     #[Route('/profile/edit', name: 'app_profile_edit')]
     public function editProfile(Request $request, EntityManagerInterface $entityManager): Response
     {
-            $user = $this->getUser();
-            if (!$user) 
-            {
-                return $this->redirectToRoute('app_login');
+        $user = $this->getUser();
+
+        if (!$user instanceof User) {
+            return $this->redirectToRoute('app_login');
+        }
+
+        if ($request->isMethod('POST')) {
+            $nom = $request->request->get('nom');
+            $prenom = $request->request->get('prenom');
+            $telephone = $request->request->get('telephone');
+            $addresse = $request->request->get('addresse');
+
+            if ($nom) {
+                $user->setNom((string) $nom);
             }
 
-            if ($request->isMethod('POST')) 
-            {
-                $nom = $request->request->get('nom');
-                $prenom = $request->request->get('prenom');
-                $telephone = $request->request->get('telephone');
-                $addresse = $request->request->get('addresse');
-
-                if ($nom) {
-                    $user->setNom($nom);
-                }
-                if ($prenom) {
-                    $user->setPrenom($prenom);
-                }
-                if ($telephone) {
-                    $user->setTelephone($telephone);
-                }
-                if ($addresse) {
-                    $user->setAddresse($addresse);
-                }
-
-                $entityManager->flush();
-
-                $this->addFlash('success', 'Profil modifié avec succès');
-                return $this->redirectToRoute('app_front_profile');
+            if ($prenom) {
+                $user->setPrenom((string) $prenom);
             }
 
-            return $this->render('front/user/edit_profile.html.twig', [
-                'user' => $user,
-            ]);
+            if ($telephone) {
+                $user->setTelephone((string) $telephone);
+            }
+
+            if ($addresse) {
+                $user->setAddresse((string) $addresse);
+            }
+
+            $entityManager->flush();
+
+            $this->addFlash('success', 'Profil modifié avec succès');
+
+            return $this->redirectToRoute('app_front_profile');
+        }
+
+        return $this->render('front/user/edit_profile.html.twig', [
+            'user' => $user,
+        ]);
     }
 
     #[Route('/change-password', name: 'app_front_change_password', methods: ['GET', 'POST'])]
@@ -591,35 +539,38 @@ class HomeController extends AbstractController
     ): Response {
         $user = $this->getUser();
 
-        if (!$user) {
+        if (!$user instanceof User) {
             return $this->redirectToRoute('app_login');
         }
 
         if ($request->isMethod('POST')) {
-            $oldPassword = $request->request->get('old_password');
-            $newPassword = $request->request->get('new_password');
-            $confirmPassword = $request->request->get('confirm_password');
+            $oldPassword = (string) $request->request->get('old_password');
+            $newPassword = (string) $request->request->get('new_password');
+            $confirmPassword = (string) $request->request->get('confirm_password');
 
             if (!$passwordHasher->isPasswordValid($user, $oldPassword)) {
                 $this->addFlash('error', 'Ancien mot de passe incorrect');
+
                 return $this->redirectToRoute('app_front_change_password');
             }
 
             if ($newPassword !== $confirmPassword) {
                 $this->addFlash('error', 'Les nouveaux mots de passe ne correspondent pas');
+
                 return $this->redirectToRoute('app_front_change_password');
             }
 
-            if (strlen((string) $newPassword) < 6) {
+            if (strlen($newPassword) < 6) {
                 $this->addFlash('error', 'Le mot de passe doit contenir au moins 6 caractères');
+
                 return $this->redirectToRoute('app_front_change_password');
             }
 
-            $hashedPassword = $passwordHasher->hashPassword($user, $newPassword);
-            $user->setPassword($hashedPassword);
+            $user->setPassword($passwordHasher->hashPassword($user, $newPassword));
             $entityManager->flush();
 
             $this->addFlash('success', 'Votre mot de passe a été modifié avec succès');
+
             return $this->redirectToRoute('app_front_profile');
         }
 
@@ -634,8 +585,9 @@ class HomeController extends AbstractController
         $page = $request->query->getInt('page', 1);
         $limit = 6;
 
-        $qb = $entityManager->getRepository(Events::class)
-            ->createQueryBuilder('e')
+        $qb = $entityManager->createQueryBuilder()
+            ->select('e')
+            ->from(Events::class, 'e')
             ->where('e.statut != :termine')
             ->setParameter('termine', 'termine')
             ->orderBy('e.date_debut', 'ASC');
@@ -650,23 +602,23 @@ class HomeController extends AbstractController
                 ->setParameter('priceLimit', $priceLimit);
         }
 
-        $totalEvents = $qb->select('COUNT(e.id_event)')
+        $totalEvents = (int) (clone $qb)
+            ->select('COUNT(e.id_event)')
             ->getQuery()
             ->getSingleScalarResult();
 
-        $totalPages = ceil($totalEvents / $limit);
+        $totalPages = (int) ceil($totalEvents / $limit);
 
         if ($page < 1) {
             $page = 1;
         }
+
         if ($page > $totalPages && $totalPages > 0) {
             $page = $totalPages;
         }
 
-        $offset = ($page - 1) * $limit;
-
-        $events = $qb->select('e')
-            ->setFirstResult($offset)
+        $events = $qb
+            ->setFirstResult(($page - 1) * $limit)
             ->setMaxResults($limit)
             ->getQuery()
             ->getResult();
@@ -687,20 +639,20 @@ class HomeController extends AbstractController
         Request $request,
         LogementSearchService $searchService,
         EntityManagerInterface $entityManager
-     ): Response {
+    ): Response {
         $search = $request->query->get('q');
         $type = $request->query->get('type');
         $sort = $request->query->get('sort');
 
         $allLogements = $searchService->searchAndSort($search, $type, $sort);
-        $logements = array_filter($allLogements, function ($logement) {
+
+        $logements = array_filter($allLogements, static function ($logement): bool {
             return $logement->isDisponibilite() === true;
         });
 
-        $typesDistincts = $entityManager
-            ->getRepository(Logement::class)
-            ->createQueryBuilder('l')
+        $typesDistincts = $entityManager->createQueryBuilder()
             ->select('DISTINCT l.type')
+            ->from(Logement::class, 'l')
             ->getQuery()
             ->getScalarResult();
 
@@ -721,16 +673,18 @@ class HomeController extends AbstractController
     }
 
     #[Route('/logements/recommendations', name: 'app_front_logement_recommendations', methods: ['GET'])]
-    public function recommendations(GeminiService $geminiService, EntityManagerInterface $em): JsonResponse
+    public function recommendations(GeminiService $geminiService, EntityManagerInterface $entityManager): JsonResponse
     {
         try {
             $user = $this->getUser();
+
             if (!$user instanceof User) {
                 return $this->json(['success' => false, 'error' => 'Utilisateur non authentifié'], 401);
             }
 
-            $reservations = $em->getRepository(Reservationlog::class)
-                ->createQueryBuilder('r')
+            $reservations = $entityManager->createQueryBuilder()
+                ->select('r')
+                ->from(Reservationlog::class, 'r')
                 ->where('r.user = :user')
                 ->andWhere('r.status IN (:statuses)')
                 ->setParameter('user', $user)
@@ -742,8 +696,9 @@ class HomeController extends AbstractController
                 return $this->json(['message' => 'Aucune réservation antérieure.']);
             }
 
-            $allLogements = $em->getRepository(Logement::class)
-                ->createQueryBuilder('l')
+            $allLogements = $entityManager->createQueryBuilder()
+                ->select('l')
+                ->from(Logement::class, 'l')
                 ->where('l.disponibilite = :dispo')
                 ->setParameter('dispo', true)
                 ->getQuery()
@@ -757,13 +712,14 @@ class HomeController extends AbstractController
 
             try {
                 $responseText = $geminiService->generateRecommendations($prompt);
-                $jsonString = preg_replace('/json\s*|\s*/', '', $responseText);
-                $recommendations = json_decode($jsonString, true);
-                $recommendedIds = $recommendations['recommended_ids'] ?? [];
+                $jsonString = preg_replace('/```json\s*|\s*```/', '', $responseText);
+                $recommendations = json_decode((string) $jsonString, true);
+                $recommendedIds = is_array($recommendations) ? ($recommendations['recommended_ids'] ?? []) : [];
 
                 if (!empty($recommendedIds)) {
-                    $recommendedLogements = $em->getRepository(Logement::class)
-                        ->createQueryBuilder('l')
+                    $recommendedLogements = $entityManager->createQueryBuilder()
+                        ->select('l')
+                        ->from(Logement::class, 'l')
                         ->where('l.id IN (:ids)')
                         ->setParameter('ids', $recommendedIds)
                         ->getQuery()
@@ -771,7 +727,7 @@ class HomeController extends AbstractController
                 } else {
                     $recommendedLogements = [];
                 }
-            } catch (\Exception $e) {
+            } catch (\Exception) {
                 $recommendedLogements = array_slice($allLogements, 0, 6);
             }
 
@@ -780,7 +736,12 @@ class HomeController extends AbstractController
             }
 
             $html = '';
+
             foreach ($recommendedLogements as $logement) {
+                if (!$logement instanceof Logement) {
+                    continue;
+                }
+
                 $imageUrl = $logement->getImage() ?: '/front/pacific/images/destination-1.jpg';
                 $nom = htmlspecialchars($logement->getNom() ?? '');
                 $type = htmlspecialchars($logement->getType() ?? '');
@@ -794,18 +755,15 @@ class HomeController extends AbstractController
                 if ($equipement) {
                     $equipements = explode(',', $equipement);
                     $equipementHtml = '<div>';
-                    $i = 0;
-                    foreach ($equipements as $equip) {
-                        if ($i < 4) {
-                            $equipementHtml .= '<span class="equipement-badge">' . htmlspecialchars(trim($equip)) . '</span>';
-                        } else {
-                            break;
-                        }
-                        $i++;
+
+                    foreach (array_slice($equipements, 0, 4) as $equip) {
+                        $equipementHtml .= '<span class="equipement-badge">' . htmlspecialchars(trim($equip)) . '</span>';
                     }
+
                     if (count($equipements) > 4) {
                         $equipementHtml .= '<span class="equipement-badge">+' . (count($equipements) - 4) . '</span>';
                     }
+
                     $equipementHtml .= '</div>';
                 }
 
@@ -845,18 +803,24 @@ class HomeController extends AbstractController
             return $this->json([
                 'status' => 'completed',
                 'html' => $html,
-                'count' => count($recommendedLogements)
+                'count' => count($recommendedLogements),
             ]);
         } catch (\Exception $e) {
             return $this->json(['error' => $e->getMessage()], 500);
         }
     }
 
+    /**
+     * @param array<int, Reservationlog> $reservations
+     * @param array<int, Logement> $candidates
+     */
     private function buildPrompt(array $reservations, array $candidates): string
     {
         $resumeReservations = '';
+
         foreach ($reservations as $res) {
             $log = $res->getLogement();
+
             $resumeReservations .= sprintf(
                 "- %s (Type: %s, Capacité: %d, Prix: %.2f DT, Équipements: %s)\n",
                 $log->getNom(),
@@ -868,6 +832,7 @@ class HomeController extends AbstractController
         }
 
         $resumeCandidates = '';
+
         foreach ($candidates as $log) {
             $resumeCandidates .= sprintf(
                 "- ID: %d | %s (Type: %s, Capacité: %d, Prix: %.2f DT, Équipements: %s)\n",
@@ -882,29 +847,23 @@ class HomeController extends AbstractController
 
         return sprintf(
             "Tu es un assistant expert en recommandation de logements de vacances.
-            Analyse l'historique des réservations de l'utilisateur et sélectionne les logements les plus pertinents parmi ceux proposés.
+Analyse l'historique des réservations de l'utilisateur et sélectionne les logements les plus pertinents parmi ceux proposés.
 
-            ## Historique des réservations de l'utilisateur
-            %s
+## Historique des réservations de l'utilisateur
+%s
 
-            ## Logements disponibles (parmi lesquels choisir)
-            %s
+## Logements disponibles
+%s
 
-            Règles:
-            - Retourne uniquement du JSON valide
-            - Structure: {\"recommended_ids\": [id1, id2, ...], \"reason\": \"brève justification\"}
-            - Sélectionne entre 3 et 6 logements
-            - Base-toi sur le type, la capacité, le prix, les équipements et la diversité
+Règles:
+- Retourne uniquement du JSON valide
+- Structure: {\"recommended_ids\": [id1, id2, ...], \"reason\": \"brève justification\"}
+- Sélectionne entre 3 et 6 logements
+- Base-toi sur le type, la capacité, le prix, les équipements et la diversité
 
-            JSON:",
+JSON:",
             $resumeReservations,
             $resumeCandidates
         );
-    }
-
-    private function reservationHasField(ManagerRegistry $doctrine, string $fieldName): bool
-    {
-        $metadata = $doctrine->getManager()->getClassMetadata(Reservation::class);
-        return $metadata->hasField($fieldName);
     }
 }

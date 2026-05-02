@@ -15,7 +15,20 @@ class OpenWeatherService
         $this->apiKey = $openWeatherApiKey;
     }
 
-    public function getWeatherByCity(string $city): ?array
+    /**
+ * @return array{
+ *     city: mixed,
+ *     country: mixed,
+ *     temperature: float|null,
+ *     description: mixed,
+ *     icon: mixed,
+ *     humidity: mixed,
+ *     wind: mixed,
+ *     advice: string,
+ *     badge: string
+ * }|null
+ */
+public function getWeatherByCity(string $city): ?array
     {
         $city = trim($city);
 
