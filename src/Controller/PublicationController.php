@@ -6,6 +6,7 @@ namespace App\Controller;
 use App\Entity\Commentaire;
 use App\Entity\Publication;
 use App\Entity\Favori;
+use App\Entity\User;
 use App\Form\CommentaireType;
 use App\Form\PublicationType;
 use App\Repository\PublicationRepository;
@@ -41,7 +42,7 @@ class PublicationController extends AbstractController
         
         $favoritesIds = [];
         $user = $this->getUser();
-        if ($user) {
+        if ($user instanceof User) {
             $favoris = $favoriRepo->findBy(['user' => $user]);
             $favoritesIds = array_map(fn($f) => $f->getPublication()->getId(), $favoris);
         } else {
@@ -64,14 +65,16 @@ class PublicationController extends AbstractController
 
         if ($form->isSubmitted() && $form->isValid()) {
             $user = $this->getUser();
-            if ($user) {
+            if ($user instanceof User) {
                 $publication->setCreatedBy($user);
                 $auteur = $user->getPrenom() . ' ' . $user->getNom();
                 $publication->setAuteur($auteur);
                 $pseudo = $auteur;
             } else {
                 $pseudo = $form->get('pseudo')->getData();
-                if (!$pseudo) $pseudo = 'Anonyme';
+                if (!$pseudo) {
+                    $pseudo = 'Anonyme';
+                }
                 $request->getSession()->set('mon_pseudo', $pseudo);
                 $publication->setAuteur($pseudo);
             }
@@ -80,7 +83,9 @@ class PublicationController extends AbstractController
             $imageFile = $form->get('imageFile')->getData();
             if ($imageFile) {
                 $uploadDir = $this->getParameter('kernel.project_dir') . '/public/images';
-                @mkdir($uploadDir, 0777, true);
+                if (!is_dir($uploadDir)) {
+                    mkdir($uploadDir, 0777, true);
+                }
                 $newFilename = uniqid() . '.' . $imageFile->guessExtension();
                 $imageFile->move($uploadDir, $newFilename);
                 $publication->setImage('/images/' . $newFilename);
@@ -97,7 +102,7 @@ class PublicationController extends AbstractController
 
             // Tags
             $tagsString = $form->get('tags')->getData();
-            if ($tagsString) {
+            if ($tagsString && is_string($tagsString)) {
                 $tagsArray = array_map('trim', explode(',', $tagsString));
                 $publication->setTags($tagsArray);
             }
@@ -125,7 +130,7 @@ class PublicationController extends AbstractController
         $sessionPseudo = $request->getSession()->get('mon_pseudo');
         $isAuthorized = false;
 
-        if ($user && $publication->getCreatedBy() && $user->getId() === $publication->getCreatedBy()->getId()) {
+        if ($user instanceof User && $publication->getCreatedBy() && $user->getId() === $publication->getCreatedBy()->getId()) {
             $isAuthorized = true;
         } elseif ($sessionPseudo && $sessionPseudo === $publication->getAuteur()) {
             $isAuthorized = true;
@@ -144,7 +149,7 @@ class PublicationController extends AbstractController
         if ($existingTags) {
             $form->get('tags')->setData(implode(', ', $existingTags));
         }
-        if (!$user) {
+        if (!$user instanceof User) {
             $form->get('pseudo')->setData($publication->getAuteur());
         }
 
@@ -154,22 +159,24 @@ class PublicationController extends AbstractController
             $imageFile = $form->get('imageFile')->getData();
             if ($imageFile) {
                 $uploadDir = $this->getParameter('kernel.project_dir') . '/public/images';
-                @mkdir($uploadDir, 0777, true);
+                if (!is_dir($uploadDir)) {
+                    mkdir($uploadDir, 0777, true);
+                }
                 $newFilename = uniqid() . '.' . $imageFile->guessExtension();
                 $imageFile->move($uploadDir, $newFilename);
                 $publication->setImage('/images/' . $newFilename);
             }
 
-            if (!$user) {
+            if (!$user instanceof User) {
                 $newPseudo = $form->get('pseudo')->getData();
-                if ($newPseudo) {
+                if ($newPseudo && is_string($newPseudo)) {
                     $publication->setAuteur($newPseudo);
                     $request->getSession()->set('mon_pseudo', $newPseudo);
                 }
             }
 
             $tagsString = $form->get('tags')->getData();
-            if ($tagsString) {
+            if ($tagsString && is_string($tagsString)) {
                 $tagsArray = array_map('trim', explode(',', $tagsString));
                 $publication->setTags($tagsArray);
             } else {
@@ -194,7 +201,7 @@ class PublicationController extends AbstractController
         $sessionPseudo = $request->getSession()->get('mon_pseudo');
         $isAuthorized = false;
 
-        if ($user && $publication->getCreatedBy() && $user->getId() === $publication->getCreatedBy()->getId()) {
+        if ($user instanceof User && $publication->getCreatedBy() && $user->getId() === $publication->getCreatedBy()->getId()) {
             $isAuthorized = true;
         } elseif ($sessionPseudo && $sessionPseudo === $publication->getAuteur()) {
             $isAuthorized = true;
@@ -207,7 +214,8 @@ class PublicationController extends AbstractController
             return $this->redirectToRoute('front_publication_index');
         }
 
-        if ($this->isCsrfTokenValid('delete_publication_' . $publication->getId(), $request->request->get('_token'))) {
+        $token = $request->request->get('_token');
+        if ($token && is_string($token) && $this->isCsrfTokenValid('delete_publication_' . $publication->getId(), $token)) {
             $em->remove($publication);
             $em->flush();
             $this->addFlash('success', 'Publication supprimée.');
@@ -226,12 +234,14 @@ class PublicationController extends AbstractController
 
         if ($form->isSubmitted() && $form->isValid()) {
             $user = $this->getUser();
-            if ($user) {
+            if ($user instanceof User) {
                 $commentaire->setCreatedBy($user);
                 $commentaire->setAuteur($user->getPrenom() . ' ' . $user->getNom());
             } else {
                 $auteur = $form->get('auteur')->getData();
-                if (!$auteur) $auteur = 'Anonyme';
+                if (!$auteur || !is_string($auteur)) {
+                    $auteur = 'Anonyme';
+                }
                 $commentaire->setAuteur($auteur);
             }
             $commentaire->setPublication($publication);
@@ -247,7 +257,7 @@ class PublicationController extends AbstractController
         
         $favoritesIds = [];
         $user = $this->getUser();
-        if ($user) {
+        if ($user instanceof User) {
             $favoris = $favoriRepo->findBy(['user' => $user]);
             $favoritesIds = array_map(fn($f) => $f->getPublication()->getId(), $favoris);
         } else {
@@ -270,7 +280,8 @@ class PublicationController extends AbstractController
     {
         $user = $this->getUser();
         $isAuthor = false;
-        if ($user && $commentaire->getCreatedBy() && $user->getId() === $commentaire->getCreatedBy()->getId()) {
+        
+        if ($user instanceof User && $commentaire->getCreatedBy() && $user->getId() === $commentaire->getCreatedBy()->getId()) {
             $isAuthor = true;
         } elseif ($commentaire->getAuteur() === $request->getSession()->get('mon_pseudo')) {
             $isAuthor = true;
@@ -303,7 +314,8 @@ class PublicationController extends AbstractController
     {
         $user = $this->getUser();
         $isAuthor = false;
-        if ($user && $commentaire->getCreatedBy() && $user->getId() === $commentaire->getCreatedBy()->getId()) {
+        
+        if ($user instanceof User && $commentaire->getCreatedBy() && $user->getId() === $commentaire->getCreatedBy()->getId()) {
             $isAuthor = true;
         } elseif ($commentaire->getAuteur() === $request->getSession()->get('mon_pseudo')) {
             $isAuthor = true;
@@ -316,9 +328,12 @@ class PublicationController extends AbstractController
             return $this->redirectToRoute('front_publication_show', ['id' => $commentaire->getPublication()->getId()]);
         }
 
-        if ($this->isCsrfTokenValid('delete' . $commentaire->getId(), $request->request->get('_token'))) {
+        $token = $request->request->get('_token');
+        if ($token && is_string($token) && $this->isCsrfTokenValid('delete' . $commentaire->getId(), $token)) {
             $publication = $commentaire->getPublication();
-            $publication->setCommentaires(max(0, $publication->getCommentaires() - 1));
+            if ($publication) {
+                $publication->setCommentaires(max(0, $publication->getCommentaires() - 1));
+            }
             $em->remove($commentaire);
             $em->flush();
             $this->addFlash('success', 'Commentaire supprimé.');
@@ -332,11 +347,11 @@ class PublicationController extends AbstractController
     public function myPublications(PublicationRepository $repo, Request $request): Response
     {
         $user = $this->getUser();
-        if ($user) {
+        if ($user instanceof User) {
             $publications = $repo->findBy(['createdBy' => $user], ['date_creation' => 'DESC']);
         } else {
             $pseudo = $request->getSession()->get('mon_pseudo');
-            if (!$pseudo) {
+            if (!$pseudo || !is_string($pseudo)) {
                 $this->addFlash('info', 'Créez une publication pour définir votre pseudo.');
                 return $this->redirectToRoute('front_publication_new');
             }
@@ -358,6 +373,11 @@ class PublicationController extends AbstractController
     {
         $session = $request->getSession();
         $likedIds = $session->get('liked_publications', []);
+        
+        if (!is_array($likedIds)) {
+            $likedIds = [];
+        }
+        
         $id = $publication->getId();
 
         if (in_array($id, $likedIds)) {
@@ -386,7 +406,7 @@ class PublicationController extends AbstractController
         $user = $this->getUser();
         $id = $publication->getId();
 
-        if ($user) {
+        if ($user instanceof User) {
             $favori = $favoriRepo->findOneBy(['user' => $user, 'publication' => $publication]);
             if ($favori) {
                 $em->remove($favori);
@@ -405,6 +425,11 @@ class PublicationController extends AbstractController
         // Anonyme : session
         $session = $request->getSession();
         $favorites = $session->get('favorite_publications', []);
+        
+        if (!is_array($favorites)) {
+            $favorites = [];
+        }
+        
         if (in_array($id, $favorites)) {
             $favorites = array_diff($favorites, [$id]);
             $isFavorite = false;
@@ -424,11 +449,18 @@ class PublicationController extends AbstractController
         $publications = [];
         $likedIds = $request->getSession()->get('liked_publications', []);
         
-        if ($user) {
+        if (!is_array($likedIds)) {
+            $likedIds = [];
+        }
+        
+        if ($user instanceof User) {
             $favoris = $favoriRepo->findBy(['user' => $user], ['dateAjout' => 'DESC']);
             $publications = array_map(fn($f) => $f->getPublication(), $favoris);
         } else {
             $favorites = $request->getSession()->get('favorite_publications', []);
+            if (!is_array($favorites)) {
+                $favorites = [];
+            }
             if (!empty($favorites)) {
                 $publications = $repo->findBy(['id' => $favorites], ['date_creation' => 'DESC']);
             }

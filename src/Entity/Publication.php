@@ -14,6 +14,9 @@ use App\Entity\User;
 #[ORM\Table(name: "publication")]
 class Publication
 {
+    /**
+     * @var int|null
+     */
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
@@ -57,11 +60,16 @@ class Publication
     #[ORM\Column(length: 100, nullable: true)]
     private ?string $pays = null;
 
+    /**
+     * @var array<string>|null
+     */
     #[ORM\Column(type: 'json', nullable: true)]
     private ?array $tags = null;
+
     #[ORM\ManyToOne(targetEntity: User::class)]
     #[ORM\JoinColumn(name: "created_by_id", referencedColumnName: "id", nullable: false)]
     private ?User $createdBy = null;
+
     /**
      * @var Collection<int, Commentaire>
      */
@@ -218,17 +226,26 @@ class Publication
         return $this;
     }
 
+    /**
+     * @return array<string>|null
+     */
     public function getTags(): ?array
     {
         return $this->tags;
     }
 
+    /**
+     * @param array<string>|null $tags
+     */
     public function setTags(?array $tags): static
     {
         $this->tags = $tags;
         return $this;
     }
 
+    /**
+     * @return Collection<int, Commentaire>
+     */
     public function getCommentaireList(): Collection
     {
         return $this->commentaireList;
@@ -239,7 +256,6 @@ class Publication
         if (!$this->commentaireList->contains($commentaire)) {
             $this->commentaireList->add($commentaire);
             $commentaire->setPublication($this);
-            // Mettre à jour le compteur de commentaires
             $this->commentaires = $this->commentaireList->count();
         }
         return $this;
@@ -251,13 +267,11 @@ class Publication
             if ($commentaire->getPublication() === $this) {
                 $commentaire->setPublication(null);
             }
-            // Mettre à jour le compteur de commentaires
             $this->commentaires = $this->commentaireList->count();
         }
         return $this;
     }
 
-    // Méthodes addCommentaireList / removeCommentaireList (si nécessaires)
     public function addCommentaireList(Commentaire $commentaireList): static
     {
         return $this->addCommentaire($commentaireList);
@@ -267,14 +281,15 @@ class Publication
     {
         return $this->removeCommentaire($commentaireList);
     }
-    public function getCreatedBy(): ?User
-{
-    return $this->createdBy;
-}
 
-public function setCreatedBy(?User $createdBy): static
-{
-    $this->createdBy = $createdBy;
-    return $this;
-}
+    public function getCreatedBy(): ?User
+    {
+        return $this->createdBy;
+    }
+
+    public function setCreatedBy(?User $createdBy): static
+    {
+        $this->createdBy = $createdBy;
+        return $this;
+    }
 }
