@@ -6,16 +6,18 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class AiContentGenerator
 {
-    private $httpClient;
+    private HttpClientInterface $httpClient;
 
     public function __construct(HttpClientInterface $httpClient)
     {
         $this->httpClient = $httpClient;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function generateAll(string $sujet): array
     {
-        // Construction du prompt
         $prompt = "Tu es un rédacteur spécialisé en voyages. À partir du sujet suivant : '$sujet', génère :
 - un titre accrocheur (max 60 caractères)
 - une catégorie parmi : Plage, Montagne, Ville, Désert, Campagne, Historique
@@ -33,18 +35,16 @@ Réponds uniquement au format JSON, sans texte autour :
 }";
 
         try {
-            // Appel à l'API texte de Pollinations.ai (gratuit, sans clé)
             $url = 'https://text.pollinations.ai/prompt?text=' . urlencode($prompt);
             $response = $this->httpClient->request('GET', $url, [
                 'timeout' => 30,
             ]);
             $text = $response->getContent();
-            
-            // Extraire le JSON (le modèle peut retourner du texte supplémentaire)
+
             preg_match('/\{.*\}/s', $text, $matches);
             if (isset($matches[0])) {
                 $data = json_decode($matches[0], true);
-                if (json_last_error() === JSON_ERROR_NONE) {
+                if (json_last_error() === JSON_ERROR_NONE && is_array($data)) {
                     return $data;
                 }
             }
@@ -52,7 +52,6 @@ Réponds uniquement au format JSON, sans texte autour :
             // fallback
         }
 
-        // Valeurs par défaut en cas d’échec
         return [
             'titre' => ucfirst($sujet),
             'categorie' => 'Ville',

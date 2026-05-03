@@ -27,13 +27,17 @@ class FaceRegistrationController extends AbstractController
         }
 
         // Créer le dossier uploads s'il n'existe pas
-        $uploadDir = $this->getParameter('kernel.project_dir') . '/public/uploads';
+        $projectDir = $this->getParameter('kernel.project_dir');
+        if (!is_string($projectDir)) {
+            throw new \RuntimeException('kernel.project_dir must be a string');
+        }
+        $uploadDir = $projectDir . '/public/uploads';
         if (!is_dir($uploadDir)) {
             mkdir($uploadDir, 0777, true);
         }
 
         $filePath = $uploadDir . '/admin_face.jpg';
-        file_put_contents($filePath, base64_decode($imageBase64));
+        file_put_contents($filePath, base64_decode((string) $imageBase64));
 
         return $this->json(['success' => true]);
     }

@@ -18,7 +18,7 @@ class FavoriApiController extends AbstractController
 {
     private function getOrCreateVisitorToken(Request $request): string
     {
-        return $request->cookies->get('horozia_visitor') ?: bin2hex(random_bytes(16));
+        return (string) ($request->cookies->get('horozia_visitor') ?: bin2hex(random_bytes(16)));
     }
 
     #[Route('/mes-favoris', name: 'app_front_mes_favoris', methods: ['GET'])]

@@ -17,10 +17,11 @@ class CurrencyService
         return $currency;
     }
 
-    public function getAllowedCurrencies(): array
-    {
-        return self::ALLOWED;
-    }
+   /** @return array<int, string> */
+public function getAllowedCurrencies(): array
+{
+    return self::ALLOWED;
+}
 
     public function getSymbol(string $currency): string
     {

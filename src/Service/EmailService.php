@@ -6,9 +6,7 @@ use App\Entity\Location;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Email;
 use Psr\Log\LoggerInterface;
-use Exception;
 use App\Entity\Reservationlog;
-
 use Twig\Environment;
 
 class EmailService
@@ -18,10 +16,9 @@ class EmailService
     private Environment $twig;
     private PdfService $pdfService;
     private QrCodeService $qrCodeService;
-    
+
     // Configuration de l'agence
     private const EMAIL_EXPEDITEUR = 'arouayadam@gmail.com';
-    private const NOM_AGENCE = 'Horizia - Agence de Location';
     private const TEL_AGENCE = '+216 53 661 445';
     private const ADRESSE_AGENCE = 'Tunis, Tunisie';
 
@@ -36,6 +33,7 @@ class EmailService
 
     /**
      * Envoie un email de confirmation de location
+     * @return array<string, mixed>
      */
     public function envoyerConfirmationLocation(Location $location, string $emailClient): array
     {
@@ -45,12 +43,13 @@ class EmailService
 
         $sujet = '✅ Confirmation de votre location - Horizia #' . $location->getIdLocation();
         $corpsHtml = $this->buildEmailConfirmation($location);
-        
+
         return $this->envoyerEmail($emailClient, $sujet, $corpsHtml);
     }
 
     /**
      * Envoie un email de rappel (24h avant)
+     * @return array<string, mixed>
      */
     public function envoyerRappelLocation(Location $location, string $emailClient): array
     {
@@ -60,12 +59,13 @@ class EmailService
 
         $sujet = '⏰ Rappel : Votre location commence demain - Horizia #' . $location->getIdLocation();
         $corpsHtml = $this->buildEmailRappel($location);
-        
+
         return $this->envoyerEmail($emailClient, $sujet, $corpsHtml);
     }
 
     /**
      * Envoie la facture finale
+     * @return array<string, mixed>
      */
     public function envoyerFactureFinale(Location $location, string $emailClient, float $montantTotal, float $avancePayee, float $soldeRestant): array
     {
@@ -75,12 +75,13 @@ class EmailService
 
         $sujet = '🧾 Votre facture finale - Horizia Location #' . $location->getIdLocation();
         $corpsHtml = $this->buildEmailFacture($location, $montantTotal, $avancePayee, $soldeRestant);
-        
+
         return $this->envoyerEmail($emailClient, $sujet, $corpsHtml);
     }
 
     /**
      * Envoie le contrat de location
+     * @return array<string, mixed>
      */
     public function envoyerContrat(Location $location, string $emailClient): array
     {
@@ -90,12 +91,13 @@ class EmailService
 
         $sujet = '📄 Votre contrat de location - Horizia #' . $location->getIdLocation();
         $corpsHtml = $this->buildEmailContrat($location);
-        
+
         return $this->envoyerEmail($emailClient, $sujet, $corpsHtml);
     }
 
     /**
      * Méthode centrale d'envoi d'email
+     * @return array<string, mixed>
      */
     private function envoyerEmail(string $destinataire, string $sujet, string $corpsHtml): array
     {
@@ -107,7 +109,7 @@ class EmailService
                 ->html($corpsHtml);
 
             $this->mailer->send($email);
-            
+
             $this->logger->info('Email envoyé à : ' . $destinataire);
             return ['succes' => true, 'message' => 'Email envoyé avec succès à ' . $destinataire];
 
@@ -125,7 +127,7 @@ class EmailService
         $clientNom = $location->getClientNomComplet() ?? 'Client';
         $dateDebut = $location->getDateDebut()?->format('d/m/Y') ?? '—';
         $dateFin = $location->getDateFinPrevue()?->format('d/m/Y') ?? '—';
-        
+
         return $this->getEmailLayout(
             '✅ Confirmation de Location',
             '#27ae60',
@@ -143,7 +145,7 @@ class EmailService
     private function buildEmailRappel(Location $location): string
     {
         $clientNom = $location->getClientNomComplet() ?? 'Client';
-        
+
         return $this->getEmailLayout(
             '⏰ Rappel de Location',
             '#f39c12',
@@ -161,7 +163,7 @@ class EmailService
     private function buildEmailFacture(Location $location, float $total, float $avance, float $solde): string
     {
         $clientNom = $location->getClientNomComplet() ?? 'Client';
-        
+
         $tableFinance = "
             <table style='width:100%; border-collapse:collapse; margin:15px 0;'>
                 <tr style='background:#f8f9fa;'>
@@ -178,7 +180,7 @@ class EmailService
                 </tr>
             </table>
         ";
-        
+
         return $this->getEmailLayout(
             '🧾 Facture Finale',
             '#8e44ad',
@@ -195,7 +197,7 @@ class EmailService
     private function buildEmailContrat(Location $location): string
     {
         $clientNom = $location->getClientNomComplet() ?? 'Client';
-        
+
         return $this->getEmailLayout(
             '📄 Votre Contrat de Location',
             '#2980b9',
@@ -215,7 +217,8 @@ class EmailService
         $dateDebut = $location->getDateDebut()?->format('d/m/Y') ?? '—';
         $dateFin = $location->getDateFinPrevue()?->format('d/m/Y') ?? '—';
         $prixJour = number_format((float) $location->getPrixParJour(), 3);
-        
+        $immatriculation = $location->getVehicule()?->getImmatriculation() ?? '—';
+
         return "
             <table style='width:100%; border-collapse:collapse; margin:15px 0;'>
                 <tr style='background:#3498db; color:white;'>
@@ -228,7 +231,7 @@ class EmailService
                     <td style='padding:10px; border:1px solid #dee2e6;'>{$location->getClientTelephone()}</td>
                 </tr>
                 <tr><td style='padding:10px; border:1px solid #dee2e6;'>Véhicule</td>
-                    <td style='padding:10px; border:1px solid #dee2e6; font-weight:bold;'>{$location->getVehicule()->getImmatriculation()}</td>
+                    <td style='padding:10px; border:1px solid #dee2e6; font-weight:bold;'>{$immatriculation}</td>
                 </tr>
                 <tr style='background:#f8f9fa;'><td style='padding:10px; border:1px solid #dee2e6;'>Date début</td>
                     <td style='padding:10px; border:1px solid #dee2e6;'>{$dateDebut}</td>
@@ -248,6 +251,7 @@ class EmailService
 
     /**
      * Envoie un email d'approbation d'annulation
+     * @return array<string, mixed>
      */
     public function sendCancellationApprovedEmail(Location $location, string $emailClient): array
     {
@@ -273,6 +277,7 @@ class EmailService
 
     /**
      * Envoie un email de refus d'annulation
+     * @return array<string, mixed>
      */
     public function sendCancellationRejectedEmail(Location $location, string $emailClient): array
     {
@@ -335,10 +340,10 @@ class EmailService
             </html>
         ";
     }
-    public function sendReservationEmail(string $to, $reservation, string $customMessage): bool
+
+    public function sendReservationEmail(string $to, mixed $reservation, string $customMessage): bool
     {
         try {
-            // Contenu du QR code
             $qrContent = "Réservation #" . $reservation->getIdreslog() . "\n";
             $qrContent .= "Logement: " . $reservation->getLogement()->getNom() . "\n";
             $qrContent .= "Arrivée: " . $reservation->getDateDebut()->format('d/m/Y') . "\n";
@@ -377,7 +382,7 @@ class EmailService
         }
     }
 
-    public function sendCancellationEmail(string $to, $reservation, string $reason): bool
+    public function sendCancellationEmail(string $to, mixed $reservation, string $reason): bool
     {
         try {
             $html = $this->twig->render('front/email/reservation_email.html.twig', [
@@ -413,59 +418,60 @@ class EmailService
                 'timeLeft' => $timeLeft,
             ]);
 
+            $userEmail = $reservation->getUser()?->getEmail() ?? '';
+
             $email = (new Email())
                 ->from('khadijaderbel123@gmail.com')
-                ->to($reservation->getUser()->getEmail())
+                ->to($userEmail)
                 ->subject('⏰ Paiement en ligne : votre réservation expire dans moins d\'1 heure !')
                 ->html($html);
 
             $this->mailer->send($email);
-            $this->logger->info('Email rappel paiement envoyé à ' . $reservation->getUser()->getEmail());
+            $this->logger->info('Email rappel paiement envoyé à ' . $userEmail);
             return true;
         } catch (\Exception $e) {
             $this->logger->error('Erreur email rappel: ' . $e->getMessage());
             return false;
         }
     }
-// Dans src/Service/EmailService.php
 
-public function sendCancellationApprovedEmaillog(string $to, $reservation): bool
-{
-    $html = $this->twig->render('front/email/cancellation_approved.html.twig', [
-        'reservation' => $reservation,
-    ]);
-    $email = (new Email())
-        ->from('khadijaderbel123@gmail.com')
-        ->to($to)
-        ->subject('Horozia - Annulation de réservation confirmée')
-        ->html($html);
-    try {
-        $this->mailer->send($email);
-        $this->logger->info('Email approbation annulation envoyé à ' . $to);
-        return true;
-    } catch (\Exception $e) {
-        $this->logger->error('Erreur email approbation annulation: ' . $e->getMessage());
-        return false;
+    public function sendCancellationApprovedEmaillog(string $to, mixed $reservation): bool
+    {
+        $html = $this->twig->render('front/email/cancellation_approved.html.twig', [
+            'reservation' => $reservation,
+        ]);
+        $email = (new Email())
+            ->from('khadijaderbel123@gmail.com')
+            ->to($to)
+            ->subject('Horozia - Annulation de réservation confirmée')
+            ->html($html);
+        try {
+            $this->mailer->send($email);
+            $this->logger->info('Email approbation annulation envoyé à ' . $to);
+            return true;
+        } catch (\Exception $e) {
+            $this->logger->error('Erreur email approbation annulation: ' . $e->getMessage());
+            return false;
+        }
     }
-}
 
-public function sendCancellationRejectedEmaillog(string $to, $reservation): bool
-{
-    $html = $this->twig->render('front/email/cancellation_rejected.html.twig', [
-        'reservation' => $reservation,
-    ]);
-    $email = (new Email())
-        ->from('khadijaderbel123@gmail.com')
-        ->to($to)
-        ->subject('Horozia - Demande d\'annulation non approuvée')
-        ->html($html);
-    try {
-        $this->mailer->send($email);
-        $this->logger->info('Email rejet annulation envoyé à ' . $to);
-        return true;
-    } catch (\Exception $e) {
-        $this->logger->error('Erreur email rejet annulation: ' . $e->getMessage());
-        return false;
+    public function sendCancellationRejectedEmaillog(string $to, mixed $reservation): bool
+    {
+        $html = $this->twig->render('front/email/cancellation_rejected.html.twig', [
+            'reservation' => $reservation,
+        ]);
+        $email = (new Email())
+            ->from('khadijaderbel123@gmail.com')
+            ->to($to)
+            ->subject('Horozia - Demande d\'annulation non approuvée')
+            ->html($html);
+        try {
+            $this->mailer->send($email);
+            $this->logger->info('Email rejet annulation envoyé à ' . $to);
+            return true;
+        } catch (\Exception $e) {
+            $this->logger->error('Erreur email rejet annulation: ' . $e->getMessage());
+            return false;
+        }
     }
-}
 }

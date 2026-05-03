@@ -31,7 +31,7 @@ class FaceCaptureController extends AbstractController
 
         $imageBase64 = $request->request->get('image');
         if ($imageBase64) {
-            $imageData = base64_decode($imageBase64);
+            $imageData = base64_decode((string) $imageBase64);
             $email = (new Email())
                 ->from('no-reply@horozia.com')
                 ->to('khalilbenlahmer@gmail.com')

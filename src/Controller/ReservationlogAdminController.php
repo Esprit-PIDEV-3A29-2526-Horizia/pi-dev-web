@@ -25,7 +25,6 @@ class ReservationlogAdminController extends AbstractController
     #[Route('/', name: 'index', methods: ['GET'])]
     public function index(Request $request, ReservationlogRepository $reservationlogRepository): Response
     {
-        // ... (identique à votre code existant)
         $this->checkAdminAccess();
         $search = $request->query->get('search', '');
         $status = $request->query->get('status', '');
@@ -73,14 +72,14 @@ class ReservationlogAdminController extends AbstractController
         $totalReservations = $reservationlogRepository->count([]);
 
         return $this->render('admin/reservationlog_admin/index.html.twig', [
-            'reservationlogs' => $reservations,
-            'total'           => $total,
+            'reservationlogs'   => $reservations,
+            'total'             => $total,
             'totalReservations' => $totalReservations,
-            'currentPage'     => $page,
-            'search'          => $search,
-            'status'          => $status,
-            'sort'            => $sort,
-            'limit'           => $limit,
+            'currentPage'       => $page,
+            'search'            => $search,
+            'status'            => $status,
+            'sort'              => $sort,
+            'limit'             => $limit,
         ]);
     }
 
@@ -99,45 +98,44 @@ class ReservationlogAdminController extends AbstractController
         }
         return $this->render('admin/reservationlog_admin/new.html.twig', [
             'reservation' => $reservationlog,
-            'form' => $form->createView(),
+            'form'        => $form->createView(),
         ]);
     }
 
-    // ⚠️ IMPORTANT : la route 'booked_dates' doit être PLACÉE AVANT les routes avec paramètre {idreslog}
-   #[Route('/booked-dates', name: 'booked_dates', methods: ['GET'])]
-public function getBookedDates(EntityManagerInterface $em): JsonResponse
-{        $this->checkAdminAccess();
+    #[Route('/booked-dates', name: 'booked_dates', methods: ['GET'])]
+    public function getBookedDates(EntityManagerInterface $em): JsonResponse
+    {
+        $this->checkAdminAccess();
 
-    $reservations = $em->getRepository(Reservationlog::class)
-        ->createQueryBuilder('r')
-        ->where('r.status NOT IN (:excluded)')
-        ->setParameter('excluded', ['annulée', 'expirée'])
-        ->getQuery()
-        ->getResult();
+        $reservations = $em->getRepository(Reservationlog::class)
+            ->createQueryBuilder('r')
+            ->where('r.status NOT IN (:excluded)')
+            ->setParameter('excluded', ['annulée', 'expirée'])
+            ->getQuery()
+            ->getResult();
 
-    $events = [];
-    foreach ($reservations as $res) {
-        $start = $res->getDateDebut()->format('Y-m-d');
-        $end = (clone $res->getDateFin())->modify('+1 day')->format('Y-m-d');
-        $title = $res->getLogement()->getNom();
-        $color = match($res->getStatus()) {
-            'confirmée' => '#81AE8D',
-            'en_attente' => '#E8B156',
-            'terminée' => '#6c757d',
-            default => '#dc3545',
-        };
-        $events[] = [
-            'title'  => $title,
-            'start'  => $start,
-            'end'    => $end,
-            'allDay' => true,
-            'color'  => $color,
-        ];
+        $events = [];
+        foreach ($reservations as $res) {
+            $start = $res->getDateDebut()->format('Y-m-d');
+            $end   = (clone $res->getDateFin())->modify('+1 day')->format('Y-m-d');
+            $title = $res->getLogement()->getNom();
+            $color = match ($res->getStatus()) {
+                'confirmée'   => '#81AE8D',
+                'en_attente'  => '#E8B156',
+                'terminée'    => '#6c757d',
+                default       => '#dc3545',
+            };
+            $events[] = [
+                'title'  => $title,
+                'start'  => $start,
+                'end'    => $end,
+                'allDay' => true,
+                'color'  => $color,
+            ];
+        }
+        return $this->json($events);
     }
-    return $this->json($events);
-}
 
-    // Routes avec paramètre {idreslog} (doivent être APRÈS la route fixe)
     #[Route('/{idreslog}', name: 'show', methods: ['GET'])]
     public function show(Reservationlog $reservationlog): Response
     {
@@ -160,7 +158,7 @@ public function getBookedDates(EntityManagerInterface $em): JsonResponse
         }
         return $this->render('admin/reservationlog_admin/edit.html.twig', [
             'reservation' => $reservationlog,
-            'form' => $form->createView(),
+            'form'        => $form->createView(),
         ]);
     }
 
@@ -168,7 +166,7 @@ public function getBookedDates(EntityManagerInterface $em): JsonResponse
     public function delete(Request $request, Reservationlog $reservationlog, EntityManagerInterface $entityManager): Response
     {
         $this->checkAdminAccess();
-        if ($this->isCsrfTokenValid('delete' . $reservationlog->getIdreslog(), $request->request->get('_token'))) {
+        if ($this->isCsrfTokenValid('delete' . $reservationlog->getIdreslog(), (string) $request->request->get('_token'))) {
             $entityManager->remove($reservationlog);
             $entityManager->flush();
             $this->addFlash('success', 'Réservation supprimée.');

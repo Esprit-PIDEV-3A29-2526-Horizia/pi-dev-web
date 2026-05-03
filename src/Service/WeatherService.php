@@ -3,7 +3,6 @@
 namespace App\Service;
 
 use Symfony\Contracts\HttpClient\HttpClientInterface;
-use Exception;
 
 class WeatherService
 {
@@ -11,7 +10,7 @@ class WeatherService
     private const CITY        = 'Tunis';
     private const COUNTRY     = 'TN';
     private const LANG        = 'fr';
-    private const UNITS       = 'metric'; // Celsius
+    private const UNITS       = 'metric';
 
     public function __construct(
         private readonly HttpClientInterface $httpClient,
@@ -20,6 +19,7 @@ class WeatherService
 
     /**
      * Météo actuelle à Tunis
+     * @return array<string, mixed>|null
      */
     public function getMeteoActuelle(): ?array
     {
@@ -43,7 +43,7 @@ class WeatherService
                 'description'   => ucfirst($data['weather'][0]['description']),
                 'icone'         => $data['weather'][0]['icon'],
                 'icone_url'     => 'https://openweathermap.org/img/wn/' . $data['weather'][0]['icon'] . '@2x.png',
-                'vent'          => round($data['wind']['speed'] * 3.6, 1), // m/s → km/h
+                'vent'          => round($data['wind']['speed'] * 3.6, 1),
                 'ville'         => $data['name'],
                 'code'          => $data['weather'][0]['id'],
                 'alerte'        => $this->detecterAlerte($data['weather'][0]['id']),
@@ -54,7 +54,8 @@ class WeatherService
     }
 
     /**
-     * Prévisions sur 5 jours (toutes les 3h → on garde 1 par jour)
+     * Prévisions sur 5 jours
+     * @return array<int, array<string, mixed>>
      */
     public function getPrevisions5Jours(): array
     {
@@ -65,20 +66,19 @@ class WeatherService
                     'appid' => $this->apiKey,
                     'lang'  => self::LANG,
                     'units' => self::UNITS,
-                    'cnt'   => 40, // 5 jours × 8 créneaux/jour
+                    'cnt'   => 40,
                 ],
                 'timeout' => 5,
             ]);
 
-            $data   = $response->toArray();
-            $jours  = [];
-            $vus    = [];
+            $data  = $response->toArray();
+            $jours = [];
+            $vus   = [];
 
             foreach ($data['list'] as $item) {
-                $date = date('Y-m-d', $item['dt']);
-
-                // Garder le créneau de midi (12h) pour chaque jour
+                $date  = date('Y-m-d', $item['dt']);
                 $heure = (int) date('H', $item['dt']);
+
                 if (in_array($date, $vus) && $heure !== 12) {
                     continue;
                 }
@@ -111,8 +111,8 @@ class WeatherService
     }
 
     /**
-     * Détecte si la météo nécessite une alerte pour les locations
-     * Codes météo OpenWeatherMap : 2xx=orage, 3xx=bruine, 5xx=pluie, 6xx=neige, 7xx=brouillard
+     * Détecte une alerte météo
+     * @return array<string, string>|null
      */
     private function detecterAlerte(int $code): ?array
     {

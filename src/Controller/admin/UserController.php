@@ -32,8 +32,8 @@ class UserController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $plainPassword = $user->getPassword();
-            $hashedPassword = $hasher->hashPassword($user, $plainPassword);
+           $plainPassword = $user->getPassword() ?? '';
+$hashedPassword = $hasher->hashPassword($user, $plainPassword);
             $user->setPassword($hashedPassword);
             
             $em->persist($user);
@@ -80,8 +80,7 @@ class UserController extends AbstractController
     }
 
     #[Route('/{id}', name: 'app_user_delete', methods: ['POST'])]
-    public function delete($id, Request $request, EntityManagerInterface $em): Response
-    {
+public function delete(int|string $id, Request $request, EntityManagerInterface $em): Response    {
         // Récupérer l'utilisateur connecté
         $currentUser = $this->getUser();
         if (!$currentUser instanceof User) {

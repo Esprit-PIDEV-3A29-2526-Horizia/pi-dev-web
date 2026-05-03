@@ -77,8 +77,8 @@ class MarqueController extends AbstractController
 public function delete(Request $request, Marque $marque, EntityManagerInterface $em): Response
 {
     // Vérifier le token CSRF
-    if ($this->isCsrfTokenValid('delete' . $marque->getIdMarque(), $request->request->get('_token'))) {
-        
+if ($this->isCsrfTokenValid('delete' . $marque->getIdMarque(), (string) $request->request->get('_token'))) {
+            
         // Vérifier si la marque a des modèles associés
         $modelesCount = $marque->getModeles()->count();
         

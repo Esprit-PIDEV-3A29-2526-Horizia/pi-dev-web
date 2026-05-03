@@ -13,6 +13,9 @@ class StripeService
         $this->stripe = new StripeClient($stripeSecretKey);
     }
 
+    /**
+     * @param array<string, string> $metadata
+     */
     public function createCheckoutSession(
         string $productName,
         int $amountInMinorUnit,
@@ -37,6 +40,6 @@ class StripeService
             'metadata' => $metadata,
         ]);
 
-        return $session->url;
+        return $session->url ?? '';
     }
 }

@@ -22,13 +22,13 @@ class ReservationlogSearchService
             ->leftJoin('r.user', 'u')
             ->addSelect('l', 'u');
 
-        if ($search && $search !== '') {
-            $qb->andWhere('l.nom LIKE :search')
+if (!empty($search)) {
+                $qb->andWhere('l.nom LIKE :search')
                ->setParameter('search', '%' . $search . '%');
         }
 
-        if ($status && $status !== '') {
-            $qb->andWhere('r.status = :status')->setParameter('status', $status);
+if (!empty($status)) {
+                $qb->andWhere('r.status = :status')->setParameter('status', $status);
         }
 
         switch ($sort) {
@@ -42,6 +42,8 @@ class ReservationlogSearchService
         return $qb;
     }
 
+    /** @return array<string, mixed> */
+
     public function getFilteredReservations(?string $search, ?string $status, ?string $sort, int $page = 1, int $limit = 10): array
     {
         $qb = $this->getReservationsQueryBuilder($search, $status, $sort);
@@ -50,8 +52,8 @@ class ReservationlogSearchService
         $reservations = $qb->getQuery()->getResult();
         return ['reservations' => $reservations, 'total' => $total];
     }
+/** @return array<string, mixed> */
 
-    // Nouvelle méthode pour filtrer par utilisateur
     public function getFilteredReservationsByUser(User $user, ?string $search, ?string $status, ?string $sort, int $page = 1, int $limit = 10): array
 {
     $qb = $this->getReservationsQueryBuilder($search, $status, $sort)

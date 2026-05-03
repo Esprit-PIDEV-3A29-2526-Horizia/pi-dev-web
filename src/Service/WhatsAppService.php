@@ -28,8 +28,7 @@ class WhatsAppService
         $this->authToken = $authToken;
         $this->fromNumber = $whatsappFromNumber;
         $this->twilioApiUrl = 'https://api.twilio.com/2010-04-01/Accounts/' . $accountSid . '/Messages.json';
-        
-        // Log la configuration (masquer les tokens)
+
         $this->logger->info('WhatsAppService initialisé', [
             'account_sid' => substr($accountSid, 0, 5) . '...',
             'from_number' => $whatsappFromNumber,
@@ -37,20 +36,23 @@ class WhatsAppService
         ]);
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function envoyerConfirmationReservation(Location $location, string $telephone): array
     {
         $debut = $location->getDateDebut()?->format('d/m/Y') ?? '—';
         $fin = $location->getDateFinPrevue()?->format('d/m/Y') ?? '—';
         $vehicule = $location->getVehicule();
         $immat = $vehicule?->getImmatriculation() ?? '—';
-        
+
         $marque = '';
         $modele = '';
         if ($vehicule && $vehicule->getModele()) {
             $marque = $vehicule->getModele()->getMarque()?->getNomMarque() ?? '';
             $modele = $vehicule->getModele()->getNomModele() ?? '';
         }
-        
+
         $montant = number_format((float) $location->getMontantTotal(), 3, '.', '');
         $nom = $location->getClientNomComplet() ?? 'Client';
         $id = sprintf('%04d', $location->getIdLocation());
@@ -70,11 +72,13 @@ class WhatsAppService
         return $this->envoyer($telephone, $message);
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function envoyer(string $telephoneDestinataire, string $message): array
     {
-        // Normaliser le numéro
         $telephone = $this->normaliserTelephone($telephoneDestinataire);
-        
+
         if (!$telephone) {
             $this->logger->error('WhatsApp: numéro invalide', ['original' => $telephoneDestinataire]);
             return [
@@ -83,7 +87,6 @@ class WhatsAppService
             ];
         }
 
-        // Vérifier les credentials
         if (empty($this->accountSid) || empty($this->authToken)) {
             return [
                 'succes' => false,
@@ -131,10 +134,9 @@ class WhatsAppService
                 ];
             }
 
-            // Erreur Twilio
             $errorMessage = $data['message'] ?? 'Erreur inconnue';
             $errorCode = $data['code'] ?? $statusCode;
-            
+
             return [
                 'succes' => false,
                 'message' => "Twilio erreur ($errorCode): $errorMessage"
@@ -145,7 +147,7 @@ class WhatsAppService
                 'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
-            
+
             return [
                 'succes' => false,
                 'message' => 'Erreur: ' . $e->getMessage()
@@ -155,29 +157,24 @@ class WhatsAppService
 
     private function normaliserTelephone(string $telephone): ?string
     {
-        // Nettoyer le numéro
         $tel = preg_replace('/[^0-9+]/', '', trim($telephone));
-        
+
         if (empty($tel)) {
             return null;
         }
 
-        // Déjà au format international
         if (str_starts_with($tel, '+')) {
             return $tel;
         }
 
-        // Numéro avec indicatif 216 sans +
         if (str_starts_with($tel, '216') && strlen($tel) === 11) {
             return '+' . $tel;
         }
 
-        // Numéro tunisien à 8 chiffres
         if (preg_match('/^[259]\d{7}$/', $tel)) {
             return '+216' . $tel;
         }
 
-        // Numéro avec 0 au début
         if (preg_match('/^0[259]\d{7}$/', $tel)) {
             return '+216' . substr($tel, 1);
         }
@@ -186,23 +183,115 @@ class WhatsAppService
         return null;
     }
 
-    public function testerConnexion(): array
+    /**
+     * @return array<string, mixed>
+     */
+    /**
+     * @return array<string, mixed>
+     */
+    public function envoyerRappel(Location $location, string $telephone): array
+    {
+        $debut  = $location->getDateDebut()?->format('d/m/Y') ?? '—';
+        $vehicule = $location->getVehicule();
+        $immat  = $vehicule?->getImmatriculation() ?? '—';
+        $marque = '';
+        $modele = '';
+        if ($vehicule && $vehicule->getModele()) {
+            $marque = $vehicule->getModele()->getMarque()?->getNomMarque() ?? '';
+            $modele = $vehicule->getModele()->getNomModele() ?? '';
+        }
+        $nom = $location->getClientNomComplet() ?? 'Client';
+        $id  = sprintf('%04d', $location->getIdLocation());
+
+        $message = "⏰ *HORIZIA — Rappel de location*\n\n"
+            . "Bonjour *{$nom}*,\n"
+            . "Nous vous rappelons votre location de véhicule.\n\n"
+            . "📋 *Rappel :*\n"
+            . "• N° : HOZ-{$id}\n"
+            . "• Véhicule : {$marque} {$modele} ({$immat})\n"
+            . "• Date de prise en charge : {$debut}\n\n"
+            . "📍 *Horizia* — +216 53 661 445\n"
+            . "À bientôt ! 🚗";
+
+        return $this->envoyer($telephone, $message);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function envoyerNotificationRetour(Location $location, string $telephone): array
+    {
+        $fin    = $location->getDateFinPrevue()?->format('d/m/Y') ?? '—';
+        $vehicule = $location->getVehicule();
+        $immat  = $vehicule?->getImmatriculation() ?? '—';
+        $marque = '';
+        $modele = '';
+        if ($vehicule && $vehicule->getModele()) {
+            $marque = $vehicule->getModele()->getMarque()?->getNomMarque() ?? '';
+            $modele = $vehicule->getModele()->getNomModele() ?? '';
+        }
+        $nom = $location->getClientNomComplet() ?? 'Client';
+        $id  = sprintf('%04d', $location->getIdLocation());
+
+        $message = "🔄 *HORIZIA — Retour de véhicule*\n\n"
+            . "Bonjour *{$nom}*,\n"
+            . "Votre location est arrivée à terme. Merci de restituer le véhicule.\n\n"
+            . "📋 *Détails :*\n"
+            . "• N° : HOZ-{$id}\n"
+            . "• Véhicule : {$marque} {$modele} ({$immat})\n"
+            . "• Date de retour prévue : {$fin}\n\n"
+            . "📍 *Horizia* — +216 53 661 445\n"
+            . "Merci pour votre confiance ! 🙏";
+
+        return $this->envoyer($telephone, $message);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    public function envoyerAnnulation(Location $location, string $telephone): array
+    {
+        $vehicule = $location->getVehicule();
+        $immat    = $vehicule?->getImmatriculation() ?? '—';
+        $marque   = '';
+        $modele   = '';
+        if ($vehicule && $vehicule->getModele()) {
+            $marque = $vehicule->getModele()->getMarque()?->getNomMarque() ?? '';
+            $modele = $vehicule->getModele()->getNomModele() ?? '';
+        }
+        $nom = $location->getClientNomComplet() ?? 'Client';
+        $id  = sprintf('%04d', $location->getIdLocation());
+
+        $message = "❌ *HORIZIA — Annulation de location*\n\n"
+            . "Bonjour *{$nom}*,\n"
+            . "Votre location a été annulée.\n\n"
+            . "📋 *Référence :*\n"
+            . "• N° : HOZ-{$id}\n"
+            . "• Véhicule : {$marque} {$modele} ({$immat})\n\n"
+            . "Pour toute question, contactez-nous :\n"
+            . "📍 *Horizia* — +216 53 661 445";
+
+        return $this->envoyer($telephone, $message);
+    }
+
+    /** @return array<string, mixed> */
+public function testerConnexion(): array
     {
         if (empty($this->accountSid) || empty($this->authToken)) {
             return ['success' => false, 'message' => 'Credentials Twilio manquants'];
         }
-        
+
         try {
             $url = 'https://api.twilio.com/2010-04-01/Accounts/' . $this->accountSid . '.json';
             $response = $this->httpClient->request('GET', $url, [
                 'auth_basic' => [$this->accountSid, $this->authToken],
                 'timeout' => 10,
             ]);
-            
+
             if ($response->getStatusCode() === 200) {
                 $data = $response->toArray();
                 return [
-                    'success' => true, 
+                    'success' => true,
                     'message' => 'Connexion Twilio OK',
                     'account_name' => $data['friendly_name'] ?? 'N/A'
                 ];

@@ -55,7 +55,8 @@ class PublicationController extends AbstractController
             // Image téléchargée manuellement
             $imageFile = $form->get('imageFile')->getData();
             if ($imageFile) {
-                $uploadDir = $this->getParameter('kernel.project_dir') . '/public/images';
+                $projectDir = $this->getParameter('kernel.project_dir');
+                $uploadDir = (is_string($projectDir) ? $projectDir : '') . '/public/images';
                 @mkdir($uploadDir, 0777, true);
                 $newFilename = uniqid() . '.' . $imageFile->guessExtension();
                 $imageFile->move($uploadDir, $newFilename);
@@ -124,7 +125,7 @@ class PublicationController extends AbstractController
         }
 
         $form = $this->createForm(PublicationType::class, $publication);
-        
+
         // Pré-remplir le champ tags (non mappé) avec les tags existants sous forme de chaîne
         $existingTags = $publication->getTags();
         if ($existingTags) {
@@ -137,7 +138,8 @@ class PublicationController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             $imageFile = $form->get('imageFile')->getData();
             if ($imageFile) {
-                $uploadDir = $this->getParameter('kernel.project_dir') . '/public/images';
+                $projectDir = $this->getParameter('kernel.project_dir');
+                $uploadDir = (is_string($projectDir) ? $projectDir : '') . '/public/images';
                 @mkdir($uploadDir, 0777, true);
                 $newFilename = uniqid() . '.' . $imageFile->guessExtension();
                 $imageFile->move($uploadDir, $newFilename);
@@ -184,7 +186,8 @@ class PublicationController extends AbstractController
             return $this->redirectToRoute('front_publication_index');
         }
 
-        if ($this->isCsrfTokenValid('delete_publication_' . $publication->getId(), $request->request->get('_token'))) {
+        // Cast (string) sur _token — correction PHPStan
+        if ($this->isCsrfTokenValid('delete_publication_' . $publication->getId(), (string) $request->request->get('_token'))) {
             $em->remove($publication);
             $em->flush();
             $this->addFlash('success', 'Publication supprimée.');
@@ -228,12 +231,17 @@ class PublicationController extends AbstractController
     #[Route('/commentaire/{id}/edit', name: 'front_commentaire_edit', methods: ['GET', 'POST'])]
     public function editCommentaire(Commentaire $commentaire, Request $request, EntityManagerInterface $em): Response
     {
+        $publication = $commentaire->getPublication();
+        if ($publication === null) {
+            throw $this->createNotFoundException('Publication introuvable.');
+        }
+
         $user = $this->getUser();
         $isAuthor = ($user && $user->getUserIdentifier() === $commentaire->getAuteur());
         $isAdmin = $this->isGranted('ROLE_ADMIN');
         if (!$isAuthor && !$isAdmin) {
             $this->addFlash('error', 'Vous ne pouvez pas modifier ce commentaire.');
-            return $this->redirectToRoute('front_publication_show', ['id' => $commentaire->getPublication()->getId()]);
+            return $this->redirectToRoute('front_publication_show', ['id' => $publication->getId()]);
         }
 
         $form = $this->createForm(CommentaireType::class, $commentaire);
@@ -242,7 +250,7 @@ class PublicationController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
             $em->flush();
             $this->addFlash('success', 'Commentaire modifié.');
-            return $this->redirectToRoute('front_publication_show', ['id' => $commentaire->getPublication()->getId()]);
+            return $this->redirectToRoute('front_publication_show', ['id' => $publication->getId()]);
         }
 
         return $this->render('front/commentaire/edit.html.twig', [
@@ -254,16 +262,21 @@ class PublicationController extends AbstractController
     #[Route('/commentaire/{id}/delete', name: 'front_commentaire_delete', methods: ['POST'])]
     public function deleteCommentaire(Request $request, Commentaire $commentaire, EntityManagerInterface $em): Response
     {
+        $publication = $commentaire->getPublication();
+        if ($publication === null) {
+            throw $this->createNotFoundException('Publication introuvable.');
+        }
+
         $user = $this->getUser();
         $isAuthor = ($user && $user->getUserIdentifier() === $commentaire->getAuteur());
         $isAdmin = $this->isGranted('ROLE_ADMIN');
         if (!$isAuthor && !$isAdmin) {
             $this->addFlash('error', 'Vous ne pouvez pas supprimer ce commentaire.');
-            return $this->redirectToRoute('front_publication_show', ['id' => $commentaire->getPublication()->getId()]);
+            return $this->redirectToRoute('front_publication_show', ['id' => $publication->getId()]);
         }
 
-        if ($this->isCsrfTokenValid('delete' . $commentaire->getId(), $request->request->get('_token'))) {
-            $publication = $commentaire->getPublication();
+        // Cast (string) sur _token — correction PHPStan
+        if ($this->isCsrfTokenValid('delete' . $commentaire->getId(), (string) $request->request->get('_token'))) {
             $publication->setCommentaires($publication->getCommentaires() - 1);
             $em->remove($commentaire);
             $em->flush();
@@ -271,7 +284,7 @@ class PublicationController extends AbstractController
         } else {
             $this->addFlash('error', 'Token CSRF invalide.');
         }
-        return $this->redirectToRoute('front_publication_show', ['id' => $commentaire->getPublication()->getId()]);
+        return $this->redirectToRoute('front_publication_show', ['id' => $publication->getId()]);
     }
 
     #[Route('/my-publications', name: 'front_my_publications')]
@@ -341,7 +354,7 @@ class PublicationController extends AbstractController
         return $this->json(['isFavorite' => $isFavorite]);
     }
 
-#[Route('/mes-favoris-publications', name: 'front_my_publications_favorites')]
+    #[Route('/mes-favoris-publications', name: 'front_my_publications_favorites')]
     public function myFavorites(PublicationRepository $repo, Request $request): Response
     {
         $favorites = $request->getSession()->get('favorite_publications', []);

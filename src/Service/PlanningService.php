@@ -5,31 +5,24 @@ namespace App\Service;
 use App\Entity\Location;
 use App\Repository\LocationRepository;
 use App\Repository\VehiculeRepository;
-use Doctrine\ORM\EntityManagerInterface;
 use DateTime;
 
 class PlanningService
 {
     private LocationRepository $locationRepository;
     private VehiculeRepository $vehiculeRepository;
-    private EntityManagerInterface $entityManager;
 
     public function __construct(
         LocationRepository $locationRepository,
-        VehiculeRepository $vehiculeRepository,
-        EntityManagerInterface $entityManager
+        VehiculeRepository $vehiculeRepository
     ) {
         $this->locationRepository = $locationRepository;
         $this->vehiculeRepository = $vehiculeRepository;
-        $this->entityManager = $entityManager;
     }
-
-    // ─────────────────────────────────────────────────────────────
-    // RÉCUPÉRATION DES LOCATIONS PAR PÉRIODE
-    // ─────────────────────────────────────────────────────────────
 
     /**
      * Récupère les locations d'un mois donné
+     * @return array<int, Location>
      */
     public function getLocationsDuMois(int $annee, int $mois): array
     {
@@ -50,6 +43,7 @@ class PlanningService
 
     /**
      * Récupère les locations pour une période donnée
+     * @return array<int, Location>
      */
     public function getLocationsPeriode(DateTime $debut, DateTime $fin): array
     {
@@ -67,6 +61,7 @@ class PlanningService
 
     /**
      * Récupère les locations pour une date spécifique
+     * @return array<int, Location>
      */
     public function getLocationsParDate(DateTime $date): array
     {
@@ -77,10 +72,6 @@ class PlanningService
 
         return $this->getLocationsPeriode($debut, $fin);
     }
-
-    // ─────────────────────────────────────────────────────────────
-    // DÉTECTION DE CONFLITS
-    // ─────────────────────────────────────────────────────────────
 
     /**
      * Vérifie si un véhicule est disponible pour une période
@@ -104,20 +95,19 @@ class PlanningService
         }
 
         $count = (int) $qb->getQuery()->getSingleScalarResult();
-        
+
         return $count === 0;
     }
 
     /**
      * Détecte les conflits de location pour un mois donné
-     * @return array<int, array> [idVehicule => [locations en conflit]]
+     * @return array<int, array<int, Location>>
      */
     public function detecterConflitsDuMois(int $annee, int $mois): array
     {
         $locations = $this->getLocationsDuMois($annee, $mois);
         $conflits = [];
 
-        // Grouper par véhicule
         $parVehicule = [];
         foreach ($locations as $loc) {
             $idVehicule = $loc->getVehicule()?->getIdVehicule();
@@ -126,7 +116,6 @@ class PlanningService
             }
         }
 
-        // Détecter les chevauchements
         foreach ($parVehicule as $idVehicule => $locs) {
             for ($i = 0; $i < count($locs); $i++) {
                 for ($j = $i + 1; $j < count($locs); $j++) {
@@ -150,9 +139,9 @@ class PlanningService
     public function seChevauchent(Location $l1, Location $l2): bool
     {
         $debut1 = $l1->getDateDebut();
-        $fin1 = $l1->getDateFinPrevue();
+        $fin1   = $l1->getDateFinPrevue();
         $debut2 = $l2->getDateDebut();
-        $fin2 = $l2->getDateFinPrevue();
+        $fin2   = $l2->getDateFinPrevue();
 
         if (!$debut1 || !$fin1 || !$debut2 || !$fin2) {
             return false;
@@ -161,16 +150,13 @@ class PlanningService
         return $debut1 < $fin2 && $debut2 < $fin1;
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // STATISTIQUES DE PLANNING
-    // ─────────────────────────────────────────────────────────────
-
     /**
      * Calcule le taux d'occupation pour un mois donné
      */
     public function calculerTauxOccupation(int $annee, int $mois): float
     {
-        $nbJoursMois = (int) date('t', mktime(0, 0, 0, $mois, 1, $annee));
+        $timestamp = mktime(0, 0, 0, $mois, 1, $annee);
+        $nbJoursMois = (int) date('t', $timestamp !== false ? $timestamp : null);
         $nbVehicules = $this->getNbVehiculesTotal();
 
         if ($nbVehicules === 0) {
@@ -178,7 +164,7 @@ class PlanningService
         }
 
         $joursOccupes = $this->calculerJoursOccupes($annee, $mois, $nbJoursMois);
-        
+
         return ($joursOccupes / ($nbVehicules * $nbJoursMois)) * 100;
     }
 
@@ -205,6 +191,7 @@ class PlanningService
 
     /**
      * Récupère les statuts des locations pour un mois
+     * @return array<string, mixed>
      */
     public function getStatutsParMois(int $annee, int $mois): array
     {
@@ -231,6 +218,7 @@ class PlanningService
 
     /**
      * Récupère les locations qui se terminent bientôt
+     * @return array<int, Location>
      */
     public function getLocationsQuiTerminentBientot(int $nbJours): array
     {
@@ -248,13 +236,6 @@ class PlanningService
             ->getResult();
     }
 
-    // ─────────────────────────────────────────────────────────────
-    // UTILITAIRES CALENDRIER
-    // ─────────────────────────────────────────────────────────────
-
-    /**
-     * Formate le nom du mois en français
-     */
     public function getNomMois(int $mois, int $annee): string
     {
         $nomsMois = [
@@ -262,47 +243,37 @@ class PlanningService
             5 => 'Mai', 6 => 'Juin', 7 => 'Juillet', 8 => 'Août',
             9 => 'Septembre', 10 => 'Octobre', 11 => 'Novembre', 12 => 'Décembre'
         ];
-        
+
         return $nomsMois[$mois] . ' ' . $annee;
     }
 
-    /**
-     * Couleur associée au statut (pour CSS)
-     */
     public function getCouleurStatut(?string $statut): string
     {
         if (!$statut) return '#95a5a6';
-        
+
         return match ($statut) {
             'réservée' => '#3498db',
             'en_cours' => '#27ae60',
             'terminée' => '#95a5a6',
-            'annulée' => '#e74c3c',
-            'no_show' => '#e67e22',
-            default => '#95a5a6',
+            'annulée'  => '#e74c3c',
+            'no_show'  => '#e67e22',
+            default    => '#95a5a6',
         };
     }
 
-    /**
-     * Emoji associé au statut
-     */
     public function getEmojiStatut(?string $statut): string
     {
         if (!$statut) return '❓';
-        
+
         return match ($statut) {
             'réservée' => '📅',
             'en_cours' => '🚗',
             'terminée' => '✅',
-            'annulée' => '❌',
-            'no_show' => '⚠️',
-            default => '❓',
+            'annulée'  => '❌',
+            'no_show'  => '⚠️',
+            default    => '❓',
         };
     }
-
-    // ─────────────────────────────────────────────────────────────
-    // MÉTHODES PRIVÉES
-    // ─────────────────────────────────────────────────────────────
 
     private function getNbVehiculesTotal(): int
     {
@@ -316,31 +287,30 @@ class PlanningService
 
     private function calculerJoursOccupes(int $annee, int $mois, int $nbJoursMois): int
     {
-        $locations = $this->getLocationsDuMois($annee, $mois);
-        $debutMois = new DateTime("{$annee}-{$mois}-01");
-        $finMois = new DateTime("{$annee}-{$mois}-{$nbJoursMois}");
-        
+        $locations  = $this->getLocationsDuMois($annee, $mois);
+        $debutMois  = new DateTime("{$annee}-{$mois}-01");
+        $finMois    = new DateTime("{$annee}-{$mois}-{$nbJoursMois}");
         $joursOccupes = [];
 
         foreach ($locations as $loc) {
             $vehicule = $loc->getVehicule();
             if (!$vehicule) continue;
-            
+
             $idVehicule = $vehicule->getIdVehicule();
-            $locDebut = $loc->getDateDebut();
-            $locFin = $loc->getDateFinPrevue();
-            
+            $locDebut   = $loc->getDateDebut();
+            $locFin     = $loc->getDateFinPrevue();
+
             if (!$locDebut || !$locFin) continue;
-            
+
             $d = $locDebut > $debutMois ? clone $locDebut : clone $debutMois;
             $f = $locFin < $finMois ? clone $locFin : clone $finMois;
-            
+
             while ($d <= $f) {
                 $joursOccupes[$idVehicule . '-' . $d->format('Y-m-d')] = true;
                 $d->modify('+1 day');
             }
         }
-        
+
         return count($joursOccupes);
     }
 }

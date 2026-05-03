@@ -190,8 +190,8 @@ class CategorieController extends AbstractController
             throw $this->createNotFoundException('Catégorie introuvable.');
         }
 
-        if ($this->isCsrfTokenValid('delete' . $categorie->getId(), $request->request->get('_token'))) {
-            $voyagesCount = $entityManager->createQueryBuilder()
+if ($this->isCsrfTokenValid('delete' . $categorie->getId(), (string) $request->request->get('_token'))) {
+                $voyagesCount = $entityManager->createQueryBuilder()
                 ->select('COUNT(v.id)')
                 ->from('App\Entity\Voyage', 'v')
                 ->where('v.categorie = :categorie')

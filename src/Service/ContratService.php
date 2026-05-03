@@ -102,9 +102,9 @@ class ContratService
 
     private function buildContratHtml(Location $location): string
     {
-        $debut   = $location->getDateDebut();
-        $fin     = $location->getDateFinPrevue();
-        $nbJours = $this->calculerNbJours($debut, $fin);
+       $debut   = $location->getDateDebut() ?? new \DateTime();
+$fin     = $location->getDateFinPrevue() ?? new \DateTime();
+$nbJours = $this->calculerNbJours($debut, $fin);
         $prixJour = (float) $location->getPrixParJour();
         $montantBase  = $prixJour * $nbJours;
         $extrasTotal  = $location->getExtrasTotal();
@@ -314,8 +314,7 @@ class ContratService
       <tr><td>Téléphone</td><td>' . htmlspecialchars($location->getClientTelephone() ?? '—') . '</td></tr>
       <tr><td>CIN</td><td>' . htmlspecialchars($location->getClientCin() ?? '—') . '</td></tr>
       <tr><td>Véhicule</td><td>' . htmlspecialchars($location->getVehicule()?->getImmatriculation() ?? '—') . '</td></tr>
-      <tr><td>Période</td><td>' . $location->getDateDebut()->format('d/m/Y') . ' → ' . $location->getDateFinPrevue()->format('d/m/Y') . '</td></tr>
-    </table>
+<tr><td>Période</td><td>' . ($location->getDateDebut()?->format('d/m/Y') ?? '—') . ' → ' . ($location->getDateFinPrevue()?->format('d/m/Y') ?? '—') . '</td></tr>    </table>
   </div>
   <div class="section">
     <div class="section-title">&#128179; Récapitulatif financier</div>

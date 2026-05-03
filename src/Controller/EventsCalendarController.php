@@ -45,8 +45,8 @@ class EventsCalendarController extends AbstractController
             $formattedEvents[] = [
                 'id' => $event->getId_event(),
                 'title' => $event->getTitre(),
-                'start' => $event->getDate_debut()->format('Y-m-d H:i:s'),
-                'end' => $event->getDate_fin()->format('Y-m-d H:i:s'),
+                'start' => $event->getDate_debut()?->format('Y-m-d H:i:s') ?? '',
+                'end' => $event->getDate_fin()?->format('Y-m-d H:i:s') ?? '',
                 'color' => $color,
                 'status' => $event->getStatut(),
                 'category' => $event->getCategorie(),

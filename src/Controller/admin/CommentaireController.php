@@ -40,7 +40,9 @@ $user = $this->getUser();
 $userId = ($user instanceof \App\Entity\User) ? $user->getId() : 0;
 $commentaire->setUtilisateurId($userId);            
             $em->persist($commentaire);
-            $publication->setCommentaires($publication->getCommentaires() + 1);
+            if ($publication !== null) {
+    $publication->setCommentaires($publication->getCommentaires() + 1);
+}
             $em->flush();
             
             $this->addFlash('success', 'Commentaire ajouté.');
@@ -80,8 +82,7 @@ $commentaire->setUtilisateurId($userId);
             $commentaire->setModifie(true);
             $em->flush();
             $this->addFlash('success', 'Commentaire modifié.');
-            return $this->redirectToRoute('admin_commentaire_index', ['publication' => $commentaire->getPublication()->getId()]);
-        }
+return $this->redirectToRoute('admin_commentaire_index', ['publication' => $commentaire->getPublication()?->getId()]);        }
 
         return $this->render('admin/commentaire/edit.html.twig', [
             'form' => $form->createView(),
@@ -92,15 +93,17 @@ $commentaire->setUtilisateurId($userId);
     #[Route('/{id}', name: 'delete', methods: ['POST'])]
     public function delete(Request $request, Commentaire $commentaire, EntityManagerInterface $em): Response
     {
-        if ($this->isCsrfTokenValid('delete' . $commentaire->getId(), $request->request->get('_token'))) {
-            $publication = $commentaire->getPublication();
-            $publication->setCommentaires(max(0, $publication->getCommentaires() - 1));
+if ($this->isCsrfTokenValid('delete' . $commentaire->getId(), (string) $request->request->get('_token'))) {       
+       $publication = $commentaire->getPublication();
+if ($publication !== null) {
+    $publication->setCommentaires(max(0, $publication->getCommentaires() - 1));
+}
             $em->remove($commentaire);
             $em->flush();
             $this->addFlash('success', 'Commentaire supprimé.');
         } else {
             $this->addFlash('error', 'Token CSRF invalide.');
         }
-        return $this->redirectToRoute('admin_commentaire_index', ['publication' => $commentaire->getPublication()->getId()]);
+return $this->redirectToRoute('admin_commentaire_index', ['publication' => $commentaire->getPublication()?->getId()]);
     }
 }

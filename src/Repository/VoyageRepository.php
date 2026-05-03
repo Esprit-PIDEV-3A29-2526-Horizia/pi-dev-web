@@ -158,21 +158,21 @@ class VoyageRepository extends ServiceEntityRepository
             ->getResult();
     }
 
-    public function findMostReservedVoyages(?int $limit = 3): array
-    {
-        $qb = $this->createQueryBuilder('v')
-            ->leftJoin(Reservation::class, 'r', 'WITH', 'r.voyage = v')
-            ->andWhere('v.placesRestantes > 0')
-            ->andWhere('v.dateDepart >= :today')
-            ->setParameter('today', new \DateTimeImmutable('today'))
-            ->groupBy('v.id')
-            ->orderBy('COUNT(r.id)', 'DESC')
-            ->addOrderBy('v.dateDepart', 'ASC');
+  public function findMostReservedVoyages(?int $limit = 3): array
+{
+    $qb = $this->createQueryBuilder('v')
+        ->innerJoin(Reservation::class, 'r', 'WITH', 'r.voyage = v') // ✅ INNER JOIN
+        ->andWhere('v.placesRestantes > 0')
+        ->andWhere('v.dateDepart >= :today')
+        ->setParameter('today', new \DateTimeImmutable('today'))
+        ->groupBy('v.id')
+        ->orderBy('COUNT(r.id)', 'DESC')
+        ->addOrderBy('v.dateDepart', 'ASC');
 
-        if ($limit !== null) {
-            $qb->setMaxResults($limit);
-        }
-
-        return $qb->getQuery()->getResult();
+    if ($limit !== null) {
+        $qb->setMaxResults($limit);
     }
+
+    return $qb->getQuery()->getResult();
+}
 }

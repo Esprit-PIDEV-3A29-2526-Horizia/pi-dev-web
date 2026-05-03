@@ -16,13 +16,12 @@ use Throwable;
 #[Route('/admin/reservation')]
 class ReservationController extends AbstractController
 {
-
     #[Route('/', name: 'app_reservation_index', methods: ['GET'])]
     public function index(
         Request $request,
         EntityManagerInterface $entityManager,
         PaginatorInterface $paginator
-     ): Response {
+    ): Response {
         $search = trim((string) $request->query->get('search', ''));
         $sort = (string) $request->query->get('sort', '');
 
@@ -160,7 +159,7 @@ class ReservationController extends AbstractController
         EntityManagerInterface $entityManager,
         \App\Service\BrevoMailerService $brevoMailerService,
         UrlGeneratorInterface $urlGenerator
-     ): Response {
+    ): Response {
         $reservation = $entityManager->getRepository(Reservation::class)->find($id);
 
         if (!$reservation) {
@@ -203,19 +202,13 @@ class ReservationController extends AbstractController
 
         $user = $reservation->getUser();
 
-        if (!$user || !\method_exists($user, 'getEmail') || !$user->getEmail()) {
-            $this->addFlash('warning', 'Réservation confirmée, mais aucun email utilisateur n’est disponible.');
+        if (!$user || !$user->getEmail()) {
+            $this->addFlash('warning', 'Réservation confirmée, mais aucun email utilisateur n\'est disponible.');
             return $this->redirectToRoute('app_reservation_index');
         }
 
         try {
-            $fullName = '';
-
-            if (\method_exists($user, 'getPrenom') && \method_exists($user, 'getNom')) {
-                $fullName = trim(($user->getPrenom() ?? '') . ' ' . ($user->getNom() ?? ''));
-            } elseif (\method_exists($user, 'getNom')) {
-                $fullName = (string) ($user->getNom() ?? '');
-            }
+            $fullName = trim(($user->getPrenom() ?? '') . ' ' . ($user->getNom() ?? ''));
 
             $paymentUrl = $urlGenerator->generate('app_payment_checkout', [
                 'id' => $reservation->getId(),
@@ -268,7 +261,7 @@ class ReservationController extends AbstractController
         int $id,
         EntityManagerInterface $entityManager,
         \App\Service\BrevoMailerService $brevoMailerService
-     ): Response {
+    ): Response {
         $reservation = $entityManager->getRepository(Reservation::class)->find($id);
 
         if (!$reservation) {
@@ -293,15 +286,9 @@ class ReservationController extends AbstractController
 
         $user = $reservation->getUser();
 
-        if ($user && \method_exists($user, 'getEmail') && $user->getEmail()) {
+        if ($user && $user->getEmail()) {
             try {
-                $fullName = '';
-
-                if (\method_exists($user, 'getPrenom') && \method_exists($user, 'getNom')) {
-                    $fullName = trim(($user->getPrenom() ?? '') . ' ' . ($user->getNom() ?? ''));
-                } elseif (\method_exists($user, 'getNom')) {
-                    $fullName = (string) ($user->getNom() ?? '');
-                }
+                $fullName = trim(($user->getPrenom() ?? '') . ' ' . ($user->getNom() ?? ''));
 
                 if ($voyage) {
                     $brevoMailerService->sendReservationCancellation(
@@ -322,40 +309,35 @@ class ReservationController extends AbstractController
         }
 
         $this->addFlash('success', 'Réservation annulée avec succès.');
-
         return $this->redirectToRoute('app_reservation_index');
     }
 
     #[Route('/test-brevo-service', name: 'app_test_brevo_service', methods: ['GET'])]
-public function testBrevoService(
-    \App\Service\BrevoMailerService $brevoMailerService,
-    \Psr\Log\LoggerInterface $logger
-): Response {
-    try {
-        $logger->info('Test Brevo Service - Début');
-        
-        $result = $brevoMailerService->sendReservationConfirmation(
-            'test@example.com',
-            'Test Client',
-            'Voyage Test',
-            'Destination Test',
-            '01/05/2025',
-            '10/05/2025',
-            2,
-            99999,
-            'https://example.com/payment'
-        );
-        
-        if ($result) {
+    public function testBrevoService(
+        \App\Service\BrevoMailerService $brevoMailerService,
+        \Psr\Log\LoggerInterface $logger
+    ): Response {
+        try {
+            $logger->info('Test Brevo Service - Début');
+
+            $brevoMailerService->sendReservationConfirmation(
+                'test@example.com',
+                'Test Client',
+                'Voyage Test',
+                'Destination Test',
+                '01/05/2025',
+                '10/05/2025',
+                2,
+                99999,
+                'https://example.com/payment'
+            );
+
             $this->addFlash('success', 'Email envoyé avec succès !');
-        } else {
-            $this->addFlash('warning', 'L\'email n\'a pas pu être envoyé.');
+        } catch (\Throwable $e) {
+            $logger->error('Erreur Brevo: ' . $e->getMessage());
+            $this->addFlash('error', 'Erreur: ' . $e->getMessage());
         }
-    } catch (\Throwable $e) {
-        $logger->error('Erreur Brevo: ' . $e->getMessage());
-        $this->addFlash('error', 'Erreur: ' . $e->getMessage());
+
+        return $this->redirectToRoute('app_reservation_index');
     }
-    
-    return $this->redirectToRoute('app_reservation_index');
-}
 }

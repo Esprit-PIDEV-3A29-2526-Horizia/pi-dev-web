@@ -53,8 +53,8 @@ class ProfilController extends AbstractController
     {
         if ($request->isMethod('POST')) {
             $profil = new Profil();
-            $profil->setType($request->request->get('type'));
-            $profil->setStatut($request->request->get('statut'));
+          $profil->setType((string) $request->request->get('type'));
+$profil->setStatut((string) $request->request->get('statut'));
             
             $em->persist($profil);
             $em->flush();
@@ -76,8 +76,8 @@ class ProfilController extends AbstractController
         }
         
         if ($request->isMethod('POST')) {
-            $profil->setType($request->request->get('type'));
-            $profil->setStatut($request->request->get('statut'));
+           $profil->setType((string) $request->request->get('type'));
+$profil->setStatut((string) $request->request->get('statut'));
             
             $em->flush();
             

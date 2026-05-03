@@ -16,19 +16,18 @@ use Symfony\Component\Routing\Annotation\Route;
 #[Route('/admin/documents')]
 class DocumentsController extends AbstractController
 {
-    // ──────────────────────────────────────
-    // 📋 LISTE des documents
-    // ──────────────────────────────────────
     #[Route('/', name: 'admin_documents_index')]
     public function index(LocationRepository $locationRepository, Request $request): Response
     {
-        $q         = $request->query->get('q', '');
+        $q         = (string) $request->query->get('q', '');
         $locations = $locationRepository->findBy([], ['dateDebut' => 'DESC']);
 
         if (!empty($q)) {
             $locations = array_filter($locations, function (Location $loc) use ($q) {
-                return stripos($loc->getClientNomComplet(), $q) !== false
-                    || stripos($loc->getVehicule()->getImmatriculation(), $q) !== false;
+                $nom = $loc->getClientNomComplet() ?? '';
+                $immat = $loc->getVehicule()?->getImmatriculation() ?? '';
+                return stripos($nom, $q) !== false
+                    || stripos($immat, $q) !== false;
             });
         }
 
@@ -37,11 +36,6 @@ class DocumentsController extends AbstractController
         ]);
     }
 
-    // ──────────────────────────────────────
-    // 📄 CONTRAT PDF
-    // Utilise : ContratService::genererContratPdf(Location)
-    // Les extras viennent directement de $location->getExtras()
-    // ──────────────────────────────────────
     #[Route('/contrat/{id}', name: 'admin_documents_contrat', methods: ['GET'])]
     public function contrat(
         #[MapEntity(mapping: ['id' => 'idLocation'])] Location $location,
@@ -59,18 +53,12 @@ class DocumentsController extends AbstractController
         );
     }
 
-    // ──────────────────────────────────────
-    // 🧾 FACTURE PDF
-    // Utilise : ContratService::genererFacturePdf(Location, float $penalites, string $notesRetour)
-    // Les pénalités sont passées via paramètres GET optionnels
-    // ──────────────────────────────────────
     #[Route('/facture/{id}', name: 'admin_documents_facture', methods: ['GET'])]
     public function facture(
         #[MapEntity(mapping: ['id' => 'idLocation'])] Location $location,
         ContratService $contratService,
         Request $request
     ): Response {
-        // Calcul des pénalités selon les paramètres GET
         $penalites = 0.0;
 
         $heuresRetard = (int) $request->query->get('heures_retard', 0);
@@ -87,7 +75,7 @@ class DocumentsController extends AbstractController
             $penalites += ContratService::PENALITE_DOMMAGE_GRAVE;
         }
 
-        $notesRetour = $request->query->get('notes', '');
+        $notesRetour = (string) $request->query->get('notes', '');
 
         $pdfContent = $contratService->genererFacturePdf($location, $penalites, $notesRetour);
 
@@ -101,20 +89,17 @@ class DocumentsController extends AbstractController
         );
     }
 
-    // ──────────────────────────────────────
-    // 🔲 QR CODE
-    // ──────────────────────────────────────
     #[Route('/qrcode/{id}', name: 'admin_documents_qrcode')]
     public function qrcode(
         #[MapEntity(mapping: ['id' => 'idLocation'])] Location $location,
         QrCodeService $qrCodeService
     ): Response {
         $qrCode = $qrCodeService->genererQRCodeLocation(
-            $location->getIdLocation(),
-            $location->getClientNomComplet(),
-            $location->getVehicule()->getImmatriculation(),
-            $location->getDateDebut()->format('d/m/Y'),
-            $location->getDateFinPrevue()->format('d/m/Y')
+            $location->getIdLocation() ?? 0,
+            $location->getClientNomComplet() ?? '',
+            $location->getVehicule()?->getImmatriculation() ?? '',
+            $location->getDateDebut()?->format('d/m/Y') ?? '',
+            $location->getDateFinPrevue()?->format('d/m/Y') ?? ''
         );
 
         return $this->render('admin/documents/qrcode.html.twig', [
@@ -123,16 +108,13 @@ class DocumentsController extends AbstractController
         ]);
     }
 
-    // ──────────────────────────────────────
-    // 📧 ENVOYER CONTRAT PAR EMAIL
-    // ──────────────────────────────────────
     #[Route('/envoyer-contrat/{id}', name: 'admin_documents_envoyer_contrat', methods: ['POST'])]
     public function envoyerContrat(
         #[MapEntity(mapping: ['id' => 'idLocation'])] Location $location,
         Request $request,
         EmailService $emailService
     ): Response {
-        $email = $request->request->get('email');
+        $email = (string) $request->request->get('email', '');
         if (empty($email)) {
             $this->addFlash('error', 'Veuillez saisir une adresse email.');
             return $this->redirectToRoute('admin_documents_index');
@@ -144,16 +126,13 @@ class DocumentsController extends AbstractController
         return $this->redirectToRoute('admin_documents_index');
     }
 
-    // ──────────────────────────────────────
-    // 📧 ENVOYER FACTURE PAR EMAIL
-    // ──────────────────────────────────────
     #[Route('/envoyer-facture/{id}', name: 'admin_documents_envoyer_facture', methods: ['POST'])]
     public function envoyerFacture(
         #[MapEntity(mapping: ['id' => 'idLocation'])] Location $location,
         Request $request,
         EmailService $emailService
     ): Response {
-        $email = $request->request->get('email');
+        $email = (string) $request->request->get('email', '');
         if (empty($email)) {
             $this->addFlash('error', 'Veuillez saisir une adresse email.');
             return $this->redirectToRoute('admin_documents_index');

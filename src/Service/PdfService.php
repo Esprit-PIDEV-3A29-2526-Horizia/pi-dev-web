@@ -18,8 +18,7 @@ class PdfService
         $this->qrCodeService = $qrCodeService;
     }
 
-    public function generateReservationPdf($reservation): string
-    {
+public function generateReservationPdf(mixed $reservation): string    {
         $chambreType = $this->chambreTypeService->getChambreType(
             $reservation->getAdultes(),
             $reservation->getEnfants(),

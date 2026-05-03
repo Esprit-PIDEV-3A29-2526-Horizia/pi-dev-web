@@ -12,6 +12,9 @@ class AiChatbotService
     ) {
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function ask(string $message): array
     {
         $originalMessage = trim($message);
@@ -230,6 +233,9 @@ class AiChatbotService
         return false;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     private function extractCriteria(string $message): array
     {
         $budgetMin = $this->extractBudget($message);
@@ -296,6 +302,9 @@ class AiChatbotService
         return null;
     }
 
+    /**
+     * @return array<int, int>
+     */
     private function extractMonthsFromMessage(string $message): array
     {
         $months = [];
@@ -343,6 +352,9 @@ class AiChatbotService
         return array_values(array_unique($months));
     }
 
+    /**
+     * @param array<string, mixed> $criteria
+     */
     private function buildRecommendationIntro(array $criteria): string
     {
         $parts = ['Voici mes recommandations les plus adaptées'];
@@ -362,6 +374,9 @@ class AiChatbotService
         return implode(' ', $parts) . ' :';
     }
 
+    /**
+     * @param array<int, mixed> $voyages
+     */
     private function formatVoyagesHtml(array $voyages): string
     {
         $html = '<div class="chatbot-response-block">';

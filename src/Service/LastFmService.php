@@ -14,7 +14,8 @@ class LastFmService
         $this->httpClient = $httpClient;
     }
 
-    public function getArtistInfo(string $artistName): ?array
+   /** @return array<string, mixed>|null */
+public function getArtistInfo(string $artistName): ?array
     {
         try {
             $response = $this->httpClient->request('GET', 'http://ws.audioscrobbler.com/2.0/', [
@@ -50,7 +51,8 @@ class LastFmService
         }
     }
 
-    public function getTopTracks(string $artistName, int $limit = 5): array
+   /** @return array<int, array<string, mixed>> */
+public function getTopTracks(string $artistName, int $limit = 5): array
     {
         try {
             $response = $this->httpClient->request('GET', 'http://ws.audioscrobbler.com/2.0/', [
@@ -84,7 +86,8 @@ class LastFmService
         }
     }
 
-    public function getSimilarArtists(string $artistName, int $limit = 5): array
+   /** @return array<int, array<string, mixed>> */
+public function getSimilarArtists(string $artistName, int $limit = 5): array
     {
         try {
             $response = $this->httpClient->request('GET', 'http://ws.audioscrobbler.com/2.0/', [

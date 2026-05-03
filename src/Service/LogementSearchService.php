@@ -14,10 +14,8 @@ class LogementSearchService
         $this->logementRepository = $logementRepository;
     }
 
-    /**
-     * Version front : recherche + type + tri (sans pagination, sans filtre disponibilité)
-     */
-    public function searchAndSort(?string $search, ?string $type, ?string $sort): array
+   /** @return array<int, mixed> */
+public function searchAndSort(?string $search, ?string $type, ?string $sort): array
     {
         $qb = $this->logementRepository->createQueryBuilder('l');
 
@@ -44,12 +42,8 @@ class LogementSearchService
         return $qb->getQuery()->getResult();
     }
 
-    /**
-     * Version admin : recherche textuelle + filtre disponibilité + tri + pagination
-     *
-     * @return array Liste des logements (objets Logement)
-     */
-    public function searchAndSortForAdmin(
+   /** @return array<int, mixed> */
+public function searchAndSortForAdmin(
         ?string $search,
         ?string $disponibilite,
         ?string $sort,

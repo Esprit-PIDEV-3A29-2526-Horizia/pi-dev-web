@@ -29,7 +29,8 @@ class GeolocationService
      * Géocoder une adresse (Adresse → Coordonnées GPS)
      * @return array ['latitude' => string, 'longitude' => string, 'adresse_formatee' => string, 'ville' => string, 'code_postal' => string]
      */
-    public function geocoderAdresse(string $adresse): array
+   /** @return array<string, mixed> */
+public function geocoderAdresse(string $adresse): array
     {
         $resultats = [];
 
@@ -102,7 +103,8 @@ class GeolocationService
     /**
      * Géocodage inverse (Coordonnées GPS → Adresse)
      */
-    public function geocoderInverse(float $latitude, float $longitude): array
+   /** @return array<string, mixed> */
+public function geocoderInverse(float $latitude, float $longitude): array
     {
         $resultats = [];
 
@@ -190,20 +192,14 @@ class GeolocationService
             return number_format($distanceKm, 1) . ' km';
         }
     }
-
-    /**
-     * Obtenir les coordonnées de l'agence Horizia
-     * @return array ['latitude' => float, 'longitude' => float]
-     */
-    public function getCoordonneesAgence(): array
-    {
-        // Coordonnées de Tunis centre
-        return [
-            'latitude' => 36.90123398692758,
-            'longitude' => 10.19090383100016
-        ];
-    }
-
+/** @return array<string, float> */
+public function getCoordonneesAgence(): array
+{
+    return [
+        'latitude' => 36.90123398692758,
+        'longitude' => 10.19090383100016
+    ];
+}
     /**
      * Calculer la distance entre un client et l'agence
      */
@@ -226,7 +222,7 @@ class GeolocationService
         if ($this->dernierAppel !== null) {
             $tempsEcoule = (microtime(true) - $this->dernierAppel) * 1000000;
             if ($tempsEcoule < self::DELAI_MIN_MS) {
-                usleep(self::DELAI_MIN_MS - $tempsEcoule);
+                usleep((int)(self::DELAI_MIN_MS - $tempsEcoule));
             }
         }
         $this->dernierAppel = microtime(true);

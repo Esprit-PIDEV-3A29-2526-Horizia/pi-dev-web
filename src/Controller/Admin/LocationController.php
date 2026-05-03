@@ -46,7 +46,7 @@ class LocationController extends AbstractController
         $limit     = $vue === 'cards' ? 6 : 10;
 
         $tousLesResultats = !empty($recherche)
-            ? $repository->rechercherParClient($recherche)
+? $repository->rechercherParClient((string) $recherche)
             : $repository->findBy([], ['dateDebut' => 'DESC']);
 
         $total      = count($tousLesResultats);
@@ -123,7 +123,7 @@ public function new(
         $em->flush();
 
         // ── Email de confirmation ──
-        $emailClient = trim($request->request->get('email_client', ''));
+$emailClient = trim((string) $request->request->get('email_client', ''));
         if (!empty($emailClient)) {
             try {
                 $emailService->envoyerConfirmationLocation($location, $emailClient);
@@ -134,7 +134,7 @@ public function new(
         }
 
         // ── WhatsApp de confirmation ──
-        $whatsappTel = trim($request->request->get('whatsapp_client', ''))
+$whatsappTel = trim((string) $request->request->get('whatsapp_client', ''))
             ?: $location->getClientTelephone();
 
         if (!empty($whatsappTel)) {
@@ -261,8 +261,8 @@ public function testWhatsapp(WhatsAppService $whatsAppService): JsonResponse
         #[MapEntity(mapping: ['id' => 'idLocation'])] Location $location,
         EntityManagerInterface $em
     ): Response {
-        if ($this->isCsrfTokenValid('delete' . $location->getIdLocation(), $request->request->get('_token'))) {
-            $vehicule = $location->getVehicule();
+if ($this->isCsrfTokenValid('delete' . $location->getIdLocation(), (string) $request->request->get('_token'))) {
+                $vehicule = $location->getVehicule();
             if ($vehicule) {
                 $vehicule->setEtat('disponible');
                 $em->persist($vehicule);
@@ -286,7 +286,7 @@ public function testWhatsapp(WhatsAppService $whatsAppService): JsonResponse
         WhatsAppService $whatsAppService
     ): JsonResponse {
         $type      = $request->request->get('type', 'confirmation');
-        $telephone = trim($request->request->get('telephone', ''))
+$telephone = trim((string) $request->request->get('telephone', ''))
             ?: $location->getClientTelephone();
 
         if (empty($telephone)) {
@@ -389,7 +389,7 @@ public function geolocate(Request $request, GeolocationService $geolocationServi
     }
 
     // Nettoyer l'adresse
-    $adresse = preg_replace('/\s+/', ' ', $adresse);
+    $adresse = (string) preg_replace('/\s+/', ' ', $adresse);
     
     try {
         $resultat = $geolocationService->geocoderAdresse($adresse);

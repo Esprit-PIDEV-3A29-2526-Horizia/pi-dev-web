@@ -27,8 +27,7 @@ class PublicationController extends AbstractController
         if (!in_array($sort, $allowedSorts)) {
             $sort = 'date_creation';
         }
-        $direction = strtoupper($direction) === 'ASC' ? 'ASC' : 'DESC';
-
+$direction = strtoupper((string) $request->query->get('direction', 'DESC')) === 'ASC' ? 'ASC' : 'DESC';
         $queryBuilder = $repo->createQueryBuilder('p')->orderBy('p.' . $sort, $direction);
 
         $search = $request->query->get('search');
@@ -62,7 +61,8 @@ class PublicationController extends AbstractController
             // 1. Image téléchargée manuellement
             $imageFile = $form->get('imageFile')->getData();
             if ($imageFile) {
-                $uploadDir = $this->getParameter('kernel.project_dir') . '/public/images';
+$projectDir = $this->getParameter('kernel.project_dir');
+$uploadDir = (is_string($projectDir) ? $projectDir : '') . '/public/images';
                 @mkdir($uploadDir, 0777, true);
                 $newFilename = uniqid() . '.' . $imageFile->guessExtension();
                 $imageFile->move($uploadDir, $newFilename);
@@ -118,7 +118,8 @@ class PublicationController extends AbstractController
             // 1. Image téléchargée manuellement
             $imageFile = $form->get('imageFile')->getData();
             if ($imageFile) {
-                $uploadDir = $this->getParameter('kernel.project_dir') . '/public/images';
+$projectDir = $this->getParameter('kernel.project_dir');
+$uploadDir = (is_string($projectDir) ? $projectDir : '') . '/public/images';
                 @mkdir($uploadDir, 0777, true);
                 $newFilename = uniqid() . '.' . $imageFile->guessExtension();
                 $imageFile->move($uploadDir, $newFilename);
@@ -157,8 +158,8 @@ class PublicationController extends AbstractController
     #[Route('/{id}/delete', name: 'admin_publication_delete', methods: ['POST'])]
     public function delete(Request $request, Publication $publication, EntityManagerInterface $em): Response
     {
-        if ($this->isCsrfTokenValid('delete' . $publication->getId(), $request->request->get('_token'))) {
-            $em->remove($publication);
+if ($this->isCsrfTokenValid('delete' . $publication->getId(), (string) $request->request->get('_token'))) {
+                $em->remove($publication);
             $em->flush();
             $this->addFlash('success', 'Publication supprimée.');
         } else {

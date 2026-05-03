@@ -34,9 +34,9 @@ class ParticipationController extends AbstractController
         }
 
         $artistInfo = null;
-        if (stripos($event->getCategorie(), 'concert') !== false) {
+        if (stripos((string) $event->getCategorie(), 'concert') !== false) {
             try {
-                $artistName = str_ireplace([' Concert', ' Live', ' Show', ' Performance', ' concert', ' live', ' show', ' performance'], '', $event->getTitre());
+                $artistName = str_ireplace([' Concert', ' Live', ' Show', ' Performance', ' concert', ' live', ' show', ' performance'], '', (string) $event->getTitre());
                 $artistName = trim($artistName);
                 $artistInfo = $lastFmService->getArtistInfo($artistName);
             } catch (\Exception $e) {
@@ -130,9 +130,9 @@ class ParticipationController extends AbstractController
             'amount' => $montantCentimes,
             'currency' => 'eur',
             'metadata' => [
-                'event_id' => $event->getId_event(),
-                'nombre_places' => $pendingData['nombre_places'],
-                'user_email' => $pendingData['email']
+                'event_id' => (string) $event->getId_event(),
+                'nombre_places' => (string) $pendingData['nombre_places'],
+                'user_email' => (string) $pendingData['email']
             ]
         ]);
         
@@ -256,7 +256,7 @@ class ParticipationController extends AbstractController
             throw $this->createNotFoundException('Participation introuvable.');
         }
 
-        if ($this->isCsrfTokenValid('delete' . $participation->getId_participation(), $request->request->get('_token'))) {
+        if ($this->isCsrfTokenValid('delete' . $participation->getId_participation(), (string) $request->request->get('_token'))) {
             $event = $participation->getId_event();
             $event->setPlaces_restantes($event->getPlaces_restantes() + $participation->getNombre_places());
             $em->remove($participation);

@@ -16,17 +16,15 @@ use Symfony\Component\Routing\Annotation\Route;
 #[Route('/admin/voyage')]
 class VoyageController extends AbstractController
 {
-    private RequestStack $requestStack;
 
-    public function __construct(RequestStack $requestStack)
-    {
-        $this->requestStack = $requestStack;
-
-        $session = $requestStack->getSession();
-        if ($session && !$session->isStarted()) {
-            $session->start();
-        }
+   public function __construct(RequestStack $requestStack)
+{
+    $session = $requestStack->getSession();
+    if (!$session->isStarted()) {
+        $session->start();
     }
+}
+    
 
     private function checkAdminAccess(): void
     {
@@ -243,8 +241,8 @@ class VoyageController extends AbstractController
             throw $this->createNotFoundException('Voyage introuvable.');
         }
 
-        if ($this->isCsrfTokenValid('delete' . $voyage->getId(), $request->request->get('_token'))) {
-            $entityManager->remove($voyage);
+if ($this->isCsrfTokenValid('delete' . $voyage->getId(), (string) $request->request->get('_token'))) {
+                $entityManager->remove($voyage);
             $entityManager->flush();
 
             $this->addFlash('success', 'Voyage supprimé avec succès.');

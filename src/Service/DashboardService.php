@@ -18,11 +18,11 @@ class DashboardService
         $this->vehiculeRepository = $vehiculeRepository;
     }
 
-    /**
-     * Récupère le modèle de voiture le plus loué
-     * @return array ['nomMarque' => string, 'nomModele' => string, 'total' => int]
-     */
-    public function getModeleLePlusLoue(): array
+   /**
+ * Récupère le modèle de voiture le plus loué
+ * @return array<string, mixed>
+ */
+public function getModeleLePlusLoue(): array
     {
         $top = $this->locationRepository->findTop5ModelesLoues();
         if (empty($top)) {

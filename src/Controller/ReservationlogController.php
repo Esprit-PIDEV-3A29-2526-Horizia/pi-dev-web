@@ -38,9 +38,9 @@ class ReservationlogController extends AbstractController
             return $this->redirectToRoute('app_login');
         }
 
-        $dateArrivee = \DateTime::createFromFormat('Y-m-d', $request->request->get('date_arrivee'));
-        $dateDepart  = \DateTime::createFromFormat('Y-m-d', $request->request->get('date_depart'));
-        $modalite    = $request->request->get('modalite');
+        $dateArrivee = \DateTime::createFromFormat('Y-m-d', (string) $request->request->get('date_arrivee'));
+        $dateDepart  = \DateTime::createFromFormat('Y-m-d', (string) $request->request->get('date_depart'));
+        $modalite    = (string) $request->request->get('modalite');
 
         $errors = [];
         if (!$dateArrivee || !$dateDepart) {
@@ -54,7 +54,10 @@ class ReservationlogController extends AbstractController
             return $this->redirectToRoute('app_front_logement_index');
         }
 
-        $nuits = $dateArrivee->diff($dateDepart)->days;
+        // At this point $dateArrivee and $dateDepart are guaranteed non-false
+        /** @var \DateTime $dateArrivee */
+        /** @var \DateTime $dateDepart */
+        $nuits   = $dateArrivee->diff($dateDepart)->days;
         $montant = $nuits * $logement->getTarifNuit();
 
         $reservation = new Reservationlog();
@@ -78,11 +81,16 @@ class ReservationlogController extends AbstractController
         $em->flush();
 
         $successUrl = $this->generateUrl('app_front_reservation_success', ['id' => $reservation->getIdreslog()], UrlGeneratorInterface::ABSOLUTE_URL);
-        $cancelUrl = $this->generateUrl('app_front_reservation_cancel', ['id' => $reservation->getIdreslog()], UrlGeneratorInterface::ABSOLUTE_URL);
+        $cancelUrl  = $this->generateUrl('app_front_reservation_cancel', ['id' => $reservation->getIdreslog()], UrlGeneratorInterface::ABSOLUTE_URL);
 
-        $session = $stripeService->createCheckoutSession($montant, 'eur', $successUrl, $cancelUrl);
+        $stripeUrl = $stripeService->createCheckoutSession(
+            (string) $logement->getNom(),
+            (int) round($montant * 100),
+            $successUrl,
+            $cancelUrl
+        );
 
-        return $this->redirect($session->url);
+        return $this->redirect($stripeUrl);
     }
 
     #[Route('/reservation/success/{id}', name: 'app_front_reservation_success')]
@@ -106,14 +114,27 @@ class ReservationlogController extends AbstractController
             $em->flush();
             $this->addFlash('error', 'Paiement annulé. Réservation annulée.');
         }
-        $emailService->sendCancellationEmail($reservation->getUser()->getEmail(), $reservation, 'Paiement annulé par l\'utilisateur');
+        if ($reservation !== null) {
+            $userObj = $reservation->getUser();
+            if ($userObj !== null) {
+                $emailService->sendCancellationEmail(
+                    (string) $userObj->getEmail(),
+                    $reservation,
+                    'Paiement annulé par l\'utilisateur'
+                );
+            }
+        }
         return $this->redirectToRoute('app_front_reservationlog_index');
     }
 
     #[Route('/reservation/create-ajax', name: 'app_front_reservation_create_ajax', methods: ['POST'])]
-    public function createReservationAjax(Request $request, EntityManagerInterface $em, LogementRepository $logementRepository,
-                                          EmailService $emailService, StripeService $stripeService): JsonResponse
-    {
+    public function createReservationAjax(
+        Request $request,
+        EntityManagerInterface $em,
+        LogementRepository $logementRepository,
+        EmailService $emailService,
+        StripeService $stripeService
+    ): JsonResponse {
         try {
             $user = $this->getUser();
             if (!$user instanceof User) {
@@ -125,15 +146,15 @@ class ReservationlogController extends AbstractController
                 return $this->json(['success' => false, 'message' => 'JSON invalide.'], 400);
             }
 
-            $logementId = $data['logement_id'] ?? null;
-            $dateArriveeStr = $data['date_arrivee'] ?? null;
-            $dateDepartStr = $data['date_depart'] ?? null;
-            $modalite = $data['modalite'] ?? null;
-            $paiementImmediat = $data['paiement_immediat'] ?? false;
-            $adultes = (int)($data['adultes'] ?? 1);
-            $enfants = (int)($data['enfants'] ?? 0);
-            $nombreChambres = (int)($data['nombre_chambres'] ?? 1);
-            $modeReservation = $data['mode_reservation'] ?? null;
+            $logementId          = $data['logement_id'] ?? null;
+            $dateArriveeStr      = $data['date_arrivee'] ?? null;
+            $dateDepartStr       = $data['date_depart'] ?? null;
+            $modalite            = $data['modalite'] ?? null;
+            $paiementImmediat    = $data['paiement_immediat'] ?? false;
+            $adultes             = (int) ($data['adultes'] ?? 1);
+            $enfants             = (int) ($data['enfants'] ?? 0);
+            $nombreChambres      = (int) ($data['nombre_chambres'] ?? 1);
+            $modeReservation     = $data['mode_reservation'] ?? null;
             $repartitionChambres = $data['repartition_chambres'] ?? null;
 
             if (!$logementId || !$dateArriveeStr || !$dateDepartStr || !$modalite) {
@@ -142,13 +163,9 @@ class ReservationlogController extends AbstractController
             if ($adultes < 1) {
                 return $this->json(['success' => false, 'message' => 'Au moins 1 adulte est requis.'], 400);
             }
-            if ($enfants < 0) {
-                return $this->json(['success' => false, 'message' => 'Nombre d\'enfants invalide.'], 400);
-            }
-            if ($nombreChambres < 1) {
-                return $this->json(['success' => false, 'message' => 'Au moins 1 chambre est requise.'], 400);
-            }
-            if (empty($modeReservation) || !in_array($modeReservation, ['all_inclusive', 'all_inclusive_soft(sans_alcool)', 'demi_pension', 'logement_petit_dejeuner'])) {
+
+            $validModes = ['logement_petit_dejeuner', 'demi_pension', 'all_inclusive', 'all_inclusive_soft(sans_alcool)'];
+            if ($modeReservation !== null && !in_array($modeReservation, $validModes)) {
                 return $this->json(['success' => false, 'message' => 'Veuillez choisir une formule de pension valide.'], 400);
             }
 
@@ -157,14 +174,14 @@ class ReservationlogController extends AbstractController
                 return $this->json(['success' => false, 'message' => 'Logement non disponible.'], 400);
             }
 
-            $typeLogement = strtolower($logement->getType());
+            $typeLogement = strtolower((string) $logement->getType());
             $isHotel = ($typeLogement === 'hôtel' || $typeLogement === 'hotel');
             if (!$isHotel) {
                 $nombreChambres = 1;
             }
 
-            $dateArrivee = \DateTime::createFromFormat('Y-m-d', $dateArriveeStr);
-            $dateDepart = \DateTime::createFromFormat('Y-m-d', $dateDepartStr);
+            $dateArrivee = \DateTime::createFromFormat('Y-m-d', (string) $dateArriveeStr);
+            $dateDepart  = \DateTime::createFromFormat('Y-m-d', (string) $dateDepartStr);
             $today = new \DateTime();
             $today->setTime(0, 0, 0);
 
@@ -176,22 +193,22 @@ class ReservationlogController extends AbstractController
                 return $this->json(['success' => false, 'message' => '❌ Désolé, le logement a atteint sa capacité maximale sur cette période. Veuillez choisir d\'autres dates.'], 400);
             }
 
-            $nuits = $dateArrivee->diff($dateDepart)->days;
-            $nombrePersonnes = $adultes + $enfants;
+            $nuits                      = $dateArrivee->diff($dateDepart)->days;
+            $nombrePersonnes            = $adultes + $enfants;
             $prixBaseParNuitParPersonne = $logement->getTarifNuit();
-            $coefficient = $this->getPensionCoefficient($modeReservation);
-            $montant = $nuits * $nombrePersonnes * $prixBaseParNuitParPersonne * $coefficient;
+            $coefficient                = $this->getPensionCoefficient((string) $modeReservation);
+            $montant                    = $nuits * $nombrePersonnes * $prixBaseParNuitParPersonne * $coefficient;
 
             $stripeUrl = null;
             if ($modalite === 'Sur place') {
-                $status = 'en_attente';
+                $status  = 'en_attente';
                 $message = 'Réservation enregistrée avec succès (paiement sur place).';
             } else {
                 if ($paiementImmediat === true) {
-                    $status = 'confirmée';
+                    $status  = 'confirmée';
                     $message = 'Réservation confirmée ! Redirection vers le paiement...';
                 } else {
-                    $status = 'en_attente';
+                    $status  = 'en_attente';
                     $message = 'Réservation en attente. Vous pouvez la finaliser dans les 24h.';
                 }
             }
@@ -202,33 +219,37 @@ class ReservationlogController extends AbstractController
             $reservation->setDateDebut($dateArrivee);
             $reservation->setDateFin($dateDepart);
             $reservation->setMontant($montant);
-            $reservation->setModalites($modalite);
+            $reservation->setModalites((string) $modalite);
             $reservation->setStatus($status);
             $reservation->setAdultes($adultes);
             $reservation->setEnfants($enfants);
             $reservation->setNombreChambres($nombreChambres);
-            $reservation->setModeReservation($modeReservation);
+            $reservation->setModeReservation((string) $modeReservation);
             $reservation->setCreatedAt(new \DateTime());
-            $reservation->setRepartitionChambres($repartitionChambres);
+            $reservation->setRepartitionChambres((string) ($repartitionChambres ?? ''));
 
             $em->persist($reservation);
             $em->flush();
 
             if ($modalite === 'En ligne' && $paiementImmediat === true) {
                 $successUrl = $this->generateUrl('app_front_reservation_success', ['id' => $reservation->getIdreslog()], UrlGeneratorInterface::ABSOLUTE_URL);
-                $cancelUrl = $this->generateUrl('app_front_reservation_cancel', ['id' => $reservation->getIdreslog()], UrlGeneratorInterface::ABSOLUTE_URL);
-                $session = $stripeService->createCheckoutSession($montant, 'eur', $successUrl, $cancelUrl);
-                $stripeUrl = $session->url;
+                $cancelUrl  = $this->generateUrl('app_front_reservation_cancel', ['id' => $reservation->getIdreslog()], UrlGeneratorInterface::ABSOLUTE_URL);
+                $stripeUrl  = $stripeService->createCheckoutSession(
+                    (string) $logement->getNom(),
+                    (int) round($montant * 100),
+                    $successUrl,
+                    $cancelUrl
+                );
             }
 
-            $emailService->sendReservationEmail($user->getEmail(), $reservation, $message);
+            $emailService->sendReservationEmail((string) $user->getEmail(), $reservation, $message);
 
             return $this->json([
-                'success' => true,
-                'message' => $message,
-                'status' => $status,
+                'success'        => true,
+                'message'        => $message,
+                'status'         => $status,
                 'reservation_id' => $reservation->getIdreslog(),
-                'stripe_url' => $stripeUrl,
+                'stripe_url'     => $stripeUrl,
             ]);
         } catch (\Exception $e) {
             return $this->json(['success' => false, 'message' => 'Erreur interne : ' . $e->getMessage()], 500);
@@ -245,7 +266,7 @@ class ReservationlogController extends AbstractController
         }
 
         $reservation = $em->getRepository(Reservationlog::class)->find($id);
-        if (!$reservation || !$user instanceof User || $reservation->getUser()->getId() !== $user->getId()) {
+        if (!$reservation || $reservation->getUser() === null || $reservation->getUser()->getId() !== $user->getId()) {
             throw $this->createNotFoundException();
         }
         if ($reservation->getStatus() !== 'en_attente' || $reservation->getModalites() !== 'En ligne') {
@@ -253,10 +274,22 @@ class ReservationlogController extends AbstractController
             return $this->redirectToRoute('app_front_reservationlog_index');
         }
 
+        // Correction PHPStan : $logement récupéré depuis la réservation (était undefined)
+        $logement = $reservation->getLogement();
+        if ($logement === null) {
+            throw $this->createNotFoundException('Logement introuvable pour cette réservation.');
+        }
+
         $successUrl = $this->generateUrl('app_front_reservation_success', ['id' => $reservation->getIdreslog()], UrlGeneratorInterface::ABSOLUTE_URL);
-        $cancelUrl = $this->generateUrl('app_front_reservation_cancel', ['id' => $reservation->getIdreslog()], UrlGeneratorInterface::ABSOLUTE_URL);
-        $session = $stripeService->createCheckoutSession($reservation->getMontant(), 'eur', $successUrl, $cancelUrl);
-        return $this->redirect($session->url);
+        $cancelUrl  = $this->generateUrl('app_front_reservation_cancel', ['id' => $reservation->getIdreslog()], UrlGeneratorInterface::ABSOLUTE_URL);
+        $stripeUrl  = $stripeService->createCheckoutSession(
+            (string) $logement->getNom(),
+            (int) round(($reservation->getMontant() ?? 0) * 100),
+            $successUrl,
+            $cancelUrl
+        );
+
+        return $this->redirect($stripeUrl);
     }
 
     private function isCapacityAvailable(Logement $logement, \DateTime $dateArrivee, \DateTime $dateDepart, int $adultes, int $enfants, EntityManagerInterface $em): bool
@@ -270,9 +303,9 @@ class ReservationlogController extends AbstractController
            ->setParameter('arrivee', $dateArrivee)
            ->setParameter('depart', $dateDepart);
 
-        $result = $qb->getQuery()->getSingleScalarResult();
-        $personnesExistantes = $result ? (int)$result : 0;
-        $nouvellesPersonnes = $adultes + $enfants;
+        $result              = $qb->getQuery()->getSingleScalarResult();
+        $personnesExistantes = $result ? (int) $result : 0;
+        $nouvellesPersonnes  = $adultes + $enfants;
         return ($personnesExistantes + $nouvellesPersonnes) <= $logement->getCapacite();
     }
 
@@ -285,7 +318,7 @@ class ReservationlogController extends AbstractController
         }
         $reservation = $em->getRepository(Reservationlog::class)->findOneBy(['user' => $user]);
         if ($reservation) {
-            $emailService->sendReservationEmail($user->getEmail(), $reservation, 'Test message');
+            $emailService->sendReservationEmail((string) $user->getEmail(), $reservation, 'Test message');
             return new Response('Email envoyé (vérifiez les logs)');
         }
         return new Response('Aucune réservation trouvée pour cet utilisateur');
@@ -294,11 +327,11 @@ class ReservationlogController extends AbstractController
     private function getPensionCoefficient(?string $modeReservation): float
     {
         return match ($modeReservation) {
-            'demi_pension' => 1.20,
-            'all_inclusive' => 1.45,
+            'demi_pension'                    => 1.20,
+            'all_inclusive'                   => 1.45,
             'all_inclusive_soft(sans_alcool)' => 1.37,
-            'logement_petit_dejeuner' => 1.00,
-            default => 1.00,
+            'logement_petit_dejeuner'         => 1.00,
+            default                           => 1.00,
         };
     }
 }

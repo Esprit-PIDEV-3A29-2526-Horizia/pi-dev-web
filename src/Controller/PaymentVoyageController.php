@@ -38,9 +38,8 @@ class PaymentVoyageController extends AbstractController
             ]);
         }
 
-        $paymentStatus = method_exists($reservation, 'getPaymentStatus')
-            ? strtoupper((string) $reservation->getPaymentStatus())
-            : 'NON_PAYEE';
+        // Correction PHPStan : method_exists() toujours vrai → appel direct
+        $paymentStatus = strtoupper((string) $reservation->getPaymentStatus());
 
         if ($paymentStatus === 'PAYEE') {
             $this->addFlash('success', 'Cette réservation est déjà payée.');
@@ -50,7 +49,8 @@ class PaymentVoyageController extends AbstractController
             ]);
         }
 
-        if (method_exists($reservation, 'getPrixTotal') && $reservation->getPrixTotal() !== null) {
+        // Correction PHPStan : method_exists() toujours vrai → appel direct
+        if ($reservation->getPrixTotal() !== null) {
             $prixTotal = (float) $reservation->getPrixTotal();
         } else {
             $prixTotal = (float) $reservation->getVoyage()->getPrix() * (int) $reservation->getNbrPersonnes();
@@ -65,7 +65,7 @@ class PaymentVoyageController extends AbstractController
         }
 
         $successUrl = $request->getSchemeAndHttpHost() . '/payment/success/' . $reservation->getId();
-        $cancelUrl = $request->getSchemeAndHttpHost() . '/payment/cancel/' . $reservation->getId();
+        $cancelUrl  = $request->getSchemeAndHttpHost() . '/payment/cancel/' . $reservation->getId();
 
         $amountInMinorUnit = (int) round($prixTotal * 100);
 
@@ -91,10 +91,9 @@ class PaymentVoyageController extends AbstractController
             throw $this->createNotFoundException('Réservation introuvable.');
         }
 
-        if (method_exists($reservation, 'setPaymentStatus')) {
-            $reservation->setPaymentStatus('PAYEE');
-            $entityManager->flush();
-        }
+        // Correction PHPStan : method_exists() toujours vrai → appel direct
+        $reservation->setPaymentStatus('PAYEE');
+        $entityManager->flush();
 
         $this->addFlash('success', 'Le paiement a été effectué avec succès.');
 

@@ -189,7 +189,7 @@ class VehiculeController extends AbstractController
     #[Route('/{id}/delete', name: 'admin_vehicule_delete', methods: ['POST'])]
     public function delete(Request $request, Vehicule $vehicule, EntityManagerInterface $em): Response
     {
-     if ($this->isCsrfTokenValid('delete' . $vehicule->getIdVehicule(), $request->request->get('_token'))) {
+     if ($this->isCsrfTokenValid('delete' . $vehicule->getIdVehicule(), (string) $request->request->get('_token'))) {
 
     $nbLocations = count($vehicule->getLocations());
     
