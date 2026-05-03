@@ -31,9 +31,11 @@ class ParticipationController extends AbstractController
         }
 
         $artistInfo = null;
-        if (stripos($event->getCategorie(), 'concert') !== false) {
+        $categorie = $event->getCategorie() ?? '';
+        if (stripos($categorie, 'concert') !== false) {
             try {
-                $artistName = str_ireplace([' Concert', ' Live', ' Show', ' Performance', ' concert', ' live', ' show', ' performance'], '', $event->getTitre());
+                $titre = $event->getTitre() ?? '';
+                $artistName = str_ireplace([' Concert', ' Live', ' Show', ' Performance', ' concert', ' live', ' show', ' performance'], '', $titre);
                 $artistName = trim($artistName);
                 $artistInfo = $lastFmService->getArtistInfo($artistName);
             } catch (\Exception $e) {
@@ -116,9 +118,9 @@ class ParticipationController extends AbstractController
             'amount' => $montantCentimes,
             'currency' => 'eur',
             'metadata' => [
-                'event_id' => $event->getId_event(),
-                'nombre_places' => $pendingData['nombre_places'],
-                'user_email' => $pendingData['email']
+                'event_id' => (string) $event->getId_event(),
+                'nombre_places' => (string) $pendingData['nombre_places'],
+                'user_email' => (string) $pendingData['email']
             ]
         ]);
         
@@ -224,7 +226,8 @@ class ParticipationController extends AbstractController
     {
         $participations = $em->getRepository(Participation::class)
             ->createQueryBuilder('p')
-            ->select('p')
+            ->leftJoin('p.user', 'u')
+            ->addSelect('u')
             ->orderBy('p.date_participation', 'DESC')
             ->getQuery()
             ->getResult();
@@ -242,9 +245,13 @@ class ParticipationController extends AbstractController
             throw $this->createNotFoundException('Participation introuvable.');
         }
 
-        if ($this->isCsrfTokenValid('delete' . $participation->getId_participation(), $request->request->get('_token'))) {
+        $token = $request->request->get('_token');
+        $isValidToken = $this->isCsrfTokenValid('delete' . $participation->getId_participation(), is_string($token) ? $token : null);
+        if ($isValidToken) {
             $event = $participation->getId_event();
-            $event->setPlaces_restantes($event->getPlaces_restantes() + $participation->getNombre_places());
+            if ($event !== null) {
+                $event->setPlaces_restantes($event->getPlaces_Restantes() + $participation->getNombre_places());
+            }
             $em->remove($participation);
             $em->flush();
             $this->addFlash('success', 'Participation supprimée avec succès.');

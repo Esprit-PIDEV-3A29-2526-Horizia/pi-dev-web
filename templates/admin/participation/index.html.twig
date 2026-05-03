@@ -42,10 +42,33 @@
 
             {# ── Participation details ── #}
             <div class="d-flex flex-column gap-2 mb-3">
+                
+                {# ── Email (priorité à l'utilisateur connecté, sinon snapshot) ── #}
                 <div class="d-flex align-items-center gap-2 small text-muted">
-                    <i class="bi bi-hash" style="color:#23779C;"></i>
-                    <span>ID participation : <strong>#{{ p.getId_participation() }}</strong></span>
+                    <i class="bi bi-envelope" style="color:#23779C;"></i>
+                    <span>
+                        <strong>Email :</strong> 
+                        {% if p.getUser() %}
+                            {{ p.getUser().getEmail() }}
+                        {% elseif p.getEmailSnapshot() %}
+                            {{ p.getEmailSnapshot() }}
+                        {% else %}
+                            <span class="text-muted">Non renseigné</span>
+                        {% endif %}
+                    </span>
                 </div>
+                
+                {# ── Optionnel : Afficher le nom/prénom si snapshot existe ── #}
+                {% if p.getPrenomSnapshot() or p.getNomSnapshot() %}
+                <div class="d-flex align-items-center gap-2 small text-muted">
+                    <i class="bi bi-person" style="color:#23779C;"></i>
+                    <span>
+                        <strong>Client :</strong> 
+                        {{ p.getPrenomSnapshot() }} {{ p.getNomSnapshot() }}
+                    </span>
+                </div>
+                {% endif %}
+                
                 <div class="d-flex align-items-center gap-2 small text-muted">
                     <i class="bi bi-ticket-perforated" style="color:#23779C;"></i>
                     <span>{{ p.getNombre_places() }} place(s) réservée(s)</span>

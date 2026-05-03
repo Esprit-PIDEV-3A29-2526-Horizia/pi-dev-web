@@ -29,28 +29,25 @@ class Events
     private string $location;
 
     #[ORM\Column(type: "datetime")]
-    private \DateTimeInterface $date_debut;
+    private ?\DateTimeInterface $date_debut = null;
 
     #[ORM\Column(type: "datetime")]
-    private \DateTimeInterface $date_fin;
+    private ?\DateTimeInterface $date_fin = null;
 
     #[ORM\Column(type: "string")]
     private string $prix;
 
     #[ORM\Column(type: "integer")]
-    private int $capacite_max;
+    private ?int $capacite_max = null;
 
     #[ORM\Column(type: "integer")]
-    private int $places_restantes;
+    private ?int $places_restantes = null;
 
     #[ORM\Column(type: "string", length: 255)]
-    private string $image_url;
+    private ?string $image_url = null;
 
     #[ORM\Column(type: "string", length: 50)]
     private string $statut;
-
-    #[ORM\Column(type: "integer")]
-    private int $id_createur;
 
     #[ORM\Column(type: "datetime")]
     private \DateTimeInterface $created_at;
@@ -61,6 +58,13 @@ class Events
     #[ORM\Column(type: "float", nullable: true)]
     private ?float $longitude = null;
 
+    #[ORM\ManyToOne(targetEntity: User::class)]
+    #[ORM\JoinColumn(name: "id_createur", referencedColumnName: "id", nullable: false)]
+    private ?User $createur = null;
+
+    /**
+     * @var Collection<int, Participation>
+     */
     #[ORM\OneToMany(mappedBy: "id_event", targetEntity: Participation::class)]
     private Collection $participations;
 
@@ -202,17 +206,6 @@ class Events
         return $this;
     }
 
-    public function getId_createur(): ?int
-    {
-        return $this->id_createur;
-    }
-
-    public function setId_createur(int $value): self
-    {
-        $this->id_createur = $value;
-        return $this;
-    }
-
     public function getCreated_at(): ?\DateTimeInterface
     {
         return $this->created_at;
@@ -246,6 +239,19 @@ class Events
         return $this;
     }
 
+    // RELATION AVEC USER
+    public function getCreateur(): ?User
+    {
+        return $this->createur;
+    }
+
+    public function setCreateur(?User $createur): self
+    {
+        $this->createur = $createur;
+        return $this;
+    }
+
+    /** @return Collection<int, Participation> */
     public function getParticipations(): Collection
     {
         return $this->participations;
@@ -271,23 +277,22 @@ class Events
     }
 
     // CamelCase aliases for Symfony Form
-    public function getDateDebut() { return $this->date_debut; }
-    public function setDateDebut($value) { $this->date_debut = $value; return $this; }
-    public function getDateFin() { return $this->date_fin; }
-    public function setDateFin($value) { $this->date_fin = $value; return $this; }
-    public function getCapaciteMax() { return $this->capacite_max; }
-    public function setCapaciteMax($value) { $this->capacite_max = $value; return $this; }
-    public function getPlacesRestantes() { return $this->places_restantes; }
-    public function setPlacesRestantes($value) { $this->places_restantes = $value; return $this; }
-    public function getImageUrl() { return $this->image_url; }
-    public function setImageUrl($value) { $this->image_url = $value; return $this; }
+    public function getDateDebut(): ?\DateTimeInterface { return $this->date_debut; }
+    public function setDateDebut(?\DateTimeInterface $value): self { $this->date_debut = $value; return $this; }
+    public function getDateFin(): ?\DateTimeInterface { return $this->date_fin; }
+    public function setDateFin(?\DateTimeInterface $value): self { $this->date_fin = $value; return $this; }
+    public function getCapaciteMax(): ?int { return $this->capacite_max; }
+    public function setCapaciteMax(?int $value): self { $this->capacite_max = $value; return $this; }
+    public function getPlacesRestantes(): ?int { return $this->places_restantes; }
+    public function setPlacesRestantes(?int $value): self { $this->places_restantes = $value; return $this; }
+    public function getImageUrl(): ?string { return $this->image_url; }
+    public function setImageUrl(?string $value): self { $this->image_url = $value; return $this; }
 
     /**
      * @Assert\Callback
      */
     public function validateDates(ExecutionContextInterface $context): void
     {
-        // Check date_debut is in the future
         $now = new \DateTime();
         if ($this->date_debut && $this->date_debut <= $now) {
             $context->buildViolation('La date de début doit être dans le futur.')
@@ -295,7 +300,6 @@ class Events
                 ->addViolation();
         }
 
-        // Check date_fin is after date_debut
         if ($this->date_debut && $this->date_fin && $this->date_fin <= $this->date_debut) {
             $context->buildViolation('La date de fin doit être postérieure à la date de début.')
                 ->atPath('date_fin')

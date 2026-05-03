@@ -14,6 +14,9 @@ class LastFmService
         $this->httpClient = $httpClient;
     }
 
+    /**
+     * @return array{name: string, bio: string, image: string|null, image_small: string|null, listeners: string, playcount: string, tags: array<int, array{name: string, url: string}>, top_tracks: array<int, array{name: string, playcount: string, listeners: string, url: string|null, image: string|null}>}|null    
+     */
     public function getArtistInfo(string $artistName): ?array
     {
         try {
@@ -50,6 +53,9 @@ class LastFmService
         }
     }
 
+    /**
+     * @return array<int, array{name: string, playcount: string, listeners: string, url: string|null, image: string|null}>
+     */
     public function getTopTracks(string $artistName, int $limit = 5): array
     {
         try {
@@ -84,6 +90,9 @@ class LastFmService
         }
     }
 
+    /**
+     * @return array<int, array{name: string, url: string|null, image: string|null}>
+     */
     public function getSimilarArtists(string $artistName, int $limit = 5): array
     {
         try {

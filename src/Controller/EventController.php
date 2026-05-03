@@ -97,8 +97,12 @@ class EventController extends AbstractController
                 $newFilename = $safeFilename . '-' . uniqid() . '.' . $originalExtension;
                 
                 try {
+                    $projectDir = $this->getParameter('kernel.project_dir');
+                    if (!is_string($projectDir)) {
+                        throw new \RuntimeException('Le paramètre kernel.project_dir n\'est pas une chaîne valide.');
+                    }
                     $imageFile->move(
-                        $this->getParameter('kernel.project_dir') . '/public/uploads/events',
+                        $projectDir . '/public/uploads/events',
                         $newFilename
                     );
                     $event->setImage_url('/uploads/events/' . $newFilename);
@@ -110,10 +114,13 @@ class EventController extends AbstractController
                 $event->setImage_url($form->get('image_url')->getData());
             }
             
-            $event->setPlaces_restantes($event->getCapacite_max());
+            $event->setPlaces_restantes($event->getCapacite_max() ?? 0);
             $event->setCreated_at(new \DateTime());
-            $event->setId_createur(1);
-            
+            $user = $this->getUser();
+            if ($user instanceof \App\Entity\User) {
+                $event->setCreateur($user);
+            }
+
             $entityManager->persist($event);
             $entityManager->flush();
             
@@ -148,7 +155,11 @@ class EventController extends AbstractController
             if ($imageFile) {
                 $oldImage = $event->getImage_url();
                 if ($oldImage && strpos($oldImage, '/uploads/events/') === 0) {
-                    $oldImagePath = $this->getParameter('kernel.project_dir') . '/public' . $oldImage;
+                    $projectDir = $this->getParameter('kernel.project_dir');
+                    if (!is_string($projectDir)) {
+                        throw new \RuntimeException('Le paramètre kernel.project_dir n\'est pas une chaîne valide.');
+                    }
+                    $oldImagePath = $projectDir . '/public' . $oldImage;
                     if (file_exists($oldImagePath)) {
                         unlink($oldImagePath);
                     }
@@ -169,8 +180,12 @@ class EventController extends AbstractController
                 $newFilename = $safeFilename . '-' . uniqid() . '.' . $originalExtension;
                 
                 try {
+                    $projectDir = $this->getParameter('kernel.project_dir');
+                    if (!is_string($projectDir)) {
+                        throw new \RuntimeException('Le paramètre kernel.project_dir n\'est pas une chaîne valide.');
+                    }
                     $imageFile->move(
-                        $this->getParameter('kernel.project_dir') . '/public/uploads/events',
+                        $projectDir . '/public/uploads/events',
                         $newFilename
                     );
                     $event->setImage_url('/uploads/events/' . $newFilename);
@@ -202,10 +217,15 @@ class EventController extends AbstractController
             throw $this->createNotFoundException('Événement introuvable.');
         }
 
-        if ($this->isCsrfTokenValid('delete' . $event->getId_event(), $request->request->get('_token'))) {
+        $token = $request->request->get('_token');
+        if ($this->isCsrfTokenValid('delete' . $event->getId_event(), $token ? (string) $token : '')) {
             $imageUrl = $event->getImage_url();
             if ($imageUrl && strpos($imageUrl, '/uploads/events/') === 0) {
-                $imagePath = $this->getParameter('kernel.project_dir') . '/public' . $imageUrl;
+                $projectDir = $this->getParameter('kernel.project_dir');
+                if (!is_string($projectDir)) {
+                    throw new \RuntimeException('Le paramètre kernel.project_dir n\'est pas une chaîne valide.');
+                }
+                $imagePath = $projectDir . '/public' . $imageUrl;
                 if (file_exists($imagePath)) {
                     unlink($imagePath);
                 }
@@ -239,6 +259,9 @@ class EventController extends AbstractController
         $search     = $request->query->get('search');
         $priceLimit = $request->query->get('price_limit');
 
+        $page = $request->query->getInt('page', 1);
+        $limit = 10;
+
         $qb = $entityManager->getRepository(Events::class)
             ->createQueryBuilder('e')
             ->orderBy('e.date_debut', 'ASC');
@@ -253,12 +276,21 @@ class EventController extends AbstractController
                ->setParameter('priceLimit', $priceLimit);
         }
 
-        $events = $qb->getQuery()->getResult();
+        $totalEvents = clone $qb;
+        $totalEvents = $totalEvents->select('COUNT(e.id_event)')
+            ->getQuery()
+            ->getSingleScalarResult();
+
+        $events = $qb->setFirstResult(($page - 1) * $limit)
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
+
 
         return $this->render('front/event/events.html.twig', [
-            'events'      => $events,
-            'search'      => $search,
-            'price_limit' => $priceLimit,
+            'events' => $events,
+            'current_page' => $page,
+            'total_pages' => ceil($totalEvents / $limit),
         ]);
     }
 

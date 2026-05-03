@@ -6,17 +6,19 @@ use App\Entity\Events;
 
 class AiService
 {
-    private $apiKey;
+    private ?string $apiKey = null;
     
     public function __construct()
     {
         $this->apiKey = $_ENV['GEMINI_API_KEY'] ?? null;
     }
-    
+    /**
+     * @internal Méthode interne utilisée par le service
+     */
     private function callGemini(string $prompt): string
     {
         if (!$this->apiKey) {
-            return "🎉 L'assistant IA n'est pas configuré.";
+            return "L'assistant IA n'est pas configuré.";
         }
         
         $url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' . $this->apiKey;
@@ -35,15 +37,24 @@ class AiService
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+        $postFields = json_encode($data);
+        if ($postFields === false) {
+            return "Erreur lors de la préparation de la requête.";
+        }
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $postFields);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
         curl_setopt($ch, CURLOPT_TIMEOUT, 30);
         
         $response = curl_exec($ch);
         curl_close($ch);
-        
+
+        if ($response === false || $response === true) {
+            return "Erreur de connexion à l'API Gemini.";
+        }
         $result = json_decode($response, true);
-        
+        if (!is_array($result)) {
+            return "Réponse invalide de l'API.";
+        }        
         if (isset($result['candidates'][0]['content']['parts'][0]['text'])) {
             return $result['candidates'][0]['content']['parts'][0]['text'];
         }
@@ -51,11 +62,15 @@ class AiService
         return "🎉 Voici nos événements disponibles !";
     }
     
+    /**
+     * @param array<int, Events> $events
+     * @return array{text: string, events: array<int, Events>}
+    */
     public function getRecommendations(string $vibe, string $budget, string $when, array $events): array
     {
         if (empty($events)) {
             return [
-                'text' => '🎉 Pas encore d\'événements à venir ! Reviens bientôt ! ✨',
+                'text' => ' Pas encore d\'événements à venir ! Reviens bientôt ! ✨',
                 'events' => []
             ];
         }
@@ -73,7 +88,7 @@ class AiService
         $recommendedEvents = array_slice($filteredEvents, 0, 3);
         
         // Short, simple message without listing all event details
-        $text = "🎉 J'ai trouvé ces événements pour toi !\n\n";
+        $text = " J'ai trouvé ces événements pour toi !\n\n";
         $text .= "✨ Selon tes critères (ambiance: $vibe, budget: $budget TND, quand: $when).\n\n";
         $text .= "Clique sur un événement ci-dessous pour voir les détails et t'inscrire ! 🎫";
         
@@ -83,6 +98,10 @@ class AiService
         ];
     }
     
+    /**
+     * @param array<int, Events> $events
+     * @return array{text: string, events: array<int, Events>}
+     */
     public function chat(string $userMessage, array $events): array
     {
         if (empty($events)) {
@@ -133,7 +152,8 @@ class AiService
         foreach ($categories as $cat) {
             if (strpos($messageLower, $cat) !== false) {
                 $filteredEvents = array_filter($events, function($event) use ($cat) {
-                    return stripos($event->getCategorie(), $cat) !== false;
+                    $categorie = $event->getCategorie() ?? '';
+                    return stripos($categorie, $cat) !== false;
                 });
                 
                 if (!empty($filteredEvents)) {
