@@ -7,6 +7,8 @@ parameters:
     stripe.public_key: '%env(STRIPE_PUBLIC_KEY)%'
     app.base_url: '%env(APP_BASE_URL)%'
     mercure_public_url: '%env(MERCURE_PUBLIC_URL)%'
+    gemini.api_key: '%env(GEMINI_API_KEY)%'
+    gemini.model: '%env(GEMINI_MODEL)%'
 
 
 services:
@@ -62,5 +64,8 @@ services:
         arguments:
             $pexelsApiKey: '%pexels_api_key%'
     App\EventListener\LoginFailureListener:
+        tags:
+            - { name: kernel.event_subscriber }
+    App\EventListener\LocaleSubscriber:
         tags:
             - { name: kernel.event_subscriber }

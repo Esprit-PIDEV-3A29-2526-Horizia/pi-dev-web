@@ -136,8 +136,11 @@ class EventController extends AbstractController
             
             $event->setPlaces_restantes($event->getCapacite_max());
             $event->setCreated_at(new \DateTime());
-            $event->setId_createur(1);
-            
+            $user = $this->getUser();
+            if ($user instanceof \App\Entity\User) {
+                $event->setCreateur($user);
+            }
+
             $entityManager->persist($event);
             $entityManager->flush();
             

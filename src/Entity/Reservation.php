@@ -6,6 +6,8 @@ use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\ORM\Mapping\Column;
 use Symfony\Component\Validator\Constraints as Assert;
+use Money\Money;
+use Money\Currency;
 
 #[ORM\Entity]
 #[ORM\Table(name: 'reservation')]
@@ -48,7 +50,7 @@ class Reservation
     #[Assert\Positive(message: 'Le nombre de personnes doit être positif.')]
     private ?int $nbrPersonnes = 1;
 
-    #[Column(name: 'prix_total', type: 'float', nullable: true)]
+    #[Column(name: 'prix_total', type: 'integer', nullable: true)]
     private ?float $prixTotal = null;
 
     #[ORM\Column(name: 'payment_status', type: 'string', length: 20, nullable: false, options: ['default' => 'NON_PAYEE'])]
@@ -147,14 +149,17 @@ class Reservation
         return $this;
     }
 
-    public function getPrixTotal(): ?float
+    public function getPrixTotal(): ?Money
     {
-        return $this->prixTotal;
+        if ($this->prixTotal === null) {
+            return null;
+        }
+        return new Money($this->prixTotal, new Currency('TND'));
     }
 
-    public function setPrixTotal(?float $prixTotal): self
+    public function setPrixTotal(?Money $prixTotal): self
     {
-        $this->prixTotal = $prixTotal;
+        $this->prixTotal = $prixTotal?->getAmount();
         return $this;
     }
 
@@ -197,10 +202,12 @@ class Reservation
 
     public function recalculerPrixTotal(): void
     {
-        if ($this->voyage) {
-            $this->prixTotal = ($this->voyage->getPrix() ?? 0) * ($this->nbrPersonnes ?? 0);
+        if ($this->voyage && $this->nbrPersonnes) {
+            $prixVoyage = $this->voyage->getPrix() ?? 0;
+            $total = $prixVoyage * $this->nbrPersonnes;
+            $this->prixTotal = (int) round($total * 100);
         } else {
-            $this->prixTotal = 0;
+            $this->prixTotal = null;
         }
     }
 }

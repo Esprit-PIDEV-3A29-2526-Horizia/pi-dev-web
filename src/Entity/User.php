@@ -49,7 +49,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\JoinColumn(name: 'profil_id', referencedColumnName: 'id', nullable: true)]
     private ?Profil $profil = null;
 
-        #[ORM\OneToMany(mappedBy:"user", targetEntity: Participation::class)]
+    #[ORM\OneToMany(mappedBy:"user", targetEntity: Participation::class, cascade: ["remove"])]
     private Collection $participations;
 
     public function __construct()

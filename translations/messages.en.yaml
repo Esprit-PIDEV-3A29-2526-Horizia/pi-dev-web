@@ -1,0 +1,102 @@
+# Navigation
+home: Home
+events: Events
+voyages: Trips
+logements: Accommodations
+publications: Publications
+reservations: My reservations
+profil: My Profile
+login: Login
+logout: Logout
+register: Register
+
+# Actions
+add: Add
+edit: Edit
+delete: Delete
+save: Save
+cancel: Cancel
+search: Search
+filter: Filter
+reset: Reset
+
+# Events
+event_title: Event title
+event_description: Description
+event_price: Price
+event_date: Date
+event_location: Location
+event_category: Category
+event_capacity: Maximum capacity
+places_remaining: Remaining places
+event_status: Status
+event_status_upcoming: Upcoming
+event_status_ongoing: Ongoing
+event_status_finished: Finished
+
+# Participation
+register_event: Register
+nombre_places: Number of places
+total_amount: Total amount
+payment: Payment
+confirm_payment: Confirm payment
+payment_success: Payment successful
+payment_failed: Payment failed
+
+# Messages
+no_events: No events available
+no_participations: No participations
+reservation_success: Reservation successful
+reservation_cancelled: Reservation cancelled
+event_full: Sorry, this event is full
+invalid_date: End date must be after start date
+
+# IA Chatbot
+chatbot_title: Horozia Assistant
+chatbot_placeholder: Write your message...
+chatbot_send: Send
+chatbot_suggestions: Suggestions
+chatbot_price_filter: Events under {price} TND
+chatbot_category_filter: Here are the {category}s coming up
+
+# Footer
+footer_about: About
+footer_info: Information
+footer_experience: Experiences
+footer_questions: Have a question?
+footer_copyright: All rights reserved
+
+# ===== NEW KEYS TO ADD =====
+# Additional navigation
+menu: Menu
+language: Language
+all_publications: All publications
+publish: Publish
+my_publications: My publications
+my_favorites: My favorites
+my_reservations: My reservations
+travel_reservations: My travel reservations
+accommodation_reservations: My accommodation reservations
+my_participations: My participations
+profile: My Profile
+
+# Footer
+about: About
+about_text: Horozia is a travel and events agency based in Tunisia. We organize concerts, festivals, custom trips and accommodation rentals for unique experiences.
+information: Information
+experiences: Experiences
+have_question: Have a question?
+online_booking: Online booking
+general_inquiries: General inquiries
+booking_conditions: Booking conditions
+privacy: Privacy
+cancellation_policies: Cancellation policies
+contact_us: Contact us
+concerts_festivals: Concerts & Festivals
+stays_travel: Stays & Travel
+hotels_restaurants: Hotels & Restaurants
+beaches_relaxation: Beaches & Relaxation
+nature_hiking: Nature & Hiking
+camping_adventures: Camping & Adventures
+copyright: Copyright
+all_rights_reserved: All rights reserved

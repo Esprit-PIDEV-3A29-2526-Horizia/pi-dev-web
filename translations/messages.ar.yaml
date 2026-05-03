@@ -1,0 +1,102 @@
+# Navigation
+home: الرئيسية
+events: الفعاليات
+voyages: رحلات
+logements: إقامات
+publications: منشورات
+reservations: حجوزاتي
+profil: ملفي الشخصي
+login: تسجيل الدخول
+logout: تسجيل الخروج
+register: إنشاء حساب
+
+# Actions
+add: إضافة
+edit: تعديل
+delete: حذف
+save: حفظ
+cancel: إلغاء
+search: بحث
+filter: تصفية
+reset: إعادة تعيين
+
+# Events
+event_title: عنوان الفعالية
+event_description: الوصف
+event_price: السعر
+event_date: التاريخ
+event_location: الموقع
+event_category: التصنيف
+event_capacity: السعة القصوى
+places_remaining: الأماكن المتبقية
+event_status: الحالة
+event_status_upcoming: قادم
+event_status_ongoing: جارٍ
+event_status_finished: منتهي
+
+# Participation
+register_event: تسجيل
+nombre_places: عدد الأماكن
+total_amount: المبلغ الإجمالي
+payment: الدفع
+confirm_payment: تأكيد الدفع
+payment_success: تم الدفع بنجاح
+payment_failed: فشل الدفع
+
+# Messages
+no_events: لا توجد فعاليات متاحة
+no_participations: لا توجد مشاركات
+reservation_success: تم الحجز بنجاح
+reservation_cancelled: تم إلغاء الحجز
+event_full: عذراً، هذه الفعالية مكتملة
+invalid_date: تاريخ النهاية يجب أن يكون بعد تاريخ البداية
+
+# IA Chatbot
+chatbot_title: مساعد هوروزيا
+chatbot_placeholder: اكتب رسالتك...
+chatbot_send: إرسال
+chatbot_suggestions: اقتراحات
+chatbot_price_filter: فعاليات بسعر أقل من {price} دينار
+chatbot_category_filter: إليك {category} القادمة
+
+# Footer
+footer_about: عن الموقع
+footer_info: معلومات
+footer_experience: تجارب
+footer_questions: لديك سؤال؟
+footer_copyright: جميع الحقوق محفوظة
+
+# ===== مفاتيح جديدة للإضافة =====
+# قائمة إضافية
+menu: القائمة
+language: اللغة
+all_publications: جميع المنشورات
+publish: نشر
+my_publications: منشوراتي
+my_favorites: المفضلة لدي
+my_reservations: حجوزاتي
+travel_reservations: حجوزات رحلاتي
+accommodation_reservations: حجوزات إقاماتي
+my_participations: مشاركاتي
+profile: ملفي الشخصي
+
+# التذييل
+about: عن الموقع
+about_text: هوروزيا هي وكالة سفر وفعاليات مقرها تونس. ننظم حفلات موسيقية ومهرجانات ورحلات مخصصة وتأجير إقامات لتجارب فريدة.
+information: معلومات
+experiences: تجارب
+have_question: لديك سؤال؟
+online_booking: حجز عبر الإنترنت
+general_inquiries: استفسارات عامة
+booking_conditions: شروط الحجز
+privacy: الخصوصية
+cancellation_policies: سياسات الإلغاء
+contact_us: اتصل بنا
+concerts_festivals: حفلات ومهرجانات
+stays_travel: إقامات وسفر
+hotels_restaurants: فنادق ومطاعم
+beaches_relaxation: شواطئ واسترخاء
+nature_hiking: طبيعة ومشي
+camping_adventures: تخييم ومغامرات
+copyright: حقوق النشر
+all_rights_reserved: جميع الحقوق محفوظة

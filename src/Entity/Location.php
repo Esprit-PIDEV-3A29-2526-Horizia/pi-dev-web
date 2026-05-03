@@ -126,8 +126,8 @@ class Location
         return $this;
     }
 
-    #[ORM\Column(type: 'decimal', nullable: true)]
-    private ?float $client_latitude = null;
+    #[ORM\Column(type: 'decimal', precision: 10, scale: 7, nullable: true)]
+    private ?string $client_latitude = null;
 
     public function getClient_latitude(): ?float
     {
@@ -140,8 +140,8 @@ class Location
         return $this;
     }
 
-    #[ORM\Column(type: 'decimal', nullable: true)]
-    private ?float $client_longitude = null;
+    #[ORM\Column(type: 'decimal', precision: 10, scale: 7, nullable: true)]
+    private ?string $client_longitude = null;
 
     public function getClient_longitude(): ?float
     {
@@ -238,8 +238,8 @@ class Location
         return $this;
     }
 
-    #[ORM\Column(type: 'decimal', nullable: false)]
-    private ?float $prix_par_jour = null;
+    #[ORM\Column(type: 'decimal', precision: 10, scale: 2, nullable: false)]
+    private ?string $prix_par_jour = null;
 
     public function getPrix_par_jour(): ?float
     {
@@ -252,8 +252,8 @@ class Location
         return $this;
     }
 
-    #[ORM\Column(type: 'decimal', nullable: false)]
-    private ?float $montant_total = null;
+    #[ORM\Column(type: 'decimal', precision: 10, scale: 2, nullable: false)]
+    private ?string $montant_total = null;
 
     public function getMontant_total(): ?float
     {
@@ -266,8 +266,8 @@ class Location
         return $this;
     }
 
-    #[ORM\Column(type: 'decimal', nullable: true)]
-    private ?float $avance = null;
+    #[ORM\Column(type: 'decimal', precision: 10, scale: 2, nullable: true)]
+    private ?string $avance = null;
 
     public function getAvance(): ?float
     {
@@ -280,8 +280,8 @@ class Location
         return $this;
     }
 
-    #[ORM\Column(type: 'decimal', nullable: true)]
-    private ?float $reste_a_payer = null;
+    #[ORM\Column(type: 'decimal', precision: 10, scale: 2, nullable: true)]
+    private ?string $reste_a_payer = null;
 
     public function getReste_a_payer(): ?float
     {

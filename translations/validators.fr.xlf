@@ -1,0 +1,282 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xliff xmlns="urn:oasis:names:tc:xliff:document:1.2" version="1.2">
+  <file source-language="fr" target-language="fr" datatype="plaintext" original="file.ext">
+    <header>
+      <tool tool-id="symfony" tool-name="Symfony"/>
+    </header>
+    <body>
+      <trans-unit id="VKDowX6" resname="Error">
+        <source>Error</source>
+        <target>Erreur</target>
+      </trans-unit>
+      <trans-unit id="mc3OF7D" resname="Le nom de la catégorie est obligatoire.">
+        <source>Le nom de la catégorie est obligatoire.</source>
+        <target>__Le nom de la catégorie est obligatoire.</target>
+      </trans-unit>
+      <trans-unit id="JffhEEJ" resname="Le nom doit contenir au moins 2 caractères.">
+        <source>Le nom doit contenir au moins 2 caractères.</source>
+        <target>__Le nom doit contenir au moins 2 caractères.</target>
+      </trans-unit>
+      <trans-unit id="nOHZBGs" resname="Le commentaire ne peut pas être vide.">
+        <source>Le commentaire ne peut pas être vide.</source>
+        <target>__Le commentaire ne peut pas être vide.</target>
+      </trans-unit>
+      <trans-unit id="l3qUxez" resname="Le commentaire doit comporter au moins 2 caractères.">
+        <source>Le commentaire doit comporter au moins 2 caractères.</source>
+        <target>__Le commentaire doit comporter au moins 2 caractères.</target>
+      </trans-unit>
+      <trans-unit id="ZYtBlms" resname="Le commentaire ne peut pas dépasser 500 caractères.">
+        <source>Le commentaire ne peut pas dépasser 500 caractères.</source>
+        <target>__Le commentaire ne peut pas dépasser 500 caractères.</target>
+      </trans-unit>
+      <trans-unit id="9xFE3AC" resname="Le type est obligatoire">
+        <source>Le type est obligatoire</source>
+        <target>__Le type est obligatoire</target>
+      </trans-unit>
+      <trans-unit id="j.KxfyZ" resname="Le nom est obligatoire">
+        <source>Le nom est obligatoire</source>
+        <target>__Le nom est obligatoire</target>
+      </trans-unit>
+      <trans-unit id="vH.7Y9T" resname="Le nom doit contenir au moins {{ limit }} caractères">
+        <source>Le nom doit contenir au moins {{ limit }} caractères</source>
+        <target>__Le nom doit contenir au moins {{ limit }} caractères</target>
+      </trans-unit>
+      <trans-unit id="P_HabOv" resname="La première lettre du nom doit être une majuscule">
+        <source>La première lettre du nom doit être une majuscule</source>
+        <target>__La première lettre du nom doit être une majuscule</target>
+      </trans-unit>
+      <trans-unit id="V2hPRvn" resname="L'adresse est obligatoire">
+        <source>L'adresse est obligatoire</source>
+        <target>__L'adresse est obligatoire</target>
+      </trans-unit>
+      <trans-unit id="YuiGERP" resname="L'adresse doit contenir au moins {{ limit }} caractères">
+        <source>L'adresse doit contenir au moins {{ limit }} caractères</source>
+        <target>__L'adresse doit contenir au moins {{ limit }} caractères</target>
+      </trans-unit>
+      <trans-unit id="bafca7U" resname="La première lettre de l'adresse doit être une majuscule">
+        <source>La première lettre de l'adresse doit être une majuscule</source>
+        <target>__La première lettre de l'adresse doit être une majuscule</target>
+      </trans-unit>
+      <trans-unit id="H0_Myal" resname="La capacité est obligatoire">
+        <source>La capacité est obligatoire</source>
+        <target>__La capacité est obligatoire</target>
+      </trans-unit>
+      <trans-unit id="nbUpBZ7" resname="Les équipements est obligatoire">
+        <source>Les équipements est obligatoire</source>
+        <target>__Les équipements est obligatoire</target>
+      </trans-unit>
+      <trans-unit id="4fKYFz8" resname="Les équipements doivent décrire au moins {{ limit }} caractères">
+        <source>Les équipements doivent décrire au moins {{ limit }} caractères</source>
+        <target>__Les équipements doivent décrire au moins {{ limit }} caractères</target>
+      </trans-unit>
+      <trans-unit id="Ks9i5G5" resname="La première lettre des équipements doit être une majuscule">
+        <source>La première lettre des équipements doit être une majuscule</source>
+        <target>__La première lettre des équipements doit être une majuscule</target>
+      </trans-unit>
+      <trans-unit id="tCObqgL" resname="Le tarif est obligatoire">
+        <source>Le tarif est obligatoire</source>
+        <target>__Le tarif est obligatoire</target>
+      </trans-unit>
+      <trans-unit id="13y7F56" resname="Le logement doit être disponible">
+        <source>Le logement doit être disponible</source>
+        <target>__Le logement doit être disponible</target>
+      </trans-unit>
+      <trans-unit id="1V6rv0C" resname="Le titre est obligatoire.">
+        <source>Le titre est obligatoire.</source>
+        <target>__Le titre est obligatoire.</target>
+      </trans-unit>
+      <trans-unit id="PWHy9NO" resname="Le titre doit comporter au moins 3 caractères.">
+        <source>Le titre doit comporter au moins 3 caractères.</source>
+        <target>__Le titre doit comporter au moins 3 caractères.</target>
+      </trans-unit>
+      <trans-unit id="s7jbACQ" resname="La description est obligatoire.">
+        <source>La description est obligatoire.</source>
+        <target>__La description est obligatoire.</target>
+      </trans-unit>
+      <trans-unit id="dqczrhE" resname="La description doit comporter au moins 10 caractères.">
+        <source>La description doit comporter au moins 10 caractères.</source>
+        <target>__La description doit comporter au moins 10 caractères.</target>
+      </trans-unit>
+      <trans-unit id="pHmsnGB" resname="La catégorie est obligatoire.">
+        <source>La catégorie est obligatoire.</source>
+        <target>__La catégorie est obligatoire.</target>
+      </trans-unit>
+      <trans-unit id="xxlv7F2" resname="La date de réservation est obligatoire.">
+        <source>La date de réservation est obligatoire.</source>
+        <target>__La date de réservation est obligatoire.</target>
+      </trans-unit>
+      <trans-unit id="HcEjiDG" resname="Le statut est obligatoire.">
+        <source>Le statut est obligatoire.</source>
+        <target>__Le statut est obligatoire.</target>
+      </trans-unit>
+      <trans-unit id="hhHcPLI" resname="Le voyage est obligatoire.">
+        <source>Le voyage est obligatoire.</source>
+        <target>__Le voyage est obligatoire.</target>
+      </trans-unit>
+      <trans-unit id="i59OWCl" resname="Le nombre d'adultes est obligatoire.">
+        <source>Le nombre d'adultes est obligatoire.</source>
+        <target>__Le nombre d'adultes est obligatoire.</target>
+      </trans-unit>
+      <trans-unit id="e5Dulgv" resname="Le nombre d'enfants est obligatoire.">
+        <source>Le nombre d'enfants est obligatoire.</source>
+        <target>__Le nombre d'enfants est obligatoire.</target>
+      </trans-unit>
+      <trans-unit id="Xd3RmZ_" resname="Le nombre de personnes est obligatoire.">
+        <source>Le nombre de personnes est obligatoire.</source>
+        <target>__Le nombre de personnes est obligatoire.</target>
+      </trans-unit>
+      <trans-unit id="izx_HwR" resname="La date d'arrivée est obligatoire.">
+        <source>La date d'arrivée est obligatoire.</source>
+        <target>__La date d'arrivée est obligatoire.</target>
+      </trans-unit>
+      <trans-unit id="JeJ6fQa" resname="La date d'arrivée ne peut pas être dans le passé.">
+        <source>La date d'arrivée ne peut pas être dans le passé.</source>
+        <target>__La date d'arrivée ne peut pas être dans le passé.</target>
+      </trans-unit>
+      <trans-unit id="GlHTj5M" resname="La date de départ est obligatoire.">
+        <source>La date de départ est obligatoire.</source>
+        <target>__La date de départ est obligatoire.</target>
+      </trans-unit>
+      <trans-unit id="3aUaR5F" resname="La date de départ doit être postérieure à la date d'arrivée.">
+        <source>La date de départ doit être postérieure à la date d'arrivée.</source>
+        <target>__La date de départ doit être postérieure à la date d'arrivée.</target>
+      </trans-unit>
+      <trans-unit id="Bhpjfok" resname="Le montant est obligatoire.">
+        <source>Le montant est obligatoire.</source>
+        <target>__Le montant est obligatoire.</target>
+      </trans-unit>
+      <trans-unit id="TkIGW4I" resname="Modalité invalide.">
+        <source>Modalité invalide.</source>
+        <target>__Modalité invalide.</target>
+      </trans-unit>
+      <trans-unit id="8XykRHv" resname="Le nombre de chambres est obligatoire.">
+        <source>Le nombre de chambres est obligatoire.</source>
+        <target>__Le nombre de chambres est obligatoire.</target>
+      </trans-unit>
+      <trans-unit id="IInz_Ie" resname="Type de pension invalide.">
+        <source>Type de pension invalide.</source>
+        <target>__Type de pension invalide.</target>
+      </trans-unit>
+      <trans-unit id="DQu3z1V" resname="Le nom est obligatoire.">
+        <source>Le nom est obligatoire.</source>
+        <target>__Le nom est obligatoire.</target>
+      </trans-unit>
+      <trans-unit id="vjSy3Ww" resname="Le prénom est obligatoire.">
+        <source>Le prénom est obligatoire.</source>
+        <target>__Le prénom est obligatoire.</target>
+      </trans-unit>
+      <trans-unit id="uK.G48K" resname="L'email est obligatoire.">
+        <source>L'email est obligatoire.</source>
+        <target>__L'email est obligatoire.</target>
+      </trans-unit>
+      <trans-unit id="VEvv10S" resname="Veuillez saisir un email valide.">
+        <source>Veuillez saisir un email valide.</source>
+        <target>__Veuillez saisir un email valide.</target>
+      </trans-unit>
+      <trans-unit id="SUEFIjn" resname="Le mot de passe est obligatoire.">
+        <source>Le mot de passe est obligatoire.</source>
+        <target>__Le mot de passe est obligatoire.</target>
+      </trans-unit>
+      <trans-unit id="kmhBnpH" resname="Le mot de passe doit contenir au moins 6 caractères.">
+        <source>Le mot de passe doit contenir au moins 6 caractères.</source>
+        <target>__Le mot de passe doit contenir au moins 6 caractères.</target>
+      </trans-unit>
+      <trans-unit id="80Cid_C" resname="Le titre doit contenir au moins 3 caractères.">
+        <source>Le titre doit contenir au moins 3 caractères.</source>
+        <target>__Le titre doit contenir au moins 3 caractères.</target>
+      </trans-unit>
+      <trans-unit id="MXFEdxp" resname="La destination est obligatoire.">
+        <source>La destination est obligatoire.</source>
+        <target>__La destination est obligatoire.</target>
+      </trans-unit>
+      <trans-unit id="zkJUytx" resname="La description doit contenir au moins 10 caractères.">
+        <source>La description doit contenir au moins 10 caractères.</source>
+        <target>__La description doit contenir au moins 10 caractères.</target>
+      </trans-unit>
+      <trans-unit id="xUoy2rt" resname="Le prix est obligatoire.">
+        <source>Le prix est obligatoire.</source>
+        <target>__Le prix est obligatoire.</target>
+      </trans-unit>
+      <trans-unit id="bWyLTTK" resname="La date de retour est obligatoire.">
+        <source>La date de retour est obligatoire.</source>
+        <target>__La date de retour est obligatoire.</target>
+      </trans-unit>
+      <trans-unit id="Ac2Zlqd" resname="Le nombre total de places est obligatoire.">
+        <source>Le nombre total de places est obligatoire.</source>
+        <target>__Le nombre total de places est obligatoire.</target>
+      </trans-unit>
+      <trans-unit id="9C_8aPj" resname="Le nombre de places restantes est obligatoire.">
+        <source>Le nombre de places restantes est obligatoire.</source>
+        <target>__Le nombre de places restantes est obligatoire.</target>
+      </trans-unit>
+      <trans-unit id="XAh_yfP" resname="Le titre doit contenir au moins {{ limit }} caractères.">
+        <source>Le titre doit contenir au moins {{ limit }} caractères.</source>
+        <target>__Le titre doit contenir au moins {{ limit }} caractères.</target>
+      </trans-unit>
+      <trans-unit id="392YZK6" resname="La description doit contenir au moins {{ limit }} caractères.">
+        <source>La description doit contenir au moins {{ limit }} caractères.</source>
+        <target>__La description doit contenir au moins {{ limit }} caractères.</target>
+      </trans-unit>
+      <trans-unit id="kSC_wh6" resname="La catégorie ne peut pas dépasser {{ limit }} caractères.">
+        <source>La catégorie ne peut pas dépasser {{ limit }} caractères.</source>
+        <target>__La catégorie ne peut pas dépasser {{ limit }} caractères.</target>
+      </trans-unit>
+      <trans-unit id="dMoIQJf" resname="Le lieu est obligatoire.">
+        <source>Le lieu est obligatoire.</source>
+        <target>__Le lieu est obligatoire.</target>
+      </trans-unit>
+      <trans-unit id="YeKYxSA" resname="La date de début est obligatoire.">
+        <source>La date de début est obligatoire.</source>
+        <target>__La date de début est obligatoire.</target>
+      </trans-unit>
+      <trans-unit id="gcHqRUc" resname="La date de début doit être une date valide.">
+        <source>La date de début doit être une date valide.</source>
+        <target>__La date de début doit être une date valide.</target>
+      </trans-unit>
+      <trans-unit id="tFvo9zo" resname="La date de fin est obligatoire.">
+        <source>La date de fin est obligatoire.</source>
+        <target>__La date de fin est obligatoire.</target>
+      </trans-unit>
+      <trans-unit id="kEVyb3R" resname="La date de fin doit être une date valide.">
+        <source>La date de fin doit être une date valide.</source>
+        <target>__La date de fin doit être une date valide.</target>
+      </trans-unit>
+      <trans-unit id="VXLjG_b" resname="La capacité maximale est obligatoire.">
+        <source>La capacité maximale est obligatoire.</source>
+        <target>__La capacité maximale est obligatoire.</target>
+      </trans-unit>
+      <trans-unit id="__FGDwY" resname="Veuillez saisir votre email.">
+        <source>Veuillez saisir votre email.</source>
+        <target>__Veuillez saisir votre email.</target>
+      </trans-unit>
+      <trans-unit id="XHAl10S" resname="L'email n'est pas valide.">
+        <source>L'email n'est pas valide.</source>
+        <target>__L'email n'est pas valide.</target>
+      </trans-unit>
+      <trans-unit id="RBxV6xM" resname="Le téléphone est obligatoire.">
+        <source>Le téléphone est obligatoire.</source>
+        <target>__Le téléphone est obligatoire.</target>
+      </trans-unit>
+      <trans-unit id="t1h93WG" resname="Le nombre de places est obligatoire.">
+        <source>Le nombre de places est obligatoire.</source>
+        <target>__Le nombre de places est obligatoire.</target>
+      </trans-unit>
+      <trans-unit id="_Bt70OU" resname="Veuillez saisir le nombre d’adultes.">
+        <source>Veuillez saisir le nombre d’adultes.</source>
+        <target>__Veuillez saisir le nombre d’adultes.</target>
+      </trans-unit>
+      <trans-unit id="r3JlCTJ" resname="Le nombre d’adultes ne peut pas dépasser les places disponibles.">
+        <source>Le nombre d’adultes ne peut pas dépasser les places disponibles.</source>
+        <target>__Le nombre d’adultes ne peut pas dépasser les places disponibles.</target>
+      </trans-unit>
+      <trans-unit id="Gdx.CXG" resname="Veuillez saisir le nombre d’enfants.">
+        <source>Veuillez saisir le nombre d’enfants.</source>
+        <target>__Veuillez saisir le nombre d’enfants.</target>
+      </trans-unit>
+      <trans-unit id="1lP43EK" resname="Le nombre d’enfants ne peut pas dépasser les places disponibles.">
+        <source>Le nombre d’enfants ne peut pas dépasser les places disponibles.</source>
+        <target>__Le nombre d’enfants ne peut pas dépasser les places disponibles.</target>
+      </trans-unit>
+    </body>
+  </file>
+</xliff>

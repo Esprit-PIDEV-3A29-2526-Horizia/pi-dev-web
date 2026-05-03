@@ -130,9 +130,9 @@ class ParticipationController extends AbstractController
             'amount' => $montantCentimes,
             'currency' => 'eur',
             'metadata' => [
-                'event_id' => $event->getId_event(),
-                'nombre_places' => $pendingData['nombre_places'],
-                'user_email' => $pendingData['email']
+                'event_id' => (string) $event->getId_event(),
+                'nombre_places' => (string) $pendingData['nombre_places'],
+                'user_email' => (string) $pendingData['email']
             ]
         ]);
         
