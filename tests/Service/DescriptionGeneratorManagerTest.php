@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Service;
 
 use App\Service\DescriptionGeneratorManager;
@@ -10,9 +12,9 @@ use Psr\Log\LoggerInterface;
 
 class DescriptionGeneratorManagerTest extends TestCase
 {
-    private $httpClient;
-    private $logger;
-    private $manager;
+    private HttpClientInterface $httpClient;
+    private LoggerInterface $logger;
+    private DescriptionGeneratorManager $manager;
 
     protected function setUp(): void
     {
@@ -20,6 +22,8 @@ class DescriptionGeneratorManagerTest extends TestCase
         $this->logger = $this->createMock(LoggerInterface::class);
         $this->manager = new DescriptionGeneratorManager($this->httpClient, $this->logger);
     }
+
+    // ========== TESTS POUR generateDescription ==========
 
     public function testGenerateDescription(): void
     {
@@ -46,6 +50,7 @@ class DescriptionGeneratorManagerTest extends TestCase
         
         $this->assertIsString($result);
         $this->assertStringContainsString('Hammamet', $result);
+        $this->assertStringContainsString('Plage', $result);
     }
 
     public function testGenerateDescriptionWithPaysOnly(): void
@@ -54,7 +59,20 @@ class DescriptionGeneratorManagerTest extends TestCase
         
         $this->assertIsString($result);
         $this->assertStringContainsString('Tunisie', $result);
+        $this->assertStringContainsString('Culture', $result);
     }
+
+    public function testGenerateDescriptionWithEmptyValues(): void
+    {
+        $result = $this->manager->generateDescription('Test', 'Categorie', '', '');
+        
+        $this->assertIsString($result);
+        $this->assertNotEmpty($result);
+        $this->assertStringContainsString('Test', $result);
+        $this->assertStringContainsString('Categorie', $result);
+    }
+
+    // ========== TESTS POUR translateDescription ==========
 
     public function testTranslateDescription(): void
     {
@@ -109,5 +127,39 @@ class DescriptionGeneratorManagerTest extends TestCase
         $result = $this->manager->translateDescription('');
         
         $this->assertEquals('', $result);
+    }
+
+    public function testTranslateDescriptionWithMultipleLanguages(): void
+    {
+        $responseMock = $this->createMock(ResponseInterface::class);
+        $responseMock->method('getContent')->willReturn(json_encode([
+            'responseData' => ['translatedText' => 'Hallo Welt']
+        ]));
+
+        $this->httpClient
+            ->expects($this->once())
+            ->method('request')
+            ->willReturn($responseMock);
+
+        $result = $this->manager->translateDescription('Bonjour le monde', 'de');
+        
+        $this->assertEquals('Hallo Welt', $result);
+    }
+
+    public function testTranslateDescriptionWithApiReturningOriginalText(): void
+    {
+        $responseMock = $this->createMock(ResponseInterface::class);
+        $responseMock->method('getContent')->willReturn(json_encode([
+            'responseData' => ['translatedText' => 'Bonjour le monde']
+        ]));
+
+        $this->httpClient
+            ->expects($this->once())
+            ->method('request')
+            ->willReturn($responseMock);
+
+        $result = $this->manager->translateDescription('Bonjour le monde', 'en');
+        
+        $this->assertEquals('Bonjour le monde', $result);
     }
 }

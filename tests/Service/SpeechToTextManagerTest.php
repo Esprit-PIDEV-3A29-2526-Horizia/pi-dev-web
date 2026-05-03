@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Tests\Service;
 
 use App\Service\SpeechToTextManager;
@@ -8,8 +10,8 @@ use Psr\Log\LoggerInterface;
 
 class SpeechToTextManagerTest extends TestCase
 {
-    private $logger;
-    private $manager;
+    private LoggerInterface $logger;
+    private SpeechToTextManager $manager;
 
     protected function setUp(): void
     {
