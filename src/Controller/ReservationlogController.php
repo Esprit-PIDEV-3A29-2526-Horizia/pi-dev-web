@@ -80,9 +80,14 @@ class ReservationlogController extends AbstractController
         $successUrl = $this->generateUrl('app_front_reservation_success', ['id' => $reservation->getIdreslog()], UrlGeneratorInterface::ABSOLUTE_URL);
         $cancelUrl = $this->generateUrl('app_front_reservation_cancel', ['id' => $reservation->getIdreslog()], UrlGeneratorInterface::ABSOLUTE_URL);
 
-        $session = $stripeService->createCheckoutSession($montant, 'eur', $successUrl, $cancelUrl);
-
-        return $this->redirect($session->url);
+        $stripeUrl = $stripeService->createCheckoutSession('Réservation logement', (int)($montant * 100), $successUrl, $cancelUrl);
+        
+        if ($stripeUrl && filter_var($stripeUrl, FILTER_VALIDATE_URL)) {
+            return $this->redirect($stripeUrl);
+        }
+        
+        $this->addFlash('error', 'Erreur lors de la création du paiement.');
+        return $this->redirectToRoute('app_front_reservationlog_index');
     }
 
     #[Route('/reservation/success/{id}', name: 'app_front_reservation_success')]
@@ -105,8 +110,8 @@ class ReservationlogController extends AbstractController
             $reservation->setStatus('annulée');
             $em->flush();
             $this->addFlash('error', 'Paiement annulé. Réservation annulée.');
+            $emailService->sendCancellationEmail($reservation->getUser()->getEmail(), $reservation, 'Paiement annulé par l\'utilisateur');
         }
-        $emailService->sendCancellationEmail($reservation->getUser()->getEmail(), $reservation, 'Paiement annulé par l\'utilisateur');
         return $this->redirectToRoute('app_front_reservationlog_index');
     }
 
@@ -217,8 +222,7 @@ class ReservationlogController extends AbstractController
             if ($modalite === 'En ligne' && $paiementImmediat === true) {
                 $successUrl = $this->generateUrl('app_front_reservation_success', ['id' => $reservation->getIdreslog()], UrlGeneratorInterface::ABSOLUTE_URL);
                 $cancelUrl = $this->generateUrl('app_front_reservation_cancel', ['id' => $reservation->getIdreslog()], UrlGeneratorInterface::ABSOLUTE_URL);
-                $session = $stripeService->createCheckoutSession($montant, 'eur', $successUrl, $cancelUrl);
-                $stripeUrl = $session->url;
+                $stripeUrl = $stripeService->createCheckoutSession('Réservation logement', (int)($montant * 100), $successUrl, $cancelUrl);
             }
 
             $emailService->sendReservationEmail($user->getEmail(), $reservation, $message);
@@ -245,7 +249,7 @@ class ReservationlogController extends AbstractController
         }
 
         $reservation = $em->getRepository(Reservationlog::class)->find($id);
-        if (!$reservation || !$user instanceof User || $reservation->getUser()->getId() !== $user->getId()) {
+        if (!$reservation || $reservation->getUser()->getId() !== $user->getId()) {
             throw $this->createNotFoundException();
         }
         if ($reservation->getStatus() !== 'en_attente' || $reservation->getModalites() !== 'En ligne') {
@@ -255,8 +259,15 @@ class ReservationlogController extends AbstractController
 
         $successUrl = $this->generateUrl('app_front_reservation_success', ['id' => $reservation->getIdreslog()], UrlGeneratorInterface::ABSOLUTE_URL);
         $cancelUrl = $this->generateUrl('app_front_reservation_cancel', ['id' => $reservation->getIdreslog()], UrlGeneratorInterface::ABSOLUTE_URL);
-        $session = $stripeService->createCheckoutSession($reservation->getMontant(), 'eur', $successUrl, $cancelUrl);
-        return $this->redirect($session->url);
+        
+        $stripeUrl = $stripeService->createCheckoutSession('Réservation logement', (int)($reservation->getMontant() * 100), $successUrl, $cancelUrl);
+        
+        if ($stripeUrl && filter_var($stripeUrl, FILTER_VALIDATE_URL)) {
+            return $this->redirect($stripeUrl);
+        }
+        
+        $this->addFlash('error', 'Erreur lors de la création de la session de paiement.');
+        return $this->redirectToRoute('app_front_reservationlog_index');
     }
 
     private function isCapacityAvailable(Logement $logement, \DateTime $dateArrivee, \DateTime $dateDepart, int $adultes, int $enfants, EntityManagerInterface $em): bool

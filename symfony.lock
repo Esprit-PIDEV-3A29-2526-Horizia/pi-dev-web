@@ -148,6 +148,9 @@
             "./config/packages/stripe.yaml"
         ]
     },
+    "survos/libre-translate-bundle": {
+        "version": "1.5.470"
+    },
     "symfony/console": {
         "version": "6.4",
         "recipe": {

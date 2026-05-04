@@ -28,6 +28,7 @@ use Endroid\QrCode\Encoding\Encoding;
 use Endroid\QrCode\ErrorCorrectionLevel\ErrorCorrectionLevel;
 use Endroid\QrCode\RoundBlockSizeMode\RoundBlockSizeMode;
 use Endroid\QrCode\Writer\PngWriter;
+use Doctrine\ORM\Tools\Pagination\Paginator;
 
 class HomeController extends AbstractController
 {
@@ -42,17 +43,18 @@ class HomeController extends AbstractController
 
         $currency = $currencyService->normalizeCurrency($request->query->get('currency', 'TND'));
 
-        $voyages = $entityManager->createQueryBuilder()
+        $query = $doctrine->getRepository(Voyage::class)->createQueryBuilder('v')
             ->select('v', 'COUNT(r.id) AS HIDDEN nbReservations')
-            ->from(Voyage::class, 'v')
-            ->leftJoin(Reservation::class, 'r', 'WITH', 'r.voyage = v AND r.statut = :statut')
+            ->innerJoin(Reservation::class, 'r', 'WITH', 'r.voyage = v AND r.statut = :statut')
             ->setParameter('statut', 'CONFIRMEE')
             ->groupBy('v.id')
             ->orderBy('nbReservations', 'DESC')
             ->addOrderBy('v.id', 'DESC')
             ->setMaxResults(3)
-            ->getQuery()
-            ->getResult();
+            ->getQuery();
+
+        $paginator = new Paginator($query, $fetchJoinCollection = true);
+        $voyages = iterator_to_array($paginator);
 
         $weatherData = [];
         $convertedPrices = [];
@@ -218,7 +220,7 @@ class HomeController extends AbstractController
             $prixTotalDt = ($voyage->getPrix() * $nbAdultes) + (($voyage->getPrix() * $prixEnfantRatio) * $nbEnfants);
 
             if (method_exists($reservation, 'setPrixTotal')) {
-                $reservation->setPrixTotal($prixTotalDt);
+                $reservation->setPrixTotal(new \Money\Money((int)($prixTotalDt * 100), new \Money\Currency('TND')));
             }
 
             $entityManager->persist($reservation);
@@ -259,8 +261,8 @@ class HomeController extends AbstractController
         $selectedStatut = trim((string) $request->query->get('statut', ''));
         $page = $request->query->getInt('page', 1);
 
-        $qb = $doctrine->getRepository(Reservation::class)->createQueryBuilder('r')
-            ->leftJoin('r.voyage', 'v')
+        $qb = $doctrine->getManager()->getRepository(Reservation::class)->createQueryBuilder('r')            
+            ->innerJoin('r.voyage', 'v')
             ->addSelect('v')
             ->andWhere('r.user = :user')
             ->setParameter('user', $user)
@@ -493,8 +495,8 @@ class HomeController extends AbstractController
         return $response;
     }
 
-    private function buildReservationQrCode(Reservation $reservation)
-{
+    private function buildReservationQrCode(Reservation $reservation): \Endroid\QrCode\Writer\Result\ResultInterface
+    {
     $detailPath = $this->generateUrl(
         'app_front_reservation_detail',
         ['id' => $reservation->getId()]
@@ -559,16 +561,16 @@ class HomeController extends AbstractController
                 $telephone = $request->request->get('telephone');
                 $addresse = $request->request->get('addresse');
 
-                if ($nom) {
+                if ($nom && method_exists($user, 'setNom')) {
                     $user->setNom($nom);
                 }
-                if ($prenom) {
+                if ($prenom && method_exists($user, 'setPrenom')) {
                     $user->setPrenom($prenom);
                 }
-                if ($telephone) {
+                if ($telephone && method_exists($user, 'setTelephone')) {
                     $user->setTelephone($telephone);
                 }
-                if ($addresse) {
+                if ($addresse && method_exists($user, 'setAddresse')) {
                     $user->setAddresse($addresse);
                 }
 

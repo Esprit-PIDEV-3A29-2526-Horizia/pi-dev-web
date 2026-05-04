@@ -258,7 +258,8 @@ class AdminController extends AbstractController
         $notifications = $session->get('user_notifications_' . $userId, []);
         $notifications[] = [
             'message' => '✅ Votre demande d\'annulation pour la réservation #' . $reservation->getIdreslog() . ' a été acceptée.',
-            'type' => 'success'
+            'type' => 'success',
+            'reservationId' => $reservation->getIdreslog()
         ];
         $session->set('user_notifications_' . $userId, $notifications);
         $session->save();
@@ -313,6 +314,24 @@ class AdminController extends AbstractController
         ], $requests);
 
         return $this->json(['count' => count($requests), 'requests' => $data]);
+    }
+
+    // Route pour que l'utilisateur récupère ses notifications
+    #[Route('/user/notifications', name: 'user_notifications', methods: ['GET'])]
+    public function getUserNotifications(RequestStack $requestStack): JsonResponse
+    {
+        $user = $this->getUser();
+        if (!$user instanceof User) {
+            return $this->json(['notifications' => []]);
+        }
+        
+        $session = $requestStack->getSession();
+        $notifications = $session->get('user_notifications_' . $user->getId(), []);
+        // Vider les notifications après les avoir récupérées
+        $session->set('user_notifications_' . $user->getId(), []);
+        $session->save();
+        
+        return $this->json(['notifications' => $notifications]);
     }
 
 }

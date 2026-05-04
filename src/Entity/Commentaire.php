@@ -30,14 +30,14 @@ class Commentaire
     #[ORM\Column(type: Types::TEXT)]
     #[Assert\NotBlank(message: "Le commentaire ne peut pas être vide.")]
     #[Assert\Length(min: 2, max: 500, minMessage: "Le commentaire doit comporter au moins 2 caractères.", maxMessage: "Le commentaire ne peut pas dépasser 500 caractères.")]
-    private ?string $contenu = null;
+    private string $contenu ='';
 
     #[ORM\Column]
-    private ?\DateTimeImmutable $date_creation = null;
+    private \DateTimeImmutable $date_creation;
 
     #[ORM\Column(nullable: true)]
     private ?bool $modifie = false;
-    #[ORM\ManyToOne(targetEntity: User::class)]
+    #[ORM\ManyToOne(targetEntity: User::class, cascade: ['persist'])]
     #[ORM\JoinColumn(name: "created_by_id", referencedColumnName: "id", nullable: false)]
     private ?User $createdBy = null;
 

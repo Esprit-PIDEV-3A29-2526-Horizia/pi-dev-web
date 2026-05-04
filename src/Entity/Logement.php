@@ -57,7 +57,7 @@ class Logement
     private ?bool $disponibilite = true;
 
     // RELATION : l'utilisateur (admin) qui a créé le logement
-    #[ORM\ManyToOne(targetEntity: User::class)]
+    #[ORM\ManyToOne(targetEntity: User::class, cascade: ['persist'])]
     #[ORM\JoinColumn(name: 'created_by_id', referencedColumnName: 'id', nullable: false)]
     private ?User $createdBy = null;
 

@@ -63,7 +63,7 @@ class Voyage
     private ?int $placesRestantes = null;
 
     // RELATION : l'utilisateur (admin) qui a créé le voyage
-    #[ORM\ManyToOne(targetEntity: User::class)]
+    #[ORM\ManyToOne(targetEntity: User::class, cascade: ['persist'])]
     #[ORM\JoinColumn(name: 'created_by_id', referencedColumnName: 'id', nullable: false)]
     private ?User $createdBy = null;
 

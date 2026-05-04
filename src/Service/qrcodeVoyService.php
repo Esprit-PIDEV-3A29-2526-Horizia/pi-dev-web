@@ -5,6 +5,7 @@ namespace App\Service;
 use App\Entity\Reservation;
 use Endroid\QrCode\Builder\Builder;
 use Endroid\QrCode\Writer\PngWriter;
+use Endroid\QrCode\Writer\Result\ResultInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Routing\RouterInterface;
 
@@ -16,7 +17,7 @@ class qrcodeVoyService
     ) {
     }
 
-    public function buildReservationQrCode(Reservation $reservation)
+    public function buildReservationQrCode(Reservation $reservation): ResultInterface
     {
         $detailPath = $this->router->generate(
             'app_front_reservation_detail',

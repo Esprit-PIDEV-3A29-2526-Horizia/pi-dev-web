@@ -41,8 +41,8 @@ class MesReservationslogController extends AbstractController
             $limit  = max(1, $request->query->getInt('limit', 6));
 
             $qb = $em->getRepository(Reservationlog::class)->createQueryBuilder('r')
-                ->leftJoin('r.logement', 'l')
-                ->leftJoin('r.user', 'u')
+                ->innerJoin('r.logement', 'l')
+                ->innerJoin('r.user', 'u')
                 ->where('r.user = :user')
                 ->setParameter('user', $user);
 
@@ -153,6 +153,7 @@ class MesReservationslogController extends AbstractController
             if (empty($reservations)) {
                 $html = '<div class="col-12"><div class="text-center py-5 bg-light rounded-4"><i class="bi bi-calendar-x display-1 text-muted mb-4 d-block"></i><h3 class="text-muted mb-3">Aucune réservation</h3><p class="text-muted mb-4">Commencez par réserver un logement.</p><a href="' . $this->generateUrl('app_front_logement_index') . '" class="btn btn-horozia-primary btn-lg px-5 rounded-pill"><i class="bi bi-house-door me-2"></i> Découvrir les logements</a></div></div>';
             }
+            $notifications = []; 
 
             return $this->json([
                 'html' => $html,

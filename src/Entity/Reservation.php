@@ -26,9 +26,8 @@ class Reservation
     #[Assert\NotBlank(message: 'Le statut est obligatoire.')]
     private ?string $statut = 'EN_ATTENTE';
 
-    #[ORM\ManyToOne(targetEntity: Voyage::class)]
+    #[ORM\ManyToOne(targetEntity: Voyage::class, cascade: ['persist'])]
     #[ORM\JoinColumn(name: 'id_voyage', referencedColumnName: 'id', nullable: false, onDelete: 'CASCADE')]
-    #[Assert\NotNull(message: 'Le voyage est obligatoire.')]
     private ?Voyage $voyage = null;
 
     #[ORM\ManyToOne(targetEntity: User::class)]
@@ -154,7 +153,7 @@ class Reservation
         if ($this->prixTotal === null) {
             return null;
         }
-        return new Money($this->prixTotal, new Currency('TND'));
+        return new Money((string)$this->prixTotal, new Currency('TND'));
     }
 
     public function setPrixTotal(?Money $prixTotal): self

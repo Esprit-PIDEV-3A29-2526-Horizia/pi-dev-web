@@ -22,4 +22,5 @@ return [
     AhmedBhs\DoctrineDoctor\DoctrineDoctorBundle::class => ['dev' => true],
     Stof\DoctrineExtensionsBundle\StofDoctrineExtensionsBundle::class => ['all' => true],
     Translation\Bundle\TranslationBundle::class => ['all' => true],
+    Survos\LibreTranslateBundle\SurvosLibreTranslateBundle::class => ['all' => true],
 ];

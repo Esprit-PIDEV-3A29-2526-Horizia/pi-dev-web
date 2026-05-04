@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "d3d29b9a992d79c12e3ae117bf03f29d",
+    "content-hash": "f10e1c2a1702e87e10a4d2801ddc6603",
     "packages": [
         {
             "name": "bacon/bacon-qr-code",
@@ -1733,26 +1733,26 @@
         },
         {
             "name": "endroid/qr-code",
-            "version": "5.1.0",
+            "version": "6.1.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/endroid/qr-code.git",
-                "reference": "393fec6c4cbdc1bd65570ac9d245704428010122"
+                "reference": "5fa534856ed95649d67c0eab0cabc03ab1d8e0e2"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/endroid/qr-code/zipball/393fec6c4cbdc1bd65570ac9d245704428010122",
-                "reference": "393fec6c4cbdc1bd65570ac9d245704428010122",
+                "url": "https://api.github.com/repos/endroid/qr-code/zipball/5fa534856ed95649d67c0eab0cabc03ab1d8e0e2",
+                "reference": "5fa534856ed95649d67c0eab0cabc03ab1d8e0e2",
                 "shasum": ""
             },
             "require": {
                 "bacon/bacon-qr-code": "^3.0",
-                "php": "^8.1"
+                "php": "^8.4"
             },
             "require-dev": {
                 "endroid/quality": "dev-main",
                 "ext-gd": "*",
-                "khanamiryan/qrcode-detector-decoder": "^2.0.2",
+                "khanamiryan/qrcode-detector-decoder": "^2.0.3",
                 "setasign/fpdf": "^1.8.2"
             },
             "suggest": {
@@ -1764,7 +1764,7 @@
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-main": "5.x-dev"
+                    "dev-main": "6.x-dev"
                 }
             },
             "autoload": {
@@ -1793,7 +1793,7 @@
             ],
             "support": {
                 "issues": "https://github.com/endroid/qr-code/issues",
-                "source": "https://github.com/endroid/qr-code/tree/5.1.0"
+                "source": "https://github.com/endroid/qr-code/tree/6.1.3"
             },
             "funding": [
                 {
@@ -1801,7 +1801,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2024-09-08T08:52:55+00:00"
+            "time": "2026-02-05T07:01:58+00:00"
         },
         {
             "name": "gedmo/doctrine-extensions",
@@ -2260,6 +2260,57 @@
                 }
             ],
             "time": "2026-03-10T16:41:02+00:00"
+        },
+        {
+            "name": "jefs42/libretranslate",
+            "version": "v1.1.2",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/jefs42/libretranslate.git",
+                "reference": "dce7d90cfbf675b4d24c8ea0c1f3840d03bccb8f"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/jefs42/libretranslate/zipball/dce7d90cfbf675b4d24c8ea0c1f3840d03bccb8f",
+                "reference": "dce7d90cfbf675b4d24c8ea0c1f3840d03bccb8f",
+                "shasum": ""
+            },
+            "require": {
+                "ext-curl": "*",
+                "ext-json": "*",
+                "php": "^7.0|^8.0"
+            },
+            "require-dev": {
+                "phpunit/phpunit": "^9.5"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Jefs42\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "GPL-3.0-or-later"
+            ],
+            "authors": [
+                {
+                    "name": "Jeffrey Shilt",
+                    "email": "dev@fortytwo-it.com",
+                    "homepage": "https://fortytwo-it.com"
+                }
+            ],
+            "description": "PHP interface for the open source LibreTranslate project",
+            "keywords": [
+                "libretranslate",
+                "php",
+                "translate"
+            ],
+            "support": {
+                "issues": "https://github.com/jefs42/libretranslate/issues",
+                "source": "https://github.com/jefs42/libretranslate/tree/v1.1.2"
+            },
+            "time": "2023-03-26T02:21:10+00:00"
         },
         {
             "name": "jms/metadata",
@@ -4408,6 +4459,63 @@
                 "source": "https://github.com/stripe/stripe-php/tree/v20.1.0"
             },
             "time": "2026-04-24T00:12:56+00:00"
+        },
+        {
+            "name": "survos/libre-translate-bundle",
+            "version": "1.5.470",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/survos/LibreTranslateBundle.git",
+                "reference": "0e814f8137b3dcada11cb47d5eb547434552d391"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/survos/LibreTranslateBundle/zipball/0e814f8137b3dcada11cb47d5eb547434552d391",
+                "reference": "0e814f8137b3dcada11cb47d5eb547434552d391",
+                "shasum": ""
+            },
+            "require": {
+                "jefs42/libretranslate": "^1.1",
+                "php": "^8.3",
+                "symfony/config": "^6.4 || ^7.1",
+                "symfony/dependency-injection": "^6.4 || ^7.1",
+                "symfony/http-kernel": "^6.4 || ^7.1",
+                "twig/twig": "^3.4"
+            },
+            "require-dev": {
+                "phpstan/phpstan": "^2.0",
+                "symfony/browser-kit": "^6.4 || ^7.1",
+                "symfony/framework-bundle": "^6.4 || ^7.1",
+                "symfony/phpunit-bridge": "^6.4 || ^7.1",
+                "symfony/twig-bundle": "^6.4 || ^7.1",
+                "symfony/var-dumper": "^6.4 || ^7.1"
+            },
+            "type": "symfony-bundle",
+            "autoload": {
+                "psr-4": {
+                    "Survos\\LibreTranslateBundle\\": "src/",
+                    "Surovs\\LibreTranslateBundle\\Tests\\": "tests/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "keywords": [
+                "symfony-ux",
+                "symfony6"
+            ],
+            "support": {
+                "issues": "https://github.com/survos/LibreTranslateBundle/issues",
+                "source": "https://github.com/survos/LibreTranslateBundle/tree/1.5.470"
+            },
+            "funding": [
+                {
+                    "url": "https://github.com/kbond",
+                    "type": "github"
+                }
+            ],
+            "time": "2024-12-15T17:32:06+00:00"
         },
         {
             "name": "symfony/asset",

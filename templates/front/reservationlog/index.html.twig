@@ -262,6 +262,30 @@
                 padding: 0 12px;
             }
         }
+        /* Animation pour la carte surlignée */
+        @keyframes highlightAnimation {
+            0% {
+                background-color: #fff3cd;
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(232, 177, 86, 0.7);
+            }
+            50% {
+                background-color: #ffeeba;
+                transform: scale(1.02);
+                box-shadow: 0 0 0 10px rgba(232, 177, 86, 0);
+            }
+            100% {
+                background-color: transparent;
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(232, 177, 86, 0);
+            }
+        }
+
+        .highlight-card {
+            animation: highlightAnimation 0.8s ease-in-out 3 !important;
+            border: 2px solid #E8B156 !important;
+            border-radius: 20px;
+        }
     </style>
 {% endblock %}
 
@@ -287,6 +311,7 @@
                             <option value="terminée">Terminée</option>
                             <option value="expirée">Expirée</option>
                             <option value="annulée">Annulée</option>
+                            <option value="demande_annulation">Demande annulation</option>
                         </select>
                     </div>
                 </div>
@@ -335,7 +360,6 @@
         let debounceTimer;
         let currentPage = 1;
         const limit = 6;
-        let pollingInterval = null;
 
         function redirectToLogin() {
             window.location.href = loginUrl;
@@ -366,22 +390,6 @@
                 .then(data => {
                     if (data.html) container.innerHTML = data.html;
                     spinner.classList.remove('active');
-                    
-                    // AFFICHER LES NOTIFICATIONS SWEETALERT
-                    if (data.notifications && data.notifications.length > 0) {
-                        data.notifications.forEach(notif => {
-                            Swal.fire({
-                                title: notif.type === 'success' ? '✅ Annulation acceptée' : '❌ Annulation rejetée',
-                                text: notif.message,
-                                icon: notif.type === 'success' ? 'success' : 'error',
-                                confirmButtonColor: '#23779C',
-                                timer: 5000,
-                                showConfirmButton: true
-                            }).then(() => {
-                                fetchReservations(currentPage);
-                            });
-                        });
-                    }
                     
                     if (data.totalPages > 1) {
                         renderPagination(data.currentPage, data.totalPages);
@@ -671,19 +679,91 @@
             if (modal) modal.hide();
         });
 
-        // Chargement initial
-        fetchReservations(1);
-        
-        // POLLING TOUTES LES 3 SECONDES POUR LES NOTIFICATIONS
-        if ({{ app.user ? 'true' : 'false' }}) {
-            pollingInterval = setInterval(() => {
-                fetchReservations(currentPage);
-            }, 3000);
+        // ========== POLLING DES NOTIFICATIONS POUR L'UTILISATEUR ==========
+        let notificationPollingInterval = null;
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
         }
-        
-        // Nettoyer l'intervalle si nécessaire
+
+        function loadUserNotifications() {
+            fetch('/user/notifications', {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(res => res.json())
+            .then(data => {
+                const badge = document.getElementById('notificationBadge');
+                const count = data.notifications ? data.notifications.length : 0;
+                
+                if (count > 0) {
+                    badge.innerText = count;
+                    badge.style.display = 'inline-block';
+                } else {
+                    badge.style.display = 'none';
+                }
+                
+                const listContainer = document.getElementById('notificationsList');
+                if (listContainer) {
+                    if (!data.notifications || data.notifications.length === 0) {
+                        listContainer.innerHTML = '<div class="dropdown-item text-center text-muted">Aucune notification</div>';
+                    } else {
+                        let html = '';
+                        data.notifications.forEach(notif => {
+                            html += `
+                                <a href="{{ path('app_front_reservationlog_index') }}?highlight=${notif.reservationId || ''}" class="dropdown-item notification-item" style="white-space: normal;">
+                                    <div class="small fw-bold">${notif.type === 'success' ? '✅ Annulation acceptée' : '❌ Demande rejetée'}</div>
+                                    <div class="small">${escapeHtml(notif.message)}</div>
+                                    <small class="text-muted">Maintenant</small>
+                                </a>
+                            `;
+                        });
+                        listContainer.innerHTML = html;
+                    }
+                }
+            })
+            .catch(err => console.error('Erreur chargement notifications:', err));
+        }
+
+        // Démarrer le polling des notifications toutes les 5 secondes
+        if ({{ app.user ? 'true' : 'false' }}) {
+            notificationPollingInterval = setInterval(loadUserNotifications, 5000);
+            setTimeout(loadUserNotifications, 1000);
+        }
+
+        // Demander la permission pour les notifications push
+        if (Notification.permission !== 'denied') {
+            Notification.requestPermission();
+        }
+
+        // Nettoyer les intervalles
         window.addEventListener('beforeunload', function() {
-            if (pollingInterval) clearInterval(pollingInterval);
+            if (notificationPollingInterval) clearInterval(notificationPollingInterval);
         });
+
+        // Gestion du surlignement quand on vient d'une notification
+        const urlParams = new URLSearchParams(window.location.search);
+        const highlightId = urlParams.get('highlight');
+
+        if (highlightId) {
+            setTimeout(() => {
+                const targetCard = document.querySelector(`.col-md-6[data-id="${highlightId}"]`);
+                if (targetCard) {
+                    targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    targetCard.classList.add('highlight-card');
+                    setTimeout(() => {
+                        targetCard.classList.remove('highlight-card');
+                    }, 3000);
+                }
+            }, 1000);
+        }
+
+        // Chargement initial des réservations
+        fetchReservations(1);
     </script>
 {% endblock %}

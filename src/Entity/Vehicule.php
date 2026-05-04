@@ -127,14 +127,14 @@ class Vehicule
     }
 
     #[ORM\Column(type: 'decimal', nullable: false)]
-    private ?float $prix_par_jour = null;
+    private ?string $prix_par_jour = null;
 
-    public function getPrix_par_jour(): ?float
+    public function getPrixParJour(): ?string
     {
         return $this->prix_par_jour;
     }
 
-    public function setPrix_par_jour(float $prix_par_jour): self
+    public function setPrixParJour(?string $prix_par_jour): self
     {
         $this->prix_par_jour = $prix_par_jour;
         return $this;

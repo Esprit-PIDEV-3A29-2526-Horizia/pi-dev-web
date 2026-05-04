@@ -18,16 +18,16 @@ class ReservationlogSearchService
     public function getReservationsQueryBuilder(?string $search, ?string $status, ?string $sort): QueryBuilder
     {
         $qb = $this->reservationRepository->createQueryBuilder('r')
-            ->leftJoin('r.logement', 'l')
-            ->leftJoin('r.user', 'u')
+            ->innerJoin('r.logement', 'l')
+            ->innerJoin('r.user', 'u')
             ->addSelect('l', 'u');
 
-        if ($search && $search !== '') {
+        if (!empty($search)) {
             $qb->andWhere('l.nom LIKE :search')
-               ->setParameter('search', '%' . $search . '%');
+            ->setParameter('search', '%' . $search . '%');
         }
 
-        if ($status && $status !== '') {
+        if (!empty($status)) {
             $qb->andWhere('r.status = :status')->setParameter('status', $status);
         }
 

@@ -72,8 +72,10 @@ public function new(Request $request, EntityManagerInterface $entityManager): Re
     $form->handleRequest($request);
 
     if ($form->isSubmitted() && $form->isValid()) {
-        // 👇 AJOUTER CETTE LIGNE pour assigner l'admin connecté
-        $logement->setCreatedBy($this->getUser());
+        $user = $this->getUser();
+        if ($user instanceof \App\Entity\User) {
+            $logement->setCreatedBy($user);
+        }
         
         $entityManager->persist($logement);
         $entityManager->flush();

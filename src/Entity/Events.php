@@ -58,7 +58,7 @@ class Events
     #[ORM\Column(type: "float", nullable: true)]
     private ?float $longitude = null;
 
-    #[ORM\ManyToOne(targetEntity: User::class)]
+    #[ORM\ManyToOne(targetEntity: User::class, cascade: ['persist'])]
     #[ORM\JoinColumn(name: "id_createur", referencedColumnName: "id", nullable: false)]
     private ?User $createur = null;
 
