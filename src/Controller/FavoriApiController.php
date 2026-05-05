@@ -3,7 +3,6 @@
 namespace App\Controller;
 
 use App\Entity\FavoriVoyage;
-use App\Entity\User;
 use App\Entity\Voyage;
 use App\Repository\FavoriVoyageRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -28,24 +27,14 @@ class FavoriApiController extends AbstractController
         FavoriVoyageRepository $favoriRepository,
         PaginatorInterface $paginator
     ): Response {
-        $user = $this->getUser();
         $visitorToken = $this->getOrCreateVisitorToken($request);
 
-        if ($user instanceof User) {
-            $qb = $favoriRepository->createQueryBuilder('f')
-                ->leftJoin('f.voyage', 'v')
-                ->addSelect('v')
-                ->andWhere('f.createdBy = :user')
-                ->setParameter('user', $user)
-                ->orderBy('f.id', 'DESC');
-        } else {
-            $qb = $favoriRepository->createQueryBuilder('f')
-                ->leftJoin('f.voyage', 'v')
-                ->addSelect('v')
-                ->andWhere('f.visitorToken = :visitorToken')
-                ->setParameter('visitorToken', $visitorToken)
-                ->orderBy('f.id', 'DESC');
-        }
+        $qb = $favoriRepository->createQueryBuilder('f')
+            ->leftJoin('f.voyage', 'v')
+            ->addSelect('v')
+            ->andWhere('f.visitorToken = :visitorToken')
+            ->setParameter('visitorToken', $visitorToken)
+            ->orderBy('f.id', 'DESC');
 
         $favoris = $paginator->paginate(
             $qb,
@@ -74,23 +63,17 @@ class FavoriApiController extends AbstractController
         EntityManagerInterface $entityManager
     ): JsonResponse {
         try {
-            $voyage = $entityManager->find(Voyage::class, $id);
+            $voyage = $entityManager->getRepository(Voyage::class)->find($id);
 
-            if (!$voyage instanceof Voyage) {
+            if (!$voyage) {
                 return $this->json([
                     'success' => false,
                     'message' => 'Voyage introuvable.',
                 ], 404);
             }
 
-            $user = $this->getUser();
             $visitorToken = $this->getOrCreateVisitorToken($request);
-
-            if ($user instanceof User) {
-                $isFavorite = $favoriRepository->findOneByUserAndVoyage($user, $voyage) !== null;
-            } else {
-                $isFavorite = $favoriRepository->findOneByVisitorAndVoyage($visitorToken, $voyage) !== null;
-            }
+            $isFavorite = $favoriRepository->findOneByVisitorAndVoyage($visitorToken, $voyage) !== null;
 
             $response = $this->json([
                 'success' => true,
@@ -120,25 +103,19 @@ class FavoriApiController extends AbstractController
         EntityManagerInterface $entityManager
     ): JsonResponse {
         try {
-            $voyage = $entityManager->find(Voyage::class, $id);
+            $voyage = $entityManager->getRepository(Voyage::class)->find($id);
 
-            if (!$voyage instanceof Voyage) {
+            if (!$voyage) {
                 return $this->json([
                     'success' => false,
                     'message' => 'Voyage introuvable.',
                 ], 404);
             }
 
-            $user = $this->getUser();
             $visitorToken = $this->getOrCreateVisitorToken($request);
+            $favori = $favoriRepository->findOneByVisitorAndVoyage($visitorToken, $voyage);
 
-            if ($user instanceof User) {
-                $favori = $favoriRepository->findOneByUserAndVoyage($user, $voyage);
-            } else {
-                $favori = $favoriRepository->findOneByVisitorAndVoyage($visitorToken, $voyage);
-            }
-
-            if ($favori instanceof FavoriVoyage) {
+            if ($favori) {
                 $entityManager->remove($favori);
                 $entityManager->flush();
 
@@ -149,14 +126,7 @@ class FavoriApiController extends AbstractController
                 ]);
             } else {
                 $favori = new FavoriVoyage();
-
-                if ($user instanceof User) {
-                    $favori->setCreatedBy($user);
-                    $favori->setVisitorToken(null);
-                } else {
-                    $favori->setVisitorToken($visitorToken);
-                }
-
+                $favori->setVisitorToken($visitorToken);
                 $favori->setVoyage($voyage);
 
                 $entityManager->persist($favori);

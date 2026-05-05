@@ -18,6 +18,45 @@
     <link rel="stylesheet" href="{{ asset('assets/css/flaticon.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/css/style.css') }}">
 
+    {# Styles personnalisés pour le mode sombre #}
+    <style>
+        /* Mode sombre : ces variables écrasent ou complètent le thème par défaut */
+        body.dark-mode {
+            background-color: #121212;
+            color: #e0e0e0;
+        }
+        body.dark-mode .navbar,
+        body.dark-mode .ftco-footer {
+            background-color: #1f1f1f !important;
+            background-image: none !important;
+        }
+        body.dark-mode .ftco-footer .bg-bottom {
+            background-image: none;
+        }
+        body.dark-mode .navbar-dark .navbar-nav .nav-link {
+            color: rgba(255,255,255,0.75);
+        }
+        body.dark-mode .navbar-dark .navbar-nav .nav-link:hover,
+        body.dark-mode .navbar-dark .navbar-nav .nav-link:focus {
+            color: #fff;
+        }
+        body.dark-mode .card,
+        body.dark-mode .ftco-section,
+        body.dark-mode .form-control {
+            background-color: #1e1e1e;
+            color: #e0e0e0;
+            border-color: #333;
+        }
+        body.dark-mode .btn-outline-primary {
+            color: #bb86fc;
+            border-color: #bb86fc;
+        }
+        body.dark-mode .text-muted {
+            color: #aaa !important;
+        }
+        /* Ajoutez ici d'autres surcharges selon votre design */
+    </style>
+
     {% block stylesheets %}{% endblock %}
 </head>
 <body>
@@ -26,6 +65,7 @@
     <nav class="navbar navbar-expand-lg navbar-dark ftco_navbar bg-dark ftco-navbar-light" id="ftco-navbar">
         <div class="container">
             <a class="navbar-brand" href="{{ path('app_front_home') }}">
+                {% set current_route = app.request.attributes.get('_route') %}
                 <img src="{{ asset('assets/images/LOGO2.png') }}" alt="Logo" style="height: 50px; width: auto;">
             </a>
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#ftco-nav" aria-controls="ftco-nav" aria-expanded="false" aria-label="Toggle navigation">
@@ -33,52 +73,83 @@
             </button>
             <div class="collapse navbar-collapse" id="ftco-nav">
                 <ul class="navbar-nav ml-auto">
-                    <li class="nav-item {% if app.request.attributes.get('_route') == 'app_front_home' %}active{% endif %}">
+                    <li class="nav-item {% if current_route == 'app_front_home' %}active{% endif %}">
                         <a href="{{ path('app_front_home') }}" class="nav-link">Accueil</a>
                     </li>
-                    <li class="nav-item {% if app.request.attributes.get('_route') == 'app_front_voyages' %}active{% endif %}">
+                    <li class="nav-item {% if current_route == 'app_front_voyages' %}active{% endif %}">
                         <a href="{{ path('app_front_voyages', {'currency': currency|default('TND')}) }}" class="nav-link">
                             Voyages
                         </a>
                     </li>
-                    <!-- Logement : visible tout le temps -->
-                    <li class="nav-item {% if app.request.attributes.get('_route') == 'app_front_logement_index' %}active{% endif %}">
+                    <li class="nav-item {% if current_route == 'app_front_logement_index' %}active{% endif %}">
                         <a href="{{ path('app_front_logement_index') }}" class="nav-link">Logement</a>
                     </li>
-                    <li class="nav-item {% if app.request.attributes.get('_route') == 'app_front_events' %}active{% endif %}">
+                    <li class="nav-item {% if current_route == 'app_front_events' %}active{% endif %}">
                         <a href="{{ path('app_front_events') }}" class="nav-link">Events</a>
                     </li>
-                    
+
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="publicationsDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            Publications
+                        </a>
+                        <div class="dropdown-menu" aria-labelledby="publicationsDropdown">
+                            <a class="dropdown-item {% if current_route == 'front_publication_index' %}active{% endif %}" href="{{ path('front_publication_index') }}">
+                                Toutes les publications
+                            </a>
+                            <a class="dropdown-item {% if current_route == 'front_publication_new' %}active{% endif %}" href="{{ path('front_publication_new') }}">
+                                Publier
+                            </a>
+                            {% if app.session.get('mon_pseudo') %}
+                                <a class="dropdown-item {% if current_route == 'front_my_publications' %}active{% endif %}" href="{{ path('front_my_publications') }}">
+                                    Mes publications
+                                </a>
+                            {% endif %}
+                            <a class="dropdown-item {% if current_route == 'front_my_favorites' %}active{% endif %}" href="{{ path('front_my_favorites') }}">
+                                <i class="fa fa-star text-warning"></i> Mes favoris
+                            </a>
+                        </div>
+                    </li>
+
                     {% if app.user %}
-                        <li class="nav-item dropdown {% if app.request.attributes.get('_route') starts with 'app_front_reservation' %}active{% endif %}">
+                        <li class="nav-item dropdown {% if current_route starts with 'app_front_reservation' %}active{% endif %}">
                             <a class="nav-link dropdown-toggle" href="#" id="reservationsDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 Mes réservations
                             </a>
                             <div class="dropdown-menu" aria-labelledby="reservationsDropdown">
                                 <a class="dropdown-item" href="{{ path('app_front_mes_reservations') }}">Mes réservations de voyages</a>
                                 <a class="dropdown-item" href="{{ path('app_front_reservationlog_index') }}">Mes réservations de logements</a>
-                                <a class="dropdown-item" href="{{ path('app_front_mes_participations') }}" class="nav-link">Mes participations</a>
-                                <a class="dropdown-item" href="{{ path('app_front_mes_favoris') }}" class="nav-link">Mes favoris </a>
+                                <a class="dropdown-item" href="{{ path('app_front_mes_participations') }}">Mes participations</a>
+                                <a class="dropdown-item" href="{{ path('app_front_mes_favoris') }}">Mes favoris</a>
                             </div>
                         </li>
                     {% endif %}
 
+                    <li class="nav-item {% if current_route == 'app_contact' %}active{% endif %}">
+                        <a href="#" class="nav-link">Contact</a>
+                    </li>
 
                     {% if app.user %}
-                        <li class="nav-item {% if app.request.attributes.get('_route') == 'app_front_profile' %}active{% endif %}">
-                            <a href="{{ path('app_front_profile') }}" class="nav-link">Mon Profil</a>
+                        <li class="nav-item {% if current_route == 'app_front_profile' %}active{% endif %}">
+                            <a href="{{ path('app_front_profile') }}" class="nav-link">Profil</a>
                         </li>
                         <li class="nav-item">
                             <a href="{{ path('app_logout') }}" class="nav-link">Déconnexion</a>
                         </li>
                     {% else %}
-                        <li class="nav-item {% if app.request.attributes.get('_route') == 'app_login' %}active{% endif %}">
+                        <li class="nav-item {% if current_route == 'app_login' %}active{% endif %}">
                             <a href="{{ path('app_login') }}" class="nav-link">Connexion</a>
                         </li>
-                        <li class="nav-item {% if app.request.attributes.get('_route') == 'app_register' %}active{% endif %}">
+                        <li class="nav-item {% if current_route == 'app_register' %}active{% endif %}">
                             <a href="{{ path('app_register') }}" class="nav-link">Inscription</a>
                         </li>
                     {% endif %}
+
+                    {# Bouton mode sombre/clair #}
+                    <li class="nav-item">
+                        <button id="dark-mode-toggle" class="btn btn-link nav-link" style="font-size: 1.2rem;" aria-label="Changer de thème">
+                            🌙
+                        </button>
+                    </li>
                 </ul>
             </div>
         </div>
@@ -168,6 +239,41 @@
     <script src="{{ asset('assets/js/bootstrap-datepicker.js') }}"></script>
     <script src="{{ asset('assets/js/scrollax.min.js') }}"></script>
     <script src="{{ asset('assets/js/main.js') }}"></script>
+
+    {# Script pour le mode sombre #}
+    <script>
+        (function() {
+            const toggleBtn = document.getElementById('dark-mode-toggle');
+            if (!toggleBtn) return;
+
+            // Vérifier la préférence enregistrée ou la préférence système
+            const storedTheme = localStorage.getItem('theme');
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            let isDark = storedTheme === 'dark' || (storedTheme === null && prefersDark);
+
+            // Appliquer le thème initial
+            function applyTheme(dark) {
+                if (dark) {
+                    document.body.classList.add('dark-mode');
+                    toggleBtn.innerHTML = '☀️';  // soleil pour repasser en clair
+                    toggleBtn.setAttribute('aria-label', 'Passer en mode clair');
+                } else {
+                    document.body.classList.remove('dark-mode');
+                    toggleBtn.innerHTML = '🌙';   // lune pour repasser en sombre
+                    toggleBtn.setAttribute('aria-label', 'Passer en mode sombre');
+                }
+                localStorage.setItem('theme', dark ? 'dark' : 'light');
+            }
+
+            applyTheme(isDark);
+
+            // Écouter le clic
+            toggleBtn.addEventListener('click', function() {
+                isDark = !isDark;
+                applyTheme(isDark);
+            });
+        })();
+    </script>
 
     {% block javascripts %}{% endblock %}
 </body>

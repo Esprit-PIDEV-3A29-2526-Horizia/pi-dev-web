@@ -17,10 +17,7 @@ class CurrencyService
         return $currency;
     }
 
-    /**
- * @return array<int, string>
- */
-public function getAllowedCurrencies(): array
+    public function getAllowedCurrencies(): array
     {
         return self::ALLOWED;
     }

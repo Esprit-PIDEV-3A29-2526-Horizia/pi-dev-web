@@ -1,10 +1,8 @@
 <?php
 
 namespace App\Controller\Admin;
-
 use App\Entity\Reservation;
 use App\Form\ReservationType;
-use App\Service\BrevoMailerService;
 use Doctrine\ORM\EntityManagerInterface;
 use Knp\Component\Pager\PaginatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -16,12 +14,26 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 #[Route('/admin/reservation')]
 class ReservationController extends AbstractController
 {
+
+     /**
+     * Vérifie que l'utilisateur a les droits d'admin
+     */
+    private function checkAdminAccess(): void
+    {
+        $user = $this->getUser();
+        if (!$user || !in_array('ROLE_ADMIN', $user->getRoles())) {
+            throw $this->createAccessDeniedException('Accès réservé aux administrateurs.');
+        }
+    }
+
+
+
     #[Route('/', name: 'app_reservation_index', methods: ['GET'])]
     public function index(
         Request $request,
         EntityManagerInterface $entityManager,
         PaginatorInterface $paginator
-    ): Response {
+     ): Response {
         $search = trim((string) $request->query->get('search', ''));
         $sort = (string) $request->query->get('sort', '');
 
@@ -78,7 +90,6 @@ class ReservationController extends AbstractController
     public function new(Request $request, EntityManagerInterface $entityManager): Response
     {
         $reservation = new Reservation();
-
         $form = $this->createForm(ReservationType::class, $reservation);
         $form->handleRequest($request);
 
@@ -90,7 +101,6 @@ class ReservationController extends AbstractController
                 $entityManager->flush();
 
                 $this->addFlash('success', 'Réservation ajoutée avec succès.');
-
                 return $this->redirectToRoute('app_reservation_index');
             }
         }
@@ -103,15 +113,14 @@ class ReservationController extends AbstractController
     #[Route('/edit/{id}', name: 'app_reservation_edit', methods: ['GET', 'POST'], requirements: ['id' => '\d+'])]
     public function edit(int $id, Request $request, EntityManagerInterface $entityManager): Response
     {
-        $reservation = $entityManager->find(Reservation::class, $id);
+        $reservation = $entityManager->getRepository(Reservation::class)->find($id);
 
-        if (!$reservation instanceof Reservation) {
+        if (!$reservation) {
             throw $this->createNotFoundException('Réservation introuvable.');
         }
 
         if ($reservation->getStatut() === 'CONFIRMEE') {
             $this->addFlash('error', 'Une réservation confirmée ne peut pas être modifiée.');
-
             return $this->redirectToRoute('app_reservation_index');
         }
 
@@ -125,7 +134,6 @@ class ReservationController extends AbstractController
                 $entityManager->flush();
 
                 $this->addFlash('success', 'Réservation modifiée avec succès.');
-
                 return $this->redirectToRoute('app_reservation_index');
             }
         }
@@ -139,25 +147,21 @@ class ReservationController extends AbstractController
     #[Route('/delete/{id}', name: 'app_reservation_delete', methods: ['GET'], requirements: ['id' => '\d+'])]
     public function delete(int $id, EntityManagerInterface $entityManager): Response
     {
-        $reservation = $entityManager->find(Reservation::class, $id);
+        $reservation = $entityManager->getRepository(Reservation::class)->find($id);
 
-        if (!$reservation instanceof Reservation) {
+        if (!$reservation) {
             throw $this->createNotFoundException('Réservation introuvable.');
         }
 
-        $voyage = $reservation->getVoyage();
-
-        if ($reservation->getStatut() === 'CONFIRMEE' && $voyage !== null) {
-            $voyage->setPlacesRestantes(
-                ($voyage->getPlacesRestantes()) + ($reservation->getNbrPersonnes() ?? 0)
-            );
+        if ($reservation->getStatut() === 'CONFIRMEE' && $reservation->getVoyage()) {
+            $voyage = $reservation->getVoyage();
+            $voyage->setPlacesRestantes($voyage->getPlacesRestantes() + $reservation->getNbrPersonnes());
         }
 
         $entityManager->remove($reservation);
         $entityManager->flush();
 
         $this->addFlash('success', 'Réservation supprimée avec succès.');
-
         return $this->redirectToRoute('app_reservation_index');
     }
 
@@ -165,70 +169,68 @@ class ReservationController extends AbstractController
     public function confirmer(
         int $id,
         EntityManagerInterface $entityManager,
-        BrevoMailerService $brevoMailerService,
+        \App\Service\BrevoMailerService $brevoMailerService,
         UrlGeneratorInterface $urlGenerator
-    ): Response {
-        $reservation = $entityManager->find(Reservation::class, $id);
+     ): Response {
+        $reservation = $entityManager->getRepository(Reservation::class)->find($id);
 
-        if (!$reservation instanceof Reservation) {
+        if (!$reservation) {
             throw $this->createNotFoundException('Réservation introuvable.');
         }
 
         if ($reservation->getStatut() === 'CONFIRMEE') {
             $this->addFlash('info', 'Cette réservation est déjà confirmée.');
-
             return $this->redirectToRoute('app_reservation_index');
         }
 
         if ($reservation->getStatut() === 'ANNULEE') {
             $this->addFlash('error', 'Une réservation annulée ne peut pas être confirmée.');
-
             return $this->redirectToRoute('app_reservation_index');
         }
 
         $voyage = $reservation->getVoyage();
 
-        if ($voyage === null) {
+        if (!$voyage) {
             $this->addFlash('error', 'Aucun voyage associé à cette réservation.');
-
             return $this->redirectToRoute('app_reservation_index');
         }
 
-        $nbrPersonnes = $reservation->getNbrPersonnes() ?? 0;
-
-        if ($nbrPersonnes <= 0) {
+        if ($reservation->getNbrPersonnes() <= 0) {
             $this->addFlash('error', 'Le nombre de personnes est invalide.');
-
             return $this->redirectToRoute('app_reservation_index');
         }
 
-        if ($nbrPersonnes > ($voyage->getPlacesRestantes())) {
+        if ($reservation->getNbrPersonnes() > $voyage->getPlacesRestantes()) {
             $this->addFlash('error', 'Places insuffisantes pour confirmer cette réservation.');
-
             return $this->redirectToRoute('app_reservation_index');
         }
 
-        $voyage->setPlacesRestantes(($voyage->getPlacesRestantes()) - $nbrPersonnes);
-        $reservation->setStatut('CONFIRMEE');
+        $voyage->setPlacesRestantes(
+            $voyage->getPlacesRestantes() - $reservation->getNbrPersonnes()
+        );
 
+        $reservation->setStatut('CONFIRMEE');
         $entityManager->flush();
 
         $user = $reservation->getUser();
 
-        if ($user === null || !$user->getEmail()) {
+        if (!$user || !method_exists($user, 'getEmail') || !$user->getEmail()) {
             $this->addFlash('warning', 'Réservation confirmée, mais aucun email utilisateur n’est disponible.');
-
             return $this->redirectToRoute('app_reservation_index');
         }
 
         try {
-            $fullName = trim(($user->getPrenom() ?? '') . ' ' . ($user->getNom() ?? ''));
+            $fullName = '';
 
-            $paymentUrl = $urlGenerator->generate(
-                'app_payment_checkout',
-                ['id' => $reservation->getId()],
-                UrlGeneratorInterface::ABSOLUTE_URL
-            );
+            if (method_exists($user, 'getPrenom') && method_exists($user, 'getNom')) {
+                $fullName = trim(($user->getPrenom() ?? '') . ' ' . ($user->getNom() ?? ''));
+            } elseif (method_exists($user, 'getNom')) {
+                $fullName = (string) ($user->getNom() ?? '');
+            }
+
+            $paymentUrl = $urlGenerator->generate('app_payment_checkout', [
+                'id' => $reservation->getId(),
+            ], UrlGeneratorInterface::ABSOLUTE_URL);
 
             $brevoMailerService->sendReservationConfirmation(
                 $user->getEmail(),
@@ -237,7 +239,7 @@ class ReservationController extends AbstractController
                 (string) $voyage->getDestination(),
                 $voyage->getDateDepart()?->format('d/m/Y') ?? '',
                 $voyage->getDateRetour()?->format('d/m/Y') ?? '',
-                $nbrPersonnes,
+                (int) $reservation->getNbrPersonnes(),
                 $reservation->getId(),
                 $paymentUrl
             );
@@ -263,7 +265,7 @@ class ReservationController extends AbstractController
             ->getQuery()
             ->getOneOrNullResult();
 
-        if (!$reservation instanceof Reservation) {
+        if (!$reservation) {
             throw $this->createNotFoundException('Réservation introuvable.');
         }
 
@@ -272,29 +274,29 @@ class ReservationController extends AbstractController
         ]);
     }
 
-    #[Route('/{id}/annuler', name: 'app_reservation_annuler', methods: ['POST'], requirements: ['id' => '\d+'])]
+    #[Route('/{id}/annuler', name: 'app_reservation_annuler', methods: ['POST'])]
     public function annuler(
         int $id,
         EntityManagerInterface $entityManager,
-        BrevoMailerService $brevoMailerService
-    ): Response {
-        $reservation = $entityManager->find(Reservation::class, $id);
+        \App\Service\BrevoMailerService $brevoMailerService
+     ): Response {
+        $reservation = $entityManager->getRepository(Reservation::class)->find($id);
 
-        if (!$reservation instanceof Reservation) {
+        if (!$reservation) {
             throw $this->createNotFoundException('Réservation introuvable.');
         }
 
         if ($reservation->getStatut() === 'ANNULEE') {
             $this->addFlash('info', 'Cette réservation est déjà annulée.');
-
             return $this->redirectToRoute('app_reservation_index');
         }
 
         $voyage = $reservation->getVoyage();
-        $nbrPersonnes = $reservation->getNbrPersonnes() ?? 0;
 
-        if ($reservation->getStatut() === 'CONFIRMEE' && $voyage !== null) {
-            $voyage->setPlacesRestantes(($voyage->getPlacesRestantes()) + $nbrPersonnes);
+        if ($reservation->getStatut() === 'CONFIRMEE' && $voyage) {
+            $voyage->setPlacesRestantes(
+                $voyage->getPlacesRestantes() + $reservation->getNbrPersonnes()
+            );
         }
 
         $reservation->setStatut('ANNULEE');
@@ -302,11 +304,17 @@ class ReservationController extends AbstractController
 
         $user = $reservation->getUser();
 
-        if ($user !== null && $user->getEmail()) {
+        if ($user && method_exists($user, 'getEmail') && $user->getEmail()) {
             try {
-                $fullName = trim(($user->getPrenom() ?? '') . ' ' . ($user->getNom() ?? ''));
+                $fullName = '';
 
-                if ($voyage !== null) {
+                if (method_exists($user, 'getPrenom') && method_exists($user, 'getNom')) {
+                    $fullName = trim(($user->getPrenom() ?? '') . ' ' . ($user->getNom() ?? ''));
+                } elseif (method_exists($user, 'getNom')) {
+                    $fullName = (string) ($user->getNom() ?? '');
+                }
+
+                if ($voyage) {
                     $brevoMailerService->sendReservationCancellation(
                         $user->getEmail(),
                         $fullName !== '' ? $fullName : 'Client',
@@ -314,13 +322,12 @@ class ReservationController extends AbstractController
                         (string) $voyage->getDestination(),
                         $voyage->getDateDepart()?->format('d/m/Y') ?? '',
                         $voyage->getDateRetour()?->format('d/m/Y') ?? '',
-                        $nbrPersonnes,
+                        (int) $reservation->getNbrPersonnes(),
                         $reservation->getId()
                     );
                 }
             } catch (\Throwable $e) {
                 $this->addFlash('warning', 'Réservation annulée, mais email non envoyé : ' . $e->getMessage());
-
                 return $this->redirectToRoute('app_reservation_index');
             }
         }
@@ -329,4 +336,6 @@ class ReservationController extends AbstractController
 
         return $this->redirectToRoute('app_reservation_index');
     }
+
+    
 }

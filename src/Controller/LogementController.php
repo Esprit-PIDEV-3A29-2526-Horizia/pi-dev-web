@@ -62,27 +62,30 @@ class LogementController extends AbstractController
         ]);
     }
 
-    #[Route('/new', name: 'new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $entityManager): Response
-    {
-        $this->checkAdminAccess();
+  #[Route('/new', name: 'new', methods: ['GET', 'POST'])]
+public function new(Request $request, EntityManagerInterface $entityManager): Response
+{
+    $this->checkAdminAccess();
 
-        $logement = new Logement();
-        $form = $this->createForm(LogementType::class, $logement, ['validation_groups' => ['Default', 'create']]);
-        $form->handleRequest($request);
+    $logement = new Logement();
+    $form = $this->createForm(LogementType::class, $logement, ['validation_groups' => ['Default', 'create']]);
+    $form->handleRequest($request);
 
-        if ($form->isSubmitted() && $form->isValid()) {
-            $entityManager->persist($logement);
-            $entityManager->flush();
-            $this->addFlash('success', 'Logement ajouté avec succès.');
-            return $this->redirectToRoute('admin_logement_index');
-        }
-
-        return $this->render('admin/logement/new.html.twig', [
-            'logement' => $logement,
-            'form' => $form->createView(),
-        ]);
+    if ($form->isSubmitted() && $form->isValid()) {
+        // 👇 AJOUTER CETTE LIGNE pour assigner l'admin connecté
+        $logement->setCreatedBy($this->getUser());
+        
+        $entityManager->persist($logement);
+        $entityManager->flush();
+        $this->addFlash('success', 'Logement ajouté avec succès.');
+        return $this->redirectToRoute('admin_logement_index');
     }
+
+    return $this->render('admin/logement/new.html.twig', [
+        'logement' => $logement,
+        'form' => $form->createView(),
+    ]);
+}
 
     #[Route('/{id}', name: 'show', methods: ['GET'])]
     public function show(Logement $logement, EntityManagerInterface $em, Request $request): Response
@@ -149,6 +152,10 @@ class LogementController extends AbstractController
     public function edit(Request $request, Logement $logement, EntityManagerInterface $entityManager): Response
     {
         $this->checkAdminAccess();
+     if ($logement->getCreatedBy() !== $this->getUser()) {
+            $this->addFlash('danger', 'Vous ne pouvez modifier que vos propres logements.');
+            return $this->redirectToRoute('admin_logement_index');
+        }
 
         $form = $this->createForm(LogementType::class, $logement);
         $form->handleRequest($request);
@@ -173,7 +180,10 @@ class LogementController extends AbstractController
     public function delete(Request $request, Logement $logement, EntityManagerInterface $entityManager): Response
     {
         $this->checkAdminAccess();
-
+ if ($logement->getCreatedBy() !== $this->getUser()) {
+            $this->addFlash('danger', 'Vous ne pouvez supprimer que vos propres logements.');
+            return $this->redirectToRoute('admin_logement_index');
+        }
         if ($this->isCsrfTokenValid('delete' . $logement->getId(), $request->request->get('_token'))) {
             $entityManager->remove($logement);
             $entityManager->flush();
