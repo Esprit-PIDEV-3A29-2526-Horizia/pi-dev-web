@@ -30,6 +30,9 @@ class Categorie
     private ?string $imageUrl = null;
 
     #[ORM\OneToMany(mappedBy: 'categorie', targetEntity: Voyage::class)]
+    /**
+     * @var Collection<int, Voyage>
+     */
     private Collection $voyages;
 
     // RELATION : l'utilisateur (admin) qui a créé la catégorie

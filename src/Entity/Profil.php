@@ -17,6 +17,9 @@ class Profil
     private ?int $id = null;
 
     #[ORM\OneToMany(targetEntity: User::class, mappedBy: 'profil')]
+    /**
+     * @var Collection<int, User>
+     */
     private Collection $users;
 
     #[ORM\Column(length: 30, nullable: true)]

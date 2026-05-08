@@ -16,6 +16,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
+    /** @phpstan-ignore-next-line */
     private ?int $id = null;
 
     #[ORM\Column(length: 100)]
@@ -36,8 +37,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[Assert\Length(min: 6, minMessage: 'Le mot de passe doit contenir au moins 6 caractères.')]
     private ?string $password = null;
 
-    private $resetToken;
-    private $resetTokenExpiresAt;
+    private ?string $resetToken = null;
+    private ?\DateTimeInterface $resetTokenExpiresAt = null;
 
     #[ORM\Column(length: 20, nullable: true)]
     private ?string $telephone = null;
@@ -49,7 +50,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\JoinColumn(name: 'profil_id', referencedColumnName: 'id', nullable: true)]
     private ?Profil $profil = null;
 
-    #[ORM\OneToMany(mappedBy:"user", targetEntity: Participation::class, cascade: ["remove"], orphanRemoval: true)]
+    #[ORM\OneToMany(mappedBy:"user", targetEntity: Participation::class, cascade: ["remove"])]
+    /**
+     * @var Collection<int, Participation>
+     */
     private Collection $participations;
 
     public function __construct()
@@ -162,6 +166,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function getResetTokenExpiresAt(): ?\DateTimeInterface { return $this->resetTokenExpiresAt; }
     public function setResetTokenExpiresAt(?\DateTimeInterface $resetTokenExpiresAt): self { $this->resetTokenExpiresAt = $resetTokenExpiresAt; return $this; }
 
+    /**
+     * @return Collection<int, Participation>
+     */
     public function getParticipations(): Collection
     {
         return $this->participations;

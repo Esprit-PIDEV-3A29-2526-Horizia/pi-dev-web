@@ -62,6 +62,9 @@ class Logement
     private ?User $createdBy = null;
 
     #[ORM\OneToMany(targetEntity: Reservationlog::class, mappedBy: 'logement')]
+    /**
+     * @var Collection<int, Reservationlog>
+     */
     private Collection $reservationlogs;
 
     public function __construct()
