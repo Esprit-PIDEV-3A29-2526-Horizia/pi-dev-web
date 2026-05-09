@@ -1,5 +1,6 @@
 {
     "intelephense.stubs": [
+        "core",
         "apache",
         "bcmath",
         "curl",

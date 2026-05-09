@@ -22,15 +22,15 @@ class PaymentVoyageController extends AbstractController
     ): RedirectResponse {
         $reservation = $entityManager->getRepository(Reservation::class)->find($id);
 
-        if (!$reservation instanceof Reservation) {
+        if (!$reservation) {
             throw $this->createNotFoundException('Réservation introuvable.');
         }
 
-        if ($reservation->getVoyage() === null) {
+        if (!$reservation->getVoyage()) {
             throw $this->createNotFoundException('Aucun voyage lié à cette réservation.');
         }
 
-        if (strtoupper($reservation->getStatut()) !== 'CONFIRMEE') {
+        if (strtoupper((string) $reservation->getStatut()) !== 'CONFIRMEE') {
             $this->addFlash('error', 'Le paiement est disponible uniquement pour les réservations confirmées.');
 
             return $this->redirectToRoute('app_front_reservation_detail', [
@@ -38,7 +38,9 @@ class PaymentVoyageController extends AbstractController
             ]);
         }
 
-        $paymentStatus = strtoupper($reservation->getPaymentStatus());
+        $paymentStatus = method_exists($reservation, 'getPaymentStatus')
+            ? strtoupper((string) $reservation->getPaymentStatus())
+            : 'NON_PAYEE';
 
         if ($paymentStatus === 'PAYEE') {
             $this->addFlash('success', 'Cette réservation est déjà payée.');
@@ -48,8 +50,8 @@ class PaymentVoyageController extends AbstractController
             ]);
         }
 
-        if ($reservation->getPrixTotal() !== null) {
-            $prixTotal = $reservation->getPrixTotal();
+        if (method_exists($reservation, 'getPrixTotal') && $reservation->getPrixTotal() !== null) {
+            $prixTotal = (float) $reservation->getPrixTotal();
         } else {
             $prixTotal = (float) $reservation->getVoyage()->getPrix() * (int) $reservation->getNbrPersonnes();
         }
@@ -85,12 +87,14 @@ class PaymentVoyageController extends AbstractController
     {
         $reservation = $entityManager->getRepository(Reservation::class)->find($id);
 
-        if (!$reservation instanceof Reservation) {
+        if (!$reservation) {
             throw $this->createNotFoundException('Réservation introuvable.');
         }
 
-        $reservation->setPaymentStatus('PAYEE');
-        $entityManager->flush();
+        if (method_exists($reservation, 'setPaymentStatus')) {
+            $reservation->setPaymentStatus('PAYEE');
+            $entityManager->flush();
+        }
 
         $this->addFlash('success', 'Le paiement a été effectué avec succès.');
 
@@ -105,7 +109,7 @@ class PaymentVoyageController extends AbstractController
     {
         $reservation = $entityManager->getRepository(Reservation::class)->find($id);
 
-        if (!$reservation instanceof Reservation) {
+        if (!$reservation) {
             throw $this->createNotFoundException('Réservation introuvable.');
         }
 

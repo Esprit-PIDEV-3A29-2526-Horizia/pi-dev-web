@@ -11,6 +11,7 @@ use Doctrine\Common\Collections\Collection;
 
 #[ORM\Entity]
 #[ORM\Table(name: 'user')]
+#[ORM\HasLifecycleCallbacks]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
@@ -32,8 +33,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $email = null;
 
     #[ORM\Column(length: 255)]
-    #[Assert\NotBlank(message: 'Le mot de passe est obligatoire.')]
-    #[Assert\Length(min: 6, minMessage: 'Le mot de passe doit contenir au moins 6 caractères.')]
     private ?string $password = null;
 
     private $resetToken;
@@ -45,11 +44,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $addresse = null;
     
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    private ?string $photo = null;
+
+    #[ORM\Column(type: 'datetime', nullable: true)]
+    private ?\DateTimeInterface $updatedAt = null;
+    
     #[ORM\ManyToOne(targetEntity: Profil::class, inversedBy: 'users')]
     #[ORM\JoinColumn(name: 'profil_id', referencedColumnName: 'id', nullable: true)]
     private ?Profil $profil = null;
 
-        #[ORM\OneToMany(mappedBy:"user", targetEntity: Participation::class)]
+    #[ORM\OneToMany(mappedBy: "user", targetEntity: Participation::class)]
     private Collection $participations;
 
     public function __construct()
@@ -57,48 +62,14 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         $this->participations = new ArrayCollection();
     }
 
-    public function getId(): ?int
-    {
-        return $this->id;
-    }
-
-    public function getNom(): ?string
-    {
-        return $this->nom;
-    }
-
-    public function setNom(string $nom): self
-    {
-        $this->nom = $nom;
-        return $this;
-    }
-
-    public function getPrenom(): ?string
-    {
-        return $this->prenom;
-    }
-
-    public function setPrenom(string $prenom): self
-    {
-        $this->prenom = $prenom;
-        return $this;
-    }
-
-    public function getEmail(): ?string
-    {
-        return $this->email;
-    }
-
-    public function setEmail(string $email): self
-    {
-        $this->email = $email;
-        return $this;
-    }
-
-    public function getUserIdentifier(): string
-    {
-        return $this->email ?? '';
-    }
+    public function getId(): ?int { return $this->id; }
+    public function getNom(): ?string { return $this->nom; }
+    public function setNom(string $nom): self { $this->nom = $nom; return $this; }
+    public function getPrenom(): ?string { return $this->prenom; }
+    public function setPrenom(string $prenom): self { $this->prenom = $prenom; return $this; }
+    public function getEmail(): ?string { return $this->email; }
+    public function setEmail(string $email): self { $this->email = $email; return $this; }
+    public function getUserIdentifier(): string { return $this->email ?? ''; }
     
     public function getRoles(): array
     {
@@ -109,74 +80,43 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return array_unique($roles);
     }
     
-    public function eraseCredentials(): void
-    {
+    public function eraseCredentials(): void {}
+    public function getPassword(): ?string { return $this->password; }
+    public function setPassword(string $password): self { $this->password = $password; return $this; }
+    public function getTelephone(): ?string { return $this->telephone; }
+    public function setTelephone(?string $telephone): self { $this->telephone = $telephone; return $this; }
+    public function getAddresse(): ?string { return $this->addresse; }
+    public function setAddresse(?string $addresse): self { $this->addresse = $addresse; return $this; }
+    
+    // ⚡ Photo de profil
+    public function getPhoto(): ?string { return $this->photo; }
+    public function setPhoto(?string $photo): self { 
+        $this->photo = $photo; 
+        $this->updatedAt = new \DateTime(); 
+        return $this; 
     }
-
-    public function getPassword(): ?string
-    {
-        return $this->password;
-    }
-
-    public function setPassword(string $password): self
-    {
-        $this->password = $password;
-        return $this;
-    }
-
-    public function getTelephone(): ?string
-    {
-        return $this->telephone;
-    }
-
-    public function setTelephone(?string $telephone): self
-    {
-        $this->telephone = $telephone;
-        return $this;
-    }
-
-    public function getAddresse(): ?string
-    {
-        return $this->addresse;
-    }
-
-    public function setAddresse(?string $addresse): self
-    {
-        $this->addresse = $addresse;
-        return $this;
-    }
-
-    public function getProfil(): ?Profil
-    {
-        return $this->profil;
-    }
-
-    public function setProfil(?Profil $profil): self
-    {
-        $this->profil = $profil;
-        return $this;
-    }
-
+    
+    // ⚡ Date de mise à jour
+    public function getUpdatedAt(): ?\DateTimeInterface { return $this->updatedAt; }
+    public function setUpdatedAt(?\DateTimeInterface $updatedAt): self { $this->updatedAt = $updatedAt; return $this; }
+    
+    public function getProfil(): ?Profil { return $this->profil; }
+    public function setProfil(?Profil $profil): self { $this->profil = $profil; return $this; }
     public function getResetToken(): ?string { return $this->resetToken; }
     public function setResetToken(?string $resetToken): self { $this->resetToken = $resetToken; return $this; }
     public function getResetTokenExpiresAt(): ?\DateTimeInterface { return $this->resetTokenExpiresAt; }
     public function setResetTokenExpiresAt(?\DateTimeInterface $resetTokenExpiresAt): self { $this->resetTokenExpiresAt = $resetTokenExpiresAt; return $this; }
-
-    public function getParticipations(): Collection
-    {
-        return $this->participations;
-    }
-
+    public function getParticipations(): Collection { return $this->participations; }
+    
     public function addParticipation(Participation $participation): self
     {
         if (!$this->participations->contains($participation)) {
             $this->participations[] = $participation;
             $participation->setUser($this);
         }
-
         return $this;
     }
-
+    
     public function removeParticipation(Participation $participation): self
     {
         if ($this->participations->removeElement($participation)) {
@@ -184,7 +124,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
                 $participation->setUser(null);
             }
         }
-
         return $this;
+    }
+    
+    #[ORM\PreUpdate]
+    public function updateTimestamps(): void 
+    { 
+        $this->updatedAt = new \DateTime(); 
     }
 }

@@ -1,0 +1,11 @@
+parameters:
+    level: 6
+    paths:
+        - src/Entity/User.php
+        - src/Repository/UserRepository.php
+        - src/Controller/UserController.php
+        - src/Controller/Front/UserController.php
+        - src/Form/UserType.php
+        - src/Security/
+        - tests/Entity/UserTest.php
+        - tests/Controller/UserControllerTest.php

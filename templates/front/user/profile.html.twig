@@ -2,18 +2,69 @@
 
 {% block title %}Mon Profil - Horozia{% endblock %}
 
-{% block body %}
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        body {
+            background-image: url('{{ asset('assets/images/ma_bg.png') }}?v={{ "now"|date("U") }}');
+            background-size: cover;
+            background-attachment: fixed;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+        .ftco-section { background: transparent !important; }
+        .project-wrap {
+            background: rgba(0, 0, 0, 0.7) !important;
+            backdrop-filter: blur(5px);
+            border-radius: 20px;
+            color: #fff !important;
+        }
+        .project-wrap h3, .project-wrap p, .project-wrap .badge, .project-wrap .row { color: #fff !important; }
+        .profile-photo {
+            width: 120px;
+            height: 120px;
+            object-fit: cover;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        .avatar-circle {
+            width: 120px; height: 120px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+        }
+        .avatar-circle span { font-size: 48px; color: white; font-weight: bold; }
+        .photo-overlay {
+            position: absolute;
+            bottom: 5px;
+            right: 5px;
+            background: #ff8c42;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            border: 2px solid white;
+            cursor: pointer;
+        }
+        #photo-upload-form { display: inline; }
+        .photo-label {
+            cursor: pointer;
+            display: inline-block;
+        }
+    </style>
+{% endblock %}
 
-<section class="hero-wrap hero-bread" style="background-image: url('{{ asset('assets/images/bg_1.jpg') }}');">
+{% block body %}
+<section class="hero-wrap hero-bread" style="background-image: url('{{ asset('assets/images/ma_bg.png') }}');">
     <div class="overlay"></div>
     <div class="container">
         <div class="row no-gutters slider-text align-items-center justify-content-center">
             <div class="col-md-9 ftco-animate text-center">
-                <p class="breadcrumbs">
-                    <span class="mr-2"><a href="{{ path('app_front_home') }}">Accueil</a></span>
-                    <span>Mon Profil</span>
-                </p>
-                <h1 class="mb-0 bread">Mon Profil</h1>
+                <p class="breadcrumbs"></p>
             </div>
         </div>
     </div>
@@ -22,81 +73,53 @@
 <section class="ftco-section">
     <div class="container">
         <div class="row">
-            <!-- Carte profil - colonne de gauche -->
             <div class="col-md-4 mb-4">
                 <div class="project-wrap h-100 text-center p-4">
-                    <div class="icon d-flex justify-content-center mb-3">
-                        <div class="avatar-circle" style="width: 120px; height: 120px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center;">
-                            <span style="font-size: 48px; color: white; font-weight: bold;">
-                                {{ user.prenom|first|upper }}{{ user.nom|first|upper }}
-                            </span>
-                        </div>
-                    </div>
-                    <h3>{{ user.nom }} {{ user.prenom }}</h3>
-                    <p class="location">
-                        <span class="fa fa-envelope"></span> {{ user.email }}
-                    </p>
+                    <!-- Formulaire pour changer la photo -->
+<!-- Formulaire pour changer la photo -->
+<form action="{{ path('app_profile_edit') }}" method="post" enctype="multipart/form-data" style="display: inline;">
+    <div style="position: relative; display: inline-block;">
+        {% if user.photo %}
+            <img src="{{ asset('uploads/profiles/' ~ user.photo) }}?v={{ user.updatedAt|date('U')|default('0') }}"
+                 style="width: 120px; height: 120px; object-fit: cover; border-radius: 50%; cursor: pointer;">
+        {% else %}
+            <div class="avatar-circle" style="cursor: pointer;">
+                <span>{{ user.prenom|first|upper }}{{ user.nom|first|upper }}</span>
+            </div>
+        {% endif %}
+        <label for="photo-input" style="position: absolute; bottom: 5px; right: 5px; background: #ff8c42; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; color: white; border: 2px solid white; cursor: pointer;">
+            <i class="fas fa-camera"></i>
+        </label>
+        <input type="file" name="photo" id="photo-input" accept="image/*" style="display: none;" onchange="this.form.submit()">
+    </div>
+</form>
+
+                    <h3 class="mt-3">{{ user.nom }} {{ user.prenom }}</h3>
+                    <p class="location"><span class="fa fa-envelope"></span> {{ user.email }}</p>
                     {% if user.profil %}
-                        <p>
-                            <span class="badge badge-primary px-3 py-2" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                                {{ user.profil.type }}
-                            </span>
-                        </p>
+                        <p><span class="badge badge-primary px-3 py-2" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">{{ user.profil.type }}</span></p>
                     {% endif %}
-                    <p class="mt-3">
-                        <a href="{{ path('app_profile_edit') }}" class="btn btn-primary py-2 px-3">
-                            <span class="fa fa-pencil"></span> Modifier mon profil
-                        </a>
-                    </p>
+                    <p class="mt-3"><a href="{{ path('app_profile_edit') }}" class="btn btn-primary py-2 px-3"><span class="fa fa-pencil"></span> Modifier mon profil</a></p>
                 </div>
             </div>
 
-            <!-- Informations détaillées - colonne de droite -->
             <div class="col-md-8">
                 <div class="project-wrap h-100 p-4">
                     <h3 class="mb-4">Mes informations</h3>
-                    <div class="row mb-3">
-                        <div class="col-md-4 fw-bold">Nom complet :</div>
-                        <div class="col-md-8">{{ user.nom }} {{ user.prenom }}</div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-md-4 fw-bold">Email :</div>
-                        <div class="col-md-8">{{ user.email }}</div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-md-4 fw-bold">Téléphone :</div>
-                        <div class="col-md-8">{{ user.telephone ?: 'Non renseigné' }}</div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-md-4 fw-bold">Adresse :</div>
-                        <div class="col-md-8">{{ user.addresse ?: 'Non renseignée' }}</div>
-                    </div>
-                    
+                    <div class="row mb-3"><div class="col-md-4 fw-bold">Nom complet :</div><div class="col-md-8">{{ user.nom }} {{ user.prenom }}</div></div>
+                    <div class="row mb-3"><div class="col-md-4 fw-bold">Email :</div><div class="col-md-8">{{ user.email }}</div></div>
+                    <div class="row mb-3"><div class="col-md-4 fw-bold">Téléphone :</div><div class="col-md-8">{{ user.telephone ?: 'Non renseigné' }}</div></div>
+                    <div class="row mb-3"><div class="col-md-4 fw-bold">Adresse :</div><div class="col-md-8">{{ user.addresse ?: 'Non renseignée' }}</div></div>
                     <hr class="my-4">
-                    
                     <div class="row">
-                        <div class="col-md-6">
-                            <a href="{{ path('app_front_mes_reservations') }}" class="btn btn-outline-primary w-100 py-3">
-                                <span class="fa fa-calendar-check-o"></span> Mes réservations
-                            </a>
-                        </div>
-                        <div class="col-md-6">
-                            <a href="{{ path('app_front_change_password') }}" class="btn btn-outline-secondary w-100 py-3">
-                                <span class="fa fa-lock"></span> Changer mon mot de passe
-                            </a>
-                        </div>
+                        <div class="col-md-6"><a href="{{ path('app_front_mes_reservations') }}" class="btn btn-outline-primary w-100 py-3"><span class="fa fa-calendar-check-o"></span> Mes réservations</a></div>
+                        <div class="col-md-6"><a href="{{ path('app_front_change_password') }}" class="btn btn-outline-secondary w-100 py-3"><span class="fa fa-lock"></span> Changer mon mot de passe</a></div>
                     </div>
-
                     <hr class="my-4">
-
                     <div class="row">
                         <div class="col-md-12">
-                            <button id="register-webauthn" class="btn btn-primary w-100 py-3" style="background: linear-gradient(135deg, #28a745, #20c997); border: none;">
-                                <i class="fas fa-fingerprint"></i> Enregistrer mon appareil (Face ID / Windows Hello)
-                            </button>
-                            <small class="text-muted d-block text-center mt-2">
-                                Enregistrez votre empreinte ou visage pour vous connecter sans mot de passe.
-                            </small>
+                            <button id="register-webauthn" class="btn btn-primary w-100 py-3" style="background: linear-gradient(135deg, #28a745, #20c997); border: none;"><i class="fas fa-fingerprint"></i> Enregistrer mon appareil (Face ID / Windows Hello)</button>
+                            <small class="text-muted d-block text-center mt-2">Enregistrez votre empreinte ou visage pour vous connecter sans mot de passe.</small>
                         </div>
                     </div>
                 </div>
@@ -106,49 +129,39 @@
 </section>
 
 <script>
-    (function() {
-        const registerButton = document.getElementById('register-webauthn');
-        if (!registerButton) return;
-
+    // Seul le code WebAuthn reste, pas l'upload AJAX
+    const registerButton = document.getElementById('register-webauthn');
+    if (registerButton) {
         registerButton.addEventListener('click', async () => {
             try {
-                // 1. Récupérer les options d'enregistrement
                 const resp = await fetch('/webauthn/register/begin');
                 if (!resp.ok) throw new Error('Erreur lors de la récupération des options');
                 const options = await resp.json();
-
-                // 2. Convertir les données binaires (base64 vers Uint8Array)
-                const publicKey = {
-                    ...options.publicKey,
-                    challenge: Uint8Array.from(atob(options.publicKey.challenge), c => c.charCodeAt(0)),
-                    user: {
-                        ...options.publicKey.user,
-                        id: Uint8Array.from(atob(options.publicKey.user.id), c => c.charCodeAt(0))
-                    },
-                    excludeCredentials: options.publicKey.excludeCredentials?.map(cred => ({
-                        ...cred,
-                        id: Uint8Array.from(atob(cred.id), c => c.charCodeAt(0))
-                    })) || []
+                const publicKey = { 
+                    ...options.publicKey, 
+                    challenge: Uint8Array.from(atob(options.publicKey.challenge), c => c.charCodeAt(0)), 
+                    user: { 
+                        ...options.publicKey.user, 
+                        id: Uint8Array.from(atob(options.publicKey.user.id), c => c.charCodeAt(0)) 
+                    }, 
+                    excludeCredentials: options.publicKey.excludeCredentials?.map(cred => ({ 
+                        ...cred, 
+                        id: Uint8Array.from(atob(cred.id), c => c.charCodeAt(0)) 
+                    })) || [] 
                 };
-
-                // 3. Demander la création de la passkey (boîte de dialogue biométrique)
                 const credential = await navigator.credentials.create({ publicKey });
-
-                // 4. Envoyer la réponse au serveur
-                const completeResp = await fetch('/webauthn/register/complete', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(credential)
+                const completeResp = await fetch('/webauthn/register/complete', { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify(credential) 
                 });
                 const result = await completeResp.json();
                 if (!result.success) throw new Error(result.error || 'Échec de l\'enregistrement');
-
-                alert('Appareil enregistré avec succès ! Vous pouvez maintenant utiliser la connexion biométrique.');
-            } catch (err) {
-                console.error(err);
-                alert('Erreur lors de l\'enregistrement : ' + err.message);
+                alert('Appareil enregistré avec succès !');
+            } catch (err) { 
+                alert('Erreur : ' + err.message); 
             }
         });
-    })();
+    }
 </script>
 {% endblock %}

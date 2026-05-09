@@ -7,7 +7,9 @@ parameters:
 
     openai.api_key: '%env(OPENAI_API_KEY)%'
     openai.model: '%env(OPENAI_MODEL)%'
-
+    groq.api_key: '%env(default::GROQ_API_KEY)%'
+    groq.model: '%env(default::GROQ_MODEL)%'
+    openrouter.api_key: '%env(default::OPENROUTER_API_KEY)%'
 services:
     _defaults:
         autowire: true
@@ -45,10 +47,7 @@ services:
         arguments:
             $stripeSecretKey: '%stripe.secret_key%'
 
-    App\Service\GeminiService:
-        arguments:
-            $apiKey: '%env(GEMINI_API_KEY)%'
-            $logger: '@logger'
+
 
     App\Service\AiChatbotService: ~
 
@@ -59,3 +58,15 @@ services:
     App\EventListener\LoginFailureListener:
         tags:
             - { name: kernel.event_subscriber }
+    App\Service\GeminiService:
+        arguments:
+            $apiKey: '%env(GEMINI_API_KEY)%'
+
+    App\Service\GroqService:
+        arguments:
+            $apiKey: '%groq.api_key%'
+            $model: '%groq.model%'
+
+    App\Service\OpenRouterService:
+        arguments:
+            $apiKey: '%openrouter.api_key%'
