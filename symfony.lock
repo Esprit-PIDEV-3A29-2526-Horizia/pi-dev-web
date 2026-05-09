@@ -68,6 +68,9 @@
             "./migrations/.gitignore"
         ]
     },
+    "endroid/qr-code-bundle": {
+        "version": "7.0.0"
+    },
     "google/apiclient": {
         "version": "2.19",
         "recipe": {

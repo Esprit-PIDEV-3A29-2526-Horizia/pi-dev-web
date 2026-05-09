@@ -23,4 +23,5 @@ return [
     Stof\DoctrineExtensionsBundle\StofDoctrineExtensionsBundle::class => ['all' => true],
     Translation\Bundle\TranslationBundle::class => ['all' => true],
     Survos\LibreTranslateBundle\SurvosLibreTranslateBundle::class => ['all' => true],
+    Endroid\QrCodeBundle\EndroidQrCodeBundle::class => ['dev' => true, 'test' => true],
 ];

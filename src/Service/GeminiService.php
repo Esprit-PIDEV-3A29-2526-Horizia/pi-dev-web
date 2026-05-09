@@ -61,6 +61,9 @@ class GeminiService
 
         return $data['candidates'][0]['content']['parts'][0]['text'] ?? '';
     }
+    /**
+     * @return array{titre: string, description: string, image_prompt: string, pays: string}
+     */
     public function generateVoyageContent(string $destination): array
     {
         try {

@@ -28,7 +28,7 @@ class ReservationType extends AbstractType
                 'label' => 'Date réservation',
                 'widget' => 'single_text',
                 'required' => true,
-                'attr' => ['class' => 'form-control']
+                'attr' => ['class' => 'form-control'],
             ])
             ->add('statut', ChoiceType::class, [
                 'label' => 'Statut',
@@ -37,20 +37,20 @@ class ReservationType extends AbstractType
                     'CONFIRMEE' => 'CONFIRMEE',
                     'ANNULEE' => 'ANNULEE',
                 ],
-                'attr' => ['class' => 'form-select']
+                'attr' => ['class' => 'form-select'],
             ])
             ->add('voyage', EntityType::class, [
                 'class' => Voyage::class,
                 'choice_label' => 'titre',
                 'label' => 'Voyage',
                 'placeholder' => 'Choisir un voyage',
-                'attr' => ['class' => 'form-select']
+                'attr' => ['class' => 'form-select'],
             ])
             ->add('user', EntityType::class, [
                 'class' => User::class,
-                'choice_label' => function (User $user) {
-                    $nom = method_exists($user, 'getNom') ? $user->getNom() : '';
-                    $prenom = method_exists($user, 'getPrenom') ? $user->getPrenom() : '';
+                'choice_label' => function (User $user): string {
+                    $nom = (string) $user->getNom();
+                    $prenom = (string) $user->getPrenom();
                     $fullName = trim($nom . ' ' . $prenom);
 
                     return $fullName !== '' ? $fullName : ('Utilisateur #' . $user->getId());
@@ -58,7 +58,7 @@ class ReservationType extends AbstractType
                 'label' => 'Client',
                 'placeholder' => 'Choisir un utilisateur',
                 'required' => false,
-                'attr' => ['class' => 'form-select']
+                'attr' => ['class' => 'form-select'],
             ])
             ->add('nbAdultes', IntegerType::class, [
                 'label' => 'Nombre d’adultes',
@@ -69,16 +69,16 @@ class ReservationType extends AbstractType
                 ],
                 'constraints' => [
                     new Assert\NotBlank([
-                        'message' => 'Veuillez saisir le nombre d’adultes.'
+                        'message' => 'Veuillez saisir le nombre d’adultes.',
                     ]),
                     new Assert\PositiveOrZero([
-                        'message' => 'Le nombre d’adultes doit être positif ou nul.'
+                        'message' => 'Le nombre d’adultes doit être positif ou nul.',
                     ]),
                     new Assert\LessThanOrEqual([
                         'value' => $placesRestantes,
-                        'message' => 'Le nombre d’adultes ne peut pas dépasser les places disponibles.'
+                        'message' => 'Le nombre d’adultes ne peut pas dépasser les places disponibles.',
                     ]),
-                ]
+                ],
             ])
             ->add('nbEnfants', IntegerType::class, [
                 'label' => 'Nombre d’enfants',
@@ -89,30 +89,30 @@ class ReservationType extends AbstractType
                 ],
                 'constraints' => [
                     new Assert\NotBlank([
-                        'message' => 'Veuillez saisir le nombre d’enfants.'
+                        'message' => 'Veuillez saisir le nombre d’enfants.',
                     ]),
                     new Assert\PositiveOrZero([
-                        'message' => 'Le nombre d’enfants doit être positif ou nul.'
+                        'message' => 'Le nombre d’enfants doit être positif ou nul.',
                     ]),
                     new Assert\LessThanOrEqual([
                         'value' => $placesRestantes,
-                        'message' => 'Le nombre d’enfants ne peut pas dépasser les places disponibles.'
+                        'message' => 'Le nombre d’enfants ne peut pas dépasser les places disponibles.',
                     ]),
-                ]
+                ],
             ]);
 
-        $builder->addEventListener(FormEvents::POST_SUBMIT, function (FormEvent $event) {
+        $builder->addEventListener(FormEvents::POST_SUBMIT, function (FormEvent $event): void {
             $reservation = $event->getData();
             $form = $event->getForm();
 
-            if (!$reservation) {
+            if (!$reservation instanceof Reservation) {
                 return;
             }
 
             $voyage = $reservation->getVoyage();
             $nbrPersonnes = $reservation->getNbrPersonnes();
 
-            if ($voyage && $nbrPersonnes && $nbrPersonnes > $voyage->getPlacesRestantes()) {
+            if ($voyage !== null && $nbrPersonnes !== null && $nbrPersonnes > $voyage->getPlacesRestantes()) {
                 if ($form->has('nbAdultes')) {
                     $form->get('nbAdultes')->addError(
                         new FormError('Le nombre total de personnes ne peut pas dépasser les places disponibles.')

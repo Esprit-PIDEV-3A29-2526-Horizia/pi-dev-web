@@ -3,6 +3,7 @@
 
 namespace App\Service;
 
+use App\Entity\Logement;
 use App\Repository\LogementRepository;
 
 class LogementSearchService
@@ -16,6 +17,8 @@ class LogementSearchService
 
     /**
      * Version front : recherche + type + tri (sans pagination, sans filtre disponibilité)
+     * 
+     * @return Logement[]
      */
     public function searchAndSort(?string $search, ?string $type, ?string $sort): array
     {
@@ -47,7 +50,7 @@ class LogementSearchService
     /**
      * Version admin : recherche textuelle + filtre disponibilité + tri + pagination
      *
-     * @return array Liste des logements (objets Logement)
+     * @return Logement[]
      */
     public function searchAndSortForAdmin(
         ?string $search,

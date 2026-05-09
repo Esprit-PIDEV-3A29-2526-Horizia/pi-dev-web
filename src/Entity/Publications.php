@@ -5,85 +5,46 @@ namespace App\Entity;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
-/**
- * Publications
- *
- * @ORM\Table(name="publications")
- * @ORM\Entity
- */
+#[ORM\Table(name: 'publications')]
+#[ORM\Entity]
 class Publications
 {
-    /**
-     * @var int
-     *
-     * @ORM\Column(name="id", type="integer", nullable=false)
-     * @ORM\Id
-     * @ORM\GeneratedValue(strategy="IDENTITY")
-     */
-    private $id;
+    #[ORM\Id]
+    #[ORM\GeneratedValue(strategy: 'IDENTITY')]
+    #[ORM\Column(name: 'id', type: 'integer', nullable: false)]
+    private int $id;
 
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="titre", type="string", length=255, nullable=false)
-     */
-    private $titre;
+    #[ORM\Column(name: 'titre', type: 'string', length: 255, nullable: false)]
+    private string $titre;
 
-    /**
-     * @var string|null
-     *
-     * @ORM\Column(name="description", type="text", length=65535, nullable=true)
-     */
-    private $description;
+    #[ORM\Column(name: 'description', type: 'text', length: 65535, nullable: true)]
+    private ?string $description = null;
 
-    /**
-     * @var string|null
-     *
-     * @ORM\Column(name="image", type="string", length=500, nullable=true)
-     */
-    private $image;
+    #[ORM\Column(name: 'image', type: 'string', length: 500, nullable: true)]
+    private ?string $image = null;
 
-    /**
-     * @var string|null
-     *
-     * @ORM\Column(name="categorie", type="string", length=50, nullable=true)
-     */
-    private $categorie;
+    #[ORM\Column(name: 'categorie', type: 'string', length: 50, nullable: true)]
+    private ?string $categorie = null;
 
-    /**
-     * @var int|null
-     *
-     * @ORM\Column(name="utilisateur_id", type="integer", nullable=true)
-     */
-    private $utilisateurId = '0';
+    #[ORM\Column(name: 'utilisateur_id', type: 'integer', nullable: true)]
+    private ?int $utilisateurId = null;
 
-    /**
-     * @var string|null
-     *
-     * @ORM\Column(name="auteur", type="string", length=100, nullable=true)
-     */
-    private $auteur;
+    #[ORM\Column(name: 'auteur', type: 'string', length: 100, nullable: true)]
+    private ?string $auteur = null;
 
-    /**
-     * @var int|null
-     *
-     * @ORM\Column(name="likes", type="integer", nullable=true)
-     */
-    private $likes = '0';
+    #[ORM\Column(name: 'likes', type: 'integer', nullable: true)]
+    private ?int $likes = null;
 
-    /**
-     * @var int|null
-     *
-     * @ORM\Column(name="commentaires", type="integer", nullable=true)
-     */
-    private $commentaires = '0';
+    #[ORM\Column(name: 'commentaires', type: 'integer', nullable: true)]
+    private ?int $commentaires = null;
 
-    /**
-     * @var \DateTime
-     *
-     * @ORM\Column(name="date_creation", type="datetime", nullable=false, options={"default"="CURRENT_TIMESTAMP"})
-     */
-    private $dateCreation = 'CURRENT_TIMESTAMP';
+    #[ORM\Column(name: 'date_creation', type: 'datetime', nullable: false)]
+    private \DateTimeInterface $dateCreation;
+
+    public function __construct()
+    {
+        $this->dateCreation = new \DateTime();
+    }
 
     public function getId(): ?int
     {
@@ -95,10 +56,9 @@ class Publications
         return $this->titre;
     }
 
-    public function setTitre(string $titre): static
+    public function setTitre(string $titre): self
     {
         $this->titre = $titre;
-
         return $this;
     }
 
@@ -107,10 +67,9 @@ class Publications
         return $this->description;
     }
 
-    public function setDescription(?string $description): static
+    public function setDescription(?string $description): self
     {
         $this->description = $description;
-
         return $this;
     }
 
@@ -119,10 +78,9 @@ class Publications
         return $this->image;
     }
 
-    public function setImage(?string $image): static
+    public function setImage(?string $image): self
     {
         $this->image = $image;
-
         return $this;
     }
 
@@ -131,10 +89,9 @@ class Publications
         return $this->categorie;
     }
 
-    public function setCategorie(?string $categorie): static
+    public function setCategorie(?string $categorie): self
     {
         $this->categorie = $categorie;
-
         return $this;
     }
 
@@ -143,10 +100,9 @@ class Publications
         return $this->utilisateurId;
     }
 
-    public function setUtilisateurId(?int $utilisateurId): static
+    public function setUtilisateurId(?int $utilisateurId): self
     {
         $this->utilisateurId = $utilisateurId;
-
         return $this;
     }
 
@@ -155,10 +111,9 @@ class Publications
         return $this->auteur;
     }
 
-    public function setAuteur(?string $auteur): static
+    public function setAuteur(?string $auteur): self
     {
         $this->auteur = $auteur;
-
         return $this;
     }
 
@@ -167,10 +122,9 @@ class Publications
         return $this->likes;
     }
 
-    public function setLikes(?int $likes): static
+    public function setLikes(?int $likes): self
     {
         $this->likes = $likes;
-
         return $this;
     }
 
@@ -179,24 +133,20 @@ class Publications
         return $this->commentaires;
     }
 
-    public function setCommentaires(?int $commentaires): static
+    public function setCommentaires(?int $commentaires): self
     {
         $this->commentaires = $commentaires;
-
         return $this;
     }
 
-    public function getDateCreation(): ?\DateTimeInterface
+    public function getDateCreation(): \DateTimeInterface
     {
         return $this->dateCreation;
     }
 
-    public function setDateCreation(\DateTimeInterface $dateCreation): static
+    public function setDateCreation(\DateTimeInterface $dateCreation): self
     {
         $this->dateCreation = $dateCreation;
-
         return $this;
     }
-
-
 }

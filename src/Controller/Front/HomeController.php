@@ -22,13 +22,14 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
-use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Endroid\QrCode\Builder\Builder;
 use Endroid\QrCode\Encoding\Encoding;
-use Endroid\QrCode\ErrorCorrectionLevel\ErrorCorrectionLevel;
-use Endroid\QrCode\RoundBlockSizeMode\RoundBlockSizeMode;
+use Endroid\QrCode\ErrorCorrectionLevel;
+use Endroid\QrCode\RoundBlockSizeMode;
 use Endroid\QrCode\Writer\PngWriter;
 use Doctrine\ORM\Tools\Pagination\Paginator;
+use Doctrine\ORM\EntityRepository;
+use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 
 class HomeController extends AbstractController
 {
@@ -43,7 +44,9 @@ class HomeController extends AbstractController
 
         $currency = $currencyService->normalizeCurrency($request->query->get('currency', 'TND'));
 
-        $query = $doctrine->getRepository(Voyage::class)->createQueryBuilder('v')
+        /** @var EntityRepository<Voyage> $voyageRepo */
+        $voyageRepo = $entityManager->getRepository(Voyage::class);
+        $query = $voyageRepo->createQueryBuilder('v')
             ->select('v', 'COUNT(r.id) AS HIDDEN nbReservations')
             ->innerJoin(Reservation::class, 'r', 'WITH', 'r.voyage = v AND r.statut = :statut')
             ->setParameter('statut', 'CONFIRMEE')
@@ -199,29 +202,17 @@ class HomeController extends AbstractController
             $reservation->setDateReservation(new \DateTime());
             $reservation->setStatut('EN_ATTENTE');
 
-            if (method_exists($reservation, 'setPaymentStatus')) {
-                $reservation->setPaymentStatus('NON_PAYEE');
-            }
+            $reservation->setPaymentStatus('NON_PAYEE');
 
-            if (method_exists($reservation, 'setNbAdultes')) {
-                $reservation->setNbAdultes($nbAdultes);
-            }
+            $reservation->setNbAdultes($nbAdultes);
 
-            if (method_exists($reservation, 'setNbEnfants')) {
-                $reservation->setNbEnfants($nbEnfants);
-            }
+            $reservation->setNbEnfants($nbEnfants);
 
-            if (method_exists($reservation, 'recalculerNbrPersonnes')) {
-                $reservation->recalculerNbrPersonnes();
-            } else {
-                $reservation->setNbrPersonnes($nbPersonnes);
-            }
+            $reservation->recalculerNbrPersonnes();
 
             $prixTotalDt = ($voyage->getPrix() * $nbAdultes) + (($voyage->getPrix() * $prixEnfantRatio) * $nbEnfants);
 
-            if (method_exists($reservation, 'setPrixTotal')) {
-                $reservation->setPrixTotal(new \Money\Money((int)($prixTotalDt * 100), new \Money\Currency('TND')));
-            }
+            $reservation->setPrixTotal($prixTotalDt);
 
             $entityManager->persist($reservation);
             $entityManager->flush();
@@ -261,8 +252,9 @@ class HomeController extends AbstractController
         $selectedStatut = trim((string) $request->query->get('statut', ''));
         $page = $request->query->getInt('page', 1);
 
-        $qb = $doctrine->getManager()->getRepository(Reservation::class)->createQueryBuilder('r')            
-            ->innerJoin('r.voyage', 'v')
+        /** @var EntityRepository<Reservation> $reservationRepo */
+        $reservationRepo = $doctrine->getManager()->getRepository(Reservation::class);
+        $qb = $reservationRepo->createQueryBuilder('r')            ->innerJoin('r.voyage', 'v')
             ->addSelect('v')
             ->andWhere('r.user = :user')
             ->setParameter('user', $user)
@@ -303,7 +295,6 @@ class HomeController extends AbstractController
         }
 
         if (
-            method_exists($reservation, 'getUser') &&
             $reservation->getUser() &&
             $reservation->getUser()->getId() !== $user->getId() &&
             !in_array('ROLE_ADMIN', $user->getRoles())
@@ -337,7 +328,6 @@ class HomeController extends AbstractController
         }
 
         if (
-            method_exists($reservation, 'getUser') &&
             $reservation->getUser() &&
             $reservation->getUser()->getId() !== $user->getId() &&
             !in_array('ROLE_ADMIN', $user->getRoles())
@@ -354,9 +344,7 @@ class HomeController extends AbstractController
             throw $this->createAccessDeniedException('Token CSRF invalide.');
         }
 
-        $paymentStatus = method_exists($reservation, 'getPaymentStatus')
-            ? strtoupper((string) $reservation->getPaymentStatus())
-            : 'NON_PAYEE';
+        $paymentStatus = strtoupper((string) $reservation->getPaymentStatus());
 
         if (strtoupper((string) $reservation->getStatut()) === 'ANNULEE') {
             $this->addFlash('error', 'Cette réservation est déjà annulée.');
@@ -382,8 +370,18 @@ class HomeController extends AbstractController
     }
 
     #[Route('/voyages', name: 'app_front_voyages', methods: ['GET'])]
-    public function voyages(ManagerRegistry $doctrine, Request $request, OpenWeatherService $openWeatherService, CurrencyService $currencyService, PaginatorInterface $paginator ): Response {
-        $qb = $doctrine->getRepository(Voyage::class)->createQueryBuilder('v')
+    public function voyages(
+        ManagerRegistry $doctrine,
+        Request $request,
+        OpenWeatherService $openWeatherService,
+        CurrencyService $currencyService,
+        PaginatorInterface $paginator,
+        EntityManagerInterface $entityManager
+    ): Response {
+        /** @var EntityRepository<Voyage> $voyageRepo */
+        $voyageRepo = $entityManager->getRepository(Voyage::class);
+ 
+        $qb = $voyageRepo->createQueryBuilder('v')
             ->orderBy('v.id', 'DESC');
 
         $filters = [
@@ -497,24 +495,24 @@ class HomeController extends AbstractController
 
     private function buildReservationQrCode(Reservation $reservation): \Endroid\QrCode\Writer\Result\ResultInterface
     {
-    $detailPath = $this->generateUrl(
-        'app_front_reservation_detail',
-        ['id' => $reservation->getId()]
-    );
+        $detailPath = $this->generateUrl(
+            'app_front_reservation_detail',
+            ['id' => $reservation->getId()]
+        );
 
-    $baseUrl = rtrim((string) $this->getParameter('app.base_url'), '/');
-    $detailUrl = $baseUrl . $detailPath;
+        $baseUrl = rtrim((string) $this->getParameter('app.base_url'), '/');
+        $detailUrl = $baseUrl . $detailPath;
 
-    return Builder::create()
-        ->writer(new PngWriter())
-        ->data($detailUrl)
-        ->encoding(new Encoding('UTF-8'))
-        ->errorCorrectionLevel(ErrorCorrectionLevel::High)
-        ->size(420)
-        ->margin(16)
-        ->roundBlockSizeMode(RoundBlockSizeMode::Margin)
-        ->build();
-}
+        return Builder::create()
+            ->writer(new PngWriter())
+            ->data($detailUrl)
+            ->encoding(new Encoding('UTF-8'))
+            ->errorCorrectionLevel(ErrorCorrectionLevel::High)
+            ->size(420)
+            ->margin(16)
+            ->roundBlockSizeMode(RoundBlockSizeMode::Margin)
+            ->build();
+    }
 
 
     #[Route('/reservation/{id}/qrcode/view', name: 'app_reservation_qrcode_view', methods: ['GET'])]
@@ -596,6 +594,10 @@ class HomeController extends AbstractController
         if (!$user) {
             return $this->redirectToRoute('app_login');
         }
+        if (!$user instanceof PasswordAuthenticatedUserInterface) {
+            throw $this->createAccessDeniedException('Ce compte ne supporte pas la gestion de mot de passe.');
+        }
+
 
         if ($request->isMethod('POST')) {
             $oldPassword = $request->request->get('old_password');
@@ -618,7 +620,9 @@ class HomeController extends AbstractController
             }
 
             $hashedPassword = $passwordHasher->hashPassword($user, $newPassword);
-            $user->setPassword($hashedPassword);
+            if (method_exists($user, 'setPassword')) {
+                $user->setPassword($hashedPassword);
+            }
             $entityManager->flush();
 
             $this->addFlash('success', 'Votre mot de passe a été modifié avec succès');
@@ -854,6 +858,10 @@ class HomeController extends AbstractController
         }
     }
 
+    /**
+     * @param array<int, Reservationlog> $reservations
+     * @param array<int, Logement> $candidates
+     */
     private function buildPrompt(array $reservations, array $candidates): string
     {
         $resumeReservations = '';

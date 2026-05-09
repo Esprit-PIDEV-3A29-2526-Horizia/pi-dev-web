@@ -2,7 +2,6 @@
 
 namespace App\Entity;
 
-use App\Entity\Categorie;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
@@ -12,10 +11,11 @@ use Symfony\Component\Validator\Context\ExecutionContextInterface;
 #[ORM\Table(name: "voyage")]
 class Voyage
 {
-    #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column(type: "integer")]
-    private ?int $id = null;
+   #[ORM\Id]
+#[ORM\GeneratedValue]
+#[ORM\Column(type: "integer")]
+/** @phpstan-ignore-next-line */
+private ?int $id = null;
 
     #[ORM\Column(length: 255, nullable: true)]
     #[Assert\NotBlank(message: "Le titre est obligatoire.")]
@@ -62,8 +62,7 @@ class Voyage
     #[Assert\PositiveOrZero(message: "Le nombre de places restantes doit être positif ou nul.")]
     private ?int $placesRestantes = null;
 
-    // RELATION : l'utilisateur (admin) qui a créé le voyage
-    #[ORM\ManyToOne(targetEntity: User::class, cascade: ['persist'])]
+    #[ORM\ManyToOne(targetEntity: User::class)]
     #[ORM\JoinColumn(name: 'created_by_id', referencedColumnName: 'id', nullable: false)]
     private ?User $createdBy = null;
 
@@ -80,6 +79,7 @@ class Voyage
     public function setTitre(?string $titre): self
     {
         $this->titre = $titre;
+
         return $this;
     }
 
@@ -91,6 +91,7 @@ class Voyage
     public function setDestination(?string $destination): self
     {
         $this->destination = $destination;
+
         return $this;
     }
 
@@ -102,6 +103,7 @@ class Voyage
     public function setDescription(?string $description): self
     {
         $this->description = $description;
+
         return $this;
     }
 
@@ -113,6 +115,7 @@ class Voyage
     public function setPrix(?float $prix): self
     {
         $this->prix = $prix;
+
         return $this;
     }
 
@@ -124,6 +127,7 @@ class Voyage
     public function setDateDepart(?\DateTimeInterface $dateDepart): self
     {
         $this->dateDepart = $dateDepart;
+
         return $this;
     }
 
@@ -135,6 +139,7 @@ class Voyage
     public function setDateRetour(?\DateTimeInterface $dateRetour): self
     {
         $this->dateRetour = $dateRetour;
+
         return $this;
     }
 
@@ -146,6 +151,7 @@ class Voyage
     public function setImageUrl(?string $imageUrl): self
     {
         $this->imageUrl = $imageUrl;
+
         return $this;
     }
 
@@ -157,6 +163,7 @@ class Voyage
     public function setCategorie(?Categorie $categorie): self
     {
         $this->categorie = $categorie;
+
         return $this;
     }
 
@@ -184,6 +191,7 @@ class Voyage
     public function setPlacesRestantes(?int $placesRestantes): self
     {
         $this->placesRestantes = $placesRestantes;
+
         return $this;
     }
 
@@ -195,13 +203,14 @@ class Voyage
     public function setCreatedBy(?User $createdBy): self
     {
         $this->createdBy = $createdBy;
+
         return $this;
     }
 
     #[Assert\Callback]
     public function validateDatesAndPlaces(ExecutionContextInterface $context): void
     {
-        if ($this->dateDepart && $this->dateRetour && $this->dateRetour < $this->dateDepart) {
+        if ($this->dateDepart !== null && $this->dateRetour !== null && $this->dateRetour < $this->dateDepart) {
             $context->buildViolation('La date de retour doit être postérieure à la date de départ.')
                 ->atPath('dateRetour')
                 ->addViolation();

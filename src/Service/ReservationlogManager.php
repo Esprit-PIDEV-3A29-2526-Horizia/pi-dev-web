@@ -35,13 +35,13 @@ class ReservationlogManager
 
         // Règle 3 : Le nombre d'adultes doit être au moins 1
         $adultes = $reservation->getAdultes();
-        if ($adultes === null || $adultes < 1) {
+        if ($adultes < 1) {
             throw new InvalidArgumentException('Le nombre d\'adultes doit être au moins 1.');
         }
 
         // Règle 4 : Le nombre de chambres doit être au moins 1
         $chambres = $reservation->getNombreChambres();
-        if ($chambres === null || $chambres < 1) {
+        if ($chambres < 1) {
             throw new InvalidArgumentException('Le nombre de chambres doit être au moins 1.');
         }
 

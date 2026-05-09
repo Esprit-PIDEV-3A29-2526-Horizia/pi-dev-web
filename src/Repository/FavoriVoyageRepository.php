@@ -3,6 +3,7 @@
 namespace App\Repository;
 
 use App\Entity\FavoriVoyage;
+use App\Entity\User;
 use App\Entity\Voyage;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
@@ -25,6 +26,17 @@ class FavoriVoyageRepository extends ServiceEntityRepository
         ]);
     }
 
+    public function findOneByUserAndVoyage(User $user, Voyage $voyage): ?FavoriVoyage
+    {
+        return $this->findOneBy([
+            'createdBy' => $user,
+            'voyage' => $voyage,
+        ]);
+    }
+
+    /**
+     * @return array<int, FavoriVoyage>
+     */
     public function findVisitorFavorites(string $visitorToken): array
     {
         return $this->createQueryBuilder('f')
@@ -32,6 +44,21 @@ class FavoriVoyageRepository extends ServiceEntityRepository
             ->addSelect('v')
             ->andWhere('f.visitorToken = :token')
             ->setParameter('token', $visitorToken)
+            ->orderBy('f.createdAt', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    /**
+     * @return array<int, FavoriVoyage>
+     */
+    public function findUserFavorites(User $user): array
+    {
+        return $this->createQueryBuilder('f')
+            ->innerJoin('f.voyage', 'v')
+            ->addSelect('v')
+            ->andWhere('f.createdBy = :user')
+            ->setParameter('user', $user)
             ->orderBy('f.createdAt', 'DESC')
             ->getQuery()
             ->getResult();

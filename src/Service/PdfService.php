@@ -4,6 +4,7 @@ namespace App\Service;
 use Twig\Environment;
 use Dompdf\Dompdf;
 use Dompdf\Options;
+use App\Entity\Reservationlog;
 
 class PdfService
 {
@@ -18,7 +19,7 @@ class PdfService
         $this->qrCodeService = $qrCodeService;
     }
 
-    public function generateReservationPdf($reservation): string 
+    public function generateReservationPdf(Reservationlog $reservation): string 
     {
         $chambreType = $this->chambreTypeService->getChambreType(
             $reservation->getAdultes(),

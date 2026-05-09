@@ -6,13 +6,16 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class AiContentGenerator
 {
-    private $httpClient;
+    private HttpClientInterface $httpClient;
 
     public function __construct(HttpClientInterface $httpClient)
     {
         $this->httpClient = $httpClient;
     }
 
+    /**
+     * @return array{titre: string, categorie: string, description: string, tags: string, imagePrompt: string}
+     */
     public function generateAll(string $sujet): array
     {
         // Construction du prompt

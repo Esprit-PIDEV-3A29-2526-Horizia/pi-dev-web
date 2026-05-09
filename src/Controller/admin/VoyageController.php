@@ -2,35 +2,20 @@
 
 namespace App\Controller\admin;
 
+use App\Entity\User;
 use App\Entity\Voyage;
 use App\Form\VoyageType;
-use App\Service\GeminiService;
 use App\Service\OpenWeatherService;
-use App\Service\PexelsService;
 use Doctrine\ORM\EntityManagerInterface;
 use Knp\Component\Pager\PaginatorInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
-use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 
 #[Route('/admin/voyage')]
 class VoyageController extends AbstractController
 {
-    private RequestStack $requestStack;
-
-    public function __construct(RequestStack $requestStack)
-    {
-        $this->requestStack = $requestStack;
-
-        $session = $requestStack->getSession();
-        if ($session && !$session->isStarted()) {
-            $session->start();
-        }
-    }
-
     private function checkAdminAccess(): void
     {
         $user = $this->getUser();
@@ -52,14 +37,14 @@ class VoyageController extends AbstractController
         $search = trim((string) $request->query->get('search', ''));
         $sort = trim((string) $request->query->get('sort', ''));
 
-        $qb = $entityManager->getRepository(Voyage::class)
-            ->createQueryBuilder('v')
-            ->leftJoin('v.categorie', 'c')
-            ->addSelect('c');
+        $qb = $entityManager->createQueryBuilder()
+            ->select('v', 'c')
+            ->from(Voyage::class, 'v')
+            ->leftJoin('v.categorie', 'c');
 
         if ($search !== '') {
             $qb->andWhere('LOWER(v.titre) LIKE :search OR LOWER(v.destination) LIKE :search')
-               ->setParameter('search', '%' . mb_strtolower($search) . '%');
+                ->setParameter('search', '%' . mb_strtolower($search) . '%');
         }
 
         switch ($sort) {
@@ -95,13 +80,15 @@ class VoyageController extends AbstractController
         $weatherData = [];
 
         foreach ($voyages as $voyage) {
+            if (!$voyage instanceof Voyage) {
+                continue;
+            }
+
             $destination = trim((string) $voyage->getDestination());
 
-            if ($destination !== '') {
-                $weatherData[$voyage->getId()] = $openWeatherService->getWeatherByCity($destination);
-            } else {
-                $weatherData[$voyage->getId()] = null;
-            }
+            $weatherData[$voyage->getId()] = $destination !== ''
+                ? $openWeatherService->getWeatherByCity($destination)
+                : null;
         }
 
         return $this->render('admin/voyage/index.html.twig', [
@@ -123,14 +110,20 @@ class VoyageController extends AbstractController
 
         if ($form->isSubmitted() && $form->isValid()) {
             $voyage->setPlacesRestantes($voyage->getPlacesTotal());
-            
-            // 👇 AJOUTER CETTE LIGNE pour assigner l'admin connecté
-            $voyage->setCreatedBy($this->getUser());
+
+            $user = $this->getUser();
+
+            if (!$user instanceof User) {
+                throw $this->createAccessDeniedException('Utilisateur invalide.');
+            }
+
+            $voyage->setCreatedBy($user);
 
             $entityManager->persist($voyage);
             $entityManager->flush();
 
             $this->addFlash('success', 'Voyage ajouté avec succès.');
+
             return $this->redirectToRoute('app_voyage_index');
         }
 
@@ -147,18 +140,17 @@ class VoyageController extends AbstractController
     ): Response {
         $this->checkAdminAccess();
 
-        $voyage = $entityManager->getRepository(Voyage::class)->find($id);
+        $voyage = $entityManager->find(Voyage::class, $id);
 
-        if (!$voyage) {
+        if (!$voyage instanceof Voyage) {
             throw $this->createNotFoundException('Voyage introuvable.');
         }
 
-        $weather = null;
         $destination = trim((string) $voyage->getDestination());
 
-        if ($destination !== '') {
-            $weather = $openWeatherService->getWeatherByCity($destination);
-        }
+        $weather = $destination !== ''
+            ? $openWeatherService->getWeatherByCity($destination)
+            : null;
 
         return $this->render('admin/voyage/show.html.twig', [
             'voyage' => $voyage,
@@ -174,9 +166,9 @@ class VoyageController extends AbstractController
     ): Response {
         $this->checkAdminAccess();
 
-        $voyage = $entityManager->getRepository(Voyage::class)->find($id);
+        $voyage = $entityManager->find(Voyage::class, $id);
 
-        if (!$voyage) {
+        if (!$voyage instanceof Voyage) {
             throw $this->createNotFoundException('Voyage introuvable.');
         }
 
@@ -191,6 +183,7 @@ class VoyageController extends AbstractController
             $entityManager->flush();
 
             $this->addFlash('success', 'Voyage modifié avec succès.');
+
             return $this->redirectToRoute('app_voyage_index');
         }
 
@@ -208,13 +201,13 @@ class VoyageController extends AbstractController
     ): Response {
         $this->checkAdminAccess();
 
-        $voyage = $entityManager->getRepository(Voyage::class)->find($id);
+        $voyage = $entityManager->find(Voyage::class, $id);
 
-        if (!$voyage) {
+        if (!$voyage instanceof Voyage) {
             throw $this->createNotFoundException('Voyage introuvable.');
         }
 
-        if ($this->isCsrfTokenValid('delete' . $voyage->getId(), $request->request->get('_token'))) {
+        if ($this->isCsrfTokenValid('delete' . $voyage->getId(), (string) $request->request->get('_token'))) {
             $entityManager->remove($voyage);
             $entityManager->flush();
 
@@ -224,72 +217,5 @@ class VoyageController extends AbstractController
         }
 
         return $this->redirectToRoute('app_voyage_index');
-    }
-
-#[Route('/generate-content', name: 'app_voyage_generate_content', methods: ['POST'])]
-    public function generateContent(
-        Request $request,
-        GeminiService $geminiService,
-        PexelsService $pexelsService
-        ): JsonResponse {
-        $data = json_decode($request->getContent(), true);
-
-        if (!is_array($data)) {
-            return $this->json([
-                'success' => false,
-                'message' => 'Requête invalide.',
-            ], 400);
-        }
-
-        $destination = trim((string) ($data['destination'] ?? ''));
-
-        if ($destination === '') {
-            return $this->json([
-                'success' => false,
-                'message' => 'Destination obligatoire.',
-            ], 400);
-        }
-
-        $generated = $geminiService->generateVoyageContent($destination);
-
-        $titre = trim((string) ($generated['titre'] ?? ''));
-        $description = trim((string) ($generated['description'] ?? ''));
-        $pays = trim((string) ($generated['pays'] ?? ''));
-        $imagePrompt = trim((string) ($generated['image_prompt'] ?? ''));
-
-        if ($titre === '') {
-            $titre = 'Voyage ' . ucfirst($destination);
-        }
-
-        if ($description === '') {
-            $description = 'Découvrez ' . ucfirst($destination) . ', une destination fascinante qui séduit par son atmosphère unique, son patrimoine culturel et la richesse de son histoire. Entre sites emblématiques, quartiers animés, traditions locales et plaisirs gastronomiques, ce voyage promet une expérience complète mêlant découverte, détente et immersion.';
-        }
-
-        $queries = array_filter([
-            $destination,
-            $destination . ' city',
-            $destination . ' tourism',
-            $pays !== '' ? $destination . ' ' . $pays : null,
-            $pays !== '' ? $pays . ' travel' : null,
-            $imagePrompt !== '' ? $imagePrompt : null,
-        ]);
-
-        $imageUrl = null;
-        foreach ($queries as $query) {
-            $imageUrl = $pexelsService->searchImage($query);
-            if ($imageUrl) {
-                break;
-            }
-        }
-
-        return $this->json([
-            'success' => true,
-            'titre' => $titre,
-            'description' => $description,
-            'image_prompt' => $imagePrompt,
-            'pays' => $pays,
-            'image_url' => $imageUrl,
-            'debug_query' => $queries,
-        ]);
     }
 }

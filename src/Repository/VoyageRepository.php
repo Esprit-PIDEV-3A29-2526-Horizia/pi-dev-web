@@ -2,8 +2,8 @@
 
 namespace App\Repository;
 
-use App\Entity\Voyage;
 use App\Entity\Reservation;
+use App\Entity\Voyage;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -17,6 +17,9 @@ class VoyageRepository extends ServiceEntityRepository
         parent::__construct($registry, Voyage::class);
     }
 
+    /**
+     * @return array<int, Voyage>
+     */
     public function findAllVoyages(?int $limit = null): array
     {
         $qb = $this->createQueryBuilder('v')
@@ -29,6 +32,9 @@ class VoyageRepository extends ServiceEntityRepository
         return $qb->getQuery()->getResult();
     }
 
+    /**
+     * @return array<int, Voyage>
+     */
     public function findAvailableVoyages(?int $limit = null): array
     {
         $qb = $this->createQueryBuilder('v')
@@ -44,6 +50,9 @@ class VoyageRepository extends ServiceEntityRepository
         return $qb->getQuery()->getResult();
     }
 
+    /**
+     * @return array<int, Voyage>
+     */
     public function findCompletedVoyages(?int $limit = null): array
     {
         $qb = $this->createQueryBuilder('v')
@@ -57,14 +66,17 @@ class VoyageRepository extends ServiceEntityRepository
         return $qb->getQuery()->getResult();
     }
 
-    public function findBudgetVoyages(float $budgetMin, ?int $limit = null): array
+    /**
+     * @return array<int, Voyage>
+     */
+    public function findBudgetVoyages(float $budgetMax, ?int $limit = null): array
     {
         $qb = $this->createQueryBuilder('v')
             ->andWhere('v.placesRestantes > 0')
             ->andWhere('v.dateDepart >= :today')
-            ->andWhere('v.prix <= :budgetMin')
+            ->andWhere('v.prix <= :budgetMax')
             ->setParameter('today', new \DateTimeImmutable('today'))
-            ->setParameter('budgetMin', $budgetMin)
+            ->setParameter('budgetMax', $budgetMax)
             ->orderBy('v.prix', 'ASC');
 
         if ($limit !== null) {
@@ -74,6 +86,9 @@ class VoyageRepository extends ServiceEntityRepository
         return $qb->getQuery()->getResult();
     }
 
+    /**
+     * @return array<int, Voyage>
+     */
     public function findBudgetVoyagesBetween3000And4000(?int $limit = null): array
     {
         $qb = $this->createQueryBuilder('v')
@@ -91,31 +106,37 @@ class VoyageRepository extends ServiceEntityRepository
         return $qb->getQuery()->getResult();
     }
 
+    /**
+     * @param array<int, string>|null $themeKeywords
+     * @param array<int, int>|null $months
+     * @return array<int, Voyage>
+     */
     public function searchSmart(
         ?string $destination = null,
         ?float $budgetMin = null,
         ?array $themeKeywords = null,
         ?int $minPlaces = null,
         ?array $months = null,
-        int $limit = 12): array {
+        int $limit = 12
+    ): array {
         $qb = $this->createQueryBuilder('v')
             ->andWhere('v.placesRestantes > 0')
             ->andWhere('v.dateDepart >= :today')
             ->setParameter('today', new \DateTimeImmutable('today'));
 
-        if ($destination) {
+        if ($destination !== null && $destination !== '') {
             $qb->andWhere('LOWER(v.destination) LIKE LOWER(:destination)')
-               ->setParameter('destination', '%' . $destination . '%');
+                ->setParameter('destination', '%' . $destination . '%');
         }
 
         if ($budgetMin !== null) {
             $qb->andWhere('v.prix <= :budgetMin')
-               ->setParameter('budgetMin', $budgetMin);
+                ->setParameter('budgetMin', $budgetMin);
         }
 
         if ($minPlaces !== null) {
             $qb->andWhere('v.placesRestantes >= :minPlaces')
-               ->setParameter('minPlaces', $minPlaces);
+                ->setParameter('minPlaces', $minPlaces);
         }
 
         if (!empty($themeKeywords)) {
@@ -161,6 +182,9 @@ class VoyageRepository extends ServiceEntityRepository
             ->getResult();
     }
 
+    /**
+     * @return array<int, Voyage>
+     */
     public function findMostReservedVoyages(?int $limit = 3): array
     {
         $qb = $this->createQueryBuilder('v')
@@ -177,5 +201,39 @@ class VoyageRepository extends ServiceEntityRepository
         }
 
         return $qb->getQuery()->getResult();
+    }
+
+    /**
+     * @return array<int, Voyage>
+     */
+    public function findByDestination(string $destination, ?int $limit = null): array
+    {
+        $qb = $this->createQueryBuilder('v')
+            ->andWhere('LOWER(v.destination) LIKE LOWER(:destination)')
+            ->orWhere('LOWER(v.titre) LIKE LOWER(:destination)')
+            ->setParameter('destination', '%' . $destination . '%')
+            ->andWhere('v.placesRestantes > 0')
+            ->orderBy('v.prix', 'ASC');
+
+        if ($limit !== null) {
+            $qb->setMaxResults($limit);
+        }
+
+        return $qb->getQuery()->getResult();
+    }
+
+    /**
+     * @return array<int, Voyage>
+     */
+    public function findCheapestVoyages(int $limit = 5): array
+    {
+        return $this->createQueryBuilder('v')
+            ->andWhere('v.placesRestantes > 0')
+            ->andWhere('v.dateDepart >= :today')
+            ->setParameter('today', new \DateTimeImmutable('today'))
+            ->orderBy('v.prix', 'ASC')
+            ->setMaxResults($limit)
+            ->getQuery()
+            ->getResult();
     }
 }

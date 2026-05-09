@@ -10,9 +10,10 @@ use Doctrine\ORM\Mapping as ORM;
 class FavoriVoyage
 {
     #[ORM\Id]
-    #[ORM\GeneratedValue]
-    #[ORM\Column(type: 'integer')]
-    private ?int $id = null;
+#[ORM\GeneratedValue]
+#[ORM\Column(type: 'integer')]
+/** @phpstan-ignore-next-line */
+private ?int $id = null;
 
     #[ORM\Column(name: 'visitor_token', type: 'string', length: 100, nullable: true)]
     private ?string $visitorToken = null;

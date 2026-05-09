@@ -13,6 +13,9 @@ class StripeService
         $this->stripe = new StripeClient($stripeSecretKey);
     }
 
+    /**
+     * @param array<string, mixed> $metadata
+     */
     public function createCheckoutSession(
         string $productName,
         int $amountInMinorUnit,

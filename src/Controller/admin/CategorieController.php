@@ -107,15 +107,20 @@ class CategorieController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            // 👇 AJOUTER CETTE LIGNE pour assigner l'admin connecté
-            $categorie->setCreatedBy($this->getUser());
-            
-            $entityManager->persist($categorie);
-            $entityManager->flush();
+    $user = $this->getUser();
 
-            $this->addFlash('success', 'Catégorie créée avec succès.');
-            return $this->redirectToRoute('admin_categorie_index');
-        }
+    if (!$user instanceof \App\Entity\User) {
+        throw $this->createAccessDeniedException('Utilisateur invalide.');
+    }
+
+    $categorie->setCreatedBy($user);
+
+    $entityManager->persist($categorie);
+    $entityManager->flush();
+
+    $this->addFlash('success', 'Catégorie créée avec succès.');
+    return $this->redirectToRoute('admin_categorie_index');
+}
 
         return $this->render('admin/categorie/new.html.twig', [
             'form' => $form->createView(),

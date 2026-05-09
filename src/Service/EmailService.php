@@ -25,7 +25,7 @@ class EmailService
         $this->qrCodeService = $qrCodeService;
     }
 
-    public function sendReservationEmail(string $to, $reservation, string $customMessage): bool
+    public function sendReservationEmail(string $to, Reservationlog $reservation, string $customMessage): bool
     {
         try {
             // Contenu du QR code
@@ -67,7 +67,7 @@ class EmailService
         }
     }
 
-    public function sendCancellationEmail(string $to, $reservation, string $reason): bool
+    public function sendCancellationEmail(string $to, Reservationlog $reservation, string $reason): bool
     {
         try {
             $html = $this->twig->render('front/email/reservation_email.html.twig', [
@@ -119,7 +119,7 @@ class EmailService
     }
 // Dans src/Service/EmailService.php
 
-public function sendCancellationApprovedEmail(string $to, $reservation): bool
+public function sendCancellationApprovedEmail(string $to, Reservationlog $reservation): bool
 {
     $html = $this->twig->render('front/email/cancellation_approved.html.twig', [
         'reservation' => $reservation,
@@ -139,7 +139,7 @@ public function sendCancellationApprovedEmail(string $to, $reservation): bool
     }
 }
 
-public function sendCancellationRejectedEmail(string $to, $reservation): bool
+public function sendCancellationRejectedEmail(string $to, Reservationlog $reservation): bool
 {
     $html = $this->twig->render('front/email/cancellation_rejected.html.twig', [
         'reservation' => $reservation,
