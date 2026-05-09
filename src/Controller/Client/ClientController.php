@@ -196,8 +196,7 @@ class ClientController extends AbstractController
                 }
             }
 
-            return $this->redirectToRoute('client_confirmation', ['id' => $location->getIdLocation()]);
-        }
+return $this->redirectToRoute('client_paiement_choisir', ['id' => $location->getIdLocation()]);        }
 
         // GET : afficher le formulaire
         return $this->render('client/reservation.html.twig', [

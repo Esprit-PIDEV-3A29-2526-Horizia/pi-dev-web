@@ -128,3 +128,8 @@ services:
     App\Repository\UserRepository:
         arguments:
             - '@Doctrine\Persistence\ManagerRegistry'
+    
+    App\Controller\Client\PaymentLocationController:
+        bind:
+            $stripeSecretKey: '%env(STRIPE_SECRET_KEY)%'
+            $stripePublicKey: '%env(STRIPE_PUBLIC_KEY)%'

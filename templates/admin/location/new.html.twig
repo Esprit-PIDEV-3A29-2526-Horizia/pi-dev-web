@@ -149,9 +149,7 @@
                         {{ form_label(form.clientCin) }}
                         <div class="input-group">
                             {{ form_widget(form.clientCin, {'attr': {'class': 'form-control', 'id': 'cin_input', 'maxlength': '8', 'placeholder': '12345678'}}) }}
-                            <button type="button" id="btn-scan-cin" class="btn btn-outline-secondary">
-                                <i class="bi bi-camera"></i> Scanner CIN
-                            </button>
+                        
                         </div>
                         <input type="file" id="cin_file_input" accept="image/*" capture="environment" class="d-none">
                         <div id="cin-scan-status" class="small mt-1"></div>
