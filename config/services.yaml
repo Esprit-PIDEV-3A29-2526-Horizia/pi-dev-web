@@ -69,3 +69,10 @@ services:
     App\EventListener\LocaleSubscriber:
         tags:
             - { name: kernel.event_subscriber }
+    App\Controller\Client\PaymentLocationController:
+        arguments:
+            $stripeSecretKey: '%env(STRIPE_SECRET_KEY)%'
+            $stripePublicKey: '%env(STRIPE_PUBLIC_KEY)%'
+    App\Service\WeatherService:
+        arguments:
+            $apiKey: '%env(OPENWEATHER_API_KEY)%'

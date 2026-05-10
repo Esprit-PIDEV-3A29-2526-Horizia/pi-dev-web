@@ -1,0 +1,12 @@
+{# templates/admin/vehicule/_badge_etat.html.twig #}
+{% if etat == 'disponible' %}
+    <span class="badge bg-success">Disponible</span>
+{% elseif etat == 'louee' %}
+    <span class="badge bg-primary">Loué</span>
+{% elseif etat == 'en_maintenance' or etat == 'maintenance' %}
+    <span class="badge bg-warning text-dark">Maintenance</span>
+{% elseif etat == 'hors_service' %}
+    <span class="badge bg-danger">Hors service</span>
+{% else %}
+    <span class="badge bg-secondary">{{ etat }}</span>
+{% endif %}

@@ -1,0 +1,88 @@
+{% extends 'admin/base_admin.html.twig' %}
+
+{% block title %}{{ modele.nomModele }} – Horizia{% endblock %}
+
+{% block admin_content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 fw-bold mb-1">{{ modele.nomModele }}</h1>
+        <p class="text-muted mb-0">{{ modele.marque.nomMarque }}</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{ path('admin_modele_edit', {id: modele.idModele}) }}" class="btn btn-warning btn-sm">
+            <i class="bi bi-pencil me-1"></i>Modifier
+        </a>
+        <a href="{{ path('admin_modele_index') }}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left me-1"></i>Retour
+        </a>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-4">
+        <div class="card text-center p-3">
+            {% if modele.image %}
+            <img src="{{ modele.image }}" alt="{{ modele.nomModele }}" class="img-fluid rounded mb-3" style="height:160px; object-fit:cover;">
+            {% else %}
+            <div class="bg-primary bg-opacity-10 rounded d-flex align-items-center justify-content-center mb-3" style="height:120px;">
+                <i class="bi bi-car-front text-primary fs-1"></i>
+            </div>
+            {% endif %}
+            <h4 class="fw-bold">{{ modele.nomModele }}</h4>
+            <span class="badge bg-info bg-opacity-10 text-info d-inline-block py-2">{{ modele.marque.nomMarque }}</span>
+        </div>
+    </div>
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header bg-white fw-bold">
+                <i class="bi bi-truck me-2 text-primary"></i>Véhicules de ce modèle
+            </div>
+            <div class="card-body">
+                {% if modele.vehicules|length > 0 %}
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Immatriculation</th>
+                                <th>Année</th>
+                                <th>État</th>
+                                <th>Prix/jour</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for vehicule in modele.vehicules %}
+                            <tr>
+                                <td class="fw-bold">{{ vehicule.immatriculation }}</td>
+                                <td>{{ vehicule.annee }}</td>
+                                <td>
+                                    {% if vehicule.etat == 'disponible' %}
+                                    <span class="badge bg-success">Disponible</span>
+                                    {% elseif vehicule.etat == 'louee' %}
+                                    <span class="badge bg-warning text-dark">Loué</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">{{ vehicule.etat }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-primary fw-bold">{{ vehicule.prixParJour|number_format(3, ',', ' ') }} TND</td>
+                                <td>
+                                    <a href="{{ path('admin_vehicule_show', {id: vehicule.idVehicule}) }}" class="btn btn-sm btn-outline-info" title="Voir"><i class="bi bi-eye"></i></a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4 text-muted">
+                    <i class="bi bi-car-front fs-1 opacity-50 mb-2 d-block"></i>
+                    Aucun véhicule pour ce modèle.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

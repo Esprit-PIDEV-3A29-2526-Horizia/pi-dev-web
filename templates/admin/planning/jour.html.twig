@@ -1,0 +1,66 @@
+{% extends 'admin/base_admin.html.twig' %}
+
+{% block title %}Planning du {{ date|date('d/m/Y') }} – Horizia{% endblock %}
+
+{% block admin_content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <h1 class="h3 fw-bold mb-1">{{ date|date('d/m/Y') }}</h1>
+        <p class="text-muted mb-0">{{ locations|length }} location(s) ce jour</p>
+    </div>
+    <div class="d-flex gap-2">
+        {% set prevDate = date|date_modify('-1 day')|date('Y-m-d') %}
+        {% set nextDate = date|date_modify('+1 day')|date('Y-m-d') %}
+        <a href="{{ path('admin_planning_jour', {date: prevDate}) }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-chevron-left"></i></a>
+        <a href="{{ path('admin_planning_mois', {annee: date|date('Y'), mois: date|date('n')}) }}" class="btn btn-primary btn-sm"><i class="bi bi-calendar3 me-1"></i>Mois</a>
+        <a href="{{ path('admin_planning_jour', {date: nextDate}) }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-chevron-right"></i></a>
+    </div>
+</div>
+
+{% if locations|length > 0 %}
+<div class="row g-3">
+    {% for location in locations %}
+    <div class="col-md-6 col-lg-4">
+        <div class="card h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center" style="width:48px;height:48px;">
+                        <i class="bi bi-person-fill text-primary fs-5"></i>
+                    </div>
+                    <div>
+                        <div class="fw-bold">{{ location.clientNomComplet }}</div>
+                        <div class="small text-muted"><i class="bi bi-telephone me-1"></i>{{ location.clientTelephone }}</div>
+                    </div>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted"><i class="bi bi-truck me-1"></i>Véhicule</span>
+                    <span class="fw-bold">{{ location.vehicule.immatriculation }}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-2">
+                    <span class="text-muted"><i class="bi bi-calendar-range me-1"></i>Période</span>
+                    <span>{{ location.dateDebut|date('d/m') }} → {{ location.dateFinPrevue|date('d/m/Y') }}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-3">
+                    <span class="text-muted">Statut</span>
+                    <span>{% include 'admin/location/_badge_statut.html.twig' with {statut: location.statut} %}</span>
+                </div>
+                <a href="{{ path('admin_location_show', {id: location.idLocation}) }}" class="btn btn-primary btn-sm w-100">
+                    <i class="bi bi-eye me-1"></i>Voir la location
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card text-center py-5">
+    <i class="bi bi-calendar-x fs-1 text-muted opacity-50 mb-3 d-block"></i>
+    <p class="text-muted">Aucune location pour ce jour.</p>
+    <a href="{{ path('admin_location_new') }}" class="btn btn-primary btn-sm">
+        <i class="bi bi-plus-lg me-1"></i>Créer une location
+    </a>
+</div>
+{% endif %}
+
+{% endblock %}

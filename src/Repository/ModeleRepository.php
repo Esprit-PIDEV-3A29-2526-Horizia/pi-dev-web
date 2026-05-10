@@ -16,28 +16,52 @@ class ModeleRepository extends ServiceEntityRepository
         parent::__construct($registry, Modele::class);
     }
 
-    //    /**
-    //     * @return Modele[] Returns an array of Modele objects
-    //     */
-    //    public function findByExampleField($value): array
-    //    {
-    //        return $this->createQueryBuilder('m')
-    //            ->andWhere('m.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->orderBy('m.id', 'ASC')
-    //            ->setMaxResults(10)
-    //            ->getQuery()
-    //            ->getResult()
-    //        ;
-    //    }
+    // Recherche par nom de modèle
+    public function rechercherParNom(string $recherche): array
+    {
+        return $this->createQueryBuilder('m')
+            ->where('m.nomModele LIKE :recherche')
+            ->setParameter('recherche', '%' . $recherche . '%')
+            ->orderBy('m.nomModele', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
 
-    //    public function findOneBySomeField($value): ?Modele
-    //    {
-    //        return $this->createQueryBuilder('m')
-    //            ->andWhere('m.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->getQuery()
-    //            ->getOneOrNullResult()
-    //        ;
-    //    }
+    // Modèles par marque
+    public function findByMarque(int $idMarque): array
+    {
+        return $this->createQueryBuilder('m')
+            ->where('m.marque = :idMarque')
+            ->setParameter('idMarque', $idMarque)
+            ->orderBy('m.nomModele', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    // Tous les modèles avec leur marque
+    public function findAllWithMarque(): array
+    {
+        return $this->createQueryBuilder('m')
+            ->leftJoin('m.marque', 'ma')
+            ->addSelect('ma')
+            ->orderBy('ma.nomMarque', 'ASC')
+            ->addOrderBy('m.nomModele', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    // Vérifier si un modèle existe déjà pour une marque
+    public function existeParNomEtMarque(string $nomModele, int $idMarque): bool
+    {
+        $result = $this->createQueryBuilder('m')
+            ->select('COUNT(m.idModele)')
+            ->where('m.nomModele = :nom')
+            ->andWhere('m.marque = :idMarque')
+            ->setParameter('nom', $nomModele)
+            ->setParameter('idMarque', $idMarque)
+            ->getQuery()
+            ->getSingleScalarResult();
+        
+        return $result > 0;
+    }
 }

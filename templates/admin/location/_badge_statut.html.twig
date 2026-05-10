@@ -1,0 +1,14 @@
+{# templates/admin/location/_badge_statut.html.twig #}
+{% if statut == 'reservee' or statut == 'réservée' %}
+    <span class="badge-reservee">Réservée</span>
+{% elseif statut == 'en_cours' %}
+    <span class="badge-en-cours">En cours</span>
+{% elseif statut == 'terminee' or statut == 'terminée' %}
+    <span class="badge-terminee">Terminée</span>
+{% elseif statut == 'annulee' or statut == 'annulée' %}
+    <span class="badge-annulee">Annulée</span>
+{% elseif statut == 'no_show' %}
+    <span class="badge-noshow">No show</span>
+{% else %}
+    <span class="badge-terminee">{{ statut }}</span>
+{% endif %}

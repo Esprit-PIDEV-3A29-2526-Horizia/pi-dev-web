@@ -1,0 +1,340 @@
+{% extends 'client/base_client.html.twig' %}
+{% block title %}Horizia - Réserver{% endblock %}
+{% block navbar_extra_class %}nav-static{% endblock %}
+
+{% block body %}
+
+<div class="hero-banner">
+    <div class="inner">
+        <h1><i class="fas fa-calendar-check mr-2"></i>Réserver un véhicule</h1>
+        {% if vehicule is defined %}
+            <p>{{ vehicule.modele.marque.nomMarque }} {{ vehicule.modele.nomModele }}</p>
+        {% endif %}
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ path('client_accueil') }}">Accueil</a></li>
+                <li class="breadcrumb-item"><a href="{{ path('client_catalogue') }}">Catalogue</a></li>
+                <li class="breadcrumb-item active">Réservation</li>
+            </ol>
+        </nav>
+    </div>
+</div>
+
+<section class="section">
+    <div class="container">
+
+        {# Message d'information utilisateur #}
+        {% if user is defined and user %}
+        <div class="alert alert-info mb-4" style="background:rgba(35,119,156,.1); border-left: 4px solid var(--teal); border-radius:12px;">
+            <div class="d-flex align-items-center">
+                <i class="fas fa-user-circle fa-2x mr-3" style="color:var(--teal);"></i>
+                <div>
+                    <strong>Réservation pour : {{ user.prenom }} {{ user.nom }}</strong><br>
+                    <small>Les informations ci-dessous sont pré-remplies depuis votre profil et ne peuvent pas être modifiées.</small>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {# ── Erreurs ── #}
+        {% if errors is defined and errors|length > 0 %}
+        <div class="alert alert-danger mb-4">
+            <strong><i class="fas fa-exclamation-triangle mr-2"></i>Veuillez corriger les erreurs suivantes :</strong>
+            <ul class="mb-0 mt-2">
+                {% for field, message in errors %}
+                    <li>{{ message }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
+        <div class="row">
+
+            {# ── Infos véhicule ── #}
+            {% if vehicule is defined %}
+            <div class="col-md-5 mb-5">
+                <div class="card card-teal h-100">
+                    {% if vehicule.photo %}
+                        <img src="{{ vehicule.photo starts with 'http' ? vehicule.photo : asset('uploads/vehicules/' ~ vehicule.photo) }}"
+                             alt="{{ vehicule.modele.marque.nomMarque }} {{ vehicule.modele.nomModele }}"
+                             style="height:200px; object-fit:cover; width:100%;">
+                    {% else %}
+                        <div class="d-flex align-items-center justify-content-center"
+                             style="height:200px; background:rgba(255,255,255,.15);">
+                            <i class="fas fa-car fa-4x opacity-50 text-white"></i>
+                        </div>
+                    {% endif %}
+                    <div class="card-body p-4">
+                        <h4 class="font-weight-800 mb-3">
+                            {{ vehicule.modele.marque.nomMarque }}
+                            {{ vehicule.modele.nomModele }}
+                        </h4>
+                        <ul class="list-unstyled">
+                            <li class="mb-2"><i class="fas fa-calendar-alt mr-2"></i>Année : {{ vehicule.annee }}</li>
+                            <li class="mb-2"><i class="fas fa-gas-pump mr-2"></i>{{ vehicule.carburant|capitalize }}</li>
+                            <li class="mb-2"><i class="fas fa-palette mr-2"></i>{{ vehicule.couleur ?? '—' }}</li>
+                            <li class="mb-2"><i class="fas fa-tachometer-alt mr-2"></i>{{ vehicule.kilometrage|number_format(0,',',' ') }} km</li>
+                            <li class="mb-2"><i class="fas fa-credit-card mr-2"></i>
+                                <strong>{{ vehicule.prixParJour }} DT</strong> / jour
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            {# ── Formulaire ── #}
+            <div class="col-md-7">
+                <div class="card">
+                    <div class="card-header-teal">
+                        <i class="fas fa-edit mr-2"></i>Formulaire de réservation
+                    </div>
+                    <div class="card-body p-4">
+
+                        <form method="post" action="{{ path('client_reservation', {id: vehicule.idVehicule}) }}" novalidate id="reservation-form">
+
+                            {# SECTION INFORMATIONS PERSONNELLES (VERROUILLÉES) #}
+                            <div class="form-section mb-4">
+                                <h6 class="font-weight-700 mb-3" style="color:var(--teal);">
+                                    <i class="fas fa-user-lock mr-2"></i>Vos informations (non modifiables)
+                                </h6>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label>Nom complet</label>
+                                        <div class="form-control-plaintext bg-light p-2 rounded" style="border:1px solid #dee2e6;">
+                                            <i class="fas fa-user mr-2 text-teal"></i>
+                                            <strong>{{ user.nom }} {{ user.prenom }}</strong>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label>Email</label>
+                                        <div class="form-control-plaintext bg-light p-2 rounded" style="border:1px solid #dee2e6;">
+                                            <i class="fas fa-envelope mr-2 text-teal"></i>
+                                            {{ user.email }}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label>Téléphone</label>
+                                        <div class="form-control-plaintext bg-light p-2 rounded" style="border:1px solid #dee2e6;">
+                                            <i class="fas fa-phone mr-2 text-teal"></i>
+                                            {{ user.telephone ?? 'Non renseigné' }}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label>Adresse</label>
+                                        <div class="form-control-plaintext bg-light p-2 rounded" style="border:1px solid #dee2e6;">
+                                            <i class="fas fa-map-marker-alt mr-2 text-teal"></i>
+                                            {{ user.addresse ?? 'Non renseignée' }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {# SECTION CIN (obligatoire à remplir) #}
+                            <div class="form-section mb-4">
+                                <h6 class="font-weight-700 mb-3" style="color:var(--teal);">
+                                    <i class="fas fa-id-card mr-2"></i>Pièce d'identité
+                                </h6>
+                                <div class="row">
+                                    <div class="col-md-12 mb-3">
+                                        <label>CIN / Numéro de passeport <span class="text-danger">*</span></label>
+                                        <input type="text" name="cin" id="cin"
+                                               class="form-control {% if errors is defined and errors.cin is defined %}is-invalid{% endif %}"
+                                               placeholder="Entrez votre numéro CIN ou passeport"
+                                               maxlength="20"
+                                               value="{{ data.cin ?? '' }}">
+                                        <small class="form-text text-muted">Format: 8 chiffres pour le CIN tunisien ou numéro de passeport</small>
+                                        {% if errors is defined and errors.cin is defined %}
+                                            <div class="invalid-feedback">{{ errors.cin }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {# SECTION DATES #}
+                            <div class="form-section mb-4">
+                                <h6 class="font-weight-700 mb-3" style="color:var(--teal);">
+                                    <i class="fas fa-calendar-alt mr-2"></i>Période de location
+                                </h6>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label>Date de début <span class="text-danger">*</span></label>
+                                        <input type="date" name="date_debut" id="date_debut"
+                                               class="form-control {% if errors is defined and errors.date_debut is defined %}is-invalid{% endif %}"
+                                               value="{{ data.date_debut ?? date_debut ?? '' }}"
+                                               min="{{ 'now'|date('Y-m-d') }}">
+                                        {% if errors is defined and errors.date_debut is defined %}
+                                            <div class="invalid-feedback">{{ errors.date_debut }}</div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label>Date de fin <span class="text-danger">*</span></label>
+                                        <input type="date" name="date_fin" id="date_fin"
+                                               class="form-control {% if errors is defined and errors.date_fin is defined %}is-invalid{% endif %}"
+                                               value="{{ data.date_fin ?? date_fin ?? '' }}">
+                                        {% if errors is defined and errors.date_fin is defined %}
+                                            <div class="invalid-feedback">{{ errors.date_fin }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {# SECTION EXTRAS #}
+                            <div class="form-section mb-4">
+                                <h6 class="font-weight-700 mb-3" style="color:var(--teal);">
+                                    <i class="fas fa-plus-circle mr-2"></i>Options supplémentaires
+                                </h6>
+                                <div class="row">
+                                    <div class="col-md-4 mb-2">
+                                        <div class="custom-control custom-checkbox">
+                                            <input type="checkbox" class="custom-control-input" id="gps" name="gps" value="1"
+                                                   {% if data.gps is defined %}checked{% endif %}>
+                                            <label class="custom-control-label" for="gps">GPS (+10 DT)</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 mb-2">
+                                        <div class="custom-control custom-checkbox">
+                                            <input type="checkbox" class="custom-control-input" id="siege_bebe" name="siege_bebe" value="1"
+                                                   {% if data.siege_bebe is defined %}checked{% endif %}>
+                                            <label class="custom-control-label" for="siege_bebe">Siège bébé (+15 DT)</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 mb-2">
+                                        <div class="custom-control custom-checkbox">
+                                            <input type="checkbox" class="custom-control-input" id="assurance" name="assurance" value="1"
+                                                   {% if data.assurance is defined %}checked{% endif %}>
+                                            <label class="custom-control-label" for="assurance">Assurance complémentaire (+25 DT)</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {# SECTION NOTES #}
+                            <div class="form-section mb-4">
+                                <h6 class="font-weight-700 mb-3" style="color:var(--teal);">
+                                    <i class="fas fa-pencil-alt mr-2"></i>Notes supplémentaires
+                                </h6>
+                                <div class="row">
+                                    <div class="col-md-12 mb-3">
+                                        <textarea name="notes" class="form-control" rows="3" 
+                                                  placeholder="Informations complémentaires (optionnel)">{{ data.notes ?? '' }}</textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {# ── Récap prix dynamique ── #}
+                            {% if vehicule is defined %}
+                            <div class="payment-box mb-4" id="recap-box" style="display:none;">
+                                <h6 class="font-weight-700 mb-3">Détails du paiement</h6>
+                                <div class="payment-row d-flex justify-content-between py-2">
+                                    <span>Nombre de jours :</span>
+                                    <span id="nb-jours" class="font-weight-bold">0 jour(s)</span>
+                                </div>
+                                <div class="payment-row d-flex justify-content-between py-2">
+                                    <span>Prix par jour :</span>
+                                    <span>{{ vehicule.prixParJour }} DT</span>
+                                </div>
+                                <div class="payment-row d-flex justify-content-between py-2">
+                                    <span>Extras :</span>
+                                    <span id="prix-extras">0 DT</span>
+                                </div>
+                                <div class="payment-row total d-flex justify-content-between py-2 mt-2" style="border-top:2px solid #dee2e6;">
+                                    <span class="font-weight-bold">Total :</span>
+                                    <span id="prix-total" class="font-weight-bold" style="font-size:1.2rem; color:var(--orange);">0 DT</span>
+                                </div>
+                                <div class="payment-row d-flex justify-content-between py-2">
+                                    <span>Avance (30%) à payer :</span>
+                                    <span id="avance" class="font-weight-bold">0 DT</span>
+                                </div>
+                            </div>
+                            {% endif %}
+
+                            {# ── Conditions ── #}
+                            <div class="custom-control custom-checkbox my-4">
+                                <input type="checkbox" class="custom-control-input {% if errors is defined and errors.conditions is defined %}is-invalid{% endif %}"
+                                       id="conditions" name="conditions" value="1"
+                                       {% if data.conditions is defined %}checked{% endif %}>
+                                <label class="custom-control-label" for="conditions">
+                                    J'accepte les <a href="#" class="text-orange">conditions générales</a> de location <span class="text-danger">*</span>
+                                </label>
+                                {% if errors is defined and errors.conditions is defined %}
+                                    <div class="invalid-feedback d-block">{{ errors.conditions }}</div>
+                                {% endif %}
+                            </div>
+
+                            <button type="submit" class="btn btn-orange btn-block"
+                                    style="border-radius:30px; padding:14px; font-size:1rem; font-weight:600;">
+                                <i class="fas fa-check-circle mr-2"></i>Confirmer la réservation
+                            </button>
+                            <a href="{{ path('client_catalogue') }}"
+                               class="btn btn-outline-secondary btn-block mt-2"
+                               style="border-radius:30px;">
+                                <i class="fas fa-arrow-left mr-2"></i>Retour au catalogue
+                            </a>
+
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+{% if vehicule is defined %}
+<script>
+const PRIX_JOUR = {{ vehicule.prixParJour }};
+const EXTRAS = { gps: 10, siege_bebe: 15, assurance: 25 };
+
+function calcPrix() {
+    const d1 = document.getElementById('date_debut');
+    const d2 = document.getElementById('date_fin');
+    if (!d1.value || !d2.value) return;
+    
+    const date1 = new Date(d1.value);
+    const date2 = new Date(d2.value);
+    if (isNaN(date1) || isNaN(date2)) return;
+    
+    const diffTime = Math.abs(date2 - date1);
+    const jours = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    if (jours <= 0) return;
+
+    let extras = 0;
+    if (document.getElementById('gps')?.checked) extras += EXTRAS.gps;
+    if (document.getElementById('siege_bebe')?.checked) extras += EXTRAS.siege_bebe;
+    if (document.getElementById('assurance')?.checked) extras += EXTRAS.assurance;
+
+    const total = jours * PRIX_JOUR + extras;
+    const avance = total * 0.30;
+    
+    document.getElementById('nb-jours').textContent = jours + ' jour(s)';
+    document.getElementById('prix-extras').textContent = extras.toFixed(3) + ' DT';
+    document.getElementById('prix-total').textContent = total.toFixed(3) + ' DT';
+    document.getElementById('avance').textContent = avance.toFixed(3) + ' DT';
+    document.getElementById('recap-box').style.display = 'block';
+}
+
+// Événements
+const dateDeb = document.getElementById('date_debut');
+const dateFin = document.getElementById('date_fin');
+if (dateDeb) dateDeb.addEventListener('change', calcPrix);
+if (dateFin) dateFin.addEventListener('change', calcPrix);
+['gps','siege_bebe','assurance'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('change', calcPrix);
+});
+
+// Validation CIN (uniquement chiffres)
+const cinInput = document.getElementById('cin');
+if (cinInput) {
+    cinInput.addEventListener('input', function(e) {
+        this.value = this.value.replace(/[^0-9]/g, '').slice(0, 8);
+    });
+}
+</script>
+{% endif %}
+{% endblock %}

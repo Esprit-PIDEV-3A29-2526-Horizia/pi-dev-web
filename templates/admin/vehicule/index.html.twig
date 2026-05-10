@@ -1,0 +1,262 @@
+{% extends 'admin/base_admin.html.twig' %}
+
+{% block title %}Véhicules – Horizia{% endblock %}
+
+{% block admin_content %}
+
+<style>
+.view-toggle-btn {
+    padding:6px 12px; border:1.5px solid #23779C;
+    background:#fff; color:#23779C; border-radius:7px;
+    font-size:.88rem; transition:.15s; text-decoration:none;
+    display:inline-flex; align-items:center; gap:5px;
+}
+.view-toggle-btn.active, .view-toggle-btn:hover { background:#23779C; color:#fff; }
+.pagination-bar { display:flex; align-items:center; justify-content:space-between; padding:14px 16px; flex-wrap:wrap; gap:8px; border-top:1px solid #f1f5f9; }
+.pg-info { font-size:.88rem; color:#6c757d; }
+.pg-btns { display:flex; gap:4px; }
+.pg-btn {
+    min-width:34px; height:34px; padding:0 8px;
+    border:1.5px solid #dde3ea; border-radius:8px;
+    background:#fff; color:#1e293b; font-size:.85rem; font-weight:600;
+    display:inline-flex; align-items:center; justify-content:center;
+    text-decoration:none; transition:.15s;
+}
+.pg-btn:hover { border-color:#23779C; color:#23779C; }
+.pg-btn.active { background:#23779C; border-color:#23779C; color:#fff; }
+.pg-btn.disabled { opacity:.4; pointer-events:none; }
+.pg-dots { min-width:34px; height:34px; display:inline-flex; align-items:center; justify-content:center; color:#94a3b8; font-weight:700; }
+
+.veh-card { border-radius:14px; border:1px solid #e2e8f0; background:#fff; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,.06); transition:box-shadow .2s; height:100%; }
+.veh-card:hover { box-shadow:0 6px 20px rgba(35,119,156,.15); }
+.veh-card-photo { width:100%; height:160px; object-fit:cover; background:#f0f7fb; }
+.veh-card-photo-placeholder { width:100%; height:160px; background:linear-gradient(135deg,#e8f4fb,#c8e6f5); display:flex; align-items:center; justify-content:center; position:relative; }
+.veh-info-row { display:flex; justify-content:space-between; font-size:.82rem; margin-bottom:6px; }
+.veh-info-label { color:#94a3b8; font-weight:500; }
+.veh-info-val { font-weight:600; color:#1e293b; }
+</style>
+
+{% set filterParams = {
+    immat:     rechercheImmat,
+    etat:      filtreEtat,
+    carburant: filtreCarburant,
+    marque:    filtreMarque,
+    tri:       tri
+} %}
+
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <h1 class="h3 fw-bold mb-1">Véhicules</h1>
+        <p class="text-muted mb-0">Gestion de la flotte de véhicules</p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap align-items-center">
+        <div class="d-flex gap-1">
+            <a href="{{ path('admin_vehicule_index', filterParams|merge({vue: 'table', page: 1})) }}"
+               class="view-toggle-btn {{ vue == 'table' ? 'active' : '' }}">
+                <i class="bi bi-table"></i> Tableau
+            </a>
+            <a href="{{ path('admin_vehicule_index', filterParams|merge({vue: 'cards', page: 1})) }}"
+               class="view-toggle-btn {{ vue == 'cards' ? 'active' : '' }}">
+                <i class="bi bi-grid-3x3-gap"></i> Cartes
+            </a>
+        </div>
+        <a href="{{ path('admin_vehicule_new') }}" class="btn btn-primary btn-sm">
+            <i class="bi bi-plus-lg me-1"></i>Nouveau véhicule
+        </a>
+    </div>
+</div>
+
+<div class="card mb-3 p-3">
+    <form method="get" class="d-flex flex-wrap gap-2 align-items-end">
+        <input type="hidden" name="vue" value="{{ vue }}">
+        <input type="hidden" name="page" value="1">
+
+        <div>
+            <label class="form-label small mb-1">Immatriculation</label>
+            <input type="text" name="immat" class="form-control form-control-sm" value="{{ rechercheImmat }}" placeholder="Ex: TU 123..." style="min-width:160px;">
+        </div>
+        <div>
+            <label class="form-label small mb-1">État</label>
+            <select name="etat" class="form-select form-select-sm">
+                <option value="">Tous</option>
+                <option value="disponible"     {{ filtreEtat == 'disponible'     ? 'selected' : '' }}>Disponible</option>
+                <option value="louee"          {{ filtreEtat == 'louee'          ? 'selected' : '' }}>Loué</option>
+                <option value="maintenance"    {{ filtreEtat == 'maintenance'    ? 'selected' : '' }}>Maintenance</option>
+                <option value="hors_service"   {{ filtreEtat == 'hors_service'   ? 'selected' : '' }}>Hors service</option>
+            </select>
+        </div>
+        <div>
+            <label class="form-label small mb-1">Carburant</label>
+            <select name="carburant" class="form-select form-select-sm">
+                <option value="">Tous</option>
+                <option value="essence"    {{ filtreCarburant == 'essence'    ? 'selected' : '' }}>Essence</option>
+                <option value="diesel"     {{ filtreCarburant == 'diesel'     ? 'selected' : '' }}>Diesel</option>
+                <option value="hybride"    {{ filtreCarburant == 'hybride'    ? 'selected' : '' }}>Hybride</option>
+                <option value="electrique" {{ filtreCarburant == 'electrique' ? 'selected' : '' }}>Électrique</option>
+                <option value="gpl"        {{ filtreCarburant == 'gpl'        ? 'selected' : '' }}>GPL</option>
+            </select>
+        </div>
+        <div>
+            <label class="form-label small mb-1">Marque</label>
+            <select name="marque" class="form-select form-select-sm">
+                <option value="">Toutes</option>
+                {% for marque in marques %}
+                <option value="{{ marque.idMarque }}" {{ filtreMarque == marque.idMarque ~ '' ? 'selected' : '' }}>{{ marque.nomMarque }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label class="form-label small mb-1">Trier par</label>
+            <select name="tri" class="form-select form-select-sm">
+                <option value="immatriculation" {{ tri == 'immatriculation' ? 'selected' : '' }}>Immatriculation</option>
+                <option value="prix_croissant"  {{ tri == 'prix_croissant'  ? 'selected' : '' }}>Prix ↑</option>
+                <option value="prix_decroissant"{{ tri == 'prix_decroissant'? 'selected' : '' }}>Prix ↓</option>
+                <option value="annee_recente"   {{ tri == 'annee_recente'   ? 'selected' : '' }}>Année récente</option>
+                <option value="kilometrage"     {{ tri == 'kilometrage'     ? 'selected' : '' }}>Kilométrage</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary btn-sm"><i class="bi bi-search me-1"></i>Filtrer</button>
+        <a href="{{ path('admin_vehicule_index', {vue: vue}) }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-x-lg me-1"></i>Reset</a>
+    </form>
+</div>
+
+{% if total > 0 %}
+
+{# VUE TABLEAU #}
+{% if vue == 'table' %}
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead class="table-dark">
+                <tr>
+                    <th>Photo</th><th>Immat.</th><th>Modèle</th><th>Année</th>
+                    <th>Carburant</th><th>Km</th><th>Prix/jour</th><th>État</th><th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for vehicule in vehicules %}
+            <tr>
+                <td>
+                    {% if vehicule.photo %}
+                        {% if vehicule.photo starts with 'http' %}
+                            <img src="{{ vehicule.photo }}"
+                                 style="width:52px;height:38px;object-fit:cover;border-radius:6px;border:1px solid #e2e8f0;" alt="">
+                        {% else %}
+                            <img src="{{ asset('uploads/vehicules/' ~ vehicule.photo) }}"
+                                 style="width:52px;height:38px;object-fit:cover;border-radius:6px;border:1px solid #e2e8f0;" alt="">
+                        {% endif %}
+                    {% else %}
+                        <div class="bg-light rounded d-flex align-items-center justify-content-center" style="width:52px;height:38px;">
+                            <i class="bi bi-car-front text-muted"></i>
+                        </div>
+                    {% endif %}
+                </td>
+                <td class="fw-bold text-primary">{{ vehicule.immatriculation }}</td>
+                <td>{{ vehicule.modele.marque.nomMarque }} {{ vehicule.modele.nomModele }}</td>
+                <td>{{ vehicule.annee }}</td>
+                <td><span class="badge bg-warning bg-opacity-15 text-warning">{{ vehicule.carburant }}</span></td>
+                <td>{{ vehicule.kilometrage|number_format(0, ',', ' ') }} km</td>
+                <td class="fw-bold text-primary">{{ vehicule.prixParJour|number_format(3, ',', ' ') }} TND</td>
+                <td>{% include 'admin/vehicule/_badge_etat.html.twig' with {etat: vehicule.etat} %}</td>
+                <td>
+                    <div class="d-flex gap-1">
+                        <a href="{{ path('admin_vehicule_show', {id: vehicule.idVehicule}) }}" class="btn btn-sm btn-outline-info"><i class="bi bi-eye"></i></a>
+                        <a href="{{ path('admin_vehicule_edit', {id: vehicule.idVehicule}) }}" class="btn btn-sm btn-outline-warning"><i class="bi bi-pencil"></i></a>
+                        <form method="post" action="{{ path('admin_vehicule_delete', {id: vehicule.idVehicule}) }}" onsubmit="return confirm('Supprimer ce véhicule ?')">
+                            <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ vehicule.idVehicule) }}">
+                            <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% include 'admin/vehicule/_pagination.html.twig' %}
+</div>
+
+{# VUE CARTES #}
+{% else %}
+<div class="row g-3">
+    {% for vehicule in vehicules %}
+    {% set etatColor = {
+        'disponible':    '#10b981',
+        'louee':         '#3b82f6',
+        'maintenance':   '#f59e0b',
+        'en_maintenance':'#f59e0b',
+        'hors_service':  '#ef4444'
+    } %}
+    {% set color = etatColor[vehicule.etat] ?? '#6b7280' %}
+
+    <div class="col-12 col-sm-6 col-xl-4">
+        <div class="veh-card">
+            {% if vehicule.photo %}
+            <div style="position:relative;">
+                {% if vehicule.photo starts with 'http' %}
+                    <img src="{{ vehicule.photo }}" style="width:100%;height:170px;object-fit:cover;" alt="{{ vehicule.immatriculation }}">
+                {% else %}
+                    <img src="{{ asset('uploads/vehicules/' ~ vehicule.photo) }}" style="width:100%;height:170px;object-fit:cover;" alt="{{ vehicule.immatriculation }}">
+                {% endif %}
+                <div style="position:absolute;top:10px;right:10px;">
+                    {% include 'admin/vehicule/_badge_etat.html.twig' with {etat: vehicule.etat} %}
+                </div>
+            </div>
+            {% else %}
+            <div class="veh-card-photo-placeholder">
+                <i class="bi bi-car-front" style="font-size:3rem;color:#23779C;opacity:.5;"></i>
+                <div style="position:absolute;top:10px;right:10px;">
+                    {% include 'admin/vehicule/_badge_etat.html.twig' with {etat: vehicule.etat} %}
+                </div>
+            </div>
+            {% endif %}
+
+            <div style="height:4px;background:{{ color }};"></div>
+
+            <div class="p-3">
+                <div class="d-flex justify-content-between align-items-start mb-2">
+                    <div>
+                        <div class="fw-bold text-primary">{{ vehicule.immatriculation }}</div>
+                        <div class="small text-muted">{{ vehicule.modele.marque.nomMarque }} {{ vehicule.modele.nomModele }}</div>
+                    </div>
+                    <div class="fw-bold text-primary">{{ vehicule.prixParJour|number_format(3, ',', ' ') }} TND<small class="text-muted">/j</small></div>
+                </div>
+
+                <div class="bg-light rounded p-2 mb-2">
+                    <div class="veh-info-row">
+                        <span class="veh-info-label"><i class="bi bi-calendar3 me-1"></i>Année</span>
+                        <span class="veh-info-val">{{ vehicule.annee }}</span>
+                    </div>
+                    <div class="veh-info-row">
+                        <span class="veh-info-label"><i class="bi bi-fuel-pump me-1"></i>Carburant</span>
+                        <span class="veh-info-val">{{ vehicule.carburant|capitalize }}</span>
+                    </div>
+                    <div class="veh-info-row">
+                        <span class="veh-info-label"><i class="bi bi-speedometer2 me-1"></i>Km</span>
+                        <span class="veh-info-val">{{ vehicule.kilometrage|number_format(0, ',', ' ') }} km</span>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2 justify-content-end">
+                    <a href="{{ path('admin_vehicule_show', {id: vehicule.idVehicule}) }}" class="btn btn-sm btn-outline-info"><i class="bi bi-eye"></i></a>
+                    <a href="{{ path('admin_vehicule_edit', {id: vehicule.idVehicule}) }}" class="btn btn-sm btn-outline-warning"><i class="bi bi-pencil"></i></a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% include 'admin/vehicule/_pagination.html.twig' %}
+{% endif %}
+
+{% else %}
+<div class="card text-center py-5">
+    <i class="bi bi-truck fs-1 text-muted opacity-50 mb-3 d-block"></i>
+    <p class="text-muted">Aucun véhicule trouvé.</p>
+    <a href="{{ path('admin_vehicule_new') }}" class="btn btn-primary btn-sm">
+        <i class="bi bi-plus-lg me-1"></i>Ajouter un véhicule
+    </a>
+</div>
+{% endif %}
+
+{% endblock %}

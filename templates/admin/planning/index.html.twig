@@ -1,0 +1,287 @@
+{% extends 'admin/base_admin.html.twig' %}
+
+{% block title %}Planning {{ moisNom }} – Horizia{% endblock %}
+
+{% block admin_content %}
+
+<style>
+/* ── Widget météo ── */
+.weather-widget {
+    background: linear-gradient(135deg, #1a6fa3 0%, #23779C 50%, #2d8fb8 100%);
+    border-radius: 16px;
+    padding: 20px 24px;
+    color: #fff;
+    position: relative;
+    overflow: hidden;
+}
+.weather-widget::before {
+    content: '';
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 160px; height: 160px;
+    border-radius: 50%;
+    background: rgba(255,255,255,.07);
+}
+.weather-temp { font-size: 3.2rem; font-weight: 900; line-height: 1; }
+.weather-desc { font-size: .92rem; opacity: .9; margin-top: 2px; }
+.weather-meta { font-size: .8rem; opacity: .75; margin-top: 6px; }
+.weather-icon { width: 72px; height: 72px; filter: drop-shadow(0 2px 6px rgba(0,0,0,.2)); }
+.forecast-card {
+    background: rgba(255,255,255,.13);
+    border-radius: 10px;
+    padding: 10px 8px;
+    text-align: center;
+    flex: 1;
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255,255,255,.15);
+}
+.forecast-day { font-size: .75rem; opacity: .8; font-weight: 600; text-transform: uppercase; letter-spacing: .5px; }
+.forecast-temp { font-size: 1.05rem; font-weight: 800; margin-top: 2px; }
+.forecast-icon { width: 36px; height: 36px; }
+.weather-alert {
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: .82rem;
+    font-weight: 600;
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.weather-alert.danger  { background: rgba(239,68,68,.25); border: 1px solid rgba(239,68,68,.4); }
+.weather-alert.warning { background: rgba(245,158,11,.25); border: 1px solid rgba(245,158,11,.4); }
+.weather-alert.info    { background: rgba(59,130,246,.25); border: 1px solid rgba(59,130,246,.4); }
+.weather-unavailable {
+    background: #f8fafc;
+    border: 2px dashed #e2e8f0;
+    border-radius: 16px;
+    padding: 24px;
+    text-align: center;
+    color: #94a3b8;
+}
+
+/* ── Calendrier ── */
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+}
+.calendar-cell {
+    min-height: 80px;
+    border-radius: 8px;
+    padding: 6px 8px;
+    background: #f8fafc;
+    border: 1px solid #f1f5f9;
+    transition: background .15s;
+}
+.calendar-cell:not(.empty):hover { background: #e8f4fb; border-color: #c8e6f5; }
+.calendar-cell.today {
+    background: rgba(35,119,156,.08);
+    border: 2px solid #23779C;
+}
+.calendar-cell.empty { background: transparent; border: none; }
+.calendar-day-num { font-size: .82rem; font-weight: 700; color: #64748b; margin-bottom: 3px; }
+.calendar-cell.today .calendar-day-num { color: #23779C; }
+.calendar-event {
+    font-size: .7rem;
+    background: #23779C;
+    color: #fff;
+    border-radius: 4px;
+    padding: 1px 5px;
+    margin-bottom: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <h1 class="h3 fw-bold mb-1">{{ moisNom }}</h1>
+        <p class="text-muted mb-0">{{ locationsduMois|length }} location(s) ce mois</p>
+    </div>
+    <div class="d-flex gap-2">
+        {% set prevMois = mois - 1 %}
+        {% set prevAnnee = annee %}
+        {% if prevMois < 1 %}{% set prevMois = 12 %}{% set prevAnnee = annee - 1 %}{% endif %}
+        {% set nextMois = mois + 1 %}
+        {% set nextAnnee = annee %}
+        {% if nextMois > 12 %}{% set nextMois = 1 %}{% set nextAnnee = annee + 1 %}{% endif %}
+        <a href="{{ path('admin_planning_mois', {annee: prevAnnee, mois: prevMois}) }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-chevron-left"></i></a>
+        <a href="{{ path('admin_planning_index') }}" class="btn btn-primary btn-sm">Aujourd'hui</a>
+        <a href="{{ path('admin_planning_mois', {annee: nextAnnee, mois: nextMois}) }}" class="btn btn-outline-secondary btn-sm"><i class="bi bi-chevron-right"></i></a>
+    </div>
+</div>
+
+<div class="row g-3 mb-3">
+    <div class="col-6 col-lg-2">
+        <div class="card text-center p-3 h-100">
+            <div class="fs-2 fw-bold text-primary">{{ tauxOccupation }}%</div>
+            <div class="small text-muted">Taux d'occupation</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-2">
+        <div class="card text-center p-3 h-100">
+            <div class="h3 fw-bold text-primary">{{ caMois|number_format(0) }}</div>
+            <div class="small text-muted">TND ce mois</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-2">
+        <div class="card text-center p-3 h-100">
+            <div class="fs-2 fw-bold text-success">{{ statuts['en_cours'] ?? 0 }}</div>
+            <div class="small text-muted">En cours</div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-2">
+        <div class="card text-center p-3 h-100">
+            <div class="fs-2 fw-bold text-warning">{{ statuts['réservée'] ?? statuts['reservee'] ?? 0 }}</div>
+            <div class="small text-muted">Réservées</div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        {% if meteo %}
+        <div class="weather-widget h-100">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="small opacity-75"><i class="bi bi-geo-alt me-1"></i>{{ meteo.ville }}, Tunisie</div>
+                    <div class="weather-temp">{{ meteo.temperature }}°</div>
+                    <div class="weather-desc">{{ meteo.description }}</div>
+                    <div class="weather-meta">
+                        <i class="bi bi-thermometer me-1"></i>Ressenti {{ meteo.ressenti }}°
+                        &nbsp;·&nbsp;
+                        <i class="bi bi-droplet me-1"></i>{{ meteo.humidity }}%
+                        &nbsp;·&nbsp;
+                        <i class="bi bi-wind me-1"></i>{{ meteo.vent }} km/h
+                    </div>
+                </div>
+                <img src="{{ meteo.icone_url }}" class="weather-icon" alt="{{ meteo.description }}">
+            </div>
+
+            {% if meteo.alerte %}
+            <div class="weather-alert {{ meteo.alerte.type }}">
+                {{ meteo.alerte.message }}
+            </div>
+            {% endif %}
+
+            {% if previsions|length > 0 %}
+            <div class="d-flex gap-2 mt-3">
+                {% for prev in previsions %}
+                <div class="forecast-card">
+                    <div class="forecast-day">{{ prev.jour_nom }}</div>
+                    <img src="{{ prev.icone_url }}" class="forecast-icon" alt="{{ prev.description }}">
+                    <div class="forecast-temp">{{ prev.temperature }}°</div>
+                    <div class="small opacity-75">{{ prev.temp_min }}° / {{ prev.temp_max }}°</div>
+                    {% if prev.pluie > 0 %}<div class="small mt-1">🌧 {{ prev.pluie }}mm</div>{% endif %}
+                    {% if prev.alerte %}<div class="small mt-1 text-warning">⚠️</div>{% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+        {% else %}
+        <div class="weather-unavailable h-100 d-flex flex-column align-items-center justify-content-center">
+            <i class="bi bi-cloud-slash fs-1 mb-2"></i>
+            <div class="fw-bold mb-1">Météo indisponible</div>
+            <div class="small">Vérifiez la clé API</div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% set alertePrevision = false %}
+{% for prev in previsions %}
+    {% if prev.alerte and not alertePrevision %}
+        {% set alertePrevision = prev %}
+    {% endif %}
+{% endfor %}
+{% if alertePrevision %}
+<div class="alert alert-warning d-flex align-items-center gap-2 mb-3">
+    <i class="bi bi-exclamation-triangle-fill"></i>
+    <strong>Alerte météo :</strong> {{ alertePrevision.alerte.message }} (prévu le {{ alertePrevision.jour_nom }})
+</div>
+{% endif %}
+
+<div class="card mb-3">
+    <div class="card-body">
+        <div class="row mb-2 text-center">
+            {% for jour in ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'] %}
+            <div class="col fw-bold small text-muted">{{ jour }}</div>
+            {% endfor %}
+        </div>
+        {% set today = "now"|date('Y-m-d') %}
+        <div class="calendar-grid">
+            {% for i in 1..premierJourSemaine %}
+                <div class="calendar-cell empty"></div>
+            {% endfor %}
+            {% for jour in 1..nbJours %}
+                {% set dateStr = annee ~ '-' ~ mois|format('%02d') ~ '-' ~ jour|format('%02d') %}
+                {% set locsJour = calendrier[dateStr] is defined ? calendrier[dateStr] : [] %}
+                {% set isToday = dateStr == today %}
+                
+                {% set meteoJour = null %}
+                {% for prev in previsions %}
+                    {% if prev.date == dateStr %}{% set meteoJour = prev %}{% endif %}
+                {% endfor %}
+                
+                <div class="calendar-cell {{ isToday ? 'today' : '' }}" 
+                     onclick="window.location='{{ path('admin_planning_jour', {date: dateStr}) }}'"
+                     style="cursor:pointer;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="calendar-day-num {{ isToday ? 'text-primary fw-bold' : '' }}">{{ jour }}</div>
+                        {% if meteoJour %}
+                        <img src="{{ meteoJour.icone_url }}" style="width:20px;height:20px;" alt="{{ meteoJour.description }}" title="{{ meteoJour.description }} {{ meteoJour.temperature }}°">
+                        {% endif %}
+                    </div>
+                    {% for loc in locsJour|slice(0, 2) %}
+                        <div class="calendar-event" title="{{ loc.clientNomComplet }} — {{ loc.vehicule.immatriculation }}">
+                            {{ loc.vehicule.immatriculation }}
+                        </div>
+                    {% endfor %}
+                    {% if locsJour|length > 2 %}
+                        <div class="small text-muted">+{{ locsJour|length - 2 }} de plus</div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header bg-white fw-bold">
+        Locations de {{ moisNom }} ({{ locationsduMois|length }})
+    </div>
+    <div class="card-body">
+        {% if locationsduMois|length > 0 %}
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th>#</th><th>Client</th><th>Véhicule</th><th>Début</th><th>Fin prévue</th><th>Statut</th><th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for loc in locationsduMois %}
+                    <tr>
+                        <td class="fw-bold text-primary">#{{ loc.idLocation }}</td>
+                        <td>{{ loc.clientNomComplet }}</td>
+                        <td><span class="badge bg-info bg-opacity-10 text-info">{{ loc.vehicule.immatriculation }}</span></td>
+                        <td>{{ loc.dateDebut|date('d/m/Y') }}</td>
+                        <td>{{ loc.dateFinPrevue|date('d/m/Y') }}</td>
+                        <td>{% include 'admin/location/_badge_statut.html.twig' with {statut: loc.statut} %}</td>
+                        <td><a href="{{ path('admin_location_show', {id: loc.idLocation}) }}" class="btn btn-sm btn-outline-info"><i class="bi bi-eye"></i></a></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-4 text-muted">
+            <i class="bi bi-calendar-x fs-1 opacity-50 mb-2 d-block"></i>
+            Aucune location ce mois.
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

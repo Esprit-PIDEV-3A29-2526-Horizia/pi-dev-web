@@ -1,0 +1,250 @@
+{% extends 'base_front.html.twig' %}
+{% block title %}Horizia - Réservation Confirmée !{% endblock %}
+
+{% block body %}
+
+{# Déterminer l'état du paiement dynamiquement #}
+{% set estPayeTotal = location.statut == 'en_cours' %}
+{% set montantTotal = location.montantTotal|number_format(3, '.', '') %}
+{% set avance = location.avance|number_format(3, '.', '') %}
+{% set resteAPayer = location.getResteAPayer|number_format(3, '.', '') %}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-9 col-lg-8">
+
+            {# Flash messages #}
+            {% for msg in app.flashes('success') %}
+                <div class="alert alert-success alert-dismissible fade show rounded-3 mb-4" role="alert">
+                    <i class="fas fa-check-circle me-2"></i>{{ msg }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+            {% for msg in app.flashes('warning') %}
+                <div class="alert alert-warning alert-dismissible fade show rounded-3 mb-4" role="alert">
+                    <i class="fas fa-exclamation-triangle me-2"></i>{{ msg }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+
+            {# Carte principale #}
+            <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+
+                {# Header dynamique selon statut #}
+                <div class="card-header text-white text-center py-4"
+                     style="background: linear-gradient(135deg, {% if estPayeTotal %}#16a34a, #15803d{% else %}#23779C, #1a5a78{% endif %});">
+                    <i class="fas {% if estPayeTotal %}fa-check-double{% else %}fa-check-circle{% endif %} fa-4x mb-3"
+                       style="color: {% if estPayeTotal %}#bbf7d0{% else %}#27ae60{% endif %};"></i>
+                    <h2 class="mb-1 fw-bold">
+                        {% if estPayeTotal %}
+                            ✅ Paiement Complet !
+                        {% else %}
+                            Réservation Confirmée !
+                        {% endif %}
+                    </h2>
+                    <p class="mb-0 opacity-75">
+                        {% if estPayeTotal %}
+                            Votre réservation est entièrement payée et confirmée
+                        {% else %}
+                            Votre avance a été enregistrée avec succès
+                        {% endif %}
+                    </p>
+                </div>
+
+                <div class="card-body p-4">
+
+                    {# Badge réservation + statut #}
+                    <div class="text-center mb-4 d-flex justify-content-center gap-3 flex-wrap">
+                        <span class="badge bg-light text-dark px-4 py-2 rounded-pill fs-6">
+                            <i class="fas fa-ticket-alt me-2 text-teal"></i>
+                            Réservation #{{ location.idLocation }}
+                        </span>
+                        <span class="badge px-4 py-2 rounded-pill fs-6
+                            {% if estPayeTotal %}bg-success{% else %}bg-warning text-dark{% endif %}">
+                            <i class="fas {% if estPayeTotal %}fa-lock{% else %}fa-hourglass-half{% endif %} me-2"></i>
+                            {% if estPayeTotal %}Payée intégralement{% else %}Avance payée{% endif %}
+                        </span>
+                    </div>
+
+                    {# Détails de la réservation #}
+                    <div class="border rounded-3 p-3 mb-4">
+                        <h6 class="fw-bold mb-3" style="color: var(--teal);">
+                            <i class="fas fa-info-circle me-2"></i>Détails de la réservation
+                        </h6>
+                        <div class="row mb-2">
+                            <div class="col-5 text-muted"><i class="fas fa-user me-2"></i>Client :</div>
+                            <div class="col-7 fw-semibold">{{ location.clientNomComplet }}</div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-5 text-muted"><i class="fas fa-car me-2"></i>Véhicule :</div>
+                            <div class="col-7 fw-semibold">
+                                {% if location.vehicule %}
+                                    {{ location.vehicule.modele.marque.nomMarque }} {{ location.vehicule.modele.nomModele }}
+                                    <br><small class="text-muted">{{ location.vehicule.immatriculation }}</small>
+                                {% else %}—{% endif %}
+                            </div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-5 text-muted"><i class="fas fa-calendar-alt me-2"></i>Période :</div>
+                            <div class="col-7 fw-semibold">
+                                {{ location.dateDebut ? location.dateDebut|date('d/m/Y') : '—' }}
+                                <i class="fas fa-arrow-right mx-1 text-teal"></i>
+                                {{ location.dateFinPrevue ? location.dateFinPrevue|date('d/m/Y') : '—' }}
+                            </div>
+                        </div>
+                    </div>
+
+                    {# ══════════════════════════════════════════
+                       SECTION FINANCIÈRE DYNAMIQUE
+                    ══════════════════════════════════════════ #}
+                    <div class="rounded-3 p-4 mb-4" style="background: #f8fafc; border: 1px solid #e2e8f0;">
+                        <h6 class="fw-bold mb-3" style="color: var(--teal);">
+                            <i class="fas fa-credit-card me-2"></i>Détails financiers
+                        </h6>
+
+                        {# Montant total #}
+                        <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
+                            <span class="text-muted">Montant total :</span>
+                            <span class="fw-bold text-success fs-5">{{ montantTotal }} DT</span>
+                        </div>
+
+                        {% if estPayeTotal %}
+                            {# === PAIEMENT TOTAL === #}
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="text-muted">Montant payé :</span>
+                                <span class="fw-bold text-success fs-5">
+                                    <i class="fas fa-check-circle me-1"></i>{{ montantTotal }} DT
+                                </span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-muted">Reste à payer :</span>
+                                <span class="fw-bold text-success">
+                                    <i class="fas fa-check-circle me-1"></i>0.000 DT
+                                </span>
+                            </div>
+                            <div class="alert alert-success mt-3 mb-0 py-2 rounded-3">
+                                <i class="fas fa-shield-alt me-2"></i>
+                                <strong>Réservation soldée !</strong> Aucun paiement supplémentaire requis à la prise du véhicule.
+                            </div>
+
+                        {% else %}
+                            {# === PAIEMENT AVANCE === #}
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="text-muted">
+                                    <i class="fas fa-check-circle text-success me-1"></i>Avance payée (30%) :
+                                </span>
+                                <span class="fw-bold" style="color: var(--teal);">{{ avance }} DT</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <span class="text-muted">
+                                    <i class="fas fa-clock text-warning me-1"></i>Reste à payer :
+                                </span>
+                                <span class="fw-bold text-danger fs-5">{{ resteAPayer }} DT</span>
+                            </div>
+
+                            {# Barre de progression #}
+                            <div class="mb-2">
+                                <div class="d-flex justify-content-between small text-muted mb-1">
+                                    <span>Progression du paiement</span>
+                                    <span>30%</span>
+                                </div>
+                                <div class="progress rounded-pill" style="height: 10px;">
+                                    <div class="progress-bar bg-success" role="progressbar"
+                                         style="width: 30%;" aria-valuenow="30" aria-valuemin="0" aria-valuemax="100">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="alert alert-warning mt-3 mb-0 py-2 rounded-3">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Le reste de <strong>{{ resteAPayer }} DT</strong> sera payé à la prise en charge du véhicule.
+                            </div>
+
+                            {# Bouton payer le reste maintenant #}
+                            <div class="text-center mt-3">
+                                <a href="{{ path('client_paiement_stripe', {id: location.idLocation, type: 'total'}) }}"
+                                   class="btn btn-sm btn-outline-success px-4 rounded-pill">
+                                    <i class="fas fa-credit-card me-2"></i>Payer le reste maintenant
+                                </a>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    {# Section email #}
+                    <div class="border rounded-3 p-3 mb-4">
+                        <h6 class="fw-bold mb-3" style="color: var(--teal);">
+                            <i class="fas fa-envelope me-2"></i>Recevoir la confirmation par email
+                        </h6>
+                        <form method="POST" action="{{ path('client_confirmation', {id: location.idLocation}) }}">
+                            <div class="input-group">
+                                <span class="input-group-text bg-white border-end-0">
+                                    <i class="fas fa-envelope text-muted"></i>
+                                </span>
+                                <input type="email" name="email" class="form-control border-start-0"
+                                       placeholder="Votre adresse email..."
+                                       value="{{ app.user.email|default('') }}"
+                                       {% if app.user %}readonly{% endif %} required>
+                                {% if app.user %}
+                                    <span class="input-group-text bg-light border-start-0">
+                                        <i class="fas fa-check-circle text-success"></i>
+                                    </span>
+                                {% endif %}
+                            </div>
+                            {% if app.user %}
+                                <small class="text-muted form-text">
+                                    <i class="fas fa-info-circle"></i> Email pré-rempli depuis votre profil
+                                </small>
+                            {% endif %}
+                            <button type="submit" class="btn btn-teal w-100 mt-3" style="border-radius: 10px;">
+                                <i class="fas fa-paper-plane me-2"></i>Envoyer la confirmation
+                            </button>
+                        </form>
+                        {% if email_envoye is same as true %}
+                            <div class="alert alert-success mt-3 mb-0 py-2">
+                                <i class="fas fa-check-circle me-2"></i>Email envoyé avec succès !
+                            </div>
+                        {% elseif email_envoye is same as false %}
+                            <div class="alert alert-danger mt-3 mb-0 py-2">
+                                <i class="fas fa-exclamation-circle me-2"></i>Erreur lors de l'envoi. Réessayez.
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    {# Boutons d'action #}
+                    <div class="d-flex gap-2 justify-content-center flex-wrap">
+                        <a href="{{ path('client_mes_reservations') }}" class="btn btn-outline-teal px-4">
+                            <i class="fas fa-list me-2"></i>Mes réservations
+                        </a>
+                        <a href="{{ path('client_catalogue') }}" class="btn btn-outline-teal px-4">
+                            <i class="fas fa-car me-2"></i>Voir le catalogue
+                        </a>
+                        <a href="{{ path('client_accueil') }}" class="btn btn-orange px-4">
+                            <i class="fas fa-home me-2"></i>Accueil
+                        </a>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    :root {
+        --orange: #e84a3e;
+        --teal: #23779C;
+        --teal-dk: #1a5a78;
+    }
+    .btn-orange { background: var(--orange); color: white; border: none; transition: all .3s; }
+    .btn-orange:hover { background: #c73a2e; color: white; transform: translateY(-2px); }
+    .btn-teal { background: var(--teal); color: white; border: none; transition: all .3s; }
+    .btn-teal:hover { background: var(--teal-dk); color: white; transform: translateY(-2px); }
+    .btn-outline-teal { border: 2px solid var(--teal); color: var(--teal); background: transparent; transition: all .3s; }
+    .btn-outline-teal:hover { background: var(--teal); color: white; }
+    .text-teal { color: var(--teal); }
+    @media (max-width: 576px) {
+        .btn-outline-teal, .btn-orange, .btn-teal { padding: 8px 16px; font-size: .85rem; }
+    }
+</style>
+
+{% endblock %}

@@ -12,97 +12,307 @@
             </a>
         </li>
 
-        <!-- Gestion Utilisateurs (exemple) -->
-        <li>
-            <a class="sidebar-link" href="{{ path('app_user_index') }}">
+        <!-- ==================== DROPDOWN GESTION UTILISATEURS ==================== -->
+        <li class="sidebar-dropdown">
+            <a class="sidebar-link dropdown-toggle" href="#" role="button" data-toggle="dropdown" aria-expanded="false">
                 <i class="bi bi-person"></i>
                 <span>Gestion Utilisateurs</span>
+                <i class="bi bi-chevron-down ms-auto"></i>
             </a>
+            <ul class="dropdown-menu sidebar-dropdown-menu">
+                <li>
+                    <a class="dropdown-item {{ app.request.attributes.get('_route') == 'app_user_index' ? 'active' : '' }}" href="{{ path('app_user_index') }}">
+                        <i class="bi bi-person"></i> Utilisateurs
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item {{ app.request.attributes.get('_route') == 'app_profil_index' ? 'active' : '' }}" href="{{ path('app_profil_index') }}">
+                        <i class="bi bi-person-badge"></i> Profils
+                    </a>
+                </li>
+            </ul>
         </li>
 
-        <!-- Gestion Profils -->
-        <li>
-            <a class="sidebar-link" href="{{ path('app_profil_index') }}">
-                <i class="bi bi-person-badge"></i>
-                <span>Gestion Profils</span>
-            </a>
-        </li>
-
-        <!-- Gestion Catégories -->
-        <li>
-            <a class="sidebar-link {{ app.request.attributes.get('_route') starts with 'app_categorie_' ? 'active' : '' }}" href="{{ path('app_categorie_index') }}">
-                <i class="bi bi-tags-fill"></i>
-                <span>Gestion Catégories</span>
-            </a>
-        </li>
-
-        <!-- Gestion Voyages -->
-        <li>
-            <a class="sidebar-link {{ app.request.attributes.get('_route') starts with 'app_voyage_' ? 'active' : '' }}" href="{{ path('app_voyage_index') }}">
+        <!-- ==================== DROPDOWN GESTION VOYAGES ==================== -->
+        <li class="sidebar-dropdown">
+            <a class="sidebar-link dropdown-toggle" href="#" role="button" data-toggle="dropdown" aria-expanded="false">
                 <i class="bi bi-airplane-fill"></i>
                 <span>Gestion Voyages</span>
+                <i class="bi bi-chevron-down ms-auto"></i>
             </a>
+            <ul class="dropdown-menu sidebar-dropdown-menu">
+                <li>
+                    <a class="dropdown-item {{ app.request.attributes.get('_route') starts with 'app_voyage_' ? 'active' : '' }}" href="{{ path('app_voyage_index') }}">
+                        <i class="bi bi-airplane-fill"></i> Voyages
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item {{ app.request.attributes.get('_route') starts with 'app_reservation_' ? 'active' : '' }}" href="{{ path('app_reservation_index') }}">
+                        <i class="bi bi-calendar-check-fill"></i> Réservations
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item {{ app.request.attributes.get('_route') starts with 'app_categorie_' ? 'active' : '' }}" href="{{ path('app_categorie_index') }}">
+                        <i class="bi bi-tags-fill"></i> Catégories
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item {{ app.request.attributes.get('_route') == 'app_calendar' ? 'active' : '' }}" href="{{ path('app_calendar') }}">
+                        <i class="bi bi-calendar3"></i> Calendrier
+                    </a>
+                </li>
+            </ul>
         </li>
 
-        <!-- Gestion Logements -->
-        <li>
-            <a class="sidebar-link {{ app.request.attributes.get('_route') starts with 'admin_logement_' ? 'active' : '' }}" href="{{ path('admin_logement_index') }}">
+        <!-- ==================== DROPDOWN GESTION LOGEMENTS ==================== -->
+        <li class="sidebar-dropdown">
+            <a class="sidebar-link dropdown-toggle" href="#" role="button" data-toggle="dropdown" aria-expanded="false">
                 <i class="bi bi-building"></i>
                 <span>Gestion Logements</span>
+                <i class="bi bi-chevron-down ms-auto"></i>
             </a>
+            <ul class="dropdown-menu sidebar-dropdown-menu">
+                <li>
+                    <a class="dropdown-item {{ app.request.attributes.get('_route') starts with 'admin_logement_' ? 'active' : '' }}" href="{{ path('admin_logement_index') }}">
+                        <i class="bi bi-building"></i> Logements
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item {{ app.request.attributes.get('_route') == 'admin_cancel_requests' ? 'active' : '' }}" href="{{ path('admin_cancel_requests') }}">
+                        <i class="bi bi-clock-history"></i> Demandes annulation
+                        {% set pendingCount = pendingCancelRequests|default(0) %}
+                        {% if pendingCount > 0 %}
+                            <span class="badge bg-danger rounded-pill ms-2">{{ pendingCount }}</span>
+                        {% endif %}
+                    </a>
+                </li>
+            </ul>
         </li>
 
-        <li>
-            <a class="sidebar-link {{ app.request.attributes.get('_route') starts with 'app_reservation_' ? 'active' : '' }}"
-            href="{{ path('app_reservation_index') }}">
-                <i class="bi bi-calendar-check-fill"></i>
-                <span>Gestion Réservations</span>
-            </a>
-        </li>
-
-        <!-- Demandes d'annulation (spécifique logements) -->
-        <li>
-            <a class="sidebar-link {{ app.request.attributes.get('_route') == 'admin_cancel_requests' ? 'active' : '' }}" href="{{ path('admin_cancel_requests') }}">
-                <i class="bi bi-clock-history"></i>
-                <span>Demandes annulation</span>
-                {% set pendingCount = pendingCancelRequests|default(0) %}
-                {% if pendingCount > 0 %}
-                    <span class="badge bg-danger rounded-pill ms-2">{{ pendingCount }}</span>
-                {% endif %}
-            </a>
-        </li>
-
-        <!-- Calendrier (si utilisé) -->
-        <li>
-            <a class="sidebar-link {{ app.request.attributes.get('_route') == 'app_calendar' ? 'active' : '' }}" href="{{ path('app_calendar') }}">
-                <i class="bi bi-calendar3"></i>
-                <span>Calendrier</span>
-            </a>
-        </li>
-
-        <!-- Gestion Participations -->
-        <li>
-            <a class="sidebar-link {{ app.request.attributes.get('_route') starts with 'app_participation' ? 'active' : '' }}" href="{{ path('app_participation_index') }}">
-                <i class="bi bi-people-fill"></i>
-                <span>Gestion Participations</span>
-            </a>
-        </li>
-
-        <!-- Gestion Événements -->
-        <li>
-            <a class="sidebar-link {{ app.request.attributes.get('_route') starts with 'app_event_' ? 'active' : '' }}" href="{{ path('app_event_index') }}">
+        <!-- ==================== DROPDOWN GESTION ÉVÉNEMENTS ==================== -->
+        <li class="sidebar-dropdown">
+            <a class="sidebar-link dropdown-toggle" href="#" role="button" data-toggle="dropdown" aria-expanded="false">
                 <i class="bi bi-list-ul"></i>
                 <span>Gestion Événements</span>
+                <i class="bi bi-chevron-down ms-auto"></i>
             </a>
+            <ul class="dropdown-menu sidebar-dropdown-menu">
+                <li>
+                    <a class="dropdown-item {{ app.request.attributes.get('_route') starts with 'app_event_' ? 'active' : '' }}" href="{{ path('app_event_index') }}">
+                        <i class="bi bi-list-ul"></i> Événements
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item {{ app.request.attributes.get('_route') starts with 'app_participation' ? 'active' : '' }}" href="{{ path('app_participation_index') }}">
+                        <i class="bi bi-people-fill"></i> Participations
+                    </a>
+                </li>
+            </ul>
         </li>
-        <!--gestion publications-->
-        <li><a class="sidebar-link {{ app.request.attributes.get('_route') starts with 'admin_publication' ? 'active' : '' }}" href="{{ path('admin_publication_index') }}"><i class="bi bi-file-text-fill"></i><span>Publications</span></a></li>
 
-        <li>
-            <a class="sidebar-link {{ app.request.attributes.get('_route') starts with 'admin_commentaire' ? 'active' : '' }}" href="{{ path('admin_commentaire_index') }}">
-                <i class="bi bi-chat-dots-fill"></i>
-                <span>Commentaires</span>
+        <!-- ==================== DROPDOWN GESTION PUBLICATIONS ==================== -->
+        <li class="sidebar-dropdown">
+            <a class="sidebar-link dropdown-toggle" href="#" role="button" data-toggle="dropdown" aria-expanded="false">
+                <i class="bi bi-file-text-fill"></i>
+                <span>Gestion Publications</span>
+                <i class="bi bi-chevron-down ms-auto"></i>
             </a>
+            <ul class="dropdown-menu sidebar-dropdown-menu">
+                <li>
+                    <a class="dropdown-item {{ app.request.attributes.get('_route') starts with 'admin_publication' ? 'active' : '' }}" href="{{ path('admin_publication_index') }}">
+                        <i class="bi bi-file-text-fill"></i> Publications
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item {{ app.request.attributes.get('_route') starts with 'admin_commentaire' ? 'active' : '' }}" href="{{ path('admin_commentaire_index') }}">
+                        <i class="bi bi-chat-dots-fill"></i> Commentaires
+                    </a>
+                </li>
+            </ul>
         </li>
+
+        <!-- ==================== SÉPARATEUR ==================== -->
+        <hr class="sidebar-divider">
+
+        <!-- ==================== AUTRES MENUS SIMPLES ==================== -->
+
+        <!-- Gestion Profils (si besoin indépendant, déjà dans dropdown) -->
+        <!-- Gestion Catégories (déjà dans dropdown voyages) -->
+        <!-- Calendrier (déjà dans dropdown voyages) -->
+
     </ul>
 </div>
+
+<style>
+/* Styles pour les dropdowns dans la sidebar admin */
+.sidebar-dropdown {
+    position: relative;
+}
+
+.sidebar-dropdown .dropdown-toggle {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    justify-content: space-between;
+}
+
+.sidebar-dropdown .dropdown-toggle .bi-chevron-down {
+    transition: transform 0.3s ease;
+    font-size: 0.8rem;
+    margin-left: auto;
+}
+
+/* Masquer la flèche quand la sidebar est réduite */
+body.sidebar-collapsed .sidebar-dropdown .dropdown-toggle .bi-chevron-down {
+    display: none;
+}
+
+.sidebar-dropdown .dropdown-toggle[aria-expanded="true"] .bi-chevron-down {
+    transform: rotate(180deg);
+}
+
+.sidebar-dropdown-menu {
+    position: static;
+    float: none;
+    width: 100%;
+    background: rgba(255,255,255,0.08);
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    margin: 0;
+    box-shadow: none;
+    display: none;
+}
+
+/* Masquer complètement le menu déroulant quand la sidebar est réduite */
+body.sidebar-collapsed .sidebar-dropdown-menu {
+    display: none !important;
+}
+
+.sidebar-dropdown-menu.show {
+    display: block;
+}
+
+/* En mode réduit, les dropdowns redeviennent des liens simples */
+body.sidebar-collapsed .sidebar-dropdown > .dropdown-toggle {
+    pointer-events: auto;
+}
+
+body.sidebar-collapsed .sidebar-dropdown > .dropdown-toggle[aria-expanded="true"] {
+    background: transparent;
+}
+
+.sidebar-dropdown-menu .dropdown-item {
+    padding: 10px 24px 10px 48px;
+    color: rgba(255,255,255,0.75);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.85rem;
+    transition: all 0.2s ease;
+}
+
+.sidebar-dropdown-menu .dropdown-item:hover {
+    background: rgba(61,148,202,0.18);
+    color: #fff;
+}
+
+.sidebar-dropdown-menu .dropdown-item.active {
+    background: rgba(61,148,202,0.25);
+    color: #fff;
+}
+
+.sidebar-dropdown-menu .dropdown-item i {
+    width: 20px;
+    font-size: 0.9rem;
+}
+
+.sidebar-divider {
+    margin: 15px 20px;
+    border-color: rgba(255,255,255,0.1);
+}
+
+/* En mode réduit, le texte des liens est masqué (déjà fait dans votre CSS global) */
+body.sidebar-collapsed .sidebar-dropdown .dropdown-toggle span {
+    display: none;
+}
+
+body.sidebar-collapsed .sidebar-dropdown .dropdown-toggle {
+    justify-content: center;
+    padding: 14px 0;
+}
+
+/* Badges dans les dropdowns */
+.sidebar-dropdown-menu .dropdown-item .badge {
+    margin-left: auto;
+}
+</style>
+
+<script>
+// Dans votre script existant, modifiez la gestion des dropdowns
+document.addEventListener('DOMContentLoaded', function() {
+    const body = document.body;
+    const dropdownToggles = document.querySelectorAll('.sidebar-dropdown > .dropdown-toggle');
+    
+    function isSidebarCollapsed() {
+        return body.classList.contains('sidebar-collapsed');
+    }
+    
+    dropdownToggles.forEach(function(toggle) {
+        toggle.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // Ne pas ouvrir le dropdown si la sidebar est réduite
+            if (isSidebarCollapsed()) {
+                // En mode réduit, rediriger vers la première page du dropdown ou rester sur la même
+                const firstLink = this.closest('.sidebar-dropdown').querySelector('.dropdown-item');
+                if (firstLink && firstLink.href) {
+                    window.location.href = firstLink.href;
+                }
+                return;
+            }
+            
+            const parent = this.closest('.sidebar-dropdown');
+            const menu = parent.querySelector('.sidebar-dropdown-menu');
+            const isExpanded = this.getAttribute('aria-expanded') === 'true';
+            
+            // Fermer tous les autres dropdowns
+            document.querySelectorAll('.sidebar-dropdown-menu.show').forEach(function(openMenu) {
+                if (openMenu !== menu) {
+                    openMenu.classList.remove('show');
+                    const otherToggle = openMenu.closest('.sidebar-dropdown').querySelector('.dropdown-toggle');
+                    if (otherToggle) otherToggle.setAttribute('aria-expanded', 'false');
+                }
+            });
+            
+            // Toggle le dropdown actuel
+            if (menu) {
+                if (isExpanded) {
+                    menu.classList.remove('show');
+                    this.setAttribute('aria-expanded', 'false');
+                } else {
+                    menu.classList.add('show');
+                    this.setAttribute('aria-expanded', 'true');
+                }
+            }
+        });
+    });
+    
+    // Garder le dropdown ouvert si un sous-menu est actif
+    const activeDropdownItem = document.querySelector('.sidebar-dropdown-menu .dropdown-item.active');
+    if (activeDropdownItem) {
+        const parentDropdown = activeDropdownItem.closest('.sidebar-dropdown');
+        if (parentDropdown) {
+            const toggle = parentDropdown.querySelector('.dropdown-toggle');
+            const menu = parentDropdown.querySelector('.sidebar-dropdown-menu');
+            if (toggle && menu) {
+                menu.classList.add('show');
+                toggle.setAttribute('aria-expanded', 'true');
+            }
+        }
+    }
+});
+</script>

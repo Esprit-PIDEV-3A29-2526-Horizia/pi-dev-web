@@ -1,0 +1,119 @@
+{% extends 'admin/base_admin.html.twig' %}
+
+{% block title %}{{ vehicule.immatriculation }} – Horizia{% endblock %}
+
+{% block admin_content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 fw-bold mb-1">{{ vehicule.immatriculation }}</h1>
+        <p class="text-muted mb-0">{{ vehicule.modele.marque.nomMarque }} {{ vehicule.modele.nomModele }}</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{ path('admin_vehicule_edit', {id: vehicule.idVehicule}) }}" class="btn btn-warning btn-sm">
+            <i class="bi bi-pencil me-1"></i>Modifier
+        </a>
+        <a href="{{ path('admin_vehicule_index') }}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left me-1"></i>Retour
+        </a>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-5">
+        <div class="card mb-3">
+            <div class="card-body text-center">
+                {% if vehicule.photo %}
+                <img src="{{ vehicule.photo }}" alt="{{ vehicule.immatriculation }}" class="img-fluid rounded mb-3" style="height:200px; object-fit:cover; width:100%;">
+                {% else %}
+                <div class="bg-light rounded d-flex align-items-center justify-content-center mb-3" style="height:160px;">
+                    <i class="bi bi-car-front text-primary fs-1"></i>
+                </div>
+                {% endif %}
+                
+                <h4 class="fw-bold text-primary">{{ vehicule.immatriculation }}</h4>
+                <div class="mb-2">{% include 'admin/vehicule/_badge_etat.html.twig' with {etat: vehicule.etat} %}</div>
+                <div class="fs-2 fw-bold text-primary">
+                    {{ vehicule.prixParJour|number_format(3, ',', ' ') }} TND
+                    <small class="fs-6 text-muted">/ jour</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-7">
+        <div class="card mb-3">
+            <div class="card-header bg-white fw-bold">
+                <i class="bi bi-info-circle me-2 text-primary"></i>Caractéristiques
+            </div>
+            <div class="card-body">
+                <div class="row g-2">
+                    <div class="col-6">
+                        <div class="bg-light rounded p-3 text-center">
+                            <div class="small text-muted">Modèle</div>
+                            <div class="fw-bold">{{ vehicule.modele.nomModele }}</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="bg-light rounded p-3 text-center">
+                            <div class="small text-muted">Marque</div>
+                            <div class="fw-bold">{{ vehicule.modele.marque.nomMarque }}</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="bg-light rounded p-3 text-center">
+                            <div class="small text-muted">Année</div>
+                            <div class="fw-bold">{{ vehicule.annee }}</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="bg-light rounded p-3 text-center">
+                            <div class="small text-muted">Carburant</div>
+                            <div class="fw-bold">{{ vehicule.carburant }}</div>
+                        </div>
+                    </div>
+                    {% if vehicule.couleur %}
+                    <div class="col-6">
+                        <div class="bg-light rounded p-3 text-center">
+                            <div class="small text-muted">Couleur</div>
+                            <div class="fw-bold">{{ vehicule.couleur }}</div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    <div class="col-6">
+                        <div class="bg-light rounded p-3 text-center">
+                            <div class="small text-muted">Kilométrage</div>
+                            <div class="fw-bold">{{ vehicule.kilometrage|number_format(0, ',', ' ') }} km</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header bg-white fw-bold">
+                <i class="bi bi-calendar-check me-2 text-primary"></i>Locations ({{ vehicule.locations|length }})
+            </div>
+            <div class="card-body">
+                {% if vehicule.locations|length > 0 %}
+                <div class="list-group list-group-flush">
+                    {% for loc in vehicule.locations|slice(0, 5) %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <span>{{ loc.clientNomComplet }}</span>
+                        <span class="text-muted small">{{ loc.dateDebut|date('d/m/Y') }}</span>
+                        <a href="{{ path('admin_location_show', {id: loc.idLocation}) }}" class="btn btn-sm btn-outline-info"><i class="bi bi-eye"></i></a>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-3 text-muted">
+                    <i class="bi bi-calendar-x fs-1 opacity-50 mb-2 d-block"></i>
+                    Aucune location pour ce véhicule.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

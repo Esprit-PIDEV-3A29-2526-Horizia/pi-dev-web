@@ -1,0 +1,461 @@
+{% extends 'base_front.html.twig' %}
+{% block title %}Horizia - Mes Locations{% endblock %}
+{% block navbar_extra_class %}nav-static{% endblock %}
+{% block nav_reservations %}active{% endblock %}
+
+{% block stylesheets %}
+<style>
+:root {
+    --orange: #e84a3e;
+    --teal: #23779C;
+    --teal-dk: #1a5a78;
+    --dark: #1a1a2e;
+}
+
+/* Hero */
+.hero-banner {
+    background: linear-gradient(135deg, var(--teal), var(--teal-dk));
+    padding: 110px 0 55px;
+    position: relative;
+    text-align: center;
+}
+.hero-banner::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,.2);
+}
+.hero-banner .inner {
+    position: relative;
+    z-index: 2;
+}
+.hero-banner h1 {
+    color: #fff;
+    font-size: 2.3rem;
+    font-weight: 800;
+}
+.hero-banner p {
+    color: rgba(255,255,255,.8);
+}
+.breadcrumb {
+    background: transparent;
+    padding: 0;
+    margin: 8px 0 0;
+    justify-content: center;
+}
+.breadcrumb-item a {
+    color: rgba(255,255,255,.7);
+    text-decoration: none;
+}
+.breadcrumb-item.active {
+    color: #fff;
+}
+.breadcrumb-item+.breadcrumb-item::before {
+    color: rgba(255,255,255,.4);
+}
+
+/* Toolbar */
+.resa-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 24px;
+    padding: 16px 20px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.06);
+}
+
+/* Filtre */
+.filter-box {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.filter-box label {
+    font-weight: 600;
+    font-size: .85rem;
+    color: var(--dark);
+    margin: 0;
+}
+.filter-box select, .filter-box input {
+    border: 1.5px solid #dee2e6;
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: .85rem;
+    outline: none;
+}
+.filter-box select:focus, .filter-box input:focus {
+    border-color: var(--teal);
+}
+.btn-filter {
+    background: var(--teal);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 20px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .2s;
+}
+.btn-filter:hover {
+    background: var(--teal-dk);
+}
+.btn-reset {
+    background: #6c757d;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 20px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+}
+.btn-reset:hover {
+    background: #5a6268;
+    color: white;
+}
+
+/* Vue toggle */
+.vue-toggle .btn-vue {
+    background: transparent;
+    border: 2px solid #dee2e6;
+    color: #adb5bd;
+    padding: 8px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all .2s;
+    font-size: 1.1rem;
+}
+.vue-toggle .btn-vue.active {
+    background: var(--teal);
+    border-color: var(--teal);
+    color: white;
+}
+
+/* Carte réservation */
+.resa-card {
+    border: none;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 16px rgba(0,0,0,.08);
+    transition: transform .25s, box-shadow .25s;
+    height: 100%;
+}
+.resa-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(35,119,156,.2);
+}
+.resa-card .card-img-top {
+    height: 160px;
+    object-fit: cover;
+}
+.img-placeholder {
+    height: 160px;
+    background: linear-gradient(135deg, var(--teal), var(--teal-dk));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.statut-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: .72rem;
+    font-weight: 700;
+}
+.resa-card .card-body {
+    padding: 16px;
+}
+.resa-ref {
+    font-size: .78rem;
+    color: var(--teal);
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+.resa-title {
+    font-size: .95rem;
+    font-weight: 700;
+    color: var(--dark);
+}
+.resa-meta {
+    font-size: .8rem;
+    color: #6c757d;
+    margin-bottom: 4px;
+}
+.resa-prix {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: var(--orange);
+    margin-top: 8px;
+}
+
+/* Tableau des réservations */
+.resa-table {
+    background: white;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0,0,0,.07);
+}
+.resa-table thead th {
+    background: var(--teal);
+    color: white;
+    border: none;
+    padding: 12px 16px;
+    font-weight: 600;
+}
+.resa-table tbody td {
+    padding: 14px 16px;
+    vertical-align: middle;
+}
+.resa-table tbody tr:hover {
+    background: #f8f9fa;
+}
+
+/* Pagination */
+.pagination-wrap {
+    display: flex;
+    justify-content: center;
+    margin-top: 32px;
+}
+.pagination .page-link {
+    color: var(--teal);
+    border-color: #dee2e6;
+    border-radius: 8px !important;
+    margin: 0 3px;
+    font-weight: 600;
+}
+.pagination .page-item.active .page-link {
+    background: var(--teal);
+    border-color: var(--teal);
+    color: white;
+}
+
+@media(max-width:767px) {
+    .resa-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .filter-box {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .table-responsive {
+        overflow-x: auto;
+    }
+}
+</style>
+{% endblock %}
+
+{% block body %}
+
+
+<section class="hero-wrap hero-wrap-2 js-fullheight" style="background-image: url('{{ asset('assets/images/bg_reservations_location.jpg') }}');">
+  <div class="overlay"></div>
+  <div class="container">
+    <div class="row no-gutters slider-text js-fullheight align-items-end justify-content-center">
+      <div class="col-md-9 ftco-animate pb-5 text-center">
+        <p class="breadcrumbs">
+          <span class="mr-2"><a href="{{ path('client_accueil') }}">Accueil <i class="fa fa-chevron-right"></i></a></span>
+          <span>Location <i class="fa fa-chevron-right"></i></span>
+        </p>
+        <h1 class="mb-0 bread">Mes Locations</h1>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section py-5">
+    <div class="container">
+
+        {# Filtres #}
+        <div class="resa-toolbar">
+            <form method="GET" action="{{ path('client_mes_reservations') }}" class="filter-box">
+                <label><i class="fa fa-filter"></i> Filtrer par véhicule :</label>
+                <input type="text" name="vehicule" value="{{ vehiculeFiltre }}" 
+                       placeholder="Immatriculation ou modèle..."
+                       style="min-width: 300px;">
+                <button type="submit" class="btn-filter">
+                    Filtrer
+                </button>
+                {% if vehiculeFiltre %}
+                    <a href="{{ path('client_mes_reservations') }}" class="btn-reset">
+                        <i class="fas fa-times"></i> Réinitialiser
+                    </a>
+                {% endif %}
+            </form>
+            
+            <div class="vue-toggle d-flex gap-2">
+                <button class="btn-vue active" id="btn-grid" onclick="setVue('grid')" title="Vue grille">
+                    <i class="fa fa-list"></i>
+                </button>
+                <button class="btn-vue" id="btn-list" onclick="setVue('list')" title="Vue liste">
+                    <i class="fa fa-th"></i>  
+                </button>
+            </div>
+        </div>
+
+        {% if locations is empty %}
+            <div class="text-center py-5">
+                <i class="fas fa-inbox fa-4x mb-4" style="color:#ccc;"></i>
+                <h4 class="text-muted">Aucune réservation trouvée.</h4>
+                {% if vehiculeFiltre %}
+                    <p class="text-muted">Aucun résultat pour "{{ vehiculeFiltre }}"</p>
+                    <a href="{{ path('client_mes_reservations') }}" class="btn btn-orange mt-3">Voir toutes mes réservations</a>
+                {% else %}
+                    <a href="{{ path('client_catalogue') }}" class="btn btn-orange mt-3">
+                        <i class="fas fa-car mr-2"></i>Réserver un véhicule
+                    </a>
+                {% endif %}
+            </div>
+        {% else %}
+
+            {# Vue TABLEAU (recommandée) #}
+            <div id="vue-grid" class="resa-vue active">
+                <div class="table-responsive">
+                    <table class="table resa-table">
+                        <thead>
+                            <tr>
+                                <th>Véhicule</th>
+                                <th>Période</th>
+                                <th>Montant</th>
+                                <th>Statut</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for loc in locations %}
+                            <tr>
+                                <td>
+                                    {% if loc.vehicule %}
+                                        <strong>{{ loc.vehicule.modele.marque.nomMarque }} {{ loc.vehicule.modele.nomModele }}</strong><br>
+                                        <small class="text-muted">{{ loc.vehicule.immatriculation }}</small>
+                                    {% else %}
+                                        Véhicule
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {{ loc.dateDebut ? loc.dateDebut|date('d/m/Y') : 'N/A' }}<br>
+                                    <i class="fas fa-arrow-right text-teal"></i><br>
+                                    {{ loc.dateFinPrevue ? loc.dateFinPrevue|date('d/m/Y') : 'N/A' }}
+                                </td>
+                                <td>
+                                    <span class="resa-prix" style="font-size:1rem;">{{ loc.montantTotal }} DT</span>
+                                </td>
+                                <td>
+                                    <span class="badge 
+                                        {% if loc.statut == 'réservée' %}badge-warning
+                                        {% elseif loc.statut == 'en_cours' %}badge-success
+                                        {% elseif loc.statut == 'terminée' %}badge-secondary
+                                        {% elseif loc.statut == 'annulée' %}badge-danger
+                                        {% else %}badge-info{% endif %}" 
+                                        style="border-radius:20px; padding:6px 14px;">
+                                        {{ loc.statut|capitalize }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <a href="{{ path('client_confirmation', {id: loc.idLocation}) }}" 
+                                       class="btn btn-sm btn-teal" 
+                                       style="border-radius:20px; font-weight:600; padding:6px 16px;">
+                                        <i class="fas fa-eye mr-1"></i> Détails
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            {# Vue CARTES (alternative) #}
+            <div id="vue-list" class="resa-vue" style="display:none;">
+                <div class="row">
+                    {% for loc in locations %}
+                    <div class="col-md-6 col-lg-4 mb-4">
+                        <div class="resa-card card">
+                            <div style="position:relative;">
+                                {% if loc.vehicule and loc.vehicule.photo %}
+                                <img src="{{ loc.vehicule.photo starts with 'http' ? loc.vehicule.photo : asset('uploads/vehicules/' ~ loc.vehicule.photo) }}"
+                                     class="card-img-top" alt="Véhicule">
+                                {% else %}
+                                <div class="img-placeholder">
+                                    <i class="fas fa-car fa-3x text-white" style="opacity:.4;"></i>
+                                </div>
+                                {% endif %}
+                                <span class="statut-badge
+                                    {% if loc.statut == 'réservée' %}bg-warning text-dark
+                                    {% elseif loc.statut == 'en_cours' %}bg-success text-white
+                                    {% elseif loc.statut == 'terminée' %}bg-secondary text-white
+                                    {% elseif loc.statut == 'annulée' %}bg-danger text-white
+                                    {% else %}bg-info text-white{% endif %}">
+                                    {{ loc.statut|capitalize }}
+                                </span>
+                            </div>
+                            <div class="card-body">
+                                <div class="resa-title">
+                                    {% if loc.vehicule %}
+                                        {{ loc.vehicule.modele.marque.nomMarque }} {{ loc.vehicule.modele.nomModele }}
+                                    {% else %}Véhicule{% endif %}
+                                </div>
+                                <div class="resa-meta mt-2">
+                                    <i class="fas fa-calendar mr-1" style="color:var(--teal);"></i>
+                                    {{ loc.dateDebut ? loc.dateDebut|date('d/m/Y') : 'N/A' }}
+                                    → {{ loc.dateFinPrevue ? loc.dateFinPrevue|date('d/m/Y') : 'N/A' }}
+                                </div>
+                                <div class="resa-prix">{{ loc.montantTotal }} DT</div>
+                            </div>
+                            <div class="card-footer bg-white border-0 pb-3 px-3">
+                                <a href="{{ path('client_confirmation', {id: loc.idLocation}) }}"
+                                   class="btn btn-orange btn-block" style="border-radius:20px;">
+                                    <i class="fas fa-eye mr-1"></i> Voir détails
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+        {% endif %}
+    </div>
+</section>
+
+{% endblock %}
+
+{% block javascripts %}
+<script>
+/* Toggle Vue */
+function setVue(vue) {
+    const grid = document.getElementById('vue-grid');
+    const list = document.getElementById('vue-list');
+    const btnG = document.getElementById('btn-grid');
+    const btnL = document.getElementById('btn-list');
+    if (!grid || !list) return;
+
+    if (vue === 'grid') {
+        grid.style.display = '';
+        list.style.display = 'none';
+        btnG.classList.add('active');
+        btnL.classList.remove('active');
+        localStorage.setItem('hz_resa_vue', 'grid');
+    } else {
+        list.style.display = '';
+        grid.style.display = 'none';
+        btnL.classList.add('active');
+        btnG.classList.remove('active');
+        localStorage.setItem('hz_resa_vue', 'list');
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    const saved = localStorage.getItem('hz_resa_vue') || 'grid';
+    setVue(saved);
+});
+</script>
+{% endblock %}

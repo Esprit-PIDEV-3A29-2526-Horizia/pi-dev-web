@@ -1,0 +1,280 @@
+{% extends 'admin/base_admin.html.twig' %}
+
+{% block title %}Modifier location #{{ location.idLocation }} – Horizia{% endblock %}
+
+{% block admin_content %}
+
+<style>
+.extras-card {
+    display: block; padding: 10px 14px;
+    border: 2px solid rgba(0,0,0,.08); border-radius: 10px;
+    cursor: pointer; transition: all .2s;
+}
+.extras-card:hover { border-color: #23779C; }
+.extras-card.selected { border-color: #23779C; background: rgba(35,119,156,.1); }
+.extras-card input { display: none; }
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 fw-bold mb-1">Modifier location #{{ location.idLocation }}</h1>
+        <p class="text-muted mb-0">{{ location.clientNomComplet }}</p>
+    </div>
+    <a href="{{ path('admin_location_index') }}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i>Retour
+    </a>
+</div>
+
+{# Erreurs globales #}
+{% if not form.vars.valid and form.vars.submitted %}
+<div class="alert alert-danger">
+    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+    Veuillez corriger les erreurs ci-dessous.
+</div>
+{% endif %}
+
+{{ form_start(form, {'attr': {'novalidate': 'novalidate'}}) }}
+
+<div class="row g-3">
+    <div class="col-lg-8">
+        <!-- Client -->
+        <div class="card mb-3">
+            <div class="card-header bg-white fw-bold">
+                <i class="bi bi-person me-2 text-primary"></i>Informations client
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        {{ form_label(form.clientNomComplet) }}
+                        {{ form_widget(form.clientNomComplet, {'attr': {'class': 'form-control'}}) }}
+                        {{ form_errors(form.clientNomComplet) }}
+                    </div>
+                    <div class="col-md-6">
+                        {{ form_label(form.clientTelephone) }}
+                        {{ form_widget(form.clientTelephone, {'attr': {'class': 'form-control'}}) }}
+                        {{ form_errors(form.clientTelephone) }}
+                    </div>
+                    <div class="col-md-6">
+                        {{ form_label(form.clientCin) }}
+                        {{ form_widget(form.clientCin, {'attr': {'class': 'form-control'}}) }}
+                        {{ form_errors(form.clientCin) }}
+                    </div>
+                    <div class="col-md-6">
+                        {{ form_label(form.clientPermisNumero) }}
+                        {{ form_widget(form.clientPermisNumero, {'attr': {'class': 'form-control'}}) }}
+                        {{ form_errors(form.clientPermisNumero) }}
+                    </div>
+                    <div class="col-md-6">
+                        {{ form_label(form.clientVille) }}
+                        {{ form_widget(form.clientVille, {'attr': {'class': 'form-control'}}) }}
+                        {{ form_errors(form.clientVille) }}
+                    </div>
+                    <div class="col-md-6">
+                        {{ form_label(form.clientCodePostal) }}
+                        {{ form_widget(form.clientCodePostal, {'attr': {'class': 'form-control'}}) }}
+                        {{ form_errors(form.clientCodePostal) }}
+                    </div>
+                    <div class="col-12">
+                        {{ form_label(form.clientAdresse) }}
+                        {{ form_widget(form.clientAdresse, {'attr': {'class': 'form-control'}}) }}
+                        {{ form_errors(form.clientAdresse) }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Véhicule et période -->
+        <div class="card mb-3">
+            <div class="card-header bg-white fw-bold">
+                <i class="bi bi-truck me-2 text-primary"></i>Véhicule et période
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-12">
+                        {{ form_label(form.vehicule) }}
+                        {{ form_widget(form.vehicule, {'attr': {'class': 'form-select'}}) }}
+                        {{ form_errors(form.vehicule) }}
+                    </div>
+                    <div class="col-md-6">
+                        {{ form_label(form.dateDebut) }}
+                        {{ form_widget(form.dateDebut, {'attr': {'class': 'form-control', 'id': 'date_debut'}}) }}
+                        {{ form_errors(form.dateDebut) }}
+                    </div>
+                    <div class="col-md-6">
+                        {{ form_label(form.dateFinPrevue) }}
+                        {{ form_widget(form.dateFinPrevue, {'attr': {'class': 'form-control', 'id': 'date_fin'}}) }}
+                        {{ form_errors(form.dateFinPrevue) }}
+                    </div>
+                    <div class="col-md-6">
+                        {{ form_label(form.dateFinReelle) }}
+                        {{ form_widget(form.dateFinReelle, {'attr': {'class': 'form-control'}}) }}
+                        {{ form_errors(form.dateFinReelle) }}
+                    </div>
+                    <div class="col-md-6">
+                        {{ form_label(form.statut) }}
+                        {{ form_widget(form.statut, {'attr': {'class': 'form-select'}}) }}
+                        {{ form_errors(form.statut) }}
+                    </div>
+                    <div class="col-md-6">
+                        {{ form_label(form.kilometrageDebut) }}
+                        {{ form_widget(form.kilometrageDebut, {'attr': {'class': 'form-control'}}) }}
+                        {{ form_errors(form.kilometrageDebut) }}
+                    </div>
+                    <div class="col-md-6">
+                        {{ form_label(form.kilometrageRetour) }}
+                        {{ form_widget(form.kilometrageRetour, {'attr': {'class': 'form-control'}}) }}
+                        {{ form_errors(form.kilometrageRetour) }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Extras -->
+        <div class="card mb-3">
+            <div class="card-header bg-white fw-bold">
+                <i class="bi bi-plus-circle me-2 text-primary"></i>Options supplémentaires
+            </div>
+            <div class="card-body">
+                <div class="row g-2">
+                    {% set extras_icons = {
+                        'siege_bebe': 'bi-person-fill',
+                        'gps': 'bi-geo-alt-fill',
+                        'plein_carburant': 'bi-fuel-pump-fill',
+                        'conducteur_supplementaire': 'bi-person-plus-fill',
+                        'wifi': 'bi-wifi',
+                        'assurance_complementaire': 'bi-shield-check'
+                    } %}
+                    {% set extras_actifs = location.extras ? location.extras|keys : [] %}
+                    {% for cle, extra in extras_dispo %}
+                    {% set est_coche = cle in extras_actifs %}
+                    <div class="col-md-4">
+                        <label class="extras-card d-flex align-items-center gap-2 {{ est_coche ? 'selected' : '' }}">
+                            <input type="checkbox" name="extras[]" value="{{ cle }}" {{ est_coche ? 'checked' : '' }} onchange="toggleCard(this); calculerTotal()">
+                            <i class="bi {{ extras_icons[cle] ?? 'bi-star' }} fs-5 text-primary"></i>
+                            <div>
+                                <div class="fw-bold small">{{ extra.label }}</div>
+                                <div class="small text-muted">+{{ extra.prix }} TND</div>
+                            </div>
+                        </label>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Facturation -->
+        <div class="card mb-3">
+            <div class="card-header bg-white fw-bold">
+                <i class="bi bi-receipt me-2 text-primary"></i>Facturation
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        {{ form_label(form.prixParJour) }}
+                        {{ form_widget(form.prixParJour, {'attr': {'class': 'form-control', 'id': 'prix_par_jour', 'step': '0.001'}}) }}
+                        {{ form_errors(form.prixParJour) }}
+                    </div>
+                    <div class="col-md-6">
+                        {{ form_label(form.avance) }}
+                        {{ form_widget(form.avance, {'attr': {'class': 'form-control'}}) }}
+                        {{ form_errors(form.avance) }}
+                    </div>
+                </div>
+                <div class="mt-3 p-3 bg-light rounded text-center">
+                    <div class="small text-muted">Total estimé</div>
+                    <div class="fs-2 fw-bold text-primary"><span id="montant_affiche">{{ location.montantTotal|number_format(3, ',', ' ') }}</span> TND</div>
+                    <div class="small text-muted" id="resume_calcul">—</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notes -->
+        <div class="card mb-3">
+            <div class="card-header bg-white fw-bold">
+                <i class="bi bi-chat-text me-2 text-primary"></i>Notes
+            </div>
+            <div class="card-body">
+                {{ form_widget(form.notes, {'attr': {'class': 'form-control', 'rows': 3}}) }}
+                {{ form_errors(form.notes) }}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card mb-3">
+            <div class="card-header bg-white fw-bold">Actions</div>
+            <div class="card-body">
+                <button type="submit" class="btn btn-primary w-100 mb-2">
+                    <i class="bi bi-check-lg me-2"></i>Enregistrer
+                </button>
+                <a href="{{ path('admin_location_show', {id: location.idLocation}) }}" class="btn btn-outline-info w-100 mb-2">
+                    <i class="bi bi-eye me-1"></i>Voir la location
+                </a>
+                <button type="button" class="btn btn-danger w-100" onclick="document.getElementById('form-delete').submit()">
+                    <i class="bi bi-trash me-1"></i>Supprimer
+                </button>
+            </div>
+        </div>
+
+        {% if location.extras %}
+        <div class="card mb-3">
+            <div class="card-header bg-white fw-bold">Extras actuels</div>
+            <div class="card-body">
+                {% for cle, prix in location.extras %}
+                <div class="d-flex justify-content-between py-1 border-bottom">
+                    <span>{{ extras_dispo[cle].label ?? cle }}</span>
+                    <span class="fw-bold text-primary">{{ prix }} TND</span>
+                </div>
+                {% endfor %}
+                <div class="d-flex justify-content-between pt-2 mt-1 fw-bold">
+                    <span>Total extras</span>
+                    <span class="text-primary">{{ location.extrasTotal|number_format(3, ',', ' ') }} TND</span>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{{ form_end(form) }}
+
+<form id="form-delete" method="post" action="{{ path('admin_location_delete', {id: location.idLocation}) }}" onsubmit="return confirm('Supprimer cette location ?')">
+    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ location.idLocation) }}">
+</form>
+
+<script>
+const EXTRAS_PRIX = {
+    siege_bebe:15, gps:10, plein_carburant:50,
+    conducteur_supplementaire:20, wifi:8, assurance_complementaire:25
+};
+
+function toggleCard(cb) {
+    cb.closest('.extras-card').classList.toggle('selected', cb.checked);
+}
+
+function calculerTotal() {
+    const debut = document.getElementById('date_debut')?.value || '';
+    const fin = document.getElementById('date_fin')?.value || '';
+    const prix = parseFloat(document.getElementById('prix_par_jour')?.value || 0);
+    let jours = 0;
+    if (debut && fin) {
+        const d1 = new Date(debut), d2 = new Date(fin);
+        jours = Math.max(1, Math.ceil((d2 - d1) / 86400000));
+    }
+    let extras = 0;
+    document.querySelectorAll('input[name="extras[]"]:checked').forEach(cb => { extras += EXTRAS_PRIX[cb.value] || 0; });
+    const total = (prix * jours) + extras;
+    document.getElementById('montant_affiche').textContent = total.toFixed(3).replace('.', ',');
+    document.getElementById('resume_calcul').textContent = prix.toFixed(3) + ' TND × ' + jours + ' jour(s) + ' + extras + ' TND extras';
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    ['date_debut','date_fin','prix_par_jour'].forEach(id => {
+        document.getElementById(id)?.addEventListener('change', calculerTotal);
+        document.getElementById(id)?.addEventListener('input', calculerTotal);
+    });
+    calculerTotal();
+});
+</script>
+
+{% endblock %}

@@ -1,0 +1,477 @@
+{% extends 'client/base_client.html.twig' %}
+{% block title %}Catalogue — Horizia Location{% endblock %}
+{% block navbar_extra_class %}nav-static{% endblock %}
+{% block nav_catalogue %}active{% endblock %}
+
+{% block stylesheets %}
+{{ parent() }}
+<style>
+/* ── Variables ── */
+:root {
+    --orange: #e84a3e;
+    --teal: #23779C;
+    --teal-dk: #1a5a78;
+    --dark: #1a1a2e;
+}
+
+/* ── Search card ── */
+.search-card {
+    background: white;
+    border-radius: 16px;
+    padding: 28px;
+    box-shadow: 0 8px 32px rgba(0,0,0,.15);
+    margin-top: 32px;
+}
+
+/* ── Météo widget ── */
+.meteo-widget {
+    background: rgba(255,255,255,.12);
+    border: 1px solid rgba(255,255,255,.2);
+    border-radius: 12px;
+    padding: 12px 20px;
+    color: white;
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    backdrop-filter: blur(8px);
+    margin-bottom: 20px;
+}
+.meteo-widget .meteo-icon { font-size: 2rem; }
+.meteo-widget .meteo-temp { font-size: 1.5rem; font-weight: 800; }
+.meteo-widget .meteo-desc { font-size: .8rem; opacity: .85; }
+.meteo-widget .meteo-city { font-size: .75rem; opacity: .7; }
+
+/* ── Toolbar ── */
+.catalogue-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 24px;
+    padding: 16px 20px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.06);
+}
+.vue-toggle .btn-vue {
+    background: transparent;
+    border: 2px solid #dee2e6;
+    color: #adb5bd;
+    padding: 8px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all .2s;
+    font-size: 1.1rem;
+}
+.vue-toggle .btn-vue.active {
+    background: var(--teal);
+    border-color: var(--teal);
+    color: white;
+}
+.catalogue-count {
+    font-weight: 700;
+    color: var(--dark);
+    font-size: .95rem;
+}
+.catalogue-count span { color: var(--teal); }
+
+/* ── Vue grille ── */
+.vehicule-grid { display: none; }
+.vehicule-grid.active { display: block; }
+.vehicule-list { display: none; }
+.vehicule-list.active { display: block; }
+
+/* ── Card grille ── */
+.vhl-card {
+    border: none;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 16px rgba(0,0,0,.08);
+    transition: transform .25s, box-shadow .25s;
+    height: 100%;
+}
+.vhl-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 12px 36px rgba(35,119,156,.2);
+}
+.vhl-card .card-img-top {
+    height: 180px;
+    object-fit: cover;
+}
+.vhl-card .img-placeholder {
+    height: 180px;
+    background: linear-gradient(135deg, var(--teal), var(--teal-dk));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.vhl-card .prix-badge {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    background: var(--teal);
+    color: white;
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: .85rem;
+}
+.vhl-card .card-body { padding: 18px; }
+.vhl-card .vhl-title { font-size: 1rem; font-weight: 700; color: var(--dark); margin-bottom: 4px; }
+.vhl-card .vhl-sub { font-size: .8rem; color: #6c757d; margin-bottom: 12px; }
+.vhl-card .vhl-specs { list-style: none; padding: 0; margin: 0 0 14px; }
+.vhl-card .vhl-specs li {
+    font-size: .82rem;
+    color: #6c757d;
+    padding: 3px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.vhl-card .vhl-specs li i { color: var(--orange); width: 14px; }
+
+/* ── Card liste ── */
+.vhl-list-item {
+    background: white;
+    border-radius: 14px;
+    box-shadow: 0 2px 10px rgba(0,0,0,.07);
+    overflow: hidden;
+    margin-bottom: 16px;
+    display: flex;
+    transition: box-shadow .2s;
+}
+.vhl-list-item:hover { box-shadow: 0 6px 24px rgba(35,119,156,.15); }
+.vhl-list-item .list-img {
+    width: 220px;
+    flex-shrink: 0;
+    object-fit: cover;
+}
+.vhl-list-item .list-img-placeholder {
+    width: 220px;
+    flex-shrink: 0;
+    background: linear-gradient(135deg, var(--teal), var(--teal-dk));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.vhl-list-item .list-body {
+    padding: 20px 24px;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+.vhl-list-item .list-info { flex: 1; }
+.vhl-list-item .list-title { font-size: 1.1rem; font-weight: 700; color: var(--dark); }
+.vhl-list-item .list-sub { font-size: .82rem; color: #6c757d; margin: 4px 0 10px; }
+.vhl-list-item .list-specs {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+.vhl-list-item .list-specs span {
+    font-size: .8rem;
+    color: #6c757d;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.vhl-list-item .list-specs i { color: var(--orange); }
+.vhl-list-item .list-price {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--teal);
+    white-space: nowrap;
+    text-align: center;
+}
+.vhl-list-item .list-price small { font-size: .7rem; color: #999; font-weight: 400; display: block; }
+
+/* ── Pagination ── */
+.pagination-wrap { display: flex; justify-content: center; margin-top: 40px; }
+.pagination .page-link {
+    color: var(--teal);
+    border-color: #dee2e6;
+    border-radius: 8px !important;
+    margin: 0 3px;
+    font-weight: 600;
+    transition: all .2s;
+}
+.pagination .page-item.active .page-link {
+    background: var(--teal);
+    border-color: var(--teal);
+    color: white;
+}
+.pagination .page-link:hover {
+    background: var(--teal);
+    color: white;
+    border-color: var(--teal);
+}
+
+/* ── Responsive ── */
+@media(max-width: 767px) {
+    .vhl-list-item { flex-direction: column; }
+    .vhl-list-item .list-img, .vhl-list-item .list-img-placeholder { width: 100%; height: 160px; }
+    .catalogue-toolbar { flex-direction: column; align-items: flex-start; }
+}
+</style>
+{% endblock %}
+
+{% block body %}
+
+{# ── HERO (même style que mes_reservations) ── #}
+<section class="hero-wrap hero-wrap-2 js-fullheight" style="background-image: url('{{ asset('assets/images/bg_voiture.jpg') }}');">
+    <div class="overlay"></div>
+    <div class="container">
+        <div class="row no-gutters slider-text js-fullheight align-items-end justify-content-center">
+            <div class="col-md-9 ftco-animate pb-5 text-center">
+                <p class="breadcrumbs">
+                    <span class="mr-2">
+                        <a href="{{ path('client_accueil') }}">Accueil <i class="fa fa-chevron-right"></i></a>
+                    </span>
+                    <span>Catalogue <i class="fa fa-chevron-right"></i></span>
+                </p>
+                <h1 class="mb-0 bread">Notre Flotte</h1>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section py-5">
+    <div class="container">
+
+        {# Formulaire de recherche #}
+        <div class="search-card text-left">
+            <form method="get" action="{{ path('client_catalogue') }}">
+                <div class="row align-items-end">
+                    <div class="col-md-3 mb-3 mb-md-0">
+                        <label class="font-weight-600 small">Date de début</label>
+                        <input type="date" name="date_debut" class="form-control"
+                               value="{{ date_debut ?? '' }}" min="{{ 'now'|date('Y-m-d') }}">
+                    </div>
+                    <div class="col-md-3 mb-3 mb-md-0">
+                        <label class="font-weight-600 small">Date de fin</label>
+                        <input type="date" name="date_fin" class="form-control"
+                               value="{{ date_fin ?? '' }}">
+                    </div>
+                    <div class="col-md-3 mb-3 mb-md-0">
+                        <label class="font-weight-600 small">Carburant</label>
+                        <select name="type" class="form-control">
+                            <option value="Tous les types" {% if type == 'Tous les types' %}selected{% endif %}>Tous les types</option>
+                            <option value="essence"    {% if type == 'essence'    %}selected{% endif %}>Essence</option>
+                            <option value="diesel"     {% if type == 'diesel'     %}selected{% endif %}>Diesel</option>
+                            <option value="electrique" {% if type == 'electrique' %}selected{% endif %}>Électrique</option>
+                            <option value="hybride"    {% if type == 'hybride'    %}selected{% endif %}>Hybride</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <button type="submit" class="btn btn-primary w-100" style="border-radius:8px; padding:11px;">
+                            <i class="fa fa-search mr-2"></i>Rechercher
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        {% if vehicules is empty %}
+        <div class="text-center py-5">
+            <i class="fas fa-car fa-4x text-muted mb-4"></i>
+            <h4 class="text-muted">Aucun véhicule disponible pour le moment.</h4>
+            <a href="{{ path('client_catalogue') }}" class="btn btn-primary mt-3">Voir tout le catalogue</a>
+        </div>
+        {% else %}
+
+        {# ── Toolbar ── #}
+        <div class="catalogue-toolbar">
+            <div class="catalogue-count">
+                <span>{{ vehicules|length }}</span> véhicule(s) disponible(s)
+            </div>
+            <div class="vue-toggle d-flex gap-2">
+                <button class="btn-vue active" id="btn-grid" onclick="setVue('grid')" title="Vue grille">
+                    <i class="fa fa-th"></i>
+                </button>
+                <button class="btn-vue" id="btn-list" onclick="setVue('list')" title="Vue liste">
+                    <i class="fa fa-list"></i>
+                </button>
+            </div>
+        </div>
+
+        {# ── VUE GRILLE ── #}
+        <div class="vehicule-grid active" id="vue-grid">
+            <div class="row" id="grid-container">
+                {% for vehicule in vehicules %}
+                <div class="col-md-6 col-lg-4 mb-4 vhl-page-item" data-page="{{ ((loop.index0) // 6) + 1 }}">
+                    <div class="vhl-card card">
+                        <div style="position:relative;">
+                            {% if vehicule.photo %}
+                            <img src="{{ vehicule.photo starts with 'http' ? vehicule.photo : asset('uploads/vehicules/' ~ vehicule.photo) }}"
+                                 class="card-img-top"
+                                 alt="{{ vehicule.modele.marque.nomMarque }} {{ vehicule.modele.nomModele }}">
+                            {% else %}
+                            <div class="img-placeholder">
+                                <i class="fas fa-car fa-3x text-white" style="opacity:.4;"></i>
+                            </div>
+                            {% endif %}
+                            <span class="prix-badge">{{ vehicule.prixParJour }} DT/j</span>
+                        </div>
+                        <div class="card-body">
+                            <div class="vhl-title">{{ vehicule.modele.marque.nomMarque }} {{ vehicule.modele.nomModele }}</div>
+                            <div class="vhl-sub">{{ vehicule.annee }}{% if vehicule.couleur %} · {{ vehicule.couleur }}{% endif %}</div>
+                            <ul class="vhl-specs">
+                                <li><i class="fas fa-gas-pump"></i>{{ vehicule.carburant|capitalize }}</li>
+                                <li><i class="fas fa-tachometer-alt"></i>{{ vehicule.kilometrage|number_format(0, ',', ' ') }} km</li>
+                                <li><i class="fas fa-id-card"></i>{{ vehicule.immatriculation }}</li>
+                            </ul>
+                            <a href="{{ path('client_reservation', {id: vehicule.idVehicule, date_debut: date_debut, date_fin: date_fin}) }}"
+                               class="btn btn-primary btn-block" style="border-radius:8px; font-weight:700;">
+                                Réserver <i class="fas fa-arrow-right ml-2"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            {# Pagination grille #}
+            <div class="pagination-wrap" id="grid-pagination"></div>
+        </div>
+
+        {# ── VUE LISTE ── #}
+        <div class="vehicule-list" id="vue-list">
+            <div id="list-container">
+                {% for vehicule in vehicules %}
+                <div class="vhl-list-item vhl-list-page-item" data-page="{{ ((loop.index0) // 5) + 1 }}">
+                    {% if vehicule.photo %}
+                    <img src="{{ vehicule.photo starts with 'http' ? vehicule.photo : asset('uploads/vehicules/' ~ vehicule.photo) }}"
+                         class="list-img"
+                         alt="{{ vehicule.modele.marque.nomMarque }} {{ vehicule.modele.nomModele }}">
+                    {% else %}
+                    <div class="list-img-placeholder">
+                        <i class="fas fa-car fa-3x text-white" style="opacity:.4;"></i>
+                    </div>
+                    {% endif %}
+
+                    <div class="list-body">
+                        <div class="list-info">
+                            <div class="list-title">{{ vehicule.modele.marque.nomMarque }} {{ vehicule.modele.nomModele }}</div>
+                            <div class="list-sub">{{ vehicule.annee }}{% if vehicule.couleur %} · {{ vehicule.couleur }}{% endif %} · {{ vehicule.immatriculation }}</div>
+                            <div class="list-specs">
+                                <span><i class="fas fa-gas-pump"></i>{{ vehicule.carburant|capitalize }}</span>
+                                <span><i class="fas fa-tachometer-alt"></i>{{ vehicule.kilometrage|number_format(0, ',', ' ') }} km</span>
+                                <span><i class="fas fa-check-circle" style="color:#27ae60;"></i>Disponible</span>
+                            </div>
+                        </div>
+                        <div class="text-center">
+                            <div class="list-price">
+                                {{ vehicule.prixParJour }} DT
+                                <small>/ jour</small>
+                            </div>
+                            <a href="{{ path('client_reservation', {id: vehicule.idVehicule, date_debut: date_debut, date_fin: date_fin}) }}"
+                               class="btn btn-primary mt-2" style="border-radius:8px; font-weight:700; padding:8px 20px;">
+                                Réserver
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            {# Pagination liste #}
+            <div class="pagination-wrap" id="list-pagination"></div>
+        </div>
+
+        {% endif %}
+    </div>
+</section>
+
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+<script>
+/* ════════════ TOGGLE VUE ════════════ */
+function setVue(vue) {
+    const grid = document.getElementById('vue-grid');
+    const list = document.getElementById('vue-list');
+    const btnG = document.getElementById('btn-grid');
+    const btnL = document.getElementById('btn-list');
+
+    if (vue === 'grid') {
+        grid.classList.add('active');
+        list.classList.remove('active');
+        btnG.classList.add('active');
+        btnL.classList.remove('active');
+        localStorage.setItem('hz_vue', 'grid');
+        paginateGrid(1);
+    } else {
+        list.classList.add('active');
+        grid.classList.remove('active');
+        btnL.classList.add('active');
+        btnG.classList.remove('active');
+        localStorage.setItem('hz_vue', 'list');
+        paginateList(1);
+    }
+}
+
+/* ════════════ PAGINATION GRILLE (6/page) ════════════ */
+function paginateGrid(page) {
+    const items = document.querySelectorAll('.vhl-page-item');
+    const perPage = 6;
+    const total = items.length;
+    const totalPages = Math.ceil(total / perPage);
+
+    items.forEach((el, i) => {
+        el.style.display = (Math.floor(i / perPage) + 1 === page) ? '' : 'none';
+    });
+
+    renderPagination('grid-pagination', page, totalPages, paginateGrid);
+}
+
+/* ════════════ PAGINATION LISTE (5/page) ════════════ */
+function paginateList(page) {
+    const items = document.querySelectorAll('.vhl-list-page-item');
+    const perPage = 5;
+    const total = items.length;
+    const totalPages = Math.ceil(total / perPage);
+
+    items.forEach((el, i) => {
+        el.style.display = (Math.floor(i / perPage) + 1 === page) ? '' : 'none';
+    });
+
+    renderPagination('list-pagination', page, totalPages, paginateList);
+}
+
+/* ════════════ RENDU PAGINATION ════════════ */
+function renderPagination(containerId, current, total, callback) {
+    const wrap = document.getElementById(containerId);
+    if (!wrap || total <= 1) { if(wrap) wrap.innerHTML = ''; return; }
+
+    let html = '<nav><ul class="pagination">';
+
+    html += `<li class="page-item ${current===1?'disabled':''}">
+        <a class="page-link" href="#" onclick="event.preventDefault();${current>1?`(${callback.name})(${current-1})`:''}">
+            <i class="fas fa-chevron-left"></i>
+        </a></li>`;
+
+    for (let i = 1; i <= total; i++) {
+        html += `<li class="page-item ${i===current?'active':''}">
+            <a class="page-link" href="#" onclick="event.preventDefault();(${callback.name})(${i})">${i}</a>
+        </li>`;
+    }
+
+    html += `<li class="page-item ${current===total?'disabled':''}">
+        <a class="page-link" href="#" onclick="event.preventDefault();${current<total?`(${callback.name})(${current+1})`:''}">
+            <i class="fas fa-chevron-right"></i>
+        </a></li>`;
+
+    html += '</ul></nav>';
+    wrap.innerHTML = html;
+}
+
+/* ════════════ INIT ════════════ */
+document.addEventListener('DOMContentLoaded', function () {
+    const savedVue = localStorage.getItem('hz_vue') || 'grid';
+    setVue(savedVue);
+});
+</script>
+{% endblock %}

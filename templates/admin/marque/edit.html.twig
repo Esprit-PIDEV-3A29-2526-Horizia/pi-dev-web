@@ -1,0 +1,69 @@
+{% extends 'admin/base_admin.html.twig' %}
+
+{% block title %}{{ marque.nomMarque }} – Horizia{% endblock %}
+
+{% block admin_content %}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 fw-bold mb-1">Modifier : {{ marque.nomMarque }}</h1>
+        <p class="text-muted mb-0">Modifier les informations de la marque</p>
+    </div>
+    <a href="{{ path('admin_marque_index') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i>Retour
+    </a>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header bg-white fw-bold">
+                <i class="bi bi-tags-fill me-2 text-primary"></i>Modifier la marque
+            </div>
+            <div class="card-body">
+                {{ form_start(form) }}
+                <div class="mb-3">
+                    {{ form_label(form.nomMarque) }}
+                    {{ form_widget(form.nomMarque, {'attr': {'class': 'form-control'}}) }}
+                    {{ form_errors(form.nomMarque) }}
+                </div>
+                <div class="mb-3">
+                    {{ form_label(form.logo) }}
+                    {{ form_widget(form.logo, {'attr': {'class': 'form-control'}}) }}
+                    {{ form_errors(form.logo) }}
+                    <div class="small text-muted mt-1">URL de l'image du logo</div>
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary flex-grow-1">
+                        <i class="bi bi-check-lg me-2"></i>Enregistrer
+                    </button>
+                    <a href="{{ path('admin_marque_show', {id: marque.idMarque}) }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-eye me-1"></i>Voir
+                    </a>
+                </div>
+                {{ form_end(form) }}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row justify-content-center mt-3">
+    <div class="col-lg-6">
+        <div class="card border-danger">
+            <div class="card-header bg-white text-danger fw-bold">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>Zone dangereuse
+            </div>
+            <div class="card-body">
+                <form method="post" action="{{ path('admin_marque_delete', {id: marque.idMarque}) }}" onsubmit="return confirm('Supprimer définitivement cette marque ? Les modèles associés seront également supprimés.')">
+                    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ marque.idMarque) }}">
+                    <button type="submit" class="btn btn-danger w-100">
+                        <i class="bi bi-trash me-1"></i>Supprimer la marque
+                    </button>
+                </form>
+                <div class="small text-muted mt-2 text-center">Cette action est irréversible.</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

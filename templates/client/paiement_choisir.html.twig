@@ -1,0 +1,318 @@
+{% extends 'client/base_client.html.twig' %}
+
+{% block title %}Paiement de votre réservation{% endblock %}
+
+{% block stylesheets %}
+{{ parent() }}
+<style>
+    .hz-payment-page {
+        min-height: 80vh;
+        padding: 48px 24px;
+        background: linear-gradient(135deg, #f0f4ff 0%, #fafafa 100%);
+    }
+    .hz-payment-container {
+        max-width: 860px;
+        margin: 0 auto;
+    }
+    .hz-payment-header {
+        text-align: center;
+        margin-bottom: 40px;
+    }
+    .hz-payment-header h1 {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 8px;
+    }
+    .hz-payment-header p {
+        color: #64748b;
+        font-size: 1rem;
+    }
+
+    /* Résumé de la réservation */
+    .hz-booking-summary {
+        background: white;
+        border-radius: 16px;
+        padding: 28px;
+        margin-bottom: 32px;
+        box-shadow: 0 4px 20px rgba(0,0,0,.06);
+        display: flex;
+        gap: 24px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+    .hz-booking-icon {
+        width: 64px;
+        height: 64px;
+        background: linear-gradient(135deg, #2563eb, #1e40af);
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.8rem;
+        flex-shrink: 0;
+    }
+    .hz-booking-info h3 {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin: 0 0 6px;
+    }
+    .hz-booking-info p {
+        color: #64748b;
+        margin: 0;
+        font-size: .9rem;
+    }
+    .hz-booking-ref {
+        margin-left: auto;
+        text-align: right;
+    }
+    .hz-booking-ref span {
+        font-size: .75rem;
+        color: #94a3b8;
+        display: block;
+    }
+    .hz-booking-ref strong {
+        font-size: 1rem;
+        color: #2563eb;
+    }
+
+    /* Cartes de paiement */
+    .hz-payment-cards {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+        margin-bottom: 32px;
+    }
+    @media (max-width: 600px) {
+        .hz-payment-cards { grid-template-columns: 1fr; }
+    }
+    .hz-payment-card {
+        background: white;
+        border-radius: 20px;
+        padding: 32px 28px;
+        box-shadow: 0 4px 20px rgba(0,0,0,.06);
+        border: 2px solid transparent;
+        transition: all .3s ease;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+    }
+    .hz-payment-card:hover {
+        border-color: #2563eb;
+        transform: translateY(-4px);
+        box-shadow: 0 12px 40px rgba(37,99,235,.15);
+    }
+    .hz-payment-card.recommended {
+        border-color: #2563eb;
+    }
+    .hz-payment-card .badge-recommended {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        background: #2563eb;
+        color: white;
+        font-size: .7rem;
+        font-weight: 700;
+        padding: 4px 10px;
+        border-radius: 20px;
+        text-transform: uppercase;
+        letter-spacing: .5px;
+    }
+    .hz-card-icon {
+        font-size: 2.5rem;
+        margin-bottom: 16px;
+    }
+    .hz-card-title {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 8px;
+    }
+    .hz-card-desc {
+        font-size: .85rem;
+        color: #64748b;
+        margin-bottom: 20px;
+        line-height: 1.5;
+    }
+    .hz-card-amount {
+        font-size: 2rem;
+        font-weight: 800;
+        color: #2563eb;
+        margin-bottom: 4px;
+    }
+    .hz-card-amount-label {
+        font-size: .8rem;
+        color: #94a3b8;
+        margin-bottom: 24px;
+    }
+    .hz-pay-btn {
+        width: 100%;
+        padding: 14px;
+        border-radius: 12px;
+        border: none;
+        font-size: 1rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all .2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        text-decoration: none;
+    }
+    .hz-pay-btn-primary {
+        background: linear-gradient(135deg, #2563eb, #1e40af);
+        color: white;
+    }
+    .hz-pay-btn-primary:hover {
+        background: linear-gradient(135deg, #1d4ed8, #1e3a8a);
+        transform: translateY(-1px);
+        color: white;
+        text-decoration: none;
+    }
+    .hz-pay-btn-secondary {
+        background: #f1f5f9;
+        color: #334155;
+    }
+    .hz-pay-btn-secondary:hover {
+        background: #e2e8f0;
+        transform: translateY(-1px);
+        color: #334155;
+        text-decoration: none;
+    }
+
+    /* Stripe info */
+    .hz-stripe-info {
+        text-align: center;
+        padding: 20px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,.04);
+    }
+    .hz-stripe-info p {
+        color: #94a3b8;
+        font-size: .8rem;
+        margin: 0;
+    }
+    .hz-stripe-badges {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+        margin-top: 10px;
+        flex-wrap: wrap;
+    }
+    .hz-stripe-badge {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: .78rem;
+        color: #64748b;
+        font-weight: 500;
+    }
+
+    /* Flash messages */
+    .hz-flash {
+        padding: 14px 20px;
+        border-radius: 12px;
+        margin-bottom: 24px;
+        font-weight: 500;
+    }
+    .hz-flash-warning { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
+    .hz-flash-success { background: #d1fae5; color: #065f46; border: 1px solid #6ee7b7; }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="hz-payment-page">
+    <div class="hz-payment-container">
+
+        {# Flash messages #}
+        {% for msg in app.flashes('warning') %}
+            <div class="hz-flash hz-flash-warning">⚠️ {{ msg }}</div>
+        {% endfor %}
+        {% for msg in app.flashes('success') %}
+            <div class="hz-flash hz-flash-success">✅ {{ msg }}</div>
+        {% endfor %}
+
+        <div class="hz-payment-header">
+            <h1>💳 Paiement de votre réservation</h1>
+            <p>Choisissez votre mode de paiement pour finaliser la réservation</p>
+        </div>
+
+        {# Résumé réservation #}
+        <div class="hz-booking-summary">
+            <div class="hz-booking-icon">🚗</div>
+            <div class="hz-booking-info">
+                <h3>
+                    {{ location.vehicule.modele.nomModele ?? 'Véhicule' }}
+                    {% if location.vehicule.immatriculation %}
+                        — {{ location.vehicule.immatriculation }}
+                    {% endif %}
+                </h3>
+                <p>
+                    📅 Du <strong>{{ location.dateDebut|date('d/m/Y') }}</strong>
+                    au <strong>{{ location.dateFinPrevue|date('d/m/Y') }}</strong>
+                    &nbsp;•&nbsp;
+                    👤 {{ location.clientNomComplet }}
+                </p>
+            </div>
+            <div class="hz-booking-ref">
+                <span>Réservation</span>
+                <strong>#{{ location.idLocation }}</strong>
+            </div>
+        </div>
+
+        {# Cartes de choix #}
+        <div class="hz-payment-cards">
+
+            {# Carte Avance (30%) #}
+            <div class="hz-payment-card recommended">
+                <span class="badge-recommended">Recommandé</span>
+                <div class="hz-card-icon">💰</div>
+                <div class="hz-card-title">Payer l'avance</div>
+                <div class="hz-card-desc">
+                    Payez 30% maintenant pour confirmer votre réservation.
+                    Le reste sera réglé à la prise en charge du véhicule.
+                </div>
+                <div class="hz-card-amount">{{ location.avance|number_format(2, ',', ' ') }} €</div>
+                <div class="hz-card-amount-label">30% du montant total</div>
+                <a href="{{ path('client_paiement_stripe', {id: location.idLocation, type: 'avance'}) }}"
+                   class="hz-pay-btn hz-pay-btn-primary">
+                    🔒 Payer l'avance
+                </a>
+            </div>
+
+            {# Carte Total #}
+            <div class="hz-payment-card">
+                <div class="hz-card-icon">✅</div>
+                <div class="hz-card-title">Payer le total</div>
+                <div class="hz-card-desc">
+                    Payez l'intégralité maintenant et bénéficiez d'une
+                    réservation entièrement soldée dès aujourd'hui.
+                </div>
+                <div class="hz-card-amount">{{ location.montantTotal|number_format(2, ',', ' ') }} €</div>
+                <div class="hz-card-amount-label">Montant total TTC</div>
+                <a href="{{ path('client_paiement_stripe', {id: location.idLocation, type: 'total'}) }}"
+                   class="hz-pay-btn hz-pay-btn-secondary">
+                    💳 Payer le total
+                </a>
+            </div>
+
+        </div>
+
+        {# Sécurité Stripe #}
+        <div class="hz-stripe-info">
+            <p>Paiement 100% sécurisé</p>
+            <div class="hz-stripe-badges">
+                <span class="hz-stripe-badge">🔒 SSL Chiffré</span>
+                <span class="hz-stripe-badge">💳 Visa / Mastercard</span>
+                <span class="hz-stripe-badge">🛡️ Stripe Secure</span>
+                <span class="hz-stripe-badge">🏦 3D Secure</span>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

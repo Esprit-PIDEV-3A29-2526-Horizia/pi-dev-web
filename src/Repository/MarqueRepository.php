@@ -16,28 +16,36 @@ class MarqueRepository extends ServiceEntityRepository
         parent::__construct($registry, Marque::class);
     }
 
-    //    /**
-    //     * @return Marque[] Returns an array of Marque objects
-    //     */
-    //    public function findByExampleField($value): array
-    //    {
-    //        return $this->createQueryBuilder('m')
-    //            ->andWhere('m.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->orderBy('m.id', 'ASC')
-    //            ->setMaxResults(10)
-    //            ->getQuery()
-    //            ->getResult()
-    //        ;
-    //    }
+    // Recherche par nom (comme dans MarqueService.java)
+    public function rechercherParNom(string $recherche): array
+    {
+        return $this->createQueryBuilder('m')
+            ->where('m.nomMarque LIKE :recherche')
+            ->setParameter('recherche', '%' . $recherche . '%')
+            ->orderBy('m.nomMarque', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
 
-    //    public function findOneBySomeField($value): ?Marque
-    //    {
-    //        return $this->createQueryBuilder('m')
-    //            ->andWhere('m.exampleField = :val')
-    //            ->setParameter('val', $value)
-    //            ->getQuery()
-    //            ->getOneOrNullResult()
-    //        ;
-    //    }
+    // Toutes les marques en ordre alphabétique
+    public function findAllAlphabetique(): array
+    {
+        return $this->createQueryBuilder('m')
+            ->orderBy('m.nomMarque', 'ASC')
+            ->getQuery()
+            ->getResult();
+    }
+
+    // Vérifier si une marque existe déjà
+    public function existeParNom(string $nom): bool
+    {
+        $result = $this->createQueryBuilder('m')
+            ->select('COUNT(m.idMarque)')
+            ->where('m.nomMarque = :nom')
+            ->setParameter('nom', $nom)
+            ->getQuery()
+            ->getSingleScalarResult();
+        
+        return $result > 0;
+    }
 }

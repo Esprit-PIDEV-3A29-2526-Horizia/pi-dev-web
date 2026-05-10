@@ -2,58 +2,85 @@
 
 namespace App\Entity;
 
-use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use Doctrine\ORM\Mapping as ORM;
 
-use App\Repository\MarqueRepository;
-
-#[ORM\Entity(repositoryClass: MarqueRepository::class)]
+#[ORM\Entity]
 #[ORM\Table(name: 'marque')]
 class Marque
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
-    #[ORM\Column(type: 'integer')]
-    private ?int $id_marque = null;
+    #[ORM\Column(name: 'id_marque', type: 'integer')]
+    private ?int $idMarque = null;
 
-    public function getId_marque(): ?int
-    {
-        return $this->id_marque;
-    }
+    #[ORM\Column(name: 'nom_marque', type: 'string', length: 50)]
+    private ?string $nomMarque = null;
 
-    public function setId_marque(int $id_marque): self
-    {
-        $this->id_marque = $id_marque;
-        return $this;
-    }
-
-    #[ORM\Column(type: 'string', nullable: false)]
-    private ?string $nom_marque = null;
-
-    public function getNom_marque(): ?string
-    {
-        return $this->nom_marque;
-    }
-
-    public function setNom_marque(string $nom_marque): self
-    {
-        $this->nom_marque = $nom_marque;
-        return $this;
-    }
-
-    #[ORM\Column(type: 'string', nullable: true)]
+    #[ORM\Column(name: 'logo', type: 'string', length: 255, nullable: true)]
     private ?string $logo = null;
+
+    #[ORM\OneToMany(targetEntity: Modele::class, mappedBy: 'marque')]
+    private Collection $modeles;
+
+    public function __construct()
+    {
+        $this->modeles = new ArrayCollection();
+    }
+
+    public function getIdMarque(): ?int
+    {
+        return $this->idMarque;
+    }
+
+    public function getNomMarque(): ?string
+    {
+        return $this->nomMarque;
+    }
+
+    public function setNomMarque(string $nomMarque): static
+    {
+        $this->nomMarque = $nomMarque;
+        return $this;
+    }
 
     public function getLogo(): ?string
     {
         return $this->logo;
     }
 
-    public function setLogo(?string $logo): self
+    public function setLogo(?string $logo): static
     {
         $this->logo = $logo;
         return $this;
     }
 
+    public function getModeles(): Collection
+    {
+        return $this->modeles;
+    }
+
+    public function addModele(Modele $modele): static
+    {
+        if (!$this->modeles->contains($modele)) {
+            $this->modeles->add($modele);
+            $modele->setMarque($this);
+        }
+        return $this;
+    }
+
+    public function removeModele(Modele $modele): static
+    {
+        if ($this->modeles->removeElement($modele)) {
+            if ($modele->getMarque() === $this) {
+                $modele->setMarque(null);
+            }
+        }
+        return $this;
+    }
+    public function __toString(): string
+{
+    return $this->nomMarque ?? '';
+}
 }

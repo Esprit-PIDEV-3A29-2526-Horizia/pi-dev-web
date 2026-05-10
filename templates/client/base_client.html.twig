@@ -1,0 +1,124 @@
+{% extends 'base_front.html.twig' %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        /* =============================================
+           HORIZIA LOCATION — Styles supplémentaires
+           Orange  #e84a3e  |  Teal  #23779C
+        ============================================= */
+        :root {
+            --orange  : #e84a3e;
+            --orange-dk: #c73a2e;
+            --teal    : #23779C;
+            --teal-dk : #1a5a78;
+            --dark    : #1a1a2e;
+        }
+
+        /* ─── BUTTONS ──────────────────────────── */
+        .btn-orange {
+            background: var(--orange); color:#fff;
+            border:none; border-radius:30px;
+            padding:12px 32px; font-weight:600;
+            transition: all .3s;
+        }
+        .btn-orange:hover {
+            background: var(--orange-dk); color:#fff;
+            transform:translateY(-2px);
+            box-shadow:0 8px 24px rgba(232,74,62,.35);
+        }
+        .btn-teal {
+            background:var(--teal); color:#fff;
+            border:none; border-radius:30px;
+            padding:12px 32px; font-weight:600;
+            transition: all .3s;
+        }
+        .btn-teal:hover { background:var(--teal-dk); color:#fff; transform:translateY(-2px); }
+        .btn-outline-teal {
+            border:2px solid var(--teal); color:var(--teal);
+            background:transparent; border-radius:30px;
+            padding:10px 28px; font-weight:600; transition:all .3s;
+        }
+        .btn-outline-teal:hover { background:var(--teal); color:#fff; }
+
+        /* ─── CARDS ────────────────────────────── */
+        .card {
+            border:none; border-radius:14px;
+            box-shadow:0 4px 20px rgba(0,0,0,.08);
+            overflow:hidden; transition:transform .3s, box-shadow .3s;
+        }
+        .card:hover { transform:translateY(-6px); box-shadow:0 14px 36px rgba(0,0,0,.15); }
+
+        .card-teal { background:var(--teal); color:#fff; }
+        .card-teal * { color:#fff !important; }
+        .card-teal .text-muted { color:rgba(255,255,255,.7) !important; }
+
+        .card-header-teal { background:var(--teal); color:#fff; padding:14px 20px; font-weight:700; }
+
+        /* ─── SECTIONS ─────────────────────────── */
+        .section { padding:72px 0; }
+        .section-gray { background:#f4f6f9; }
+
+        .section-title .sub {
+            color:var(--orange); font-size:.78rem; font-weight:700;
+            letter-spacing:3px; text-transform:uppercase;
+            display:block; margin-bottom:6px;
+        }
+        .section-title h2 { font-size:2rem; font-weight:800; color:var(--dark); }
+
+        /* Badge prix flottant */
+        .price-badge {
+            position:absolute; bottom:16px; right:16px;
+            background:var(--teal); color:#fff;
+            padding:6px 16px; border-radius:20px;
+            font-size:.9rem; font-weight:700;
+        }
+
+        /* ─── TABLE ─────────────────────────────── */
+        .table thead th { background:var(--teal); color:#fff; border:none; font-weight:600; }
+        .table tbody tr:hover { background:#f0f8fc; }
+
+        /* ─── FORMS ─────────────────────────────── */
+        .form-control { border-radius:8px; padding:11px 16px; font-size:.95rem; border:1.5px solid #ddd; }
+        .form-control:focus { border-color:var(--teal); box-shadow:0 0 0 .2rem rgba(35,119,156,.18); }
+        label { font-weight:600; font-size:.88rem; color:#444; margin-bottom:5px; }
+
+        /* ─── MODAL / PAYMENT ───────────────────── */
+        .modal-content { border:none; border-radius:16px; overflow:hidden; }
+        .modal-header  { background:var(--teal); color:#fff; border:none; padding:18px 24px; }
+        .modal-title   { font-weight:700; }
+        .payment-box   { background:#f8f9fa; border-radius:10px; padding:18px; margin-top:12px; }
+        .payment-row   { display:flex; justify-content:space-between; align-items:center; padding:6px 0; font-size:.9rem; }
+        .payment-row.total {
+            border-top:2px solid #ddd; margin-top:8px; padding-top:12px;
+            font-weight:700; font-size:1rem; color:var(--teal);
+        }
+
+        /* ─── MISC ──────────────────────────────── */
+        .text-orange { color:var(--orange) !important; }
+        .text-teal   { color:var(--teal)   !important; }
+        .icon-circle {
+            width:68px; height:68px; border-radius:50%;
+            background:rgba(35,119,156,.1);
+            display:inline-flex; align-items:center; justify-content:center;
+        }
+
+        /* État des badges */
+        .badge-ok  { background:#27ae60; color:#fff; padding:4px 14px; border-radius:20px; font-size:.8rem; }
+        .badge-pnd { background:#f39c12; color:#fff; padding:4px 14px; border-radius:20px; font-size:.8rem; }
+        .badge-err { background:#e74c3c; color:#fff; padding:4px 14px; border-radius:20px; font-size:.8rem; }
+
+        @media(max-width:768px) {
+            .hero-title { font-size:2.1rem; }
+            .section { padding:48px 0; }
+            .hero-full { min-height:auto; }
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    {# Le contenu des pages client sera affiché ici #}
+    {{ parent() }}
+{% endblock %}
+
+{# On garde le footer de base_front.html.twig donc pas besoin de le redéfinir #}
