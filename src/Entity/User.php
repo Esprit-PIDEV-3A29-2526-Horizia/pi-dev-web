@@ -8,6 +8,8 @@ use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Validator\Constraints as Assert;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
+use Symfony\Component\Serializer\Annotation\Ignore;
+use SensitiveParameter;
 
 #[ORM\Entity]
 #[ORM\Table(name: 'user')]
@@ -33,6 +35,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?string $email = null;
 
     #[ORM\Column(length: 255)]
+    #[Ignore]
     private ?string $password = null;
 
     private ?string $resetToken = null;
@@ -83,7 +86,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     
     public function eraseCredentials(): void {}
     public function getPassword(): ?string { return $this->password; }
-    public function setPassword(string $password): self { $this->password = $password; return $this; }
+    public function setPassword(#[SensitiveParameter] string $password): self 
+    { 
+        $this->password = $password; 
+        return $this; 
+    }    
     public function getTelephone(): ?string { return $this->telephone; }
     public function setTelephone(?string $telephone): self { $this->telephone = $telephone; return $this; }
     public function getAddresse(): ?string { return $this->addresse; }

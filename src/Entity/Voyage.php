@@ -31,10 +31,10 @@ private ?int $id = null;
     #[Assert\Length(min: 10, minMessage: "La description doit contenir au moins 10 caractères.")]
     private ?string $description = null;
 
-    #[ORM\Column(type: "float")]
+    #[ORM\Column(type: "decimal", precision: 10, scale: 3)]
     #[Assert\NotBlank(message: "Le prix est obligatoire.")]
     #[Assert\Positive(message: "Le prix doit être positif.")]
-    private ?float $prix = null;
+    private ?string $prix = null;
 
     #[ORM\Column(type: Types::DATE_MUTABLE)]
     #[Assert\NotBlank(message: "La date de départ est obligatoire.")]
@@ -107,15 +107,18 @@ private ?int $id = null;
         return $this;
     }
 
-    public function getPrix(): ?float
+    public function getPrix(): ?string
     {
         return $this->prix;
     }
 
-    public function setPrix(?float $prix): self
+    public function setPrix(float|string|null $prix): self
     {
-        $this->prix = $prix;
-
+        if (is_float($prix)) {
+            $this->prix = number_format($prix, 3, '.', '');
+        } else {
+            $this->prix = $prix;
+        }
         return $this;
     }
 

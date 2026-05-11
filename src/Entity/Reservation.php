@@ -49,8 +49,8 @@ class Reservation
     #[Assert\Positive(message: 'Le nombre de personnes doit être positif.')]
     private ?int $nbrPersonnes = 1;
 
-    #[Column(name: 'prix_total', type: 'float', nullable: true)]
-    private ?float $prixTotal = null;
+    #[Column(name: 'prix_total', type: 'decimal', precision: 10, scale: 3, nullable: true)]
+    private ?string $prixTotal = null;
 
     #[ORM\Column(name: 'payment_status', type: 'string', length: 20, nullable: false, options: ['default' => 'NON_PAYEE'])]
     private string $paymentStatus = 'NON_PAYEE';
@@ -153,15 +153,18 @@ class Reservation
         return $this;
     }
 
-    public function getPrixTotal(): ?float
+    public function getPrixTotal(): ?string
     {
         return $this->prixTotal;
     }
 
-    public function setPrixTotal(?float $prixTotal): self
+    public function setPrixTotal(float|string|null $prixTotal): self
     {
-        $this->prixTotal = $prixTotal;
-
+        if (is_float($prixTotal)) {
+            $this->prixTotal = number_format($prixTotal, 3, '.', '');
+        } else {
+            $this->prixTotal = $prixTotal;
+        }
         return $this;
     }
 
@@ -209,9 +212,10 @@ class Reservation
     public function recalculerPrixTotal(): void
     {
         if ($this->voyage !== null) {
-            $this->prixTotal = ($this->voyage->getPrix() ?? 0) * ($this->nbrPersonnes ?? 0);
+            $prix = ($this->voyage->getPrix() ?? 0) * ($this->nbrPersonnes ?? 0);
+            $this->prixTotal = number_format($prix, 3, '.', '');
         } else {
-            $this->prixTotal = 0;
+            $this->prixTotal = '0.000';
         }
     }
 }

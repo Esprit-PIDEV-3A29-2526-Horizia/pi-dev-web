@@ -59,6 +59,5 @@ class ReservationManager
             throw new \InvalidArgumentException('Au moins 1 personne requise.');
         }
 
-        return $reservation->getVoyage()->getPrix() * $reservation->getNbrPersonnes();
-    }
+        return (float) $reservation->getVoyage()->getPrix() * $reservation->getNbrPersonnes();    }
 }

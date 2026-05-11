@@ -47,10 +47,10 @@ class Logement
     #[Assert\Regex(pattern: "/^[A-Z]/", message: "La première lettre des équipements doit être une majuscule")]
     private ?string $equipement = null;
 
-    #[ORM\Column(type: 'float', nullable: false)]
+    #[ORM\Column(type: 'decimal', precision: 10, scale: 3, nullable: false)]
     #[Assert\NotBlank(message: "Le tarif est obligatoire")]
     #[Assert\Positive(message: "Le tarif doit être un nombre positif")]
-    private ?float $tarif_nuit = null;
+    private ?string $tarif_nuit = null;
 
     #[ORM\Column(type: 'boolean', nullable: false, options: ['default' => true])]
     #[Assert\IsTrue(message: "Le logement doit être disponible", groups: ["create"])]
@@ -142,14 +142,18 @@ class Logement
         return $this;
     }
 
-    public function getTarifNuit(): ?float
+    public function getTarifNuit(): ?string
     {
         return $this->tarif_nuit;
     }
 
-    public function setTarifNuit(float $tarif_nuit): self
+    public function setTarifNuit(float|string $tarif_nuit): self
     {
-        $this->tarif_nuit = $tarif_nuit;
+        if (is_float($tarif_nuit)) {
+            $this->tarif_nuit = number_format($tarif_nuit, 3, '.', '');
+        } else {
+            $this->tarif_nuit = $tarif_nuit;
+        }
         return $this;
     }
 

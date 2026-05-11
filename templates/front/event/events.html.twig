@@ -286,10 +286,13 @@
 }
 /* From Uiverse.io by Mike11jr */ 
 .scene {
- width: 40em;
- justify-content: center;
- align-items: center;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 20px 0;
 }
+
 
 .cube {
  color: #ccc;
@@ -298,8 +301,9 @@
  transition: all 0.85s cubic-bezier(.17,.67,.14,.93);
  transform-style: preserve-3d;
  transform-origin: 100% 50%;
- width: 40em;
+ width: 300px;
  height: 4em;
+ margin: auto;
 }
 
 .cube:hover {
@@ -309,13 +313,16 @@
 .side {
  box-sizing: border-box;
  position: absolute;
- display: inline-block;
+ display: flex;
+ align-items: center;
+ justify-content: center;
+ cursor: pointer;
  height: 4em;
- width: 40em;
+ width: 300px;
  text-align: center;
  text-transform: uppercase;
- padding-top: 1.5em;
  font-weight: bold;
+
 }
 
 .top {
