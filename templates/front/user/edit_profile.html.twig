@@ -1,31 +1,64 @@
-{% extends 'base.html.twig' %}
+{% extends 'base_front.html.twig' %}
 
 {% block title %}Modifier mon profil - Horozia{% endblock %}
 
 {% block body %}
 <div class="container py-5">
     <div class="row justify-content-center">
-        <div class="col-md-6">
-            <div class="card auth-card">
-                <div class="card-header">
-                    <i class="bi bi-pencil me-2"></i> Modifier mon profil
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Modifier mon profil</h4>
                 </div>
-                <div class="card-body p-4">
-                    <form method="post">
+                <div class="card-body">
+                    <form method="post" action="{{ path('app_profile_edit') }}" enctype="multipart/form-data">
+                        <input type="hidden" name="_csrf_token" value="{{ csrf_token('edit_profile') }}">
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Nom</label>
+                                <input type="text" name="nom" class="form-control" value="{{ user.nom }}" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Prénom</label>
+                                <input type="text" name="prenom" class="form-control" value="{{ user.prenom }}" required>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-control" value="{{ user.email }}" disabled>
+                            <small class="text-muted">L'email ne peut pas être modifié</small>
+                        </div>
+                        
                         <div class="mb-3">
                             <label class="form-label">Téléphone</label>
                             <input type="tel" name="telephone" class="form-control" value="{{ user.telephone }}">
                         </div>
+                        
                         <div class="mb-3">
                             <label class="form-label">Adresse</label>
                             <textarea name="addresse" class="form-control" rows="3">{{ user.addresse }}</textarea>
                         </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Photo de profil</label>
+                            {% if user.photo %}
+                                <div class="mb-2">
+                                    <img src="{{ asset('uploads/profiles/' ~ user.photo) }}?v={{ user.updatedAt|date('U') }}" 
+                                         style="width: 100px; height: 100px; object-fit: cover; border-radius: 50%;">
+                                </div>
+                            {% endif %}
+                            <input type="file" name="photo" class="form-control" accept="image/jpeg,image/png,image/gif">
+                            <small class="text-muted">Formats acceptés: JPG, PNG, GIF (max 5MB)</small>
+                        </div>
+                        
                         <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-horozia-primary">
-                                <i class="bi bi-save me-2"></i> Enregistrer
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fa fa-save"></i> Enregistrer
                             </button>
-                            <a href="{{ path('app_profile') }}" class="btn btn-horozia-neutral">
-                                <i class="bi bi-arrow-left me-2"></i> Retour
+                            <a href="{{ path('app_front_profile') }}" class="btn btn-secondary">
+                                <i class="fa fa-arrow-left"></i> Retour
                             </a>
                         </div>
                     </form>

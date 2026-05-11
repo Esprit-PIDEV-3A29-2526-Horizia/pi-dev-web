@@ -18,6 +18,95 @@
     <link rel="stylesheet" href="{{ asset('assets/css/flaticon.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/css/style.css') }}">
 
+    {# Styles personnalisés pour le mode sombre #}
+    <style>
+        /* Mode sombre - compatible avec la structure existante */
+        body.dark-mode {
+            background-color: #121212;
+            color: #e0e0e0;
+        }
+
+        /* Dark mode pour le header personnalisé */
+        body.dark-mode .site-header {
+            background: rgba(0, 0, 0, 0.8) !important;
+        }
+
+        body.dark-mode .menu > ol > li > a {
+            text-shadow: none;
+        }
+
+        body.dark-mode .menu > ol > li > ol > li > a {
+            background: #2a2a2a;
+            color: #e0e0e0;
+        }
+
+        body.dark-mode .menu > ol > li > ol > li > a:hover,
+        body.dark-mode .menu > ol > li > ol > li > a:focus {
+            background: #3a3a3a;
+            color: #fff;
+        }
+
+        /* Dark mode pour le footer */
+        body.dark-mode .ftco-footer {
+            background-color: #1a1a1a !important;
+            background-image: none !important;
+        }
+
+        body.dark-mode .ftco-footer .bg-bottom {
+            background-image: none;
+        }
+
+        body.dark-mode .ftco-footer-widget h2,
+        body.dark-mode .ftco-footer-widget p,
+        body.dark-mode .ftco-footer-widget li a {
+            color: #e0e0e0;
+        }
+
+        body.dark-mode .ftco-footer-widget li a:hover {
+            color: #fff;
+        }
+
+        /* Dark mode pour les cartes et sections */
+        body.dark-mode .card,
+        body.dark-mode .ftco-section,
+        body.dark-mode .form-control {
+            background-color: #1e1e1e;
+            color: #e0e0e0;
+            border-color: #333;
+        }
+
+        /* Dark mode pour les boutons */
+        body.dark-mode .btn-outline-primary {
+            color: #bb86fc;
+            border-color: #bb86fc;
+        }
+
+        body.dark-mode .btn-outline-primary:hover {
+            background-color: #bb86fc;
+            color: #121212;
+        }
+
+        /* Dark mode pour les textes */
+        body.dark-mode .text-muted {
+            color: #aaa !important;
+        }
+
+        /* Dark mode pour les bordures */
+        body.dark-mode .border-left {
+            border-left-color: #333 !important;
+        }
+
+        /* Dark mode pour la navbar scrollée */
+        body.dark-mode .scrolled {
+            background: #1a1a1a !important;
+        }
+
+        /* Dark mode pour le loader */
+        body.dark-mode #ftco-loader {
+            background-color: #121212;
+        }
+    </style>
+
     {% block stylesheets %}{% endblock %}
 </head>
 <body>
@@ -35,9 +124,36 @@
             top: 0; left: 0; right: 0;
             z-index: 1000;
             background: transparent;
+            transition: background 0.3s ease;
+        }
+        .site-header.scrolled {
+            background: rgba(0, 0, 0, 0.26);
+            position: fixed;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
         .site-header .brand a { display: flex; align-items: center; text-decoration: none; }
         .site-header .brand img { height: 46px; width: auto; }
+
+        /* Dark mode toggle button */
+        .dark-mode-toggle-btn {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 1.3rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            margin-left: 0.5rem;
+            border-radius: 50%;
+            transition: background 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+        }
+        .dark-mode-toggle-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
 
         .notif-wrapper { position: relative; display: inline-block; }
         #notificationBadge { position: absolute; top: -6px; right: -10px; font-size: 10px; display: none; }
@@ -66,7 +182,6 @@
                 position: absolute;
                 top: 0; width: 100%; bottom: 0;
                 margin-right: -50%;
-                background: rgba(0,0,0,0.1);
                 border-radius: 0.5rem;
                 z-index: 0;
                 transition: 350ms cubic-bezier(1, 0.49, 0.09, 1.29) all;
@@ -160,20 +275,16 @@
         .menu > ol > li > a.nav-active { opacity: 1 !important; font-weight: 600; }
     </style>
 
-    <header class="site-header">
+    <header class="site-header" id="site-header">
         <div class="brand">
             <a href="{{ path('app_front_home') }}">
                 <img src="{{ asset('assets/images/LOGO2.png') }}" alt="Logo">
             </a>
         </div>
 
-        <button class="menu-mobile-toggle" aria-label="Toggle menu" onclick="document.querySelector('.menu').classList.toggle('menu-open')">
-            ☰ {{ 'menu'|trans }}
-        </button>
 
         <nav class="menu" aria-label="Main navigation">
             <ol>
-
                 {# HOME — no dropdown #}
                 <li>
                     <a href="{{ path('app_front_home') }}" {% if current_route == 'app_front_home' %}class="nav-active"{% endif %}>
@@ -279,9 +390,17 @@
                     </ol>
                 </li>
                 {% endif %}
-
             </ol>
         </nav>
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <button class="menu-mobile-toggle" aria-label="Toggle menu" onclick="document.querySelector('.menu').classList.toggle('menu-open')">
+                ☰ {{ 'menu'|trans }}
+            </button>
+            <button id="dark-mode-toggle" class="dark-mode-toggle-btn" aria-label="Changer de thème">
+                🌙
+            </button>
+        </div>
+
     </header>
     {# ===== END NAVBAR ===== #}
 
@@ -368,6 +487,54 @@
     <script src="{{ asset('assets/js/bootstrap-datepicker.js') }}"></script>
     <script src="{{ asset('assets/js/scrollax.min.js') }}"></script>
     <script src="{{ asset('assets/js/main.js') }}"></script>
+
+    {# Script pour le mode sombre et le header scrolled #}
+    <script>
+        (function() {
+            // Dark mode toggle
+            const toggleBtn = document.getElementById('dark-mode-toggle');
+            if (toggleBtn) {
+                // Vérifier la préférence enregistrée ou la préférence système
+                const storedTheme = localStorage.getItem('theme');
+                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                let isDark = storedTheme === 'dark' || (storedTheme === null && prefersDark);
+
+                // Appliquer le thème initial
+                function applyTheme(dark) {
+                    if (dark) {
+                        document.body.classList.add('dark-mode');
+                        toggleBtn.innerHTML = '☀️';
+                        toggleBtn.setAttribute('aria-label', 'Passer en mode clair');
+                    } else {
+                        document.body.classList.remove('dark-mode');
+                        toggleBtn.innerHTML = '🌙';
+                        toggleBtn.setAttribute('aria-label', 'Passer en mode sombre');
+                    }
+                    localStorage.setItem('theme', dark ? 'dark' : 'light');
+                }
+
+                applyTheme(isDark);
+
+                // Écouter le clic
+                toggleBtn.addEventListener('click', function() {
+                    isDark = !isDark;
+                    applyTheme(isDark);
+                });
+            }
+
+            // Header scroll effect
+            const header = document.getElementById('site-header');
+            if (header) {
+                window.addEventListener('scroll', function() {
+                    if (window.scrollY > 50) {
+                        header.classList.add('scrolled');
+                    } else {
+                        header.classList.remove('scrolled');
+                    }
+                });
+            }
+        })();
+    </script>
 
     {% block javascripts %}{% endblock %}
 </body>

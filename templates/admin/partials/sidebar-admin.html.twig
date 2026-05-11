@@ -88,6 +88,36 @@
                 </li>
             </ul>
         </li>
+        <!-- ==================== DROPDOWN GESTION VÉHICULES ==================== -->
+        <li class="sidebar-dropdown">
+            <a class="sidebar-link dropdown-toggle" href="#" role="button" data-toggle="dropdown" aria-expanded="false">
+                <i class="bi bi-truck-front-fill"></i>
+                <span>Gestion Locations</span>
+                <i class="bi bi-chevron-down ms-auto"></i>
+            </a>
+            <ul class="dropdown-menu sidebar-dropdown-menu">
+                <li>
+                    <a class="dropdown-item {{ app.request.attributes.get('_route') starts with 'admin_location' and app.request.attributes.get('_route') != 'admin_location_dashboard' ? 'active' : '' }}" href="{{ path('admin_location_index') }}">
+                        <i class="bi bi-calendar-check-fill"></i> Locations
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item {{ app.request.attributes.get('_route') starts with 'admin_vehicule' ? 'active' : '' }}" href="{{ path('admin_vehicule_index') }}">
+                        <i class="bi bi-truck-front-fill"></i> Véhicules
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item {{ app.request.attributes.get('_route') == 'admin_planning_index' ? 'active' : '' }}" href="{{ path('admin_planning_index') }}">
+                        <i class="bi bi-calendar3"></i> Planning
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item {{ app.request.attributes.get('_route') starts with 'admin_marque' ? 'active' : '' }}" href="{{ path('admin_marque_index') }}">
+                        <i class="bi bi-tags-fill"></i> Marques
+                    </a>
+                </li>
+            </ul>
+        </li>
 
         <!-- ==================== DROPDOWN GESTION ÉVÉNEMENTS ==================== -->
         <li class="sidebar-dropdown">

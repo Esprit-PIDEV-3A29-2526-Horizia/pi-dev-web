@@ -529,59 +529,7 @@ class HomeController extends AbstractController
         ]);
     }
 
-    #[Route('/profile', name: 'app_front_profile')]
-    public function profile(): Response
-    {
-        $user = $this->getUser();
 
-        if (!$user) {
-            return $this->redirectToRoute('app_login');
-        }
-
-        return $this->render('front/user/profile.html.twig', [
-            'user' => $user,
-        ]);
-    }
-
-    #[Route('/profile/edit', name: 'app_profile_edit')]
-    public function editProfile(Request $request, EntityManagerInterface $entityManager): Response
-    {
-            $user = $this->getUser();
-            if (!$user) 
-            {
-                return $this->redirectToRoute('app_login');
-            }
-
-            if ($request->isMethod('POST')) 
-            {
-                $nom = $request->request->get('nom');
-                $prenom = $request->request->get('prenom');
-                $telephone = $request->request->get('telephone');
-                $addresse = $request->request->get('addresse');
-
-                if ($nom && method_exists($user, 'setNom')) {
-                    $user->setNom($nom);
-                }
-                if ($prenom && method_exists($user, 'setPrenom')) {
-                    $user->setPrenom($prenom);
-                }
-                if ($telephone && method_exists($user, 'setTelephone')) {
-                    $user->setTelephone($telephone);
-                }
-                if ($addresse && method_exists($user, 'setAddresse')) {
-                    $user->setAddresse($addresse);
-                }
-
-                $entityManager->flush();
-
-                $this->addFlash('success', 'Profil modifié avec succès');
-                return $this->redirectToRoute('app_front_profile');
-            }
-
-            return $this->render('front/user/edit_profile.html.twig', [
-                'user' => $user,
-            ]);
-    }
 
     #[Route('/change-password', name: 'app_front_change_password', methods: ['GET', 'POST'])]
     public function changePassword(
@@ -916,5 +864,99 @@ class HomeController extends AbstractController
     {
         $metadata = $doctrine->getManager()->getClassMetadata(Reservation::class);
         return $metadata->hasField($fieldName);
+    }
+
+
+    #[Route('/profile', name: 'app_front_profile')]
+    public function profile(): Response
+    {
+        $user = $this->getUser();
+
+        if (!$user) {
+            return $this->redirectToRoute('app_login');
+        }
+
+        return $this->render('front/user/profile.html.twig', [
+            'user' => $user,
+        ]);
+    }
+
+   #[Route('/profile/edit', name: 'app_profile_edit')]
+    public function editProfile(Request $request, EntityManagerInterface $entityManager): Response
+    {
+        $user = $this->getUser();
+        if (!$user) {
+            return $this->redirectToRoute('app_login');
+        }
+
+        // ⚡ TRAITEMENT DE LA PHOTO ⚡
+        if ($request->files->has('photo')) {
+            $photoFile = $request->files->get('photo');
+            if ($photoFile && $photoFile->getError() === UPLOAD_ERR_OK) {
+                // Check file extension instead of MIME type
+                $originalFilename = pathinfo($photoFile->getClientOriginalName(), PATHINFO_EXTENSION);
+                $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif'];
+                $extension = strtolower($photoFile->getClientOriginalExtension());
+                
+                if (in_array($extension, $allowedExtensions)) {
+                    $newFilename = uniqid('profile_', true) . '.' . $extension;
+                    $uploadDir = $this->getParameter('kernel.project_dir') . '/public/uploads/profiles';
+                    
+                    if (!is_dir($uploadDir)) {
+                        mkdir($uploadDir, 0755, true);
+                    }
+                    
+                    $photoFile->move($uploadDir, $newFilename);
+
+                    // Supprimer l'ancienne photo
+                    if ($user->getPhoto()) {
+                        $oldFile = $uploadDir . '/' . $user->getPhoto();
+                        if (file_exists($oldFile)) {
+                            unlink($oldFile);
+                        }
+                    }
+
+                    $user->setPhoto($newFilename);
+                    $entityManager->flush();
+
+                    $this->addFlash('success', 'Photo de profil mise à jour !');
+                } else {
+                    $this->addFlash('error', 'Format non supporté. Utilisez JPG, PNG ou GIF.');
+                }
+            } else if ($photoFile && $photoFile->getError() !== UPLOAD_ERR_NO_FILE) {
+                $this->addFlash('error', 'Erreur lors du téléchargement du fichier.');
+            }
+            return $this->redirectToRoute('app_front_profile');
+        }
+
+        // 📝 TRAITEMENT DES AUTRES INFORMATIONS
+        if ($request->isMethod('POST')) {
+            $nom = $request->request->get('nom');
+            $prenom = $request->request->get('prenom');
+            $telephone = $request->request->get('telephone');
+            $addresse = $request->request->get('addresse');
+
+            if ($nom) {
+                $user->setNom($nom);
+            }
+            if ($prenom) {
+                $user->setPrenom($prenom);
+            }
+            if ($telephone) {
+                $user->setTelephone($telephone);
+            }
+            if ($addresse) {
+                $user->setAddresse($addresse);
+            }
+
+            $entityManager->flush();
+
+            $this->addFlash('success', 'Profil modifié avec succès');
+            return $this->redirectToRoute('app_front_profile');
+        }
+
+        return $this->render('front/user/edit_profile.html.twig', [
+            'user' => $user,
+        ]);
     }
 }
