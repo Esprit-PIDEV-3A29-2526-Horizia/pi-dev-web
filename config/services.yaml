@@ -76,3 +76,5 @@ services:
     App\Service\WeatherService:
         arguments:
             $apiKey: '%env(OPENWEATHER_API_KEY)%'
+    App\Controller\admin\CategorieController:
+        tags: ['controller.service_arguments']
