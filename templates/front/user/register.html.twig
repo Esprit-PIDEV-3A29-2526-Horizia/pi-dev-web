@@ -375,6 +375,112 @@
             font-size: 0.9rem;
         }
     }
+    /*terms and conditions*/
+    .terms-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        z-index: 10000;
+        backdrop-filter: blur(5px);
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .terms-modal.show {
+        display: flex;
+        opacity: 1;
+    }
+
+    .terms-modal-content {
+        background: white;
+        border-radius: 20px;
+        width: 90%;
+        max-width: 600px;
+        max-height: 80vh;
+        overflow: hidden;
+        animation: slideInUp 0.4s ease-out;
+        box-shadow: 0 30px 60px rgba(0, 0, 0, 0.3);
+    }
+
+    @keyframes slideInUp {
+        from {
+            transform: translateY(50px);
+            opacity: 0;
+        }
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    .terms-modal-header {
+        background: linear-gradient(135deg, #ff6b35, #ff8c42);
+        color: white;
+        padding: 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .terms-modal-header h4 {
+        margin: 0;
+        font-size: 1.3rem;
+    }
+
+    .terms-modal-close {
+        cursor: pointer;
+        font-size: 24px;
+        transition: transform 0.2s;
+    }
+
+    .terms-modal-close:hover {
+        transform: scale(1.1);
+    }
+
+    .terms-modal-body {
+        padding: 25px;
+        max-height: 60vh;
+        overflow-y: auto;
+        color: #333;
+        line-height: 1.6;
+    }
+
+    .terms-modal-footer {
+        padding: 15px 20px;
+        border-top: 1px solid #eee;
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+    }
+
+    .btn-accept-terms {
+        background: linear-gradient(135deg, #ff6b35, #ff8c42);
+        border: none;
+        padding: 10px 25px;
+        border-radius: 50px;
+        color: white;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+
+    .btn-accept-terms:hover {
+        transform: translateY(-2px);
+    }
+
+    .btn-cancel-terms {
+        background: #f0f0f0;
+        border: none;
+        padding: 10px 25px;
+        border-radius: 50px;
+        cursor: pointer;
+    }
 </style>
 
 <section class="register-section-custom">
@@ -501,8 +607,7 @@
                             <div class="terms-custom">
                                 <label class="checkbox-label-custom">
                                     <input type="checkbox" name="agree_terms" required> J'accepte les 
-                                    <a href="#">conditions générales</a> et la 
-                                    <a href="#">politique de confidentialité</a>
+                                    <a href="#">conditions générales</a>
                                 </label>
                             </div>
 
@@ -533,10 +638,167 @@
         </div>
     </div>
 </section>
+<!-- Modal Terms & Conditions -->
+<div id="termsModal" class="terms-modal">
+    <div class="terms-modal-content">
+        <div class="terms-modal-header">
+            <h4><i class="fas fa-file-contract"></i> Conditions Générales d'Utilisation</h4>
+            <span class="terms-modal-close" onclick="closeTermsModal()">&times;</span>
+        </div>
+        <div class="terms-modal-body" id="termsModalBody">
+            <h5>1. Acceptation des conditions</h5>
+            <p>En créant un compte sur Horozia, vous acceptez pleinement et sans réserve les présentes conditions générales d'utilisation.</p>
+            
+            <h5>2. Utilisation du service</h5>
+            <p>Horozia est une plateforme de réservation de voyages, événements et services touristiques. Vous vous engagez à utiliser nos services de manière honnête et conforme à la loi.</p>
+            
+            <h5>3. Compte utilisateur</h5>
+            <p>Vous êtes responsable de la confidentialité de votre mot de passe et de toutes les activités effectuées depuis votre compte.</p>
+            
+            <h5>4. Réservations et annulations</h5>
+            <p>Les conditions de réservation et d'annulation varient selon les prestataires. Veuillez consulter les détails avant toute confirmation.</p>
+            
+            <h5>5. Protection des données</h5>
+            <p>Vos données personnelles sont traitées conformément à notre politique de confidentialité et à la législation en vigueur.</p>
+            
+            <h5>6. Modification des conditions</h5>
+            <p>Horozia se réserve le droit de modifier ces conditions à tout moment. Les modifications vous seront notifiées par email.</p>
+            
+            <p><strong>En cliquant sur "J'accepte", vous confirmez avoir lu et accepté l'intégralité de ces conditions.</strong></p>
+        </div>
+        <div class="terms-modal-footer">
+            <button class="btn-cancel-terms" onclick="closeTermsModal()">Fermer</button>
+            <button class="btn-accept-terms" onclick="acceptTerms()">
+                <i class="fas fa-check"></i> J'accepte
+            </button>
+        </div>
+    </div>
+</div>
+
+<div id="privacyModal" class="terms-modal">
+    <div class="terms-modal-content">
+        <div class="terms-modal-header">
+            <h4><i class="fas fa-shield-alt"></i> Politique de Confidentialité</h4>
+            <span class="terms-modal-close" onclick="closePrivacyModal()">&times;</span>
+        </div>
+        <div class="terms-modal-body" id="privacyModalBody">
+            <h5>1. Collecte des données</h5>
+            <p>Nous collectons les informations que vous nous fournissez lors de votre inscription : nom, prénom, email, téléphone, adresse.</p>
+            
+            <h5>2. Utilisation des données</h5>
+            <p>Vos données sont utilisées pour :<br>
+            - Gérer vos réservations<br>
+            - Vous envoyer des confirmations et rappels<br>
+            - Améliorer nos services<br>
+            - Vous proposer des offres personnalisées</p>
+            
+            <h5>3. Partage des données</h5>
+            <p>Vos données sont partagées uniquement avec les prestataires de services nécessaires à vos réservations (hébergements, transports, etc.).</p>
+            
+            <h5>4. Sécurité</h5>
+            <p>Nous mettons en œuvre des mesures de sécurité pour protéger vos données contre tout accès non autorisé.</p>
+            
+            <h5>5. Vos droits</h5>
+            <p>Vous avez le droit d'accéder, modifier ou supprimer vos données personnelles. Contactez-nous à dpo@horozia.com.</p>
+            
+            <h5>6. Cookies</h5>
+            <p>Notre site utilise des cookies pour améliorer votre expérience de navigation et mémoriser vos préférences.</p>
+            
+            <p><strong>En acceptant nos conditions, vous consentez à notre politique de confidentialité.</strong></p>
+        </div>
+        <div class="terms-modal-footer">
+            <button class="btn-cancel-terms" onclick="closePrivacyModal()">Fermer</button>
+            <button class="btn-accept-terms" onclick="acceptPrivacy()">
+                <i class="fas fa-check"></i> J'accepte
+            </button>
+        </div>
+    </div>
+</div>
 
 {% block stylesheets %}
     {{ parent() }}
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script>
+// Variables pour suivre quel modal est ouvert et la case à cocher
+let currentModalType = null;
+let termsCheckbox = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Récupérer la case à cocher
+    termsCheckbox = document.querySelector('input[name="agree_terms"]');
+    
+    // Modifier les liens pour ouvrir les modales
+    const termsLink = document.querySelector('.checkbox-label-custom a:first-child');
+    const privacyLink = document.querySelector('.checkbox-label-custom a:last-child');
+    
+    if (termsLink) {
+        termsLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            openTermsModal('terms');
+        });
+    }
+    
+    if (privacyLink) {
+        privacyLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            openTermsModal('privacy');
+        });
+    }
+});
+
+function openTermsModal(type) {
+    currentModalType = type;
+    const modalId = type === 'terms' ? 'termsModal' : 'privacyModal';
+    const modal = document.getElementById(modalId);
+    modal.style.display = 'flex';
+    setTimeout(() => {
+        modal.classList.add('show');
+    }, 10);
+}
+
+function closeTermsModal() {
+    const modal = document.getElementById('termsModal');
+    modal.classList.remove('show');
+    setTimeout(() => {
+        modal.style.display = 'none';
+    }, 300);
+    currentModalType = null;
+}
+
+function closePrivacyModal() {
+    const modal = document.getElementById('privacyModal');
+    modal.classList.remove('show');
+    setTimeout(() => {
+        modal.style.display = 'none';
+    }, 300);
+    currentModalType = null;
+}
+
+function acceptTerms() {
+    if (termsCheckbox) {
+        termsCheckbox.checked = true;
+    }
+    closeTermsModal();
+}
+
+function acceptPrivacy() {
+    if (termsCheckbox) {
+        termsCheckbox.checked = true;
+    }
+    closePrivacyModal();
+}
+
+// Fermer la modale en cliquant en dehors
+window.onclick = function(event) {
+    if (event.target.classList.contains('terms-modal')) {
+        if (currentModalType === 'terms') {
+            closeTermsModal();
+        } else if (currentModalType === 'privacy') {
+            closePrivacyModal();
+        }
+    }
+}
+</script>
 {% endblock %}
 
 {% endblock %}

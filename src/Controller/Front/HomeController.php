@@ -6,6 +6,7 @@ use App\Entity\Reservation;
 use App\Entity\Events;
 use App\Entity\Voyage;
 use App\Entity\Logement;
+use App\Repository\LogementRepository;
 use App\Entity\Reservationlog;
 use App\Entity\User;
 use App\Service\GeminiService;
@@ -77,6 +78,22 @@ class HomeController extends AbstractController
                 $currency
             );
         }
+        $logementRepo = $entityManager->getRepository(Logement::class);
+        $logementsPopulaires = $logementRepo->findBy(
+            ['disponibilite' => true],
+            ['id' => 'DESC'],
+            3
+        );
+        $eventRepo = $entityManager->getRepository(Events::class);
+        $eventsAVenir = $eventRepo->createQueryBuilder('e')
+            ->where('e.statut != :termine')
+            ->setParameter('termine', 'terminé')
+            ->andWhere('e.date_debut >= :now')
+            ->setParameter('now', new \DateTime())
+            ->orderBy('e.date_debut', 'ASC')
+            ->setMaxResults(3)
+            ->getQuery()
+            ->getResult();
 
         return $this->render('front/index.html.twig', [
             'voyages' => $voyages,
@@ -85,7 +102,10 @@ class HomeController extends AbstractController
             'currencySymbol' => $currencyService->getSymbol($currency),
             'convertedPrices' => $convertedPrices,
             'allowedCurrencies' => $currencyService->getAllowedCurrencies(),
+            'logementsPopulaires' => $logementsPopulaires,
+            'eventsAVenir' => $eventsAVenir,
         ]);
+
     }
 
     #[Route('/home', name: 'app_home')]
