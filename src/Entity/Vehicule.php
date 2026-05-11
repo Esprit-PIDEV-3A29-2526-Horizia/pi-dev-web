@@ -36,7 +36,7 @@ class Vehicule
     private ?int $kilometrage = null;
 
     #[ORM\Column(name: 'etat', type: 'string', length: 20)]
-    private ?string $etat = 'disponible';
+    private string $etat = 'disponible';
 
     #[ORM\Column(name: 'prix_par_jour', type: 'decimal', precision: 10, scale: 3)]
     private ?string $prixParJour = null;
@@ -44,6 +44,7 @@ class Vehicule
     #[ORM\Column(name: 'photo', type: 'string', length: 255, nullable: true)]
     private ?string $photo = null;
 
+    /** @var Collection<int, Location> */
     #[ORM\OneToMany(targetEntity: Location::class, mappedBy: 'vehicule')]
     private Collection $locations;
 
@@ -156,6 +157,9 @@ class Vehicule
         return $this;
     }
 
+    /**
+     * @return Collection<int, Location>
+     */
     public function getLocations(): Collection
     {
         return $this->locations;

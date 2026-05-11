@@ -81,6 +81,7 @@ class Location
     private ?string $notes = null;
 
     // Champ extras JSON
+    /** @var array<string, float|int|string>|null */
     #[ORM\Column(name: 'extras', type: 'json', nullable: true)]
     private ?array $extras = null;
 
@@ -329,11 +330,14 @@ class Location
     // EXTRAS
     // ──────────────────────────────────────────
 
+    /** @return array<string, float|int|string>|null */
+
     public function getExtras(): ?array
     {
         return $this->extras;
     }
 
+    /** @param array<string, float|int|string>|null $extras */
     public function setExtras(?array $extras): static
     {
         $this->extras = $extras;

@@ -25,6 +25,7 @@ class Modele
     #[ORM\JoinColumn(name: 'id_marque', referencedColumnName: 'id_marque', nullable: false)]
     private ?Marque $marque = null;
 
+    /** @var Collection<int, Vehicule> */
     #[ORM\OneToMany(targetEntity: Vehicule::class, mappedBy: 'modele')]
     private Collection $vehicules;
 
@@ -71,6 +72,9 @@ class Modele
         return $this;
     }
 
+    /**
+     * @return Collection<int, Vehicule>
+     */
     public function getVehicules(): Collection
     {
         return $this->vehicules;

@@ -35,8 +35,8 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(length: 255)]
     private ?string $password = null;
 
-    private $resetToken;
-    private $resetTokenExpiresAt;
+    private ?string $resetToken = null;
+    private ?\DateTimeInterface $resetTokenExpiresAt = null;
 
     #[ORM\Column(length: 20, nullable: true)]
     private ?string $telephone = null;
@@ -54,6 +54,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\JoinColumn(name: 'profil_id', referencedColumnName: 'id', nullable: true)]
     private ?Profil $profil = null;
 
+    /** @var Collection<int, Participation> */
     #[ORM\OneToMany(mappedBy: "user", targetEntity: Participation::class)]
     private Collection $participations;
 
@@ -106,6 +107,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setResetToken(?string $resetToken): self { $this->resetToken = $resetToken; return $this; }
     public function getResetTokenExpiresAt(): ?\DateTimeInterface { return $this->resetTokenExpiresAt; }
     public function setResetTokenExpiresAt(?\DateTimeInterface $resetTokenExpiresAt): self { $this->resetTokenExpiresAt = $resetTokenExpiresAt; return $this; }
+    /**
+     * @return Collection<int, Participation>
+     */
     public function getParticipations(): Collection { return $this->participations; }
     
     public function addParticipation(Participation $participation): self

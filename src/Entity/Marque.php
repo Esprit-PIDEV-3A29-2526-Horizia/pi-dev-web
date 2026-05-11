@@ -21,6 +21,7 @@ class Marque
     #[ORM\Column(name: 'logo', type: 'string', length: 255, nullable: true)]
     private ?string $logo = null;
 
+    /** @var Collection<int, Modele> */
     #[ORM\OneToMany(targetEntity: Modele::class, mappedBy: 'marque')]
     private Collection $modeles;
 
@@ -56,6 +57,9 @@ class Marque
         return $this;
     }
 
+    /**
+     * @return Collection<int, Modele>
+     */
     public function getModeles(): Collection
     {
         return $this->modeles;
