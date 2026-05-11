@@ -17,6 +17,9 @@ class ModeleRepository extends ServiceEntityRepository
     }
 
     // Recherche par nom de modèle
+    /**
+     * @return array<int, Modele>
+     */
     public function rechercherParNom(string $recherche): array
     {
         return $this->createQueryBuilder('m')
@@ -28,6 +31,9 @@ class ModeleRepository extends ServiceEntityRepository
     }
 
     // Modèles par marque
+    /**
+     * @return array<int, Modele>
+     */
     public function findByMarque(int $idMarque): array
     {
         return $this->createQueryBuilder('m')
@@ -39,6 +45,9 @@ class ModeleRepository extends ServiceEntityRepository
     }
 
     // Tous les modèles avec leur marque
+    /**
+     * @return array<int, Modele>
+     */
     public function findAllWithMarque(): array
     {
         return $this->createQueryBuilder('m')

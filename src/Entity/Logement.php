@@ -15,7 +15,7 @@ class Logement
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
-    private ?int $id = null;
+    private int $id = 0;
 
     #[ORM\Column(type: 'string', length: 50, nullable: false)]
     #[Assert\NotBlank(message: "Le type est obligatoire")]
@@ -54,17 +54,15 @@ class Logement
 
     #[ORM\Column(type: 'boolean', nullable: false, options: ['default' => true])]
     #[Assert\IsTrue(message: "Le logement doit être disponible", groups: ["create"])]
-    private ?bool $disponibilite = true;
+    private bool $disponibilite = true;
 
     // RELATION : l'utilisateur (admin) qui a créé le logement
-    #[ORM\ManyToOne(targetEntity: User::class, cascade: ['persist'])]
+    #[ORM\ManyToOne(targetEntity: User::class)]
     #[ORM\JoinColumn(name: 'created_by_id', referencedColumnName: 'id', nullable: false)]
     private ?User $createdBy = null;
 
+    /** @var Collection<int, Reservationlog> */
     #[ORM\OneToMany(targetEntity: Reservationlog::class, mappedBy: 'logement')]
-    /**
-     * @var Collection<int, Reservationlog>
-     */
     private Collection $reservationlogs;
 
     public function __construct()

@@ -12,6 +12,7 @@ class GeminiService
     private string $apiKey;
     private LoggerInterface $logger;
     private string  $geminiModel;
+    
 
     public function __construct(HttpClientInterface $httpClient, string $apiKey, LoggerInterface $logger,string  $geminiModel)
     {

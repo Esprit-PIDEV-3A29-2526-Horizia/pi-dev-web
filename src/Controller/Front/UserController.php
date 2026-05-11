@@ -100,7 +100,7 @@ class UserController extends AbstractController
 public function afterLoginRedirect(Request $request): Response
 {
     $user = $this->getUser();
-    if (!$user) {
+    if (!$user instanceof User) {
         return $this->redirectToRoute('app_login');
     }
 
@@ -115,10 +115,15 @@ public function afterLoginRedirect(Request $request): Response
     return $this->redirectToRoute('app_front_home');
 }
 
+/**
+ * @return \Symfony\Component\HttpFoundation\RedirectResponse
+ */
 #[Route('/connect/google', name: 'connect_google_start')]
 public function connectGoogle(ClientRegistry $clientRegistry): Response
 {
-    return $clientRegistry->getClient('google')->redirect();
+    /** @var \KnpU\OAuth2ClientBundle\Client\OAuth2ClientInterface $client */
+    $client = $clientRegistry->getClient('google');
+    return $client->redirect([], []);
 }
 
 #[Route('/connect/google/check', name: 'google_connect_check')]
@@ -149,8 +154,8 @@ public function forgotPassword(Request $request, EntityManagerInterface $em, Mai
             $reset = new PasswordReset();
             $reset->setEmail($email);
             $reset->setCode($code); // stocke le code numérique
-            $reset->setExpiresAt(new \DateTime('+1 hour'));
-            $reset->setCreatedAt(new \DateTime());
+            $reset->setExpires_at(new \DateTime('+1 hour'));
+            $reset->setCreated_at(new \DateTime());
             $reset->setUsed(false);
 
             $em->persist($reset);
@@ -198,7 +203,7 @@ public function verifyCode(Request $request, EntityManagerInterface $em, Session
             'used' => false,
         ]);
 
-        if ($reset && $reset->getExpiresAt() > new \DateTime()) {
+        if ($reset && $reset->getExpires_at() > new \DateTime()) {
             // Code valide : on le marque comme utilisé immédiatement ou on le garde pour l'étape suivante
             // Ici on le garde en session pour l'étape du nouveau mot de passe
             $session->set('reset_code', $submittedCode);
@@ -227,7 +232,7 @@ public function resetPasswordForm(Request $request, EntityManagerInterface $em, 
         'used' => false,
     ]);
 
-    if (!$reset || $reset->getExpiresAt() < new \DateTime()) {
+    if (!$reset || $reset->getExpires_at() < new \DateTime()) {
         $this->addFlash('error', 'Code invalide ou expiré.');
         return $this->redirectToRoute('app_forgot_password');
     }

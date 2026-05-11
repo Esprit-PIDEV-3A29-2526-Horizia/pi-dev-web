@@ -12,10 +12,8 @@ class AiService
     {
         $this->apiKey = $_ENV['GEMINI_API_KEY'] ?? null;
     }
-    /**
-     * @internal Méthode interne utilisée par le service
-     */
-    private function callGemini(string $prompt): string
+
+    public function callGemini(string $prompt): string
     {
         if (!$this->apiKey) {
             return "L'assistant IA n'est pas configuré.";

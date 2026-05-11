@@ -13,7 +13,7 @@ class Modele
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(name: 'id_modele', type: 'integer')]
-    private ?int $idModele = null;
+    private int $idModele = 0;
 
     #[ORM\Column(name: 'nom_modele', type: 'string', length: 80)]
     private ?string $nomModele = null;

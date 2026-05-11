@@ -17,6 +17,9 @@ class VehiculeRepository extends ServiceEntityRepository
     }
 
     // Recherche par immatriculation
+    /**
+     * @return array<int, Vehicule>
+     */
     public function rechercherParImmatriculation(string $immat): array
     {
         return $this->createQueryBuilder('v')
@@ -28,6 +31,9 @@ class VehiculeRepository extends ServiceEntityRepository
     }
 
     // Véhicules disponibles
+    /**
+     * @return array<int, Vehicule>
+     */
     public function findDisponibles(): array
     {
         return $this->createQueryBuilder('v')
@@ -39,6 +45,9 @@ class VehiculeRepository extends ServiceEntityRepository
     }
 
     // Véhicules avec modèle et marque
+    /**
+     * @return array<int, Vehicule>
+     */
     public function findAllWithModeleAndMarque(): array
     {
         return $this->createQueryBuilder('v')

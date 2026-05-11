@@ -81,7 +81,7 @@ public function onAuthenticationSuccess(Request $request, TokenInterface $token,
     $user = $token->getUser();
     
     // Si l'utilisateur est l'administrateur (email spécifique ou rôle ADMIN)
-    if ($user->getEmail() === 'admin@admin.com' || in_array('ROLE_ADMIN', $user->getRoles())) {
+    if ($user instanceof User && ($user->getEmail() === 'admin@admin.com' || in_array('ROLE_ADMIN', $user->getRoles()))) {
         return new RedirectResponse($this->router->generate('app_admin'));
     }
     
@@ -92,6 +92,9 @@ public function onAuthenticationSuccess(Request $request, TokenInterface $token,
     {
         return new RedirectResponse($this->router->generate('app_login'));
     }
+    /**
+     * @return array<int, string>
+     */
     protected function getScopes(): array
 {
     return ['email', 'profile']; // vos scopes

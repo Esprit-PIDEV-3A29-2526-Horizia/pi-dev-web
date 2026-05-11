@@ -6,5 +6,3 @@ parameters:
         - public/
         - src/
         - tests/
-    ignoreErrors:
-        - '#cascade="remove" on ManyToMany to Independent Entity#'

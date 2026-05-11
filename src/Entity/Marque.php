@@ -13,7 +13,7 @@ class Marque
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(name: 'id_marque', type: 'integer')]
-    private ?int $idMarque = null;
+    private int $idMarque = 0;
 
     #[ORM\Column(name: 'nom_marque', type: 'string', length: 50)]
     private ?string $nomMarque = null;

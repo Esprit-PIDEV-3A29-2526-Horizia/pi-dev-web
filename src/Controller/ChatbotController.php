@@ -30,7 +30,7 @@ class ChatbotController extends AbstractController
 
             return $this->json([
                 'success' => true,
-                'reply' => (string) ($result['reply'] ?? 'Réponse vide.'),
+                'reply' => (string) $result['reply'],
                 'reply_html' => $result['reply_html'] ?? null,
             ], 200);
 

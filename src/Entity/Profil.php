@@ -14,8 +14,9 @@ class Profil
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
-    private ?int $id = null;
+    private int $id = 0;
 
+    /** @var Collection<int, User> */
     #[ORM\OneToMany(targetEntity: User::class, mappedBy: 'profil')]
     private Collection $users;
 

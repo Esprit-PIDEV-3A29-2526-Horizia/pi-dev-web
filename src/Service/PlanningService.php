@@ -307,7 +307,9 @@ class PlanningService
 
             while ($d <= $f) {
                 $joursOccupes[$idVehicule . '-' . $d->format('Y-m-d')] = true;
-                $d->modify('+1 day');
+                if ($d instanceof \DateTime) {
+                    $d->modify('+1 day');
+                }
             }
         }
 

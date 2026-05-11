@@ -15,7 +15,7 @@ class Commentaire
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    private ?int $id = null;
+    private int $id = 0;
 
     #[ORM\ManyToOne(inversedBy: 'commentaireList')]
     #[ORM\JoinColumn(name: "publication_id", referencedColumnName: "id", nullable: false, onDelete: "CASCADE")]
@@ -37,7 +37,7 @@ class Commentaire
 
     #[ORM\Column(nullable: true)]
     private ?bool $modifie = false;
-    #[ORM\ManyToOne(targetEntity: User::class, cascade: ['persist'])]
+    #[ORM\ManyToOne(targetEntity: User::class)]
     #[ORM\JoinColumn(name: "created_by_id", referencedColumnName: "id", nullable: false)]
     private ?User $createdBy = null;
 

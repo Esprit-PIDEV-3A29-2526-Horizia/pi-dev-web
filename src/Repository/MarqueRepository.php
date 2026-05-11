@@ -17,6 +17,9 @@ class MarqueRepository extends ServiceEntityRepository
     }
 
     // Recherche par nom (comme dans MarqueService.java)
+    /**
+     * @return array<int, Marque>
+     */
     public function rechercherParNom(string $recherche): array
     {
         return $this->createQueryBuilder('m')
@@ -28,6 +31,9 @@ class MarqueRepository extends ServiceEntityRepository
     }
 
     // Toutes les marques en ordre alphabétique
+    /**
+     * @return array<int, Marque>
+     */
     public function findAllAlphabetique(): array
     {
         return $this->createQueryBuilder('m')

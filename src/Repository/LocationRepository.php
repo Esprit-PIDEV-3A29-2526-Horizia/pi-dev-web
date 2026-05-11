@@ -17,6 +17,9 @@ class LocationRepository extends ServiceEntityRepository
     }
 
     // Recherche par client (nom ou téléphone)
+    /**
+     * @return array<int, Location>
+     */
     public function rechercherParClient(string $recherche): array
     {
         return $this->createQueryBuilder('l')
@@ -29,6 +32,9 @@ class LocationRepository extends ServiceEntityRepository
     }
 
     // Locations actives (réservée ou en_cours)
+    /**
+     * @return array<int, Location>
+     */
     public function findActives(): array
     {
         return $this->createQueryBuilder('l')
@@ -40,6 +46,9 @@ class LocationRepository extends ServiceEntityRepository
     }
 
     // Top 5 modèles les plus loués
+    /**
+     * @return array<int, array{marque_nom: string, modele_nom: string, total: int}>
+     */
     public function findTop5ModelesLoues(): array
     {
         return $this->createQueryBuilder('l')
@@ -55,6 +64,9 @@ class LocationRepository extends ServiceEntityRepository
     }
 
     // Locations par statut (pour dashboard)
+    /**
+     * @return array<int, array{statut: string, total: int}>
+     */
     public function countByStatut(): array
     {
         return $this->createQueryBuilder('l')
@@ -97,6 +109,9 @@ class LocationRepository extends ServiceEntityRepository
      * - Exclut annulées et no_show
      * - Charge le véhicule en eager loading (évite N+1 queries)
      * - Limitée à 50 pour la performance
+     */
+    /**
+     * @return array<int, Location>
      */
     public function findPourCartographie(): array
     {

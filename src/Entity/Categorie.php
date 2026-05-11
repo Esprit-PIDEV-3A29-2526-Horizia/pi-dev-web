@@ -16,7 +16,7 @@ class Categorie
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
-    private ?int $id = null;
+    private int $id = 0;
 
     #[ORM\Column(length: 255)]
     #[Assert\NotBlank(message: "Le nom de la catégorie est obligatoire.")]

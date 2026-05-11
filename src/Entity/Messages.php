@@ -20,7 +20,7 @@ class Messages
      * @ORM\Id
      * @ORM\GeneratedValue(strategy="IDENTITY")
      */
-    private $id;
+    private int $id = 0;
 
     /**
      * @var int
@@ -44,11 +44,11 @@ class Messages
     private $isUser;
 
     /**
-     * @var \DateTime
+     * @var \DateTimeInterface
      *
      * @ORM\Column(name="timestamp", type="datetime", nullable=false)
      */
-    private $timestamp;
+    private \DateTimeInterface $timestamp;
 
     public function getId(): ?int
     {

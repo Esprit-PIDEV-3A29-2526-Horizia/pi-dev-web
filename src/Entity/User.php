@@ -17,7 +17,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(type: 'integer')]
-    private ?int $id = null;
+    private int $id = 0;
 
     #[ORM\Column(length: 100)]
     #[Assert\NotBlank(message: 'Le nom est obligatoire.')]

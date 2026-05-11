@@ -8,11 +8,12 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Session\SessionInterface;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\HttpFoundation\Response; 
 
 class TwoFactorController extends AbstractController
 {
     #[Route('/2fa/verify', name: 'app_2fa_verify')]
-    public function verifyPage(SessionInterface $session)
+    public function verifyPage(SessionInterface $session): Response
     {
         if (!$session->get('2fa_pending')) {
             return $this->redirectToRoute('app_login');

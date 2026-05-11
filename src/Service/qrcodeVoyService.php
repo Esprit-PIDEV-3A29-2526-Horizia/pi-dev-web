@@ -3,7 +3,7 @@
 namespace App\Service;
 
 use App\Entity\Reservation;
-use Endroid\QrCode\Builder\Builder;
+use Endroid\QrCode\QrCode;
 use Endroid\QrCode\Writer\PngWriter;
 use Endroid\QrCode\Writer\Result\ResultInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
@@ -27,11 +27,14 @@ class qrcodeVoyService
 
         $detailUrl = rtrim($this->appUrl, '/') . $detailPath;
 
-        return Builder::create()
-            ->writer(new PngWriter())
-            ->data($detailUrl)
-            ->size(420)
-            ->margin(16)
-            ->build();
+        // Version corrigée pour Endroid QrCode 6.x
+        $qrCode = new QrCode(
+            data: $detailUrl,
+            size: 420,
+            margin: 16
+        );
+
+        $writer = new PngWriter();
+        return $writer->write($qrCode);
     }
 }

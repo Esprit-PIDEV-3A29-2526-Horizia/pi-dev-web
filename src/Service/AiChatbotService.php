@@ -133,11 +133,10 @@ Consignes :
 - Ne dis pas que tu es une IA.
 PROMPT;
 
-            $aiResponse = $this->geminiService->askForPlacesToVisit($prompt);
-
-            if (!is_string($aiResponse) || trim($aiResponse) === '') {
-                return $this->response("Je n'ai pas pu générer une réponse IA pour le moment.");
-            }
+        $aiResponse = $this->geminiService->generateRecommendations($prompt);
+        if (trim($aiResponse) === '') {
+            return $this->response("Je n'ai pas pu générer une réponse IA pour le moment.");
+        }
 
             return $this->response($aiResponse);
 

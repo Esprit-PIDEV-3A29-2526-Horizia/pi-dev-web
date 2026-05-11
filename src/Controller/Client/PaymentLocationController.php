@@ -121,9 +121,9 @@ class PaymentLocationController extends AbstractController
             ),
             'customer_email' => $user->getEmail(),
             'metadata'       => [
-                'location_id' => $id,
-                'type'        => $type,
-                'user_id'     => $user->getId(),
+                'location_id' => (string) $id,
+                'type'        => (string) $type,
+                'user_id'     => (string) $user->getId(),
             ],
         ]);
 

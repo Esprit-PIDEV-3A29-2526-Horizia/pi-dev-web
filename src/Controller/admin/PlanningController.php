@@ -50,7 +50,9 @@ class PlanningController extends AbstractController
             while ($cursor <= $borneMax) {
                 $key = $cursor->format('Y-m-d');
                 $calendrier[$key][] = $loc;
-                $cursor->modify('+1 day');
+                if ($cursor instanceof \DateTime) {
+                    $cursor->modify('+1 day');
+                }
             }
         }
 

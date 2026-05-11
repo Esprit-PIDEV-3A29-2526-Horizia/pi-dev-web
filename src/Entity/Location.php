@@ -12,7 +12,7 @@ class Location
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(name: 'id_location', type: 'integer')]
-    private ?int $idLocation = null;
+    private int $idLocation = 0;
 
     #[ORM\ManyToOne(inversedBy: 'locations')]
     #[ORM\JoinColumn(name: 'id_vehicule', referencedColumnName: 'id_vehicule', nullable: false)]
@@ -84,6 +84,12 @@ class Location
     /** @var array<string, float|int|string>|null */
     #[ORM\Column(name: 'extras', type: 'json', nullable: true)]
     private ?array $extras = null;
+
+    public function __construct()
+    {
+        $this->idLocation = 0;
+        $this->extras = null;
+    }
 
     // ──────────────────────────────────────────
     // GETTERS / SETTERS

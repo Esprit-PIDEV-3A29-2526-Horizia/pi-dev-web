@@ -38,15 +38,17 @@ class CommentaireController extends AbstractController
             $commentaire->setDateCreation(new \DateTimeImmutable());
             $commentaire->setModifie(false);
             // Liaison à l'utilisateur connecté (admin)
-            $commentaire->setCreatedBy($this->getUser());
+            $user = $this->getUser();
+            if ($user instanceof \App\Entity\User) {
+                $commentaire->setCreatedBy($user);
+            }
             // Pour l'affichage, on peut aussi définir l'auteur textuel
             $user = $this->getUser();
-            if ($user) {
+            if ($user instanceof \App\Entity\User) {
                 $commentaire->setAuteur($user->getPrenom() . ' ' . $user->getNom());
             } else {
                 $commentaire->setAuteur('Admin');
             }
-            
             $em->persist($commentaire);
             $publication->setCommentaires($publication->getCommentaires() + 1);
             $em->flush();

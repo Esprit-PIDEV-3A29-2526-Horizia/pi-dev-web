@@ -14,13 +14,10 @@ use App\Entity\User;
 #[ORM\Table(name: "publication")]
 class Publication
 {
-    /**
-     * @var int|null
-     */
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
-    private ?int $id = null;
+    private int $id = 0;
 
     #[ORM\Column(length: 255)]
     #[Assert\NotBlank(message: "Le titre est obligatoire.")]
@@ -66,7 +63,7 @@ class Publication
     #[ORM\Column(type: 'json', nullable: true)]
     private ?array $tags = null;
 
-    #[ORM\ManyToOne(targetEntity: User::class, cascade: ['persist'])]
+    #[ORM\ManyToOne(targetEntity: User::class)]
     #[ORM\JoinColumn(name: "created_by_id", referencedColumnName: "id", nullable: false)]
     private ?User $createdBy = null;
 

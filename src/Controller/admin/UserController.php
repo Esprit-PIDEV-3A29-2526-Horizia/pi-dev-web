@@ -80,7 +80,7 @@ class UserController extends AbstractController
     }
 
     #[Route('/{id}', name: 'app_user_delete', methods: ['POST'])]
-    public function delete($id, Request $request, EntityManagerInterface $em): Response
+    public function delete(int|string $id, Request $request, EntityManagerInterface $em): Response
     {
         // Récupérer l'utilisateur connecté
         $currentUser = $this->getUser();

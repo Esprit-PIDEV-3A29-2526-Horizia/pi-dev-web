@@ -12,7 +12,7 @@ class Publications
     #[ORM\Id]
     #[ORM\GeneratedValue(strategy: 'IDENTITY')]
     #[ORM\Column(name: 'id', type: 'integer', nullable: false)]
-    private int $id;
+    private int $id = 0;
 
     #[ORM\Column(name: 'titre', type: 'string', length: 255, nullable: false)]
     private string $titre;

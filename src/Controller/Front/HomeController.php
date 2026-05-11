@@ -23,11 +23,12 @@ use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Attribute\Route;
 use Endroid\QrCode\Builder\Builder;
+use Endroid\QrCode\RoundBlockSizeMode;
+use Doctrine\ORM\Tools\Pagination\Paginator;
+use Endroid\QrCode\QrCode;
 use Endroid\QrCode\Encoding\Encoding;
 use Endroid\QrCode\ErrorCorrectionLevel;
-use Endroid\QrCode\RoundBlockSizeMode;
 use Endroid\QrCode\Writer\PngWriter;
-use Doctrine\ORM\Tools\Pagination\Paginator;
 use Doctrine\ORM\EntityRepository;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 
@@ -493,6 +494,8 @@ class HomeController extends AbstractController
         return $response;
     }
 
+// Cherche cette méthode vers ligne 490-510 et REMPLACE-LA ENTIÈREMENT par :
+
     private function buildReservationQrCode(Reservation $reservation): \Endroid\QrCode\Writer\Result\ResultInterface
     {
         $detailPath = $this->generateUrl(
@@ -503,15 +506,15 @@ class HomeController extends AbstractController
         $baseUrl = rtrim((string) $this->getParameter('app.base_url'), '/');
         $detailUrl = $baseUrl . $detailPath;
 
-        return Builder::create()
-            ->writer(new PngWriter())
-            ->data($detailUrl)
-            ->encoding(new Encoding('UTF-8'))
-            ->errorCorrectionLevel(ErrorCorrectionLevel::High)
-            ->size(420)
-            ->margin(16)
-            ->roundBlockSizeMode(RoundBlockSizeMode::Margin)
-            ->build();
+        // Version corrigée - comme dans qrcodeVoyService
+        $qrCode = new \Endroid\QrCode\QrCode(
+            data: $detailUrl,
+            size: 420,
+            margin: 16
+        );
+
+        $writer = new \Endroid\QrCode\Writer\PngWriter();
+        return $writer->write($qrCode);
     }
 
 
@@ -885,7 +888,7 @@ class HomeController extends AbstractController
     public function editProfile(Request $request, EntityManagerInterface $entityManager): Response
     {
         $user = $this->getUser();
-        if (!$user) {
+        if (!$user instanceof User){
             return $this->redirectToRoute('app_login');
         }
 

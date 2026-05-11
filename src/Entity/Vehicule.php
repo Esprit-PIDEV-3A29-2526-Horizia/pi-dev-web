@@ -14,7 +14,7 @@ class Vehicule
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column(name: 'id_vehicule', type: 'integer')]
-    private ?int $idVehicule = null;
+    private int $idVehicule = 0;
 
     #[ORM\Column(name: 'immatriculation', type: 'string', length: 20)]
     private ?string $immatriculation = null;

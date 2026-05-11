@@ -264,7 +264,11 @@ class FrontController extends AbstractController
             return $this->json(['error' => $e->getMessage()], 500);
         }
     }
-    
+
+    /**
+     * @param array<int, Reservationlog> $reservations
+     * @param array<int, Logement> $candidates
+     */
     private function buildPrompt(array $reservations, array $candidates): string
     {
         $resumeReservations = '';
